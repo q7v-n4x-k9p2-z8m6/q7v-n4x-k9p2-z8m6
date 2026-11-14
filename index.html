@@ -7,15 +7,27 @@
     <meta name="description" content="حساب صراف" />
     <title>حساب صراف</title>
     <script>
-      // GitHub Pages serves unknown client-side routes through 404.html.
-      // Restore the original React Router path before loading the app.
+      // Restore GitHub Pages SPA routes and normalize malformed wildcard paths
+      // before React Router starts. The literal "/**" is not an application route.
       (function () {
         try {
           var params = new URLSearchParams(window.location.search);
           var spaPath = params.get('__spa_path');
-          if (!spaPath) return;
-          var target = new URL(spaPath, window.location.origin);
-          if (target.origin === window.location.origin) {
+          var current = new URL(window.location.href);
+          var target = spaPath ? new URL(spaPath, window.location.origin) : current;
+
+          // Accept only same-origin, absolute application paths.
+          if (target.origin !== window.location.origin || !target.pathname.startsWith('/') || target.pathname.startsWith('//')) {
+            return;
+          }
+
+          // A wildcard route pattern was incorrectly persisted as a browser URL.
+          if (target.pathname === '/**' || target.pathname === '/**/') {
+            target.pathname = '/';
+          }
+
+          if (spaPath || target.pathname !== current.pathname) {
+            target.searchParams.delete('__spa_path');
             window.history.replaceState(null, '', target.pathname + target.search + target.hash);
           }
         } catch (error) {
