@@ -25,15 +25,21 @@ const MOBILE_ITEMS = {
   restore: { id: 'restore', label: 'بازیابی پشتیبان', description: 'بازیابی نسخه پشتیبان آزمایشی' },
   print: { id: 'print', label: 'چاپ صفحه', description: 'چاپ محتوای صفحه جاری' },
   reset: { id: 'reset', label: 'بازنشانی داده‌های آزمایشی', description: 'بازنشانی فقط داده‌های پیش‌نمایش آزمایشی' },
-  settings: { id: 'settings', label: 'تنظیمات', description: 'تنظیمات محیط آزمایشی' },
+  settings: { id: 'settings', label: 'تنظیمات', description: 'تنظیمات محیط آزمایشی', children: ['انتخاب زبان', 'پشتیبانی'] },
+  language: { id: 'language', label: 'زبان برنامه', description: 'انتخاب زبان رابط کاربری', children: ['فارسی', 'دری', 'English', 'العربية'] },
+  products: { id: 'products', label: 'محصولات آنلاین', description: 'خدمات و محصولات دیجیتال', children: ['شارژ موبایل', 'بسته‌های اینترنت', 'UC پابجی موبایل'] },
+  groupChat: { id: 'groupChat', label: 'گروه و چت', description: 'ارتباط گروهی و گفت‌وگوی خصوصی', children: ['ایجاد گروه', 'گفت‌وگوی گروهی', 'گفت‌وگوی خصوصی'] },
+  assistant: { id: 'assistant', label: 'هوش مصنوعی', description: 'جایگاه دستیار هوشمند در نسخه موبایل' },
+  support: { id: 'support', label: 'پشتیبانی', description: 'مرکز پشتیبانی؛ روش‌های تماس و ثبت درخواست بعداً طراحی می‌شوند' },
   help: { id: 'help', label: 'راهنما', description: 'راهنمای استفاده از بخش‌ها' },
 };
 
 const MOBILE_MENUS = [
   { id: 'definitions', label: 'تعاریف و حساب‌ها', items: ['customers', 'customerLedger', 'branches', 'branchLedger', 'cash', 'banks', 'currencies', 'accounts'] },
-  { id: 'operations', label: 'عملیات مالی', items: ['cashIn', 'cashOut', 'exchange', 'remittance', 'expenses'] },
+  { id: 'operations', label: 'عملیات مالی', items: ['cashIn', 'cashOut', 'exchange', 'remittance', 'expenses', 'products'] },
   { id: 'accounting', label: 'حسابداری', items: ['journal', 'ledger'] },
-  { id: 'reports-tools', label: 'گزارش و ابزارها', items: ['reports', 'profit', 'balance', 'backup', 'restore', 'print', 'reset', 'settings', 'help'] },
+  { id: 'communications', label: 'ارتباطات', items: ['groupChat', 'assistant'] },
+  { id: 'reports-tools', label: 'گزارش و ابزارها', items: ['reports', 'profit', 'balance', 'backup', 'restore', 'print', 'reset', 'settings', 'language', 'help'] },
 ];
 
 export default function MobileLayoutPreview() {
@@ -156,6 +162,7 @@ export default function MobileLayoutPreview() {
                     </div>
                     <div className="p-3">
                       <p className="text-[10px] leading-6 text-muted-foreground">{active.description}</p>
+                      {active.children?.length > 0 && <div className="mt-3 grid grid-cols-1 gap-2">{active.children.map((child, index) => <div key={child} className="rounded-md border border-border bg-muted/30 px-3 py-2 text-[10px] font-semibold">{activeId === 'settings' ? <button type="button" onClick={() => openWindow(index === 0 ? 'language' : 'support')} className="w-full text-right">{child} ←</button> : child}</div>)}</div>}
                       {activeId === 'customerLedger' ? (
                         <div className="mt-3 overflow-hidden rounded-md border border-border">
                           <div className="grid grid-cols-[1.2fr_.7fr_.7fr] gap-1 bg-muted px-2 py-2 text-[9px] font-bold">
@@ -208,7 +215,7 @@ export default function MobileLayoutPreview() {
           <div className="rounded-lg bg-muted/40 p-3">
             <p className="text-xs font-bold">قواعد نمایش موبایل</p>
             <ul className="mt-2 list-disc space-y-1 pr-4 text-[10px] leading-5 text-muted-foreground">
-              <li>هیچ آیکون یا شبکه میانبر در این چیدمان استفاده نمی‌شود.</li>
+              <li>منوها و پنجره‌های این پیش‌نمایش به‌صورت اسکلت نمایشی هستند.</li>
               <li>منوها به شکل نوشتاری و کلاسیک در بالای صفحه قرار دارند.</li>
               <li>با انتخاب هر گزینه، پنجره مستقل همان بخش باز می‌شود.</li>
               <li>پنجره در اندازه صفحه موبایل جا می‌گیرد و دکمه بستن دارد.</li>
