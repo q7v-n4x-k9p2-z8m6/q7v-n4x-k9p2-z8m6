@@ -771,6 +771,46 @@ function InternalControlsReview() {
 }
 
 
+function BudgetReadiness() {
+  const exchangeCode = getExchangeCode();
+  const query = useQuery({
+    queryKey: ['budgetReadiness', exchangeCode],
+    enabled: !!exchangeCode,
+    queryFn: async () => {
+      const [centers, periods] = await Promise.all([
+        fetchAllTenantRows('cost_centers', 'id,center_code,center_name,center_type,parent_id,is_active,exchange_code', exchangeCode),
+        fetchAllTenantRows('fiscal_periods', 'id,period_code,period_name,start_date,end_date,status,exchange_code', exchangeCode),
+      ]);
+      return {
+        centers,
+        activeCenters: centers.filter(row => row.is_active !== false),
+        periods,
+        openPeriods: periods.filter(row => !['closed','locked'].includes(String(row.status || '').toLowerCase())),
+      };
+    },
+    staleTime: 30000,
+  });
+  if (!exchangeCode) return <Card><CardContent className="p-5 text-sm text-muted-foreground">برای بررسی بودجه، ابتدا با حساب همان صرافی وارد شوید.</CardContent></Card>;
+  const data = query.data;
+  return <div className="space-y-4">
+    <Card><CardContent className="p-4 space-y-3">
+      <div className="flex items-center justify-between gap-2"><div><h2 className="font-semibold">آمادگی بودجه و پیش‌بینی</h2><p className="text-xs text-muted-foreground">بررسی ساختار مراکز هزینه و دوره‌های مالی؛ فقط‌خواندنی</p></div><Button size="sm" variant="outline" onClick={() => query.refetch()} disabled={query.isFetching}><RefreshCw className="w-4 h-4"/>بروزرسانی</Button></div>
+      {query.isLoading ? <LoadingState/> : query.isError ? <p className="text-sm text-destructive">{query.error?.message || 'بررسی ساختار بودجه ناموفق بود'}</p> : <>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+          <div className="rounded-lg bg-muted/50 p-3"><p className="text-xs text-muted-foreground">کل مراکز هزینه</p><p className="text-xl font-bold">{data.centers.length}</p></div>
+          <div className="rounded-lg bg-muted/50 p-3"><p className="text-xs text-muted-foreground">مراکز فعال</p><p className="text-xl font-bold">{data.activeCenters.length}</p></div>
+          <div className="rounded-lg bg-muted/50 p-3"><p className="text-xs text-muted-foreground">دوره‌های مالی باز</p><p className="text-xl font-bold">{data.openPeriods.length}</p></div>
+        </div>
+        {data.activeCenters.length > 0 && <div className="rounded-lg border p-3 space-y-2"><h3 className="text-sm font-semibold">مراکز هزینه فعال</h3>{data.activeCenters.slice(0,30).map(row=><div key={row.id} className="flex justify-between gap-3 border-b last:border-0 py-2 text-sm"><span>{row.center_name}</span><span className="font-mono text-xs text-muted-foreground">{row.center_code || '—'}</span></div>)}</div>}
+        {data.periods.length > 0 && <div className="rounded-lg border p-3 space-y-2"><h3 className="text-sm font-semibold">دوره‌های مالی تعریف‌شده</h3>{data.periods.slice(0,20).map(row=><div key={row.id} className="flex justify-between gap-3 border-b last:border-0 py-2 text-xs"><span>{row.period_name || row.period_code}</span><span className="text-muted-foreground">{row.start_date} تا {row.end_date} · {row.status || 'بدون وضعیت'}</span></div>)}</div>}
+        <div className="rounded-lg border p-3 space-y-2"><div className="flex items-center gap-2 text-sm font-semibold"><AlertTriangle className="w-4 h-4 text-amber-600"/>دفتر بودجه و پیش‌بینی هنوز وجود ندارد</div><p className="text-sm text-muted-foreground">در ساختار فعلی، مراکز هزینه و دوره‌های مالی موجودند؛ اما جدول بودجه مصوب، نسخه‌بندی بودجه، ردیف‌های درآمد/هزینه، تخصیص به مرکز هزینه، اصلاحیه، پیش‌بینی و مقایسه بودجه با عملکرد تأیید نشده‌اند.</p><p className="text-xs text-muted-foreground">بنابراین هیچ مبلغ بودجه یا انحرافی از داده‌های موجود حدس زده یا محاسبه نمی‌شود.</p></div>
+      </>}
+    </CardContent></Card>
+    <div className="rounded-lg border p-3 text-xs text-muted-foreground">این صفحه فقط آمادگی زیرساخت را نشان می‌دهد. مرحله بعدی طراحی دفتر بودجه افزایشی و سازگار با داده‌های موجود، همراه با کنترل دوره مالی و اتصال حسابداری قابل ممیزی است؛ فعلاً هیچ رکورد مالی ایجاد یا تغییر نمی‌شود.</div>
+  </div>;
+}
+
+
 function DataGovernanceReadiness() {
   const exchangeCode = getExchangeCode();
   const query = useQuery({
@@ -930,6 +970,7 @@ export default function EnterpriseModulePage() {
   if(key==='fiscal_periods') return <><PageHeader title="دوره‌های مالی" icon={CalendarDays}/><FiscalPeriodsManager/></>;
   if(key==='period_close') return <><PageHeader title="بستن دوره مالی" icon={CalendarDays}/><PeriodCloseReadiness/></>;
   if(key==='internal_controls') return <><PageHeader title="کنترل‌های داخلی" icon={ShieldCheck}/><InternalControlsReview/></>;
+  if(key==='budgets') return <><PageHeader title="بودجه و پیش‌بینی" icon={ListTree}/><BudgetReadiness/></>;
   if(key==='data_governance') return <><PageHeader title="حاکمیت داده و حریم خصوصی" icon={ShieldCheck}/><DataGovernanceReadiness/></>;
   if(key==='cost_centers') return <><PageHeader title="مراکز هزینه و سود" icon={GitBranch}/><CostCentersManager/></>;
   if(key==='document_center') return <><PageHeader title="مرکز اسناد" icon={ListTree}/><DocumentCenter/></>;
