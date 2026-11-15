@@ -822,6 +822,38 @@ function AccountsPayableReadiness() {
   </div>;
 }
 
+
+function FixedAssetsReadiness() {
+  const exchangeCode = getExchangeCode();
+  const query = useQuery({
+    queryKey: ['fixedAssetsReadiness', exchangeCode],
+    enabled: !!exchangeCode,
+    queryFn: async () => {
+      const [accounts, documents, entries] = await Promise.all([
+        fetchAllTenantRows('chart_of_accounts', 'id,account_code,account_name,account_type,is_active,exchange_code', exchangeCode),
+        fetchAllTenantRows('documents', 'id,doc_number,doc_type,related_type,related_name,amount,currency,created_at,deleted,reversed,exchange_code', exchangeCode),
+        fetchAllTenantRows('ledger_entries', 'id,account_type,account_id,document_id,debit,credit,currency,deleted,exchange_code', exchangeCode),
+      ]);
+      const assetAccounts = accounts.filter(a => a.account_type === 'asset' && a.is_active !== false);
+      const taggedDocs = documents.filter(d => d.deleted !== true && d.reversed !== true &&
+        ['fixed_asset','asset_purchase','asset_disposal'].includes(String(d.related_type || '').toLowerCase()));
+      const taggedEntries = entries.filter(e => e.deleted !== true &&
+        ['fixed_asset','asset'].includes(String(e.account_type || '').toLowerCase()));
+      return { assetAccounts, taggedDocs, taggedEntries };
+    },
+    staleTime: 30000,
+  });
+  if (!exchangeCode) return <Card><CardContent className="p-5 text-sm text-muted-foreground">برای بررسی دارایی‌های ثابت، ابتدا با حساب همان صرافی وارد شوید.</CardContent></Card>;
+  return <div className="space-y-4"><Card><CardContent className="p-4 space-y-3">
+    <div className="flex items-center justify-between gap-2"><div><h2 className="font-semibold">آمادگی دفتر دارایی‌های ثابت</h2><p className="text-xs text-muted-foreground">بررسی فقط‌خواندنی کدینگ دارایی، اسناد و ردیف‌های مرتبط</p></div><Button size="sm" variant="outline" onClick={()=>query.refetch()} disabled={query.isFetching}><RefreshCw className="w-4 h-4"/>بروزرسانی</Button></div>
+    {query.isLoading ? <LoadingState/> : query.isError ? <p className="text-sm text-destructive">{query.error?.message || 'دریافت اطلاعات ناموفق بود'}</p> : <>
+      <div className="grid grid-cols-3 gap-2"><div className="rounded-lg bg-muted/50 p-3"><p className="text-xs text-muted-foreground">حساب‌های دارایی فعال</p><p className="text-xl font-bold">{query.data.assetAccounts.length}</p></div><div className="rounded-lg bg-muted/50 p-3"><p className="text-xs text-muted-foreground">اسناد برچسب‌خورده</p><p className="text-xl font-bold">{query.data.taggedDocs.length}</p></div><div className="rounded-lg bg-muted/50 p-3"><p className="text-xs text-muted-foreground">ردیف‌های دفترکل مرتبط</p><p className="text-xl font-bold">{query.data.taggedEntries.length}</p></div></div>
+      <div className="rounded-lg border p-3 space-y-2"><div className="flex items-center gap-2 text-sm font-semibold"><AlertTriangle className="w-4 h-4 text-amber-600"/>دفتر دارایی ثابت هنوز گردش‌کار کامل ندارد</div><p className="text-sm text-muted-foreground">کدینگ دارایی عمومی موجود است، اما دفتر مستقل دارایی، تاریخ بهره‌برداری، بهای تمام‌شده، ارزش اسقاط، روش و عمر استهلاک، محاسبه دوره‌ای و سند حسابداری استهلاک به‌صورت یک زنجیره قابل ردیابی تأیید نشده‌اند.</p><p className="text-xs text-muted-foreground">هیچ استهلاک، ارزش دفتری یا سود و زیان واگذاری از این شمارنده‌ها استنباط نمی‌شود.</p></div>
+      {query.data.assetAccounts.length>0 && <div className="rounded-lg border p-3 space-y-2"><h3 className="text-sm font-semibold">حساب‌های دارایی موجود</h3>{query.data.assetAccounts.slice(0,30).map(a=><div key={a.id} className="flex justify-between gap-3 border-b last:border-0 py-2 text-sm"><span>{a.account_name}</span><span className="font-mono text-muted-foreground">{a.account_code}</span></div>)}</div>}
+    </>}
+  </CardContent></Card><div className="rounded-lg border p-3 text-xs text-muted-foreground">این صفحه فقط آمادگی داده‌ها را نمایش می‌دهد. تا طراحی دفتر دارایی، قواعد استهلاک و ثبت دوطرفهٔ قابل بازبینی تکمیل نشود، هیچ داده مالی جدیدی ثبت یا تغییر نمی‌کند.</div></div>;
+}
+
 export default function EnterpriseModulePage() {
   const { moduleKey='' } = useParams();
   const key=String(moduleKey).replace(/-/g,'_');
@@ -834,6 +866,7 @@ export default function EnterpriseModulePage() {
   if(key==='fx_exposure') return <><PageHeader title="موقعیت و ریسک ارزی" icon={ListTree}/><FxExposureReport/></>;
   if(key==='accounts_receivable') return <><PageHeader title="مانده حساب مشتریان" icon={ListTree}/><CustomerBalancesReport/></>;
   if(key==='accounts_payable') return <><PageHeader title="حساب‌های پرداختنی" icon={ListTree}/><AccountsPayableReadiness/></>;
+  if(key==='fixed_assets') return <><PageHeader title="دارایی‌های ثابت" icon={ListTree}/><FixedAssetsReadiness/></>;
   if(key==='fiscal_periods') return <><PageHeader title="دوره‌های مالی" icon={CalendarDays}/><FiscalPeriodsManager/></>;
   if(key==='period_close') return <><PageHeader title="بستن دوره مالی" icon={CalendarDays}/><PeriodCloseReadiness/></>;
   if(key==='internal_controls') return <><PageHeader title="کنترل‌های داخلی" icon={ShieldCheck}/><InternalControlsReview/></>;
