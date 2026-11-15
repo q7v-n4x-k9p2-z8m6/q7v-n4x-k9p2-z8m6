@@ -1,168 +1,142 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
-import { Check, Smartphone, ChevronLeft, X, LayoutGrid } from 'lucide-react';
-import { SARRAAF_PAGES, PROPOSED_BOTTOM_NAV, renderPage } from '@/components/sarraaf/preview/SarraafPagePreviews';
+import {
+  Home, Users, Wallet, BookOpen, BookText, Landmark, Building2, Send,
+  BarChart3, Receipt, ScrollText, ClipboardList, ListChecks, Coins,
+  FileSpreadsheet, Scale, ArrowLeftRight, MoreHorizontal, ChevronRight
+} from 'lucide-react';
 
-const PHONE_WIDTH = 340;
-const PHONE_HEIGHT = 640;
+const MOBILE_MODULES = [
+  { id: 'home', label: 'میزکار', icon: Home, group: 'عمومی', description: 'نمای کلی وضعیت و دسترسی سریع' },
+  { id: 'customers', label: 'تعریف مشتریان', icon: Users, group: 'تعاریف و دفاتر', description: 'ثبت و مدیریت مشتریان' },
+  { id: 'customerLedger', label: 'دفتر حساب مشتریان', icon: BookOpen, group: 'تعاریف و دفاتر', description: 'مشاهده گردش حساب مشتریان' },
+  { id: 'branches', label: 'تعریف نمایندگی‌ها', icon: Building2, group: 'تعاریف و دفاتر', description: 'مدیریت نمایندگی‌ها' },
+  { id: 'branchLedger', label: 'دفتر حساب نمایندگی‌ها', icon: BookText, group: 'تعاریف و دفاتر', description: 'گردش حساب نمایندگی‌ها' },
+  { id: 'cash', label: 'صندوق‌ها و موجودی', icon: Wallet, group: 'صندوق و بانک', description: 'صندوق‌های مستقل و موجودی هرکدام' },
+  { id: 'banks', label: 'بانک و چک', icon: Landmark, group: 'صندوق و بانک', description: 'حساب‌های بانکی و چک‌ها' },
+  { id: 'exchange', label: 'خرید و فروش اسعار', icon: ArrowLeftRight, group: 'عملیات صرافی', description: 'ثبت معاملات خرید، فروش و تبدیل' },
+  { id: 'remittance', label: 'دفتر حواله‌ها', icon: Send, group: 'عملیات صرافی', description: 'حواله‌های ارسالی و دریافتی' },
+  { id: 'expenses', label: 'مصارف و پرداخت‌ها', icon: Receipt, group: 'عملیات صرافی', description: 'ثبت مصارف و پرداخت‌ها' },
+  { id: 'journal', label: 'دفتر روزنامچه', icon: ScrollText, group: 'حسابداری', description: 'اسناد روزنامچه' },
+  { id: 'ledger', label: 'دفتر کل', icon: ClipboardList, group: 'حسابداری', description: 'گردش حساب‌های کل' },
+  { id: 'accounts', label: 'کدینگ حساب‌ها', icon: ListChecks, group: 'حسابداری', description: 'ساختار حساب‌های کل، معین و تفصیلی' },
+  { id: 'currencies', label: 'تعریف اسعار', icon: Coins, group: 'تنظیمات', description: 'مدیریت ارزها' },
+  { id: 'reports', label: 'گزارش عملیات', icon: FileSpreadsheet, group: 'گزارشات', description: 'گزارش‌های عملیاتی' },
+  { id: 'profit', label: 'مفاد و زیان', icon: BarChart3, group: 'گزارشات', description: 'گزارش مفاد و زیان' },
+  { id: 'balance', label: 'بیلانس عمومی', icon: Scale, group: 'گزارشات', description: 'نمای کلی بیلانس' },
+];
 
-function PhoneFrame({ children }) {
+const QUICK_IDS = ['home', 'customers', 'cash', 'exchange'];
+
+function PhoneIcon({ item, active, onClick }) {
+  const Icon = item.icon;
   return (
-    <div
-      className="relative bg-background rounded-[2.5rem] border-[6px] border-foreground/10 shadow-2xl overflow-hidden mx-auto"
-      style={{ width: `${PHONE_WIDTH}px` }}
-    >
-      {/* Notch */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-24 h-6 bg-foreground/12 rounded-b-2xl z-20" />
-      {/* Status bar */}
-      <div className="absolute top-0 inset-x-0 h-6 flex items-center justify-between px-6 z-10">
-        <span className="text-[9px] font-bold text-foreground/70">۹:۴۱</span>
-        <div className="flex items-center gap-1">
-          <div className="w-3 h-2 rounded-sm bg-foreground/40" />
-          <div className="w-4 h-2 rounded-sm border border-foreground/40" />
-        </div>
-      </div>
-      {/* Content */}
-      <div
-        className="overflow-y-auto scrollbar-thin px-3 pt-8 pb-20"
-        dir="rtl"
-        style={{ height: `${PHONE_HEIGHT}px` }}
-      >
-        {children}
-      </div>
-      {/* Bottom nav */}
-      <BottomNav />
-    </div>
-  );
-}
-
-function BottomNav({ activePage, setActivePage, moreOpen, setMoreOpen }) {
-  return (
-    <div className="absolute bottom-0 inset-x-0 bg-card/95 backdrop-blur-md border-t border-border flex items-center justify-around px-1 pt-1.5 pb-2 z-10">
-      {PROPOSED_BOTTOM_NAV.map(item => {
-        const Icon = item.icon;
-        const active = activePage === item.key;
-        return (
-          <button
-            key={item.key}
-            onClick={() => { setActivePage(item.key); setMoreOpen(false); }}
-            className={`flex flex-col items-center gap-0.5 px-1 py-0.5 rounded-lg flex-1 transition-all ${active ? 'text-primary' : 'text-muted-foreground'}`}
-          >
-            <Icon className="w-[18px] h-[18px]" strokeWidth={active ? 2.4 : 2} />
-            <span className={`text-[9px] ${active ? 'font-bold' : 'font-medium'}`}>{item.label}</span>
-            {active && <div className="w-1 h-1 rounded-full bg-primary" />}
-          </button>
-        );
-      })}
-      {/* More button */}
-      <button
-        onClick={() => setMoreOpen(!moreOpen)}
-        className={`flex flex-col items-center gap-0.5 px-1 py-0.5 rounded-lg flex-1 transition-all ${moreOpen ? 'text-primary' : 'text-muted-foreground'}`}
-      >
-        <LayoutGrid className="w-[18px] h-[18px]" strokeWidth={moreOpen ? 2.4 : 2} />
-        <span className={`text-[9px] ${moreOpen ? 'font-bold' : 'font-medium'}`}>بیشتر</span>
-        {moreOpen && <div className="w-1 h-1 rounded-full bg-primary" />}
-      </button>
-    </div>
+    <button onClick={onClick} className={`min-w-0 min-h-[92px] rounded-xl border p-2 flex flex-col items-center justify-center gap-2 text-center transition-colors ${active ? 'border-primary bg-primary/10 text-primary shadow-sm' : 'border-border bg-card text-foreground hover:bg-muted'}`}>
+      <span className="w-11 h-11 rounded-xl bg-muted flex items-center justify-center shrink-0">
+        <Icon className="w-6 h-6" strokeWidth={1.9} />
+      </span>
+      <span className="text-[11px] font-semibold leading-4">{item.label}</span>
+    </button>
   );
 }
 
 export default function MobileLayoutPreview() {
-  const [activePage, setActivePage] = useState('dashboard');
-  const [moreOpen, setMoreOpen] = useState(false);
-
-  const activePageData = SARRAAF_PAGES.find(p => p.key === activePage);
-  const groups = [...new Set(SARRAAF_PAGES.map(p => p.group))];
-  const bottomKeys = new Set(PROPOSED_BOTTOM_NAV.map(b => b.key));
-  const morePages = SARRAAF_PAGES.filter(p => !bottomKeys.has(p.key));
+  const [activeId, setActiveId] = useState('home');
+  const [showAll, setShowAll] = useState(false);
+  const active = MOBILE_MODULES.find(item => item.id === activeId) || MOBILE_MODULES[0];
+  const groups = useMemo(() => [...new Set(MOBILE_MODULES.map(item => item.group))], []);
+  const quickItems = QUICK_IDS.map(id => MOBILE_MODULES.find(item => item.id === id)).filter(Boolean);
+  const Icon = active.icon;
 
   return (
-    <div className="space-y-4">
+    <div dir="rtl" className="space-y-4">
       <Card>
-        <CardContent className="p-4">
-          {/* Header */}
-          <div className="flex items-center gap-2 mb-2">
-            <Smartphone className="w-5 h-5 text-primary" />
-            <h3 className="text-sm font-bold">پیش‌نمایش موبایل — رابط حرفه‌ای صرافی</h3>
+        <CardContent className="p-4 space-y-3">
+          <div className="flex items-center gap-2">
+            <Home className="w-5 h-5 text-primary" />
+            <div>
+              <h3 className="text-sm font-bold">چیدمان مستقل موبایل حساب صراف</h3>
+              <p className="text-[11px] text-muted-foreground">بر پایه همان بخش‌های نسخه لپ‌تاپ، با اندازه مناسب لمس و صفحه گوشی</p>
+            </div>
           </div>
-          <p className="text-xs text-muted-foreground mb-4">
-            تجربهٔ موبایل‌محور با نوار پایین فشرده برای دسترسی سریع به عملیات روزانهٔ صرافی.
-            تمام داده‌ها نمونه‌ای هستند و هیچ اتصالی به دیتابیس زنده وجود ندارد.
-          </p>
-
-          {/* Phone preview */}
-          <div className="flex justify-center py-2">
-            <div className="relative" style={{ width: `${PHONE_WIDTH}px` }}>
-              <PhoneFrame>
-                {renderPage(activePage)}
-                <p className="text-[9px] text-muted-foreground text-center bg-muted/50 rounded-lg py-1.5 mt-2">
-                  ⚠ دادهٔ نمونه — پیش‌نمایش بصری
-                </p>
-              </PhoneFrame>
-
-              {/* More drawer — categorized */}
-              {moreOpen && (
-                <div className="absolute inset-0 z-30 bg-black/50 rounded-[2.5rem]" onClick={() => setMoreOpen(false)}>
-                  <div
-                    className="absolute bottom-20 inset-x-1 bg-card rounded-2xl shadow-2xl max-h-[420px] overflow-y-auto scrollbar-thin"
-                    onClick={e => e.stopPropagation()}
-                  >
-                    <div className="flex items-center justify-between px-3 py-2 border-b border-border sticky top-0 bg-card rounded-t-2xl">
-                      <span className="text-xs font-bold">سایر بخش‌ها</span>
-                      <button onClick={() => setMoreOpen(false)} className="p-1 rounded-lg hover:bg-muted"><X className="w-4 h-4" /></button>
-                    </div>
-                    <div className="p-2 space-y-2">
-                      {groups.map(group => (
-                        <div key={group}>
-                          <p className="text-[9px] font-bold text-muted-foreground px-1 mb-1">{group}</p>
-                          <div className="grid grid-cols-3 gap-1">
-                            {SARRAAF_PAGES.filter(p => p.group === group && !bottomKeys.has(p.key)).map(p => {
-                              const Icon = p.icon;
-                              const active = activePage === p.key;
-                              return (
-                                <button
-                                  key={p.key}
-                                  onClick={() => { setActivePage(p.key); setMoreOpen(false); }}
-                                  className={`flex flex-col items-center gap-1 rounded-lg p-2 transition-colors ${active ? 'bg-primary/10 text-primary' : 'text-foreground hover:bg-muted'}`}
-                                >
-                                  <Icon className="w-4 h-4" strokeWidth={2} />
-                                  <span className="text-[9px] text-center leading-tight">{p.label}</span>
-                                </button>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
+          <div className="mx-auto w-full max-w-[390px] rounded-[2rem] border-[7px] border-slate-800 bg-slate-900 p-1 shadow-xl">
+            <div className="overflow-hidden rounded-[1.55rem] bg-background">
+              <div className="h-7 bg-slate-900 text-white flex items-center justify-between px-4 text-[9px]">
+                <span>۹:۴۱</span><span>حساب صراف · نسخه موبایل</span><span>●●●</span>
+              </div>
+              <div className="bg-card border-b border-border px-3 py-3">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="text-[10px] text-muted-foreground">پنل حسابداری صراف</p>
+                    <h4 className="text-sm font-bold truncate">{active.label}</h4>
                   </div>
+                  <span className="w-9 h-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center"><Icon className="w-5 h-5" /></span>
+                </div>
+              </div>
+              {activeId === 'home' ? (
+                <div className="p-3 space-y-3">
+                  <div className="grid grid-cols-2 gap-2">
+                    {[
+                      ['مشتریان', '—'], ['صندوق‌ها', '—'], ['عملیات امروز', '—'], ['گزارش‌ها', '—']
+                    ].map(([label, value]) => (
+                      <div key={label} className="rounded-xl border border-border bg-card p-2.5">
+                        <p className="text-[10px] text-muted-foreground">{label}</p>
+                        <b className="text-base">{value}</b>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <b className="text-xs">دسترسی سریع</b>
+                    <span className="text-[9px] text-muted-foreground">امکانات حسابداری</span>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2">
+                    {MOBILE_MODULES.slice(1, 10).map(item => <PhoneIcon key={item.id} item={item} active={false} onClick={() => setActiveId(item.id)} />)}
+                  </div>
+                  <button onClick={() => setShowAll(true)} className="w-full rounded-lg border border-primary/30 bg-primary/5 py-2.5 text-xs font-semibold text-primary">نمایش همه بخش‌ها</button>
+                </div>
+              ) : (
+                <div className="min-h-[390px] p-3 space-y-3">
+                  <button onClick={() => setActiveId('home')} className="flex items-center gap-1 text-xs text-primary"><ChevronRight className="w-4 h-4" /> بازگشت به میزکار</button>
+                  <div className="rounded-xl border border-border bg-card p-4 flex items-center gap-3">
+                    <span className="w-12 h-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center"><Icon className="w-6 h-6" /></span>
+                    <div><b className="text-sm">{active.label}</b><p className="text-[10px] text-muted-foreground mt-1">{active.description}</p></div>
+                  </div>
+                  <div className="rounded-xl border border-dashed border-border p-4 text-center text-xs text-muted-foreground">پیش‌نمایش مسیر و جایگاه این بخش در نسخه موبایل</div>
+                  <button onClick={() => setShowAll(true)} className="w-full rounded-lg border py-2 text-xs">فهرست همه بخش‌ها</button>
                 </div>
               )}
+              <div className="grid grid-cols-5 border-t border-border bg-card px-1 py-2">
+                {quickItems.map(item => {
+                  const ItemIcon = item.icon;
+                  return <button key={item.id} onClick={() => { setActiveId(item.id); setShowAll(false); }} className={`flex flex-col items-center gap-1 min-w-0 ${activeId === item.id ? 'text-primary' : 'text-muted-foreground'}`}>
+                    <ItemIcon className="w-5 h-5" />
+                    <span className="text-[9px] font-medium">{item.label === 'خرید و فروش اسعار' ? 'معامله' : item.label === 'تعریف مشتریان' ? 'مشتری' : item.label === 'صندوق‌ها و موجودی' ? 'صندوق' : 'میزکار'}</span>
+                  </button>;
+                })}
+                <button onClick={() => setShowAll(v => !v)} className={`flex flex-col items-center gap-1 ${showAll ? 'text-primary' : 'text-muted-foreground'}`}>
+                  <MoreHorizontal className="w-5 h-5" /><span className="text-[9px]">بیشتر</span>
+                </button>
+              </div>
+              {showAll && <div className="border-t border-border bg-card p-3 space-y-3 max-h-[320px] overflow-y-auto">
+                <div className="flex items-center justify-between"><b className="text-xs">همه بخش‌های حسابداری</b><button onClick={() => setShowAll(false)} className="text-xs text-primary">بستن</button></div>
+                {groups.map(group => <section key={group} className="space-y-2">
+                  <p className="text-[10px] font-bold text-muted-foreground">{group}</p>
+                  <div className="grid grid-cols-3 gap-2">
+                    {MOBILE_MODULES.filter(item => item.group === group).map(item => <PhoneIcon key={item.id} item={item} active={activeId === item.id} onClick={() => { setActiveId(item.id); setShowAll(false); }} />)}
+                  </div>
+                </section>)}
+              </div>}
             </div>
           </div>
-
-          {/* Page label */}
-          <p className="text-center text-xs font-medium text-muted-foreground mt-3">
-            {activePageData?.label} — مسیر: {activePageData?.path}
-          </p>
-
-          {/* Structure overview */}
-          <div className="mt-6 border-t border-border pt-4">
-            <h4 className="text-xs font-bold text-foreground mb-2">خلاصهٔ ساختار برنامه</h4>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-[10px]">
-              {groups.map(g => (
-                <div key={g} className="rounded-lg border border-border bg-muted/30 p-2">
-                  <p className="font-bold text-foreground mb-1">{g}</p>
-                  <ul className="space-y-0.5 text-muted-foreground">
-                    {SARRAAF_PAGES.filter(p => p.group === g).map(p => (
-                      <li key={p.key}>• {p.label}</li>
-                    ))}
-                  </ul>
-                </div>
-              ))}
-            </div>
-            <p className="text-[10px] text-muted-foreground mt-2">
-              نوار پایین: {PROPOSED_BOTTOM_NAV.map(b => b.label).join('، ')} + دکمه «بیشتر» برای سایر صفحات.
-            </p>
+          <p className="text-center text-[10px] text-muted-foreground">نمونه چیدمان موبایل · داده‌ها و تراکنش‌های زنده در این پیش‌نمایش دست‌کاری نمی‌شوند.</p>
+          <div className="rounded-lg bg-muted/40 p-3 space-y-1">
+            <p className="text-xs font-bold">اصول چیدمان</p>
+            <ul className="list-disc pr-4 text-[10px] text-muted-foreground space-y-1">
+              <li>آیکون‌ها و نام بخش‌ها با نسخه لپ‌تاپ یکسان هستند.</li>
+              <li>شبکه سه‌ستونه با فاصله و اندازه مناسب لمس.</li>
+              <li>چهار میانبر پرکاربرد در نوار پایین و بقیه در فهرست دسته‌بندی‌شده.</li>
+              <li>میزکار همیشه نقطه شروع و راه بازگشت است.</li>
+            </ul>
           </div>
         </CardContent>
       </Card>
