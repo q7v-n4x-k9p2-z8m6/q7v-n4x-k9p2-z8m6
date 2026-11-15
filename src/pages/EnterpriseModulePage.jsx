@@ -611,7 +611,7 @@ function PeriodCloseReadiness() {
           .order('start_date', { ascending: false })
           .limit(300),
         fetchAllTenantRows('documents', 'id,doc_number,doc_type,created_at,deleted,reversed,description', exchangeCode),
-        fetchAllTenantRows('ledger_entries', 'id,document_id,deleted', exchangeCode),
+        fetchAllTenantRows('ledger_entries', 'id,document_id,currency,debit,credit,deleted', exchangeCode),
       ]);
       if (periodResult.error) throw new Error(periodResult.error.message || 'دریافت دوره‌های مالی ناموفق بود');
       return { periods: periodResult.data || [], documents, entries };
