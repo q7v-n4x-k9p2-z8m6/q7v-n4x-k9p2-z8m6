@@ -596,6 +596,95 @@ function FxExposureReport() {
   </div>;
 }
 
+
+function PeriodCloseReadiness() {
+  const exchangeCode = getExchangeCode();
+  const [selectedPeriodId, setSelectedPeriodId] = useState('');
+  const query = useQuery({
+    queryKey: ['enterprisePeriodCloseReadiness', exchangeCode],
+    enabled: !!exchangeCode,
+    queryFn: async () => {
+      const [periodResult, documents, entries] = await Promise.all([
+        supabase.from('fiscal_periods')
+          .select('id,period_code,period_name,start_date,end_date,status')
+          .eq('exchange_code', exchangeCode)
+          .order('start_date', { ascending: false })
+          .limit(300),
+        fetchAllTenantRows('documents', 'id,doc_number,doc_type,created_at,deleted,reversed,description', exchangeCode),
+        fetchAllTenantRows('ledger_entries', 'id,document_id,deleted', exchangeCode),
+      ]);
+      if (periodResult.error) throw new Error(periodResult.error.message || 'دریافت دوره‌های مالی ناموفق بود');
+      return { periods: periodResult.data || [], documents, entries };
+    },
+    staleTime: 30000,
+  });
+  const periods = query.data?.periods || [];
+  const selectedPeriod = periods.find(p => String(p.id) === String(selectedPeriodId))
+    || periods.find(p => p.status === 'open')
+    || periods[0]
+    || null;
+  const review = useMemo(() => {
+    if (!selectedPeriod || !query.data) return null;
+    const docs = query.data.documents.filter(doc => {
+      const date = String(doc.created_at || '').slice(0, 10);
+      return date && date >= selectedPeriod.start_date && date <= selectedPeriod.end_date;
+    });
+    const docIds = new Set(docs.map(doc => String(doc.id)));
+    const periodEntries = query.data.entries.filter(entry =>
+      entry.document_id != null && docIds.has(String(entry.document_id))
+    );
+    const activeEntriesByDocument = new Map();
+    for (const entry of periodEntries) {
+      if (entry.deleted === true) continue;
+      const key = String(entry.document_id);
+      activeEntriesByDocument.set(key, (activeEntriesByDocument.get(key) || 0) + 1);
+    }
+    const activeDocs = docs.filter(doc => doc.deleted !== true && doc.reversed !== true);
+    const missingLedger = activeDocs.filter(doc => !activeEntriesByDocument.has(String(doc.id)));
+    return {
+      documents: docs,
+      activeDocuments: activeDocs.length,
+      deletedDocuments: docs.filter(doc => doc.deleted === true).length,
+      reversedDocuments: docs.filter(doc => doc.reversed === true).length,
+      ledgerLines: periodEntries.filter(entry => entry.deleted !== true).length,
+      missingLedger,
+    };
+  }, [selectedPeriod, query.data]);
+
+  if (!exchangeCode) return <Card><CardContent className="p-5 text-sm text-muted-foreground">برای بررسی بستن دوره، ابتدا با حساب همان صرافی وارد شوید.</CardContent></Card>;
+
+  return <div className="space-y-4">
+    <Card><CardContent className="p-4 space-y-3">
+      <div className="flex items-center justify-between gap-2">
+        <div><h2 className="font-semibold">کنترل‌های پیش از بستن دوره</h2><p className="text-xs text-muted-foreground">مرور اسناد و ردیف‌های دفترکل در بازه انتخاب‌شده</p></div>
+        <Button size="sm" variant="outline" onClick={() => query.refetch()} disabled={query.isFetching}><RefreshCw className="w-4 h-4"/>بروزرسانی</Button>
+      </div>
+      <div className="space-y-1"><Label>دوره مالی</Label>
+        <Select value={selectedPeriod ? String(selectedPeriod.id) : ''} onValueChange={setSelectedPeriodId}>
+          <SelectTrigger><SelectValue placeholder="انتخاب دوره مالی"/></SelectTrigger>
+          <SelectContent>{periods.map(period => <SelectItem key={period.id} value={String(period.id)}>{period.period_name} · {period.start_date} تا {period.end_date} · {period.status === 'closed' ? 'بسته' : 'باز'}</SelectItem>)}</SelectContent>
+        </Select>
+      </div>
+    </CardContent></Card>
+    {query.isLoading ? <LoadingState/> : query.isError ? <Card><CardContent className="p-4 space-y-2"><p className="text-sm text-destructive">{query.error?.message || 'بررسی دوره ناموفق بود'}</p><Button size="sm" onClick={() => query.refetch()}>تلاش دوباره</Button></CardContent></Card> : !selectedPeriod ? <Card><CardContent className="p-5 text-center space-y-2"><CalendarDays className="w-8 h-8 mx-auto text-muted-foreground"/><p className="font-semibold">دوره مالی تعریف نشده است</p><p className="text-sm text-muted-foreground">ابتدا از بخش دوره‌های مالی، یک دوره برای این صرافی تعریف کنید.</p></CardContent></Card> : review && <>
+      <Card><CardContent className="p-4 space-y-2"><div className="flex justify-between items-center"><h3 className="font-semibold">{selectedPeriod.period_name}</h3><span className={`text-xs rounded-full px-2 py-1 ${selectedPeriod.status === 'closed' ? 'bg-muted text-muted-foreground' : 'bg-amber-100 text-amber-800'}`}>{selectedPeriod.status === 'closed' ? 'دوره بسته' : 'دوره باز'}</span></div><p className="text-xs text-muted-foreground">{selectedPeriod.period_code} · {selectedPeriod.start_date} تا {selectedPeriod.end_date}</p>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          <div className="rounded-lg bg-muted/50 p-3"><p className="text-xs text-muted-foreground">کل اسناد</p><p className="text-xl font-bold">{review.documents.length}</p></div>
+          <div className="rounded-lg bg-muted/50 p-3"><p className="text-xs text-muted-foreground">اسناد فعال</p><p className="text-xl font-bold">{review.activeDocuments}</p></div>
+          <div className="rounded-lg bg-muted/50 p-3"><p className="text-xs text-muted-foreground">ردیف‌های دفترکل</p><p className="text-xl font-bold">{review.ledgerLines}</p></div>
+          <div className="rounded-lg bg-muted/50 p-3"><p className="text-xs text-muted-foreground">اسناد بدون ردیف فعال</p><p className="text-xl font-bold">{review.missingLedger.length}</p></div>
+        </div>
+      </Card>
+      <Card><CardContent className="p-4 space-y-3">
+        <h3 className="font-semibold text-sm">موارد نیازمند بازبینی</h3>
+        <div className="flex flex-wrap gap-2 text-xs"><span className="rounded-md bg-muted px-2 py-1">حذف‌شده: {review.deletedDocuments}</span><span className="rounded-md bg-muted px-2 py-1">معکوس‌شده: {review.reversedDocuments}</span></div>
+        {review.missingLedger.length === 0 ? <p className="text-sm text-muted-foreground">برای اسناد فعال این دوره، موردی بدون ردیف فعال دفترکل پیدا نشد.</p> : <div className="space-y-2">{review.missingLedger.slice(0, 50).map(doc => <div key={doc.id} className="rounded-lg border p-3 text-sm"><div className="flex justify-between gap-2"><span className="font-medium">{doc.doc_number || ('سند ' + doc.id)}</span><span className="text-xs text-muted-foreground">{doc.created_at ? new Date(doc.created_at).toLocaleDateString('fa-IR') : '—'}</span></div><p className="text-xs text-muted-foreground mt-1">{doc.description || doc.doc_type || 'بدون شرح'}</p></div>)}{review.missingLedger.length > 50 && <p className="text-xs text-muted-foreground">۵۰ مورد نخست از {review.missingLedger.length} مورد نمایش داده شده است.</p>}</div>}
+      </CardContent></Card>
+      <div className="rounded-lg border p-3 text-xs text-muted-foreground">این صفحه فقط‌خواندنی است. نبود ردیف دفترکل به‌تنهایی اثبات خطای حسابداری نیست؛ نوع سند باید بررسی شود. کنترل تراز بدهکار و بستانکار، کنترل ثبت‌های معوق و قفل‌کردن ثبت در دوره بسته باید در سمت سرور و در یک عملیات اتمیک تکمیل شود؛ بنابراین از این صفحه هیچ دوره‌ای بسته نمی‌شود و هیچ سند یا مانده‌ای تغییر نمی‌کند.</div>
+    </>}
+  </div>;
+}
+
 export default function EnterpriseModulePage() {
   const { moduleKey='' } = useParams();
   const key=String(moduleKey).replace(/-/g,'_');
@@ -608,6 +697,7 @@ export default function EnterpriseModulePage() {
   if(key==='fx_exposure') return <><PageHeader title="موقعیت و ریسک ارزی" icon={ListTree}/><FxExposureReport/></>;
   if(key==='accounts_receivable') return <><PageHeader title="مانده حساب مشتریان" icon={ListTree}/><CustomerBalancesReport/></>;
   if(key==='fiscal_periods') return <><PageHeader title="دوره‌های مالی" icon={CalendarDays}/><FiscalPeriodsManager/></>;
+  if(key==='period_close') return <><PageHeader title="بستن دوره مالی" icon={CalendarDays}/><PeriodCloseReadiness/></>;
   if(key==='cost_centers') return <><PageHeader title="مراکز هزینه و سود" icon={GitBranch}/><CostCentersManager/></>;
   if(key==='document_center') return <><PageHeader title="مرکز اسناد" icon={ListTree}/><DocumentCenter/></>;
   if(key==='treasury') return <><PageHeader title="خزانه‌داری و نقدینگی" icon={ListTree}/><TreasuryOverview/></>;
