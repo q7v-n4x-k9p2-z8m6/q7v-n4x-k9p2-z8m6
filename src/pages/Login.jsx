@@ -8,7 +8,7 @@ import GoogleIcon from '@/components/GoogleIcon';
 import SarraafLogo from '@/components/SarraafLogo';
 import { ArrowLeft, Lock, Loader2, UserCircle, Store, Bot } from 'lucide-react';
 import { useAuth } from '@/lib/AuthContext';
-import { HOME_BY_ROLE } from '@/lib/rbac';
+import { HOME_BY_ROLE, normalizeRole } from '@/lib/rbac';
 import { directLogin, checkLegacyUser } from '@/lib/directAuth';
 import { login as localLogin } from '@/lib/localAuth';
 import { tryMigrateLocalUser } from '@/lib/legacyMigration';
@@ -509,10 +509,15 @@ export default function Login() {
       if (result.user && result.user.role !== 'creator') {
         localStorage.setItem('auth_user', JSON.stringify(result.user));
       }
-      const userRole = result.user?.role;
+      // Normalize the backend role before validating the selected login tab
+      // and before choosing the post-login destination.
+      const finalRole = normalizeRole(result.user?.role);
+      const normalizedUser = result.user ? { ...result.user, role: finalRole } : result.user;
+      if (normalizedUser && normalizedUser.role !== 'creator') {
+        localStorage.setItem('auth_user', JSON.stringify(normalizedUser));
+      }
       // legacy_login does not return is_default_password, so the typed password is checked too.
-      syncDefaultPasswordAlert(password, userRole, result.is_default_password === true);
-      const finalRole = result.user?.role;
+      syncDefaultPasswordAlert(password, finalRole, result.is_default_password === true);
       if (tab === 'customer' && finalRole !== 'customer') {
         localStorage.removeItem('auth_token');
         localStorage.removeItem('auth_user');
@@ -527,7 +532,7 @@ export default function Login() {
         setLoading(false);
         return;
       }
-      window.location.replace(HOME_BY_ROLE[result.user.role] || '/');
+      window.location.replace(HOME_BY_ROLE[finalRole] || '/');
     } catch (err) {
       setError(err.message || 'خطا در ورود');
     } finally {
