@@ -114,7 +114,7 @@ const Receipt = lazyWithRetry(() => import('@/pages/Receipt'));
 const PageNotFound = lazyWithRetry(() => import('@/lib/PageNotFound'));
 const SetupDatabase = lazyWithRetry(() => import('@/pages/SetupDatabase'));
 // Layout
-const Layout = lazyWithRetry(() => import('@/components/sarraaf/Layout'));
+const Layout = lazyWithRetry(() => import('@/components/sarraaf/Version21Layout'));
 
 // ── Page loader fallback ──
 function PageLoader() {
@@ -234,6 +234,7 @@ const AppRoutes = () => {
         {/* Sarraaf Panel — gated by auth + role */}
         <Route element={<ProtectedRoute unauthenticatedElement={<Navigate to="/login" replace />} allowedRoles={['creator', 'admin', 'sarraaf', 'employee']} />}>
           <Route element={<Layout />}>
+            <Route path="/v21" element={<Navigate to="/dashboard" replace />} />
             <Route path="/dashboard" element={<FeatureGate featureKey="dashboard"><Dashboard /></FeatureGate>} />
             <Route path="/customers" element={<FeatureGate featureKey="customers"><Customers /></FeatureGate>} />
             <Route path="/customers/:id" element={<FeatureGate featureKey="customers"><CustomerDetail /></FeatureGate>} />
