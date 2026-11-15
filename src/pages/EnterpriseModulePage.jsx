@@ -770,6 +770,58 @@ function InternalControlsReview() {
   </div>;
 }
 
+
+function AccountsPayableReadiness() {
+  const exchangeCode = getExchangeCode();
+  const query = useQuery({
+    queryKey: ['accountsPayableReadiness', exchangeCode],
+    enabled: !!exchangeCode,
+    queryFn: async () => {
+      const [accounts, entries, documents] = await Promise.all([
+        fetchAllTenantRows('chart_of_accounts', 'id,account_code,account_name,account_type,is_active,exchange_code', exchangeCode),
+        fetchAllTenantRows('ledger_entries', 'id,account_type,account_id,document_id,debit,credit,currency,deleted,exchange_code', exchangeCode),
+        fetchAllTenantRows('documents', 'id,doc_number,doc_type,related_type,related_id,related_name,amount,currency,created_at,deleted,reversed,exchange_code', exchangeCode),
+      ]);
+      const liabilities = accounts.filter(a => a.account_type === 'liability' && a.is_active !== false);
+      const activeEntries = entries.filter(e => e.deleted !== true);
+      const supplierEntries = activeEntries.filter(e => ['supplier','vendor','payable'].includes(String(e.account_type || '').toLowerCase()));
+      const supplierDocuments = documents.filter(d => d.deleted !== true && d.reversed !== true &&
+        ['supplier','vendor'].includes(String(d.related_type || '').toLowerCase()));
+      return { liabilities, activeEntries, supplierEntries, supplierDocuments };
+    },
+    staleTime: 30000,
+  });
+
+  if (!exchangeCode) return <Card><CardContent className="p-5 text-sm text-muted-foreground">برای بررسی حساب‌های پرداختنی، ابتدا با حساب همان صرافی وارد شوید.</CardContent></Card>;
+
+  return <div className="space-y-4">
+    <Card><CardContent className="p-4 space-y-2">
+      <div className="flex items-center justify-between gap-2">
+        <div><h2 className="font-semibold">آمادگی حساب‌های پرداختنی</h2><p className="text-xs text-muted-foreground">بررسی اتصال تأمین‌کنندگان، اسناد بدهی و دفترکل؛ بدون ثبت یا تغییر داده</p></div>
+        <Button size="sm" variant="outline" onClick={() => query.refetch()} disabled={query.isFetching}><RefreshCw className="w-4 h-4"/>بروزرسانی</Button>
+      </div>
+      {query.isLoading ? <LoadingState/> : query.isError ? <p className="text-sm text-destructive">{query.error?.message || 'بررسی ساختار ناموفق بود'}</p> : <>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+          <div className="rounded-lg bg-muted/50 p-3"><p className="text-xs text-muted-foreground">حساب‌های بدهی فعال</p><p className="text-xl font-bold">{query.data.liabilities.length}</p></div>
+          <div className="rounded-lg bg-muted/50 p-3"><p className="text-xs text-muted-foreground">ردیف دفترکل فعال</p><p className="text-xl font-bold">{query.data.activeEntries.length}</p></div>
+          <div className="rounded-lg bg-muted/50 p-3"><p className="text-xs text-muted-foreground">اسناد مرتبط با تأمین‌کننده</p><p className="text-xl font-bold">{query.data.supplierDocuments.length}</p></div>
+        </div>
+        <div className="rounded-lg border p-3 space-y-2">
+          <div className="flex items-center gap-2 text-sm font-semibold"><AlertTriangle className="w-4 h-4 text-amber-600"/>گردش پرداختنی هنوز عملیاتی نیست</div>
+          <p className="text-sm text-muted-foreground">در ساختار فعلی، حساب‌های بدهی در کدینگ قابل تعریف‌اند؛ اما موجودیت مستقل تأمین‌کننده، فاکتور خرید/بدهی، سررسید و تسویهٔ قابل ردیابی به‌صورت یک گردش‌کار کامل به هم متصل نشده‌اند.</p>
+          <ul className="list-disc pr-5 space-y-1 text-xs text-muted-foreground">
+            <li>ردیف‌های دفترکل با نوع تأمین‌کننده/فروشنده: {query.data.supplierEntries.length}</li>
+            <li>اسناد مرتبط با تأمین‌کننده: {query.data.supplierDocuments.length}</li>
+            <li>تعداد حساب‌های بدهی صرفاً وجود کدینگ را نشان می‌دهد و به‌تنهایی ماندهٔ قابل پرداخت را اثبات نمی‌کند.</li>
+          </ul>
+        </div>
+        {query.data.liabilities.length > 0 && <div className="rounded-lg border p-3 space-y-2"><h3 className="text-sm font-semibold">حساب‌های بدهی تعریف‌شده</h3>{query.data.liabilities.map(a => <div key={a.id} className="flex justify-between gap-3 border-b last:border-0 py-2 text-sm"><span>{a.account_name}</span><span className="font-mono text-muted-foreground">{a.account_code}</span></div>)}</div>}
+      </>}
+    </CardContent></Card>
+    <div className="rounded-lg border p-3 text-xs text-muted-foreground">این صفحه فقط وضعیت آمادگی ساختار را گزارش می‌کند. تا زمان طراحی و اعمال امن جداول تأمین‌کنندگان، اسناد پرداختنی، تسویه‌ها، کنترل مانده و اتصال اتمیک به دفترکل، هیچ بدهی یا پرداختی ثبت یا محاسبهٔ قطعی نمی‌شود.</div>
+  </div>;
+}
+
 export default function EnterpriseModulePage() {
   const { moduleKey='' } = useParams();
   const key=String(moduleKey).replace(/-/g,'_');
@@ -781,6 +833,7 @@ export default function EnterpriseModulePage() {
   if(key==='cash_flow') return <><PageHeader title="گردش وجوه نقد" icon={ListTree}/><CashFlowReport/></>;
   if(key==='fx_exposure') return <><PageHeader title="موقعیت و ریسک ارزی" icon={ListTree}/><FxExposureReport/></>;
   if(key==='accounts_receivable') return <><PageHeader title="مانده حساب مشتریان" icon={ListTree}/><CustomerBalancesReport/></>;
+  if(key==='accounts_payable') return <><PageHeader title="حساب‌های پرداختنی" icon={ListTree}/><AccountsPayableReadiness/></>;
   if(key==='fiscal_periods') return <><PageHeader title="دوره‌های مالی" icon={CalendarDays}/><FiscalPeriodsManager/></>;
   if(key==='period_close') return <><PageHeader title="بستن دوره مالی" icon={CalendarDays}/><PeriodCloseReadiness/></>;
   if(key==='internal_controls') return <><PageHeader title="کنترل‌های داخلی" icon={ShieldCheck}/><InternalControlsReview/></>;
