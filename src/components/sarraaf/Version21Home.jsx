@@ -161,7 +161,7 @@ export default function Version21Home() {
           <div className="border border-white/30 bg-white/10 px-3 py-2 text-xs">حساب فعال: {name}</div>
         </header>
 
-        <div className="space-y-2 border-b border-[#b7c5cf] bg-[#e7eef3] p-3">
+        <div className="hidden lg:block sticky top-0 z-20 space-y-2 border-b border-[#b7c5cf] bg-[#e7eef3] p-3 shadow-sm">
           <div className="flex flex-wrap items-center gap-1.5">
             <span className="ml-2 text-xs font-bold text-[#24496d]">عملیات:</span>
             {OPERATION_TOOLS.map(item => <ToolButton key={item.label} item={item} />)}
@@ -172,12 +172,34 @@ export default function Version21Home() {
           </div>
           <div className="flex flex-wrap items-center gap-1.5">
             <span className="ml-2 text-xs font-bold text-[#24496d]">دسترسی سریع حسابداری:</span>
-            {ACCOUNTING_SHORTCUTS.map(item => {
+            {ACCOUNTING_SHORTCUTS.filter(item => item.roles.includes(role)).map(item => {
               const Icon = item.icon;
               return item.pending
                 ? <span key={item.label} className="inline-flex min-h-8 items-center gap-1.5 border border-dashed border-[#bdc8cf] bg-[#f2f4f5] px-2.5 text-[11px] text-[#657785]" title="در حال اتصال"><Icon className="h-3.5 w-3.5" />{item.label}</span>
                 : <Link key={item.label} to={item.path} className="inline-flex min-h-8 items-center gap-1.5 border border-[#b7c8d4] bg-white px-2.5 text-[11px] font-semibold text-[#294b65] hover:border-[#5b87a4]"><Icon className="h-3.5 w-3.5" />{item.label}</Link>;
             })}
+          </div>
+        </div>
+
+        <div className="space-y-3 border-b border-[#b7c5cf] bg-[#e7eef3] p-3 lg:hidden">
+          <div className="grid grid-cols-3 gap-2">
+            {OPERATION_TOOLS.map(item => <ToolButton key={item.label} item={item} />)}
+          </div>
+          <label className="flex min-h-11 items-center gap-2 border border-[#b7c8d4] bg-white px-3 text-[#526779]">
+            <Search className="h-4 w-4 shrink-0" />
+            <input value={search} onChange={event => setSearch(event.target.value)} placeholder="جستجوی بخش‌ها..." className="w-full bg-transparent text-sm outline-none" />
+          </label>
+          <div>
+            <h2 className="mb-2 text-xs font-bold text-[#24496d]">دسترسی سریع حسابداری</h2>
+            <div className="grid grid-cols-2 gap-2">
+              {ACCOUNTING_SHORTCUTS.filter(item => item.roles.includes(role)).map(item => {
+                const Icon = item.icon;
+                const content = <><Icon className="h-4 w-4" /><span>{item.label}</span></>;
+                return item.pending
+                  ? <div key={item.label} className="flex min-h-11 items-center justify-center gap-2 border border-dashed border-[#bdc8cf] bg-[#f2f4f5] px-2 text-center text-xs text-[#657785]">{content}</div>
+                  : <Link key={item.label} to={item.path} className="flex min-h-11 items-center justify-center gap-2 border border-[#b7c8d4] bg-white px-2 text-center text-xs font-semibold text-[#294b65]">{content}</Link>;
+              })}
+            </div>
           </div>
         </div>
 
