@@ -232,8 +232,8 @@ export default function CreatorPreviewLab(){
   const currencies=[...new Set([customer.currency||'AFN',...tx.map(t=>t.currency)])];
   return currencies.map(currency=>{
    const opening=customer.currency===currency?n(customer.opening):0;
-   const debit=opening+tx.filter(t=>t.currency===currency&&n(t.amount)<0).reduce((sum,t)=>sum+Math.abs(n(t.amount)),0);
-   const credit=tx.filter(t=>t.currency===currency&&n(t.amount)>0).reduce((sum,t)=>sum+n(t.amount),0);
+   const debit=Math.max(opening,0)+tx.filter(t=>t.currency===currency&&n(t.amount)<0).reduce((sum,t)=>sum+Math.abs(n(t.amount)),0);
+   const credit=Math.max(-opening,0)+tx.filter(t=>t.currency===currency&&n(t.amount)>0).reduce((sum,t)=>sum+n(t.amount),0);
    const net=debit-credit;
    return {currency,debit,credit,net,status:net>0?'بدهکار':net<0?'بستانکار':'تسویه'};
   });
@@ -249,7 +249,7 @@ export default function CreatorPreviewLab(){
   if(!customerDetail)return [];
   const tx=data.transactions.filter(t=>t.partyType==='customer'&&t.party===customerDetail.name);
   const totals={};
-  if(customerDetail.opening){const c=customerDetail.currency||'AFN';totals[c]={debit:n(customerDetail.opening),credit:0};}
+  if(customerDetail.opening){const c=customerDetail.currency||'AFN';totals[c]={debit:Math.max(n(customerDetail.opening),0),credit:Math.max(-n(customerDetail.opening),0)};}
   tx.forEach(t=>{const c=t.currency||'AFN';totals[c]??={debit:0,credit:0};if(n(t.amount)<0)totals[c].debit+=Math.abs(n(t.amount));else totals[c].credit+=n(t.amount);});
   return Object.entries(totals).map(([currency,x])=>({currency,...x,net:x.debit-x.credit}));
  };
