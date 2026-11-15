@@ -1046,9 +1046,9 @@ export default function EnterpriseModulePage() {
   if(key==='audit_log') return <><PageHeader title="ردپای حسابرسی" icon={ListTree}/><AuditLogViewer/></>;
   if(key==='cash_flow') return <><PageHeader title="گردش وجوه نقد" icon={ListTree}/><CashFlowReport/></>;
   if(key==='fx_exposure') return <><PageHeader title="موقعیت و ریسک ارزی" icon={ListTree}/><FxExposureReport/></>;
-  if(key==='accounts_receivable') return <><PageHeader title="مانده حساب مشتریان" icon={ListTree}/><CustomerBalancesReport/></>;
+  if(key==='accounts_receivable') return <><PageHeader title="مانده حساب مشتریان و آمادگی دریافتنی" icon={ListTree}/><CustomerBalancesReport/><AccountsReceivableReadiness/></>;
   if(key==='accounts_payable') return <><PageHeader title="حساب‌های پرداختنی" icon={ListTree}/><AccountsPayableReadiness/></>;
-  if(key==='accounts_receivable') return <><PageHeader title="حساب‌های دریافتنی" icon={ListTree}/><AccountsReceivableReadiness/></>;
+
   if(key==='fixed_assets') return <><PageHeader title="دارایی‌های ثابت" icon={ListTree}/><FixedAssetsReadiness/></>;
   if(key==='fiscal_periods') return <><PageHeader title="دوره‌های مالی" icon={CalendarDays}/><FiscalPeriodsManager/></>;
   if(key==='period_close') return <><PageHeader title="بستن دوره مالی" icon={CalendarDays}/><PeriodCloseReadiness/></>;
