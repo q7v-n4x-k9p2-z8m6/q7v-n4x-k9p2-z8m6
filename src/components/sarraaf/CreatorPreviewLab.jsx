@@ -291,7 +291,7 @@ export default function CreatorPreviewLab(){
     totals[currency].credit+=Math.max(-n(account.opening),0)+tx.filter(t=>n(t.amount)<0).reduce((s,t)=>s+Math.abs(n(t.amount)),0);
    });
   } else if(active==='banks'){
-   accountsLoop: for(const account of selectedRows){const currency=account.currency||'AFN';totals[currency]??={debit:0,credit:0};totals[currency].debit+=Math.max(n(account.opening),0);}
+   for(const account of selectedRows){const currency=account.currency||'AFN';totals[currency]??={debit:0,credit:0};totals[currency].debit+=Math.max(n(account.opening),0);const related=data.journal.filter(j=>(j.debitAccount||'').includes(account.name)||(j.creditAccount||'').includes(account.name));totals[currency].debit+=related.filter(j=>(j.debitAccount||'').includes(account.name)).reduce((s,j)=>s+n(j.amount),0);totals[currency].credit+=related.filter(j=>(j.creditAccount||'').includes(account.name)).reduce((s,j)=>s+n(j.amount),0);}
   } else if(active==='journal'||active==='ledger'){
    selectedRows.filter(x=>x.status==='قطعی'||!x.status).forEach(row=>{const currency=row.currency||'AFN';totals[currency]??={debit:0,credit:0};totals[currency].debit+=n(row.amount);totals[currency].credit+=n(row.amount);});
   }
@@ -342,7 +342,7 @@ export default function CreatorPreviewLab(){
  const currencies=[...new Set([...data.cash.map(x=>x.currency),...data.transactions.map(x=>x.currency),'AFN'])];
  const mainTitle='سیستم حسابداری صراف — الگوی آزمایشگاهی الهام‌گرفته از آریانا'; return <div dir="rtl" className="space-y-2 text-[#253746]">
   <div className="flex flex-wrap items-center justify-between gap-2 border border-slate-400 bg-[#eaf0f5] px-3 py-2"><b className="flex items-center gap-2 text-xs text-[#24496d]"><Calculator className="h-4 w-4"/> آزمایشگاه حسابداری صراف — نسخه مرورگری</b><span className="text-[10px] font-bold text-emerald-800">محلی و مستقل · بدون اتصال به سرور یا دیتابیس</span></div>
-  <section className="overflow-hidden border border-[#65798b] bg-[#eef1f4] shadow-md">
+  <section className="flex max-h-[78vh] min-h-[640px] flex-col overflow-hidden border border-[#65798b] bg-[#eef1f4] shadow-md">
    <header className="flex min-h-9 items-center justify-between bg-gradient-to-b from-[#315f80] to-[#173f5d] px-3 py-1.5 text-white"><div className="flex items-center gap-2"><Calculator className="h-4 w-4"/><b className="text-xs">{mainTitle}</b><span className="hidden text-[10px] text-blue-100 sm:inline">— محیط آزمایشی مستقل</span></div><div className="flex gap-1"><button onClick={()=>setModal('settings')} className="border border-white/30 px-2 text-xs">⚙</button><button onClick={()=>setActive('home')} className="border border-white/30 px-2 text-xs">⌂</button></div></header>
    <nav className="flex flex-wrap items-center border-b border-slate-400 bg-gradient-to-b from-[#fdfefe] to-[#dce4ea]">{NAV_MENUS.map(m=><div key={m.label} className="relative"><button onClick={()=>setMenu(menu===m.label?'':m.label)} className={'px-3 py-2 text-[11px] hover:bg-white '+(menu===m.label?'bg-white font-bold text-blue-800':'')}>{m.label}<ChevronDown className="mr-1 inline h-3 w-3"/></button>{menu===m.label&&<div className="absolute right-0 top-full z-40 min-w-48 border border-slate-400 bg-white py-1 shadow-xl">{m.items.map(([label,act])=><button key={act} onClick={()=>menuAction(act)} className="block w-full px-3 py-2 text-right text-[11px] hover:bg-blue-50">{label}</button>)}</div>}</div>)}</nav>
    {/* ردیف اول: عملیات روی رکورد انتخاب‌شده */}
