@@ -674,7 +674,7 @@ function PeriodCloseReadiness() {
           <div className="rounded-lg bg-muted/50 p-3"><p className="text-xs text-muted-foreground">ردیف‌های دفترکل</p><p className="text-xl font-bold">{review.ledgerLines}</p></div>
           <div className="rounded-lg bg-muted/50 p-3"><p className="text-xs text-muted-foreground">اسناد بدون ردیف فعال</p><p className="text-xl font-bold">{review.missingLedger.length}</p></div>
         </div>
-      </Card>
+      </CardContent></Card>
       <Card><CardContent className="p-4 space-y-3">
         <h3 className="font-semibold text-sm">موارد نیازمند بازبینی</h3>
         <div className="flex flex-wrap gap-2 text-xs"><span className="rounded-md bg-muted px-2 py-1">حذف‌شده: {review.deletedDocuments}</span><span className="rounded-md bg-muted px-2 py-1">معکوس‌شده: {review.reversedDocuments}</span></div>
