@@ -71,10 +71,12 @@ export default function Customers() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      const payload = { ...form };
+      if (payload.identity_status === 'verified') payload.identity_verified_at = new Date().toISOString();
       if (editId) {
-        await updateMut.mutateAsync({ id: editId, data: form });
+        await updateMut.mutateAsync({ id: editId, data: payload });
       } else {
-        await createMut.mutateAsync(form);
+        await createMut.mutateAsync(payload);
       }
       setDialogOpen(false);
     } catch (err) {
@@ -167,6 +169,9 @@ export default function Customers() {
                           {typeLabels[c.customer_type] || c.customer_type}
                         </span>
                       )}
+                      <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-md ${c.identity_status === 'verified' ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'}`}>
+                        {c.identity_status === 'verified' ? 'شناسایی تأییدشده' : 'شناسایی بررسی‌نشده'}
+                      </span>
                     </div>
                     <div className="flex items-center gap-2 text-xs text-muted-foreground">
                       {c.phone ? (
