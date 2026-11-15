@@ -771,6 +771,66 @@ function InternalControlsReview() {
 }
 
 
+function DataGovernanceReadiness() {
+  const exchangeCode = getExchangeCode();
+  const query = useQuery({
+    queryKey: ['dataGovernanceReadiness', exchangeCode],
+    enabled: !!exchangeCode,
+    queryFn: async () => {
+      const [logs, documents, entries] = await Promise.all([
+        fetchAllTenantRows('audit_logs', 'id,action,entity_type,created_at,status,exchange_code', exchangeCode),
+        fetchAllTenantRows('documents', 'id,deleted,reversed,exchange_code', exchangeCode),
+        fetchAllTenantRows('ledger_entries', 'id,deleted,exchange_code', exchangeCode),
+      ]);
+      const recentCutoff = Date.now() - 30 * 24 * 60 * 60 * 1000;
+      const recentLogs = logs.filter(row => row.created_at && new Date(row.created_at).getTime() >= recentCutoff);
+      const actionCounts = new Map();
+      for (const row of logs) {
+        const action = String(row.action || 'نامشخص');
+        actionCounts.set(action, (actionCounts.get(action) || 0) + 1);
+      }
+      const statusCounts = new Map();
+      for (const row of logs) {
+        const status = String(row.status || 'ثبت‌نشده');
+        statusCounts.set(status, (statusCounts.get(status) || 0) + 1);
+      }
+      return {
+        logs, recentLogs, documents, entries,
+        actionCounts: [...actionCounts.entries()].sort((a,b) => b[1]-a[1]).slice(0,8),
+        statusCounts: [...statusCounts.entries()].sort((a,b) => b[1]-a[1]).slice(0,6),
+        activeDocuments: documents.filter(row => row.deleted !== true && row.reversed !== true).length,
+        activeEntries: entries.filter(row => row.deleted !== true).length,
+      };
+    },
+    staleTime: 30000,
+  });
+  if (!exchangeCode) return <Card><CardContent className="p-5 text-sm text-muted-foreground">برای بررسی حاکمیت داده، ابتدا با حساب همان صرافی وارد شوید.</CardContent></Card>;
+  const data = query.data;
+  return <div className="space-y-4">
+    <Card><CardContent className="p-4 space-y-3">
+      <div className="flex items-center justify-between gap-2"><div><h2 className="font-semibold">مرور حاکمیت داده و ردپای تغییرات</h2><p className="text-xs text-muted-foreground">نمایش فقط‌خواندنی پوشش ثبت رویدادها در محدوده صرافی جاری</p></div><Button size="sm" variant="outline" onClick={() => query.refetch()} disabled={query.isFetching}><RefreshCw className="w-4 h-4"/>بروزرسانی</Button></div>
+      {query.isLoading ? <LoadingState/> : query.isError ? <div className="space-y-2"><p className="text-sm text-destructive">{query.error?.message || 'دریافت اطلاعات ناموفق بود'}</p><Button size="sm" onClick={() => query.refetch()}>تلاش دوباره</Button></div> : <>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          <div className="rounded-lg bg-muted/50 p-3"><p className="text-xs text-muted-foreground">کل رویدادهای ثبت‌شده</p><p className="text-xl font-bold">{data.logs.length}</p></div>
+          <div className="rounded-lg bg-muted/50 p-3"><p className="text-xs text-muted-foreground">رویدادهای ۳۰ روز اخیر</p><p className="text-xl font-bold">{data.recentLogs.length}</p></div>
+          <div className="rounded-lg bg-muted/50 p-3"><p className="text-xs text-muted-foreground">اسناد فعال</p><p className="text-xl font-bold">{data.activeDocuments}</p></div>
+          <div className="rounded-lg bg-muted/50 p-3"><p className="text-xs text-muted-foreground">ردیف‌های فعال دفترکل</p><p className="text-xl font-bold">{data.activeEntries}</p></div>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="rounded-lg border p-3 space-y-2"><h3 className="text-sm font-semibold">پراکندگی نوع رویداد</h3>{data.actionCounts.length ? data.actionCounts.map(([name,count])=><div key={name} className="flex justify-between gap-3 border-b last:border-0 py-1.5 text-xs"><span>{name}</span><strong>{count}</strong></div>) : <p className="text-xs text-muted-foreground">رویدادی برای نمایش وجود ندارد.</p>}</div>
+          <div className="rounded-lg border p-3 space-y-2"><h3 className="text-sm font-semibold">وضعیت رویدادها</h3>{data.statusCounts.length ? data.statusCounts.map(([name,count])=><div key={name} className="flex justify-between gap-3 border-b last:border-0 py-1.5 text-xs"><span>{name}</span><strong>{count}</strong></div>) : <p className="text-xs text-muted-foreground">وضعیتی برای نمایش وجود ندارد.</p>}</div>
+        </div>
+      </>}
+    </CardContent></Card>
+    <div className="rounded-lg border p-3 space-y-2 text-xs text-muted-foreground">
+      <div className="flex items-center gap-2 text-sm font-semibold text-foreground"><ShieldCheck className="w-4 h-4"/>محدودیت‌های این بررسی</div>
+      <p>وجود رکورد در audit_logs اثبات نمی‌کند که همه عملیات حساس ثبت شده‌اند یا دسترسی‌ها به‌درستی محدودند. این صفحه فقط داده‌های موجود را می‌شمارد و نمایش می‌دهد؛ هیچ داده‌ای تغییر نمی‌کند.</p>
+      <p>طبقه‌بندی اطلاعات، دوره نگهداری، درخواست حذف/دسترسی، ممیزی دسترسی به داده‌های حساس، پوشش کامل ثبت رویدادها و آزمون سیاست‌های RLS هنوز باید جداگانه بررسی و پیاده‌سازی شوند.</p>
+    </div>
+  </div>;
+}
+
+
 function AccountsPayableReadiness() {
   const exchangeCode = getExchangeCode();
   const query = useQuery({
@@ -870,6 +930,7 @@ export default function EnterpriseModulePage() {
   if(key==='fiscal_periods') return <><PageHeader title="دوره‌های مالی" icon={CalendarDays}/><FiscalPeriodsManager/></>;
   if(key==='period_close') return <><PageHeader title="بستن دوره مالی" icon={CalendarDays}/><PeriodCloseReadiness/></>;
   if(key==='internal_controls') return <><PageHeader title="کنترل‌های داخلی" icon={ShieldCheck}/><InternalControlsReview/></>;
+  if(key==='data_governance') return <><PageHeader title="حاکمیت داده و حریم خصوصی" icon={ShieldCheck}/><DataGovernanceReadiness/></>;
   if(key==='cost_centers') return <><PageHeader title="مراکز هزینه و سود" icon={GitBranch}/><CostCentersManager/></>;
   if(key==='document_center') return <><PageHeader title="مرکز اسناد" icon={ListTree}/><DocumentCenter/></>;
   if(key==='treasury') return <><PageHeader title="خزانه‌داری و نقدینگی" icon={ListTree}/><TreasuryOverview/></>;
