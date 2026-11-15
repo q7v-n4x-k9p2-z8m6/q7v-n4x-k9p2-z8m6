@@ -56,6 +56,23 @@ const QUICK_PROMPTS = [
   'این آیکون یا دکمه چه کاری انجام می‌دهد؟',
 ];
 
+
+const CUSTOMER_GUIDE_GROUPS = [
+  { title: 'حساب و خدمات مشتری', items: [
+    { id: 'wallet', title: 'کیف پول و موجودی', subtitle: 'آشنایی با نمایش موجودی', icon: Wallet, prompt: 'کیف پول مشتری چه کاربردی دارد و اطلاعات آن را چگونه بخوانم؟' },
+    { id: 'orders', title: 'سفارش‌ها', subtitle: 'پیگیری درخواست‌ها و سفارش‌ها', icon: ClipboardList, prompt: 'وضعیت سفارش‌های خود را از کجا پیگیری کنم؟' },
+    { id: 'notebook', title: 'دفترچه شخصی', subtitle: 'ثبت یادداشت درآمد و هزینه شخصی', icon: BookOpen, prompt: 'دفترچه شخصی درآمد و هزینه چه کاربردی دارد؟' },
+    { id: 'services', title: 'خدمات', subtitle: 'آشنایی با خدمات قابل درخواست', icon: Smartphone, prompt: 'چطور درخواست یک خدمت را ثبت و وضعیت آن را پیگیری کنم؟' },
+    { id: 'support', title: 'پشتیبانی', subtitle: 'دریافت راهنمایی', icon: Headphones, prompt: 'چطور برای مشکل حساب مشتری درخواست پشتیبانی بفرستم؟' },
+  ] },
+];
+const CUSTOMER_QUICK_PROMPTS = [
+  'موجودی کیف پولم را از کجا ببینم؟',
+  'چطور وضعیت سفارش خود را پیگیری کنم؟',
+  'دفترچه شخصی چه کاربردی دارد؟',
+  'چطور با پشتیبانی تماس بگیرم؟',
+];
+
 const PUBLIC_GUIDE_GROUPS = [{
   title: 'شروع امن و آسان',
   items: [
@@ -134,9 +151,10 @@ const GUIDE_DETAILS = {
 
 export default function Assistant({ embedded = false, onClose }) {
   const { user } = useAuth();
-  const isPublicVisitor = !user || !['sarraaf', 'employee', 'exchange'].includes(user.role);
-  const visibleGuideGroups = isPublicVisitor ? PUBLIC_GUIDE_GROUPS : GUIDE_GROUPS;
-  const visibleQuickPrompts = isPublicVisitor ? PUBLIC_QUICK_PROMPTS : QUICK_PROMPTS;
+  const isPublicVisitor = !user;
+  const isCustomer = user?.role === 'customer';
+  const visibleGuideGroups = isPublicVisitor ? PUBLIC_GUIDE_GROUPS : isCustomer ? CUSTOMER_GUIDE_GROUPS : GUIDE_GROUPS;
+  const visibleQuickPrompts = isPublicVisitor ? PUBLIC_QUICK_PROMPTS : isCustomer ? CUSTOMER_QUICK_PROMPTS : QUICK_PROMPTS;
   // Conversations are intentionally session-only: no chat transcript is persisted.
   const historyScope = user?.id ? `user:${user.id}:${user.role || 'unknown'}` : 'guest';
   const [messages, setMessages] = useState([]);
@@ -280,7 +298,7 @@ export default function Assistant({ embedded = false, onClose }) {
   };
 
   const selectedGuide = activeGuide ? GUIDE_DETAILS[activeGuide] : null;
-  const displayRole = user?.role === 'customer' ? 'راهنمای مشتری' : user ? 'راهنمای تخصصی پنل' : 'راهنمای ورود و ثبت‌نام';
+  const displayRole = isPublicVisitor ? 'راهنمای ورود و ثبت‌نام' : isCustomer ? 'راهنمای مشتری' : 'راهنمای تخصصی صراف';
 
   return (
     <main dir="rtl" lang="fa" className={`mx-auto flex w-full flex-col ${embedded ? 'h-full' : 'min-h-screen max-w-6xl px-3 py-4 sm:px-5 sm:py-6'}`} style={{ fontFamily: 'Tahoma, Arial, sans-serif' }}>
