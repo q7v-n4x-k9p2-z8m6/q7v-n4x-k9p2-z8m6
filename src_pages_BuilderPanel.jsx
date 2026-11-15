@@ -9,7 +9,7 @@ import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
   Shield, Users, CreditCard, Lock, Bell, MessageSquare,
-  Server, Wallet, Crown, Upload, LogOut, Download, AlertTriangle, UserCog, Clock, Eye, Mail, Smartphone, Gamepad2, Zap, Globe, Store, FlaskConical, Database, Bot
+  Server, Wallet, Crown, Upload, LogOut, Download, AlertTriangle, UserCog, Clock, Eye, Mail, Smartphone, Monitor, Gamepad2, Zap, Globe, Store, FlaskConical, Database, Bot
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -38,6 +38,7 @@ import LegacyDataMigrator from '@/components/sarraaf/LegacyDataMigrator';
 import AccountRecoveryManager from '@/components/sarraaf/AccountRecoveryManager';
 import TrialManager from '@/components/sarraaf/TrialManager';
 import MobileLayoutPreview from '@/components/sarraaf/MobileLayoutPreview';
+import ComputerLayoutPreview from '@/components/sarraaf/ComputerLayoutPreview';
 import { lazy } from 'react';
 const Assistant = lazy(() => import('@/pages/Assistant'));
 import UCManager from '@/components/sarraaf/UCManager';
@@ -168,10 +169,16 @@ const TAB_GROUPS = [
     description: 'مدیریت دوره آزمایشی صرافان',
   },
   {
-    label: 'چیدمان موبایل',
+    label: 'نسخه جدید چیدمان موبایل',
     icon: Smartphone,
     value: 'layout_preview',
-    description: 'پیش‌نمایش چیدمان موبایل',
+    description: 'پیش‌نمایش نسخه جدید چیدمان موبایل',
+  },
+  {
+    label: 'نسخه جدید چیدمان کامپیوتر',
+    icon: Monitor,
+    value: 'computer_layout_preview',
+    description: 'پیش‌نمایش نسخه جدید چیدمان کامپیوتر',
   },
   {
     label: 'هوش مثنوی',
@@ -481,6 +488,11 @@ export default function BuilderPanel() {
         {/* پیش‌نمایش چیدمان موبایل */}
         <TabsContent value="layout_preview">
           <MobileLayoutPreview />
+        </TabsContent>
+
+        {/* نسخه جدید چیدمان کامپیوتر — پیش‌نمایش مستقل از داده‌های مالی زنده */}
+        <TabsContent value="computer_layout_preview">
+          <ComputerLayoutPreview />
         </TabsContent>
 
         {/* هوش مثنوی — دستیار هوشمند آزمایشی */}
