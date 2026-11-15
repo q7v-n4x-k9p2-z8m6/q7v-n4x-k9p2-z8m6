@@ -44,7 +44,6 @@ export default function CustomerDetail() {
     setForm({
       name: customer.name || '', phone: customer.phone || '', code: customer.code || '',
       customer_type: customer.customer_type || 'permanent', status: customer.status || 'active',
-      tazkira_id: customer.tazkira_id || '', identity_status: customer.identity_status || 'not_verified',
       notes: customer.notes || '',
     });
     setEditOpen(true);
@@ -52,9 +51,7 @@ export default function CustomerDetail() {
 
   const handleEdit = async (e) => {
     e.preventDefault();
-    const payload = { ...form };
-    if (payload.identity_status === 'verified') payload.identity_verified_at = new Date().toISOString();
-    await updateMut.mutateAsync({ id: customer.id, data: payload });
+    await updateMut.mutateAsync({ id: customer.id, data: form });
     setEditOpen(false);
   };
 
@@ -75,7 +72,6 @@ export default function CustomerDetail() {
         {customer.phone && <span className="px-2 py-1 rounded-lg bg-muted text-xs">{customer.phone}</span>}
         {customer.customer_type && <span className="px-2 py-1 rounded-lg bg-muted text-xs">{CUSTOMER_TYPE_LABELS[customer.customer_type]}</span>}
         <StatusBadge status={customer.status} labels={{ active: 'فعال', inactive: 'غیرفعال' }} />
-        <span className={`px-2 py-1 rounded-lg text-xs ${customer.identity_status === 'verified' ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'}`}>{customer.identity_status === 'verified' ? 'اطلاعات شناسایی تأییدشده' : 'اطلاعات شناسایی بررسی‌نشده'}</span>
       </div>
 
       {/* Balances */}
@@ -123,18 +119,6 @@ export default function CustomerDetail() {
           <form onSubmit={handleEdit} className="space-y-3">
             <div><Label>نام</Label><Input value={form.name || ''} onChange={e => setForm({...form, name: e.target.value})} required /></div>
             <div><Label>موبایل</Label><Input value={form.phone || ''} onChange={e => setForm({...form, phone: e.target.value})} /></div>
-            <div><Label>شماره شناسایی (اختیاری)</Label><Input value={form.tazkira_id || ''} onChange={e => setForm({...form, tazkira_id: e.target.value})} /></div>
-            <div>
-              <Label>وضعیت بررسی اطلاعات</Label>
-              <Select value={form.identity_status || 'not_verified'} onValueChange={v => setForm({...form, identity_status: v})}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="not_verified">بررسی‌نشده</SelectItem>
-                  <SelectItem value="verified">اطلاعات بررسی و تأیید شد</SelectItem>
-                </SelectContent>
-              </Select>
-              <p className="text-xs text-muted-foreground mt-1">فقط ثبت وضعیت شناسایی مشتری در سوابق حسابداری است.</p>
-            </div>
             <div><Label>کد</Label><Input value={form.code || ''} onChange={e => setForm({...form, code: e.target.value})} /></div>
             <div className="grid grid-cols-2 gap-2">
               <div>
