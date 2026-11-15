@@ -278,7 +278,8 @@ export default function CreatorPreviewLab(){
  };
  const branchDetailTotals=()=>branchDetail?branchSummary(branchDetail):[];
  const accountBookTotals=()=>{
-  const selectedRows=selected?[selected]:rows;
+  const allRows=active==='cash'?data.cash:active==='banks'?data.banks:(active==='journal'||active==='ledger')?data.journal:rows;
+  const selectedRows=selected?[selected]:allRows;
   if(active==='customerLedger')return customerDetail?customerDetailTotals():customerListTotals().map(x=>({...x,net:x.debit-x.credit}));
   if(active==='branchLedger')return branchDetail?branchDetailTotals():branchListTotals();
   const totals={};
