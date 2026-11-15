@@ -3,9 +3,9 @@ import { Card, CardContent } from '@/components/ui/card';
 import {
   Home, Users, Wallet, BookOpen, BookText, Landmark, Building2, Send,
   BarChart3, Receipt, ScrollText, ClipboardList, ListChecks, Coins,
-  FileSpreadsheet, Scale, ArrowLeftRight, ChevronDown, ChevronRight,
+  FileSpreadsheet, Scale, ArrowLeftRight, ChevronDown, ChevronLeft,
   Folder, Settings, Archive, Upload, Printer, RotateCcw, CircleHelp,
-  ArrowDownCircle, ArrowUpCircle, FileText, Search
+  ArrowDownCircle, ArrowUpCircle
 } from 'lucide-react';
 
 // این فهرست از همان ماژول‌ها و آیکون‌های موجود در آزمایشگاه لپ‌تاپ استفاده می‌کند.
@@ -75,7 +75,7 @@ function MenuItem({ item, active, onClick }) {
 }
 
 function ChevronLeftIcon() {
-  return <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />;
+  return <ChevronLeft className="h-4 w-4 shrink-0 text-muted-foreground" />;
 }
 
 export default function MobileLayoutPreview() {
