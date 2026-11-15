@@ -165,6 +165,7 @@ export default function CreatorPreviewLab(){
  const [showHelp,setShowHelp]=useState(false);
  const [showWorkspace,setShowWorkspace]=useState(false);
  const [customerDetail,setCustomerDetail]=useState(null);
+ const [branchDetail,setBranchDetail]=useState(null);
  useEffect(()=>{try{localStorage.setItem(STORE_KEY,JSON.stringify(data));}catch{setNotice('فضای ذخیره‌سازی مرورگر در دسترس نیست؛ داده‌ها فقط تا زمان بازبودن صفحه باقی می‌مانند.');}},[data]);
  const notify=s=>{setNotice(s);setTimeout(()=>setNotice(''),4500);};
  const page=MODULES.find(x=>x.id===active)||MODULES[0];
@@ -172,12 +173,12 @@ export default function CreatorPreviewLab(){
  const rows=useMemo(()=>{
   let source=data[active]||[];
   if(active==='customerLedger') source=customerDetail?data.transactions.filter(x=>x.partyType==='customer'&&x.party===customerDetail.name):data.customers;
-  if(active==='branchLedger') source=data.transactions.filter(x=>x.partyType==='branch');
+  if(active==='branchLedger') source=branchDetail?data.transactions.filter(x=>x.partyType==='branch'&&x.party===branchDetail.name):data.branches;
   if(active==='ledger') source=data.journal;
   if(active==='reports') source=data.transactions;
   const q=query.trim().toLowerCase();
   return source.filter(r=>(!q||Object.values(r).join(' ').toLowerCase().includes(q))&&(filterCurrency==='همه'||!r.currency||r.currency===filterCurrency)&&(!dateFrom||!r.date||r.date>=dateFrom)&&(!dateTo||!r.date||r.date<=dateTo));
- },[data,active,customerDetail,query,filterCurrency,dateFrom,dateTo]);
+ },[data,active,customerDetail,branchDetail,query,filterCurrency,dateFrom,dateTo]);
  const setField=(k,v)=>setDraft(d=>({...d,[k]:v}));
  const openNew=(module=active,extra={})=>{const sc=SCHEMAS[module];const defaults=Object.fromEntries((sc?.fields||[]).map(([k,,type,opts])=>[k,type==='date'?today():type==='select'?(opts?.[0]??''): '']));setActive(module);setDraft({...defaults,date:today(),currency:'AFN',...extra});setSelected(null);setModal(module);};
  const saveRecord=()=>{
@@ -205,13 +206,21 @@ export default function CreatorPreviewLab(){
  };
  const addTransaction=tx=>setData(d=>({...d,transactions:[{id:uid(),date:today(),...tx},...d.transactions]}));
  const removeSelected=()=>{
-  if(!selected){notify('ابتدا یک ردیف را انتخاب کنید.');return;}
+  const master=active==='customerLedger'?customerDetail:active==='branchLedger'?branchDetail:null;
+  if(!selected&&!master){notify('ابتدا یک ردیف را انتخاب کنید.');return;}
   if(active==='reports'){notify('گزارش فقط نمایشی است؛ رکورد را از بخش عملیات اصلی حذف کنید.');return;}
   if(!window.confirm('این ردیف فقط از اطلاعات آزمایشی همین مرورگر حذف شود؟'))return;
+  if(master){const key=active==='customerLedger'?'customers':'branches';setData(d=>({...d,[key]:(d[key]||[]).filter(x=>x.id!==master.id)}));if(active==='customerLedger')setCustomerDetail(null);else setBranchDetail(null);setSelected(null);notify('حساب آزمایشی حذف شد.');return;}
   const key=active==='customerLedger'||active==='branchLedger'?'transactions':active==='ledger'?'journal':active;
   setData(d=>({...d,[key]:(d[key]||[]).filter(x=>x.id!==selected.id)}));setSelected(null);notify('ردیف آزمایشی حذف شد.');
  };
- const editSelected=()=>{if(!selected){notify('ابتدا یک ردیف را انتخاب کنید.');return;}if(!SCHEMAS[active]){notify('ویرایش مستقیم این گزارش ممکن نیست؛ رکورد اصلی را از بخش مربوط باز کنید.');return;}setDraft({...selected});setModal(active);};
+ const editSelected=()=>{
+  const master=active==='customerLedger'?customerDetail:active==='branchLedger'?branchDetail:null;
+  if(master){const mod=active==='customerLedger'?'customers':'branches';setDraft({...master});setModal(mod);return;}
+  if(!selected){notify('ابتدا یک ردیف را انتخاب کنید.');return;}
+  if(!SCHEMAS[active]){notify('ویرایش مستقیم این گزارش ممکن نیست؛ رکورد اصلی را از بخش مربوط باز کنید.');return;}
+  setDraft({...selected});setModal(active);
+ };
  const cashAction=kind=>{const first=data.cash.find(x=>x.currency==='AFN')||data.cash[0];setDraft({date:today(),kind,amount:'',currency:first?.currency||'AFN',cash:first?.name||'',party:'',partyType:'customer',description:''});setModal('cashAction');};
  const saveCashAction=()=>{
   const amount=n(draft.amount);if(amount<=0){notify('مبلغ باید بیشتر از صفر باشد.');return;}
@@ -253,6 +262,42 @@ export default function CreatorPreviewLab(){
   tx.forEach(t=>{const c=t.currency||'AFN';totals[c]??={debit:0,credit:0};if(n(t.amount)<0)totals[c].debit+=Math.abs(n(t.amount));else totals[c].credit+=n(t.amount);});
   return Object.entries(totals).map(([currency,x])=>({currency,...x,net:x.debit-x.credit}));
  };
+ const branchSummary=(branch)=>{
+  const tx=data.transactions.filter(t=>t.partyType==='branch'&&t.party===branch.name);
+  const currencies=[...new Set([branch.currency||'AFN',...tx.map(t=>t.currency||'AFN')])];
+  return currencies.map(currency=>{
+   const opening=branch.currency===currency?n(branch.opening):0;
+   const debit=Math.max(opening,0)+tx.filter(t=>(t.currency||'AFN')===currency&&n(t.amount)<0).reduce((s,t)=>s+Math.abs(n(t.amount)),0);
+   const credit=Math.max(-opening,0)+tx.filter(t=>(t.currency||'AFN')===currency&&n(t.amount)>0).reduce((s,t)=>s+n(t.amount),0);
+   return {currency,debit,credit,net:debit-credit};
+  });
+ };
+ const branchListTotals=()=>{
+  const totals={};data.branches.forEach(branch=>branchSummary(branch).forEach(x=>{totals[x.currency]??={debit:0,credit:0};totals[x.currency].debit+=x.debit;totals[x.currency].credit+=x.credit;}));
+  return Object.entries(totals).map(([currency,x])=>({currency,...x,net:x.debit-x.credit}));
+ };
+ const branchDetailTotals=()=>branchDetail?branchSummary(branchDetail):[];
+ const accountBookTotals=()=>{
+  const selectedRows=selected?[selected]:rows;
+  if(active==='customerLedger')return customerDetail?customerDetailTotals():customerListTotals().map(x=>({...x,net:x.debit-x.credit}));
+  if(active==='branchLedger')return branchDetail?branchDetailTotals():branchListTotals();
+  const totals={};
+  if(active==='cash'){
+   const accounts=selectedRows;
+   accounts.forEach(account=>{
+    const currency=account.currency||'AFN';totals[currency]??={debit:0,credit:0};
+    const tx=data.transactions.filter(t=>t.cash===account.name&&t.currency===currency);
+    totals[currency].debit+=Math.max(n(account.opening),0)+tx.filter(t=>n(t.amount)>0).reduce((s,t)=>s+n(t.amount),0);
+    totals[currency].credit+=Math.max(-n(account.opening),0)+tx.filter(t=>n(t.amount)<0).reduce((s,t)=>s+Math.abs(n(t.amount)),0);
+   });
+  } else if(active==='banks'){
+   accountsLoop: for(const account of selectedRows){const currency=account.currency||'AFN';totals[currency]??={debit:0,credit:0};totals[currency].debit+=Math.max(n(account.opening),0);}
+  } else if(active==='journal'||active==='ledger'){
+   selectedRows.filter(x=>x.status==='قطعی'||!x.status).forEach(row=>{const currency=row.currency||'AFN';totals[currency]??={debit:0,credit:0};totals[currency].debit+=n(row.amount);totals[currency].credit+=n(row.amount);});
+  }
+  return Object.entries(totals).map(([currency,x])=>({currency,...x,net:x.debit-x.credit}));
+ };
+ const showBookSummary=['customerLedger','branchLedger','cash','banks','journal','ledger'].includes(active);
  const columnsFor=(mod,arr)=>{
   if(mod==='customerLedger'&&!customerDetail)return [
    {key:'code',label:'کد مشتری'},{key:'name',label:'نام مشتری'},{key:'currency',label:'ارز اصلی'},
@@ -260,6 +305,15 @@ export default function CreatorPreviewLab(){
    {key:'phone',label:'شماره تماس'},{key:'status',label:'وضعیت مشتری'}
   ];
   if(mod==='customerLedger'&&customerDetail)return [
+   {key:'date',label:'تاریخ'},{key:'type',label:'نوع عملیات'},{key:'description',label:'شرح'},
+   {key:'debit',label:'بدهکار',render:r=>fmt(n(r.amount)<0?Math.abs(n(r.amount)):0)},
+   {key:'credit',label:'بستانکار',render:r=>fmt(n(r.amount)>0?n(r.amount):0)},{key:'currency',label:'ارز'}
+  ];
+  if(mod==='branchLedger'&&!branchDetail)return [
+   {key:'code',label:'کد نمایندگی'},{key:'name',label:'نام نمایندگی'},{key:'city',label:'موقعیت'},{key:'currency',label:'ارز اصلی'},
+   {key:'opening',label:'مانده افتتاحیه',render:r=>fmt(r.opening)},{key:'status',label:'وضعیت'}
+  ];
+  if(mod==='branchLedger'&&branchDetail)return [
    {key:'date',label:'تاریخ'},{key:'type',label:'نوع عملیات'},{key:'description',label:'شرح'},
    {key:'debit',label:'بدهکار',render:r=>fmt(n(r.amount)<0?Math.abs(n(r.amount)):0)},
    {key:'credit',label:'بستانکار',render:r=>fmt(n(r.amount)>0?n(r.amount):0)},{key:'currency',label:'ارز'}
@@ -292,16 +346,12 @@ export default function CreatorPreviewLab(){
    <header className="flex min-h-9 items-center justify-between bg-gradient-to-b from-[#315f80] to-[#173f5d] px-3 py-1.5 text-white"><div className="flex items-center gap-2"><Calculator className="h-4 w-4"/><b className="text-xs">{mainTitle}</b><span className="hidden text-[10px] text-blue-100 sm:inline">— محیط آزمایشی مستقل</span></div><div className="flex gap-1"><button onClick={()=>setModal('settings')} className="border border-white/30 px-2 text-xs">⚙</button><button onClick={()=>setActive('home')} className="border border-white/30 px-2 text-xs">⌂</button></div></header>
    <nav className="flex flex-wrap items-center border-b border-slate-400 bg-gradient-to-b from-[#fdfefe] to-[#dce4ea]">{NAV_MENUS.map(m=><div key={m.label} className="relative"><button onClick={()=>setMenu(menu===m.label?'':m.label)} className={'px-3 py-2 text-[11px] hover:bg-white '+(menu===m.label?'bg-white font-bold text-blue-800':'')}>{m.label}<ChevronDown className="mr-1 inline h-3 w-3"/></button>{menu===m.label&&<div className="absolute right-0 top-full z-40 min-w-48 border border-slate-400 bg-white py-1 shadow-xl">{m.items.map(([label,act])=><button key={act} onClick={()=>menuAction(act)} className="block w-full px-3 py-2 text-right text-[11px] hover:bg-blue-50">{label}</button>)}</div>}</div>)}</nav>
    {/* ردیف اول: عملیات روی رکورد انتخاب‌شده */}
-   <div className="flex flex-wrap items-center border-b border-slate-400 bg-[#edf1f4]">
-    {[[Plus,'جدید',()=>SCHEMAS[active]?openNew():notify('برای ثبت جدید، یکی از بخش‌های عملیاتی را انتخاب کنید.')],[Pencil,'ویرایش',editSelected],[Trash2,'حذف',removeSelected],[RefreshCw,'تازه‌سازی',()=>{setQuery('');setFilterCurrency('همه');setSelected(null);notify('فهرست تازه شد.')}],[Search,'جستجو',()=>document.getElementById('lab-search')?.focus()],[Printer,'چاپ',printPage],[Download,'خروجی CSV',exportCsv],[Archive,'پشتیبان',backup]].map(([I,l,fn])=><button key={l} onClick={fn} className="flex min-w-[76px] flex-row items-center justify-center gap-2 border-l border-slate-300 px-3 py-2 text-[10px] hover:bg-white"><I className="h-4 w-4 text-[#315d7d]"/>{l}</button>)}
-    <span className="mr-auto flex items-center gap-1 px-3 text-[10px] text-slate-500"><Lock className="h-3 w-3"/> فقط مرورگر</span>
-   </div>
-   <div className="flex min-h-[610px] flex-col">
-    <aside className="grid w-full grid-cols-6 gap-1 border-b border-slate-400 bg-[#e1e8ed] p-2 md:grid-cols-12">
-      {['customerLedger','customers','branches','branchLedger','banks','remittance','cash','exchange','expenses','journal','ledger'].map(id=>{const m=MODULES.find(x=>x.id===id);if(!m)return null;const I=m.icon;return <button key={m.id} title={m.label} onClick={()=>{setActive(m.id);setSelected(null);setCustomerDetail(null);setQuery('');}} className={'flex min-w-0 flex-col items-center justify-center gap-1 rounded-sm border px-1 py-1.5 text-center '+(active===m.id?'border-blue-300 bg-[#d2e3f1] font-bold text-blue-900':'border-transparent text-[#29465e] hover:border-slate-300 hover:bg-white')}><I className="h-4 w-4"/><span className="w-full truncate text-[9px]">{m.label}</span></button>})}
+   <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+    <aside className="shrink-0 grid w-full grid-cols-6 gap-1 border-b border-slate-400 bg-[#e1e8ed] p-2 md:grid-cols-12">
+      {['customerLedger','customers','branches','branchLedger','banks','remittance','cash','exchange','expenses','journal','ledger'].map(id=>{const m=MODULES.find(x=>x.id===id);if(!m)return null;const I=m.icon;return <button key={m.id} title={m.label} onClick={()=>{setActive(m.id);setSelected(null);setCustomerDetail(null);setBranchDetail(null);setQuery('');}} className={'flex min-w-0 flex-col items-center justify-center gap-1 rounded-sm border px-1 py-1.5 text-center '+(active===m.id?'border-blue-300 bg-[#d2e3f1] font-bold text-blue-900':'border-transparent text-[#29465e] hover:border-slate-300 hover:bg-white')}><I className="h-4 w-4"/><span className="w-full truncate text-[9px]">{m.label}</span></button>})}
       <button onClick={()=>setShowWorkspace(true)} className="flex min-w-0 flex-col items-center justify-center gap-1 rounded-sm border border-[#9aabb9] bg-white px-1 py-1.5 text-center text-[#24496d] hover:bg-blue-50"><Home className="h-4 w-4"/><span className="w-full truncate text-[9px] font-bold">میزکار</span></button>
      </aside>
-    <main className="min-w-0 flex-1 bg-[#f9fafb] p-3">
+    <main className="min-h-0 min-w-0 flex-1 overflow-y-auto bg-[#f9fafb] p-3">
      {active==='home'?<>
       <div className="mb-3 flex flex-wrap items-center justify-between border-b-2 border-[#315e80] pb-2">
        <div><div className="text-[9px] text-slate-500">سیستم حسابداری صراف / میز کار</div><h2 className="text-sm font-bold text-[#24496d]">مرکز عملیات صرافی</h2><p className="mt-1 text-[10px] text-slate-500">دسترسی مستقیم به دفاتر، صندوق‌ها، حواله‌ها و معاملات</p></div>
@@ -321,7 +371,7 @@ export default function CreatorPreviewLab(){
         {title:'حسابداری و گزارشات',ids:['journal','ledger','accounts','currencies','reports','profit','balance']}
        ].map(group=><section key={group.title} className="border border-[#9aabb9] bg-[#e8eef3] p-2 shadow-sm">
         <div className="mb-2 flex items-center justify-between border-b border-[#b7c5d0] pb-1"><b className="text-[11px] text-[#294d69]">\${group.title}</b><span className="text-[9px] text-slate-500">فهرست امکانات</span></div>
-        <div className="flex flex-wrap items-stretch gap-2">{group.ids.map(id=>{const m=MODULES.find(x=>x.id===id);return m?<div key={m.id} className="min-w-[112px] flex-1 basis-[112px]"><Tile icon={m.icon} label={m.label} onClick={()=>{setActive(m.id);setSelected(null);setQuery('');}}/></div>:null;})}</div>
+        <div className="flex flex-wrap items-stretch gap-2">{group.ids.map(id=>{const m=MODULES.find(x=>x.id===id);return m?<div key={m.id} className="min-w-[112px] flex-1 basis-[112px]"><Tile icon={m.icon} label={m.label} onClick={()=>{setActive(m.id);setSelected(null);setCustomerDetail(null);setBranchDetail(null);setQuery('');}}/></div>:null;})}</div>
        </section>)}
       </div>
       <div className="mt-3 border border-[#9aabb9] bg-white p-2">
@@ -335,21 +385,24 @@ export default function CreatorPreviewLab(){
        </div>
       </div>
      </>:<>
-      <div className="mb-3 flex flex-wrap items-center justify-between gap-2 border-b-2 border-[#315e80] pb-2"><div className="flex items-center gap-2"><page.icon className="h-5 w-5 text-[#315e80]"/><div><div className="text-[9px] text-slate-500">سیستم حسابداری / {page.label}</div><h2 className="text-sm font-bold text-[#24496d]">{page.label}</h2></div>{active==='customerLedger'&&customerDetail&&<button onClick={()=>{setCustomerDetail(null);setSelected(null);}} className="mr-2 border bg-white px-2 py-1 text-[10px]">بازگشت به فهرست مشتریان</button>}</div><div className="flex flex-wrap gap-1 text-[10px]"><label>از <input type="date" value={dateFrom} onChange={e=>setDateFrom(e.target.value)} className="border bg-white px-1 py-1"/></label><label>تا <input type="date" value={dateTo} onChange={e=>setDateTo(e.target.value)} className="border bg-white px-1 py-1"/></label><button onClick={()=>{setDateFrom('');setDateTo('');}} className="border bg-white px-2">پاک‌سازی تاریخ</button></div></div>
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-2 border-b-2 border-[#315e80] pb-2"><div className="flex items-center gap-2"><page.icon className="h-5 w-5 text-[#315e80]"/><div><div className="text-[9px] text-slate-500">سیستم حسابداری / {page.label}</div><h2 className="text-sm font-bold text-[#24496d]">{page.label}</h2></div>{active==='customerLedger'&&customerDetail&&<button onClick={()=>{setCustomerDetail(null);setSelected(null);}} className="mr-2 border bg-white px-2 py-1 text-[10px]">بازگشت به فهرست مشتریان</button>}{active==='branchLedger'&&branchDetail&&<button onClick={()=>{setBranchDetail(null);setSelected(null);}} className="mr-2 border bg-white px-2 py-1 text-[10px]">بازگشت به فهرست نمایندگی‌ها</button>}</div><div className="flex flex-wrap gap-1 text-[10px]"><label>از <input type="date" value={dateFrom} onChange={e=>setDateFrom(e.target.value)} className="border bg-white px-1 py-1"/></label><label>تا <input type="date" value={dateTo} onChange={e=>setDateTo(e.target.value)} className="border bg-white px-1 py-1"/></label><button onClick={()=>{setDateFrom('');setDateTo('');}} className="border bg-white px-2">پاک‌سازی تاریخ</button></div></div>
       {active==='cash'&&<div className="mb-3 flex flex-wrap items-center justify-between gap-2 border border-[#b6c4cf] bg-[#edf3f7] px-3 py-2"><div><b className="text-[11px] text-[#24496d]">فهرست صندوق‌ها</b><div className="mt-1 text-[10px] text-slate-600">هر صندوق در یک ردیف؛ برای دیدن جزئیات، ردیف را انتخاب کنید.</div></div><div className="flex items-center gap-3 text-[10px]"><span>تعداد صندوق‌ها: <b>{fmt(data.cash.length)}</b></span><button onClick={()=>openNew('cash')} className="border border-blue-300 bg-white px-3 py-2 font-bold text-blue-900"><Plus className="ml-1 inline h-3 w-3"/>صندوق جدید</button></div></div>}
       {active==='profit'&&<div className="mb-3 grid gap-2 sm:grid-cols-3">{CURRENCIES.slice(0,4).map(c=><div key={c} className="border bg-emerald-50 p-3"><span className="text-[10px]">گردش خالص {c}</span><b className="block text-lg">{fmt(totalByCurrency(c))}</b></div>)}</div>}
       {active==='balance'&&<div className="mb-3 overflow-auto border bg-white"><table className="w-full text-xs"><thead className="bg-slate-200"><tr><th className="p-2 text-right">ارز</th><th>مانده صندوق</th><th>گردش خالص</th></tr></thead><tbody>{currencies.map(c=><tr key={c} className="border-t"><td className="p-2">{c}</td><td className="text-center">{fmt(data.cash.filter(x=>x.currency===c).reduce((s,x)=>s+balanceFor(c,x.name),0))}</td><td className="text-center">{fmt(totalByCurrency(c))}</td></tr>)}</tbody></table></div>}
       {active==='exchange'&&<div className="mb-2 flex gap-2"><button onClick={()=>openNew('exchange',{kind:'خرید'})} className="border bg-white px-3 py-2 text-[10px]">خرید اسعار</button><button onClick={()=>openNew('exchange',{kind:'فروش'})} className="border bg-white px-3 py-2 text-[10px]">فروش اسعار</button><button onClick={()=>openNew('exchange',{kind:'تبدیل'})} className="border bg-white px-3 py-2 text-[10px]">تبدیل ارز</button></div>}
       {active==='remittance'&&<div className="mb-2 flex gap-2"><button onClick={()=>openNew('remittance',{direction:'ارسالی'})} className="border bg-white px-3 py-2 text-[10px]">حواله ارسالی</button><button onClick={()=>openNew('remittance',{direction:'دریافتی'})} className="border bg-white px-3 py-2 text-[10px]">حواله دریافتی</button><button onClick={()=>openNew('remittance',{direction:'نامعلوم'})} className="border bg-white px-3 py-2 text-[10px]">حواله نامعلوم</button></div>}
       <div className="mb-2 flex flex-wrap items-center justify-between gap-2"><div className="flex items-center gap-2 text-[10px]"><b>فهرست {page.label}</b><span className="text-slate-500">تعداد: {fmt(rows.length)}</span></div><div className="flex flex-wrap gap-1"><input id="lab-search" value={query} onChange={e=>setQuery(e.target.value)} placeholder="جستجو..." className="h-8 w-36 border bg-white px-2 text-[10px]"/><select value={filterCurrency} onChange={e=>setFilterCurrency(e.target.value)} className="h-8 border bg-white px-2 text-[10px]"><option>همه</option>{CURRENCIES.map(c=><option key={c}>{c}</option>)}</select><button onClick={()=>{setQuery('');setFilterCurrency('همه');}} className="border bg-white px-2 text-[10px]"><Filter className="inline h-3 w-3"/> پاک</button></div></div>
-      <DataTable columns={active==='reports'?columnsFor('transactions'):active==='ledger'?columnsFor('journal'):active==='branchLedger'?columnsFor('transactions'):columnsFor(active)} rows={rows} selected={selected} onSelect={r=>{if(active==='customerLedger'&&!customerDetail){setCustomerDetail(r);setSelected(null);}else setSelected(r);}}/>
-      {active==='customerLedger'&&<div className="mt-2 grid gap-2 border border-[#9aabb9] bg-[#e9edf1] p-2 sm:grid-cols-2 lg:grid-cols-3">{(customerDetail?customerDetailTotals():customerListTotals()).map(x=><div key={x.currency} className="border border-slate-300 bg-white p-2"><div className="mb-1 text-[10px] font-bold text-[#294d69]">جمع {x.currency} {customerDetail?'این مشتری':'تمام مشتریان'}</div><div className="flex flex-wrap justify-between gap-2 text-[10px]"><span className="font-bold text-rose-800">بدهکار: {fmt(x.debit)}</span><span className="font-bold text-emerald-800">بستانکار: {fmt(x.credit)}</span>{customerDetail&&<span className="font-bold text-slate-700">مانده: {fmt(Math.abs(x.net))} {x.net>0?'بدهکار':x.net<0?'بستانکار':'تسویه'}</span>}</div></div>)}</div>}
-       <div className="mt-2 flex flex-wrap items-center justify-between gap-2 border bg-[#e9edf1] px-3 py-2 text-[10px]"><span>ردیف انتخاب‌شده: {selected?.id||'هیچ‌کدام'} · ذخیره‌سازی: محلی</span><div className="flex gap-1"><button onClick={editSelected} className="border bg-white px-2 py-1">ویرایش</button><button onClick={removeSelected} className="border bg-white px-2 py-1">حذف</button><button onClick={exportCsv} className="border bg-white px-2 py-1">CSV</button><button onClick={printPage} className="border bg-white px-2 py-1">چاپ</button></div></div>
+      <div className="mb-2 flex flex-wrap gap-1 border border-slate-300 bg-white p-1.5 text-[10px]">{[[RefreshCw,'تازه‌سازی',()=>{setQuery('');setFilterCurrency('همه');setSelected(null);notify('فهرست تازه شد.')}],[Search,'تمرکز جستجو',()=>document.getElementById('lab-search')?.focus()],[Download,'خروجی CSV',exportCsv],[Archive,'پشتیبان',backup]].map(([I,label,fn])=><button key={label} onClick={fn} className="flex items-center gap-1 border border-slate-200 bg-[#f8fafc] px-2 py-1.5 hover:bg-blue-50"><I className="h-3.5 w-3.5"/>{label}</button>)}</div>
+      <DataTable columns={active==='reports'?columnsFor('transactions'):active==='ledger'?columnsFor('journal'):columnsFor(active)} rows={rows} selected={selected} onSelect={r=>{if(active==='customerLedger'&&!customerDetail){setCustomerDetail(r);setSelected(null);}else if(active==='branchLedger'&&!branchDetail){setBranchDetail(r);setSelected(null);}else setSelected(r);}}/>
       {SCHEMAS[active]&&<button onClick={()=>openNew()} className="mt-2 border border-blue-300 bg-blue-50 px-3 py-2 text-xs font-bold text-blue-900"><Plus className="ml-1 inline h-4 w-4"/>ثبت {SCHEMAS[active].title} جدید</button>}
      </>}
     </main>
    </div>
-   <footer className="flex flex-wrap items-center justify-between gap-2 border-t border-slate-400 bg-[#dfe5ea] px-3 py-2 text-[9px] text-slate-600"><span>وضعیت: آماده</span><span>محیط: آزمایشگاه محلی مرورگر</span><span>دیتابیس: قطع</span><span>داده‌های نمونه و آزمایشی</span></footer>
+   {showBookSummary&&<div className="shrink-0 border-t border-slate-400 bg-[#e9edf1] p-2">
+    <div className="flex gap-2 overflow-x-auto pb-1">{accountBookTotals().map(x=><div key={x.currency} className="min-w-[250px] flex-1 border border-slate-300 bg-white p-2 text-right"><b className="mb-1 block text-[10px] text-[#294d69]" dir="ltr">{x.currency}</b><div className="grid grid-cols-3 gap-2"><div><span className="block text-[9px] text-slate-500">جمع کل بدهکار</span><b className="text-[11px]">{fmt(x.debit)}</b></div><div><span className="block text-[9px] text-slate-500">جمع کل بستانکار</span><b className="text-[11px]">{fmt(x.credit)}</b></div><div><span className="block text-[9px] text-slate-500">{x.net>0?'مانده بدهکار':x.net<0?'مانده بستانکار':'اختلاف مانده'}</span><b className="text-[11px]">{fmt(Math.abs(x.net))}</b></div></div></div>)}</div>
+   </div>}
+   <div className="shrink-0 flex items-center justify-between gap-2 border-t border-slate-400 bg-[#dfe5ea] px-3 py-2" aria-label="چهار عملیات ثابت دفتر"><div className="flex gap-2">{[[Plus,'ثبت',()=>{const mod=active==='customerLedger'?'customers':active==='branchLedger'?'branches':active==='ledger'?'journal':active;if(SCHEMAS[mod])openNew(mod);else notify('ثبت جدید برای این بخش در دسترس نیست.');}],[Pencil,'ویرایش',editSelected],[Trash2,'حذف',removeSelected],[Printer,'چاپ',printPage]].map(([I,label,fn])=><button key={label} onClick={fn} title={label} aria-label={label} className="flex min-w-[42px] items-center justify-center gap-1 border border-slate-400 bg-white px-2 py-2 text-[10px] hover:bg-blue-50"><I className="h-4 w-4 text-[#315d7d]"/><span>{label}</span></button>)}</div><span className="text-[9px] text-slate-500">عملیات آزمایشی محلی</span></div>
+   <footer className="shrink-0 flex flex-wrap items-center justify-between gap-2 border-t border-slate-400 bg-[#dfe5ea] px-3 py-2 text-[9px] text-slate-600"><span>وضعیت: آماده</span><span>محیط: آزمایشگاه محلی مرورگر</span><span>دیتابیس: قطع</span><span>داده‌های نمونه و آزمایشی</span></footer>
   </section>
   {showWorkspace&&<div className="fixed inset-0 z-[90] flex items-center justify-center bg-black/45 p-3"><div className="max-h-[85vh] w-full max-w-4xl overflow-auto border-2 border-slate-600 bg-[#f7f9fb] shadow-2xl"><div className="sticky top-0 flex items-center justify-between bg-gradient-to-b from-[#386b91] to-[#17466c] px-3 py-2 text-white"><b className="text-xs">میزکار · سایر امکانات برنامه</b><button onClick={()=>setShowWorkspace(false)}><X className="h-4 w-4"/></button></div><div className="grid grid-cols-2 gap-2 p-3 sm:grid-cols-3 lg:grid-cols-4">{MODULES.filter(m=>m.id!=='home'&&!['customerLedger','customers','branches','branchLedger','banks','remittance','cash','exchange','expenses','journal','ledger'].includes(m.id)).map(m=><Tile key={m.id} icon={m.icon} label={m.label} onClick={()=>{setActive(m.id);setSelected(null);setCustomerDetail(null);setQuery('');setShowWorkspace(false);}}/>)}</div></div></div>}
    {notice&&<div className="flex items-center gap-2 border border-blue-200 bg-blue-50 p-3 text-[11px] text-blue-900"><Check className="h-4 w-4"/>{notice}<button onClick={()=>setNotice('')} className="mr-auto"><X className="h-4 w-4"/></button></div>}
