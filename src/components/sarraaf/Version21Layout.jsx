@@ -3,54 +3,103 @@ import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import {
   Home, Users, Wallet, Landmark, ArrowLeftRight, Send, ScrollText,
   ClipboardList, Coins, FileSpreadsheet, BarChart3, Scale,
-  MessagesSquare, Bot, ShoppingBag, Headphones,
-  Construction, LogOut
+  MessagesSquare, Bot, ShoppingBag, Headphones, Construction, LogOut,
+  BookOpen, Building2, Receipt, Calculator, ArrowDownUp, Network,
+  Settings, FileSearch, CalendarDays, ShieldCheck, Files, ClipboardCheck,
+  Banknote, CircleDollarSign, FolderKanban, Handshake, Activity, Bell,
+  Database, BriefcaseBusiness, FileCheck, ChartNoAxesCombined, Landmark as TreasuryIcon
 } from 'lucide-react';
 import { useAuth } from '@/lib/AuthContext';
 
-// Production shell for version 21. All enabled items open existing, authenticated
-// A1 routes; this component contains no demo records, local database, or mock CRUD.
+// Version 21 production shell: one A1 data/authentication layer, responsive
+// navigation, and no demo records or local database.
 const MODULES = [
-  { id: 'home', label: 'میز کار', path: '/dashboard', icon: Home, group: 'عمومی', roles: ['creator', 'admin', 'sarraaf', 'employee'] },
-  { id: 'customers', label: 'تعریف مشتریان', path: '/customers', icon: Users, group: 'تعاریف و دفاتر', roles: ['creator', 'admin', 'sarraaf', 'employee'] },
-  { id: 'customerLedger', label: 'دفتر حساب مشتریان', pending: true, icon: ClipboardList, group: 'تعاریف و دفاتر', roles: ['creator', 'admin', 'sarraaf'] },
-  { id: 'branches', label: 'تعریف نمایندگی‌ها', pending: true, icon: Construction, group: 'تعاریف و دفاتر', roles: ['creator', 'admin', 'sarraaf'] },
-  { id: 'branchLedger', label: 'دفتر حساب نمایندگی‌ها', pending: true, icon: ClipboardList, group: 'تعاریف و دفاتر', roles: ['creator', 'admin', 'sarraaf'] },
-  { id: 'cash', label: 'صندوق‌ها و موجودی', path: '/cash', icon: Wallet, group: 'صندوق و بانک', roles: ['creator', 'admin', 'sarraaf', 'employee'] },
-  { id: 'banks', label: 'بانک و چک', path: '/bank', icon: Landmark, group: 'صندوق و بانک', roles: ['creator', 'admin', 'sarraaf'] },
-  { id: 'exchange', label: 'خرید و فروش اسعار', path: '/trade', icon: ArrowLeftRight, group: 'عملیات صرافی', roles: ['creator', 'admin', 'sarraaf', 'employee'] },
-  { id: 'remittance', label: 'دفتر حواله‌ها', path: '/transfers/send', icon: Send, group: 'عملیات صرافی', roles: ['creator', 'admin', 'sarraaf', 'employee'] },
-  { id: 'expenses', label: 'مصارف و پرداخت‌ها', pending: true, icon: Wallet, group: 'عملیات صرافی', roles: ['creator', 'admin', 'sarraaf'] },
-  { id: 'journal', label: 'دفتر روزنامچه', path: '/journal', icon: ScrollText, group: 'حسابداری', roles: ['creator', 'admin', 'sarraaf'] },
-  { id: 'ledger', label: 'دفتر کل', path: '/general-ledger', icon: ClipboardList, group: 'حسابداری', roles: ['creator', 'admin', 'sarraaf'] },
-  { id: 'accounts', label: 'کدینگ حساب‌ها', pending: true, icon: ClipboardList, group: 'حسابداری', roles: ['creator', 'admin', 'sarraaf'] },
-  { id: 'currencies', label: 'تعریف اسعار', path: '/currencies', icon: Coins, group: 'تنظیمات', roles: ['creator', 'admin', 'sarraaf'] },
-  { id: 'reports', label: 'گزارش عملیات', path: '/reports', icon: FileSpreadsheet, group: 'گزارشات', roles: ['creator', 'admin', 'sarraaf', 'employee'] },
-  { id: 'profit', label: 'مفاد و زیان', path: '/profit-loss', icon: BarChart3, group: 'گزارشات', roles: ['creator', 'admin', 'sarraaf'] },
-  { id: 'balance', label: 'بیلانس عمومی', path: '/balance-sheet', icon: Scale, group: 'گزارشات', roles: ['creator', 'admin', 'sarraaf'] },
-  { id: 'sarraafGroups', label: 'گروه و چت', path: '/chat', icon: MessagesSquare, group: 'امکانات تکمیلی', roles: ['creator', 'admin', 'sarraaf'] },
-  { id: 'assistant', label: 'هوش مصنوعی', path: '/assistant', icon: Bot, group: 'امکانات تکمیلی', roles: ['creator', 'admin', 'sarraaf', 'employee'] },
-  { id: 'products', label: 'محصولات آنلاین', path: '/online-products', icon: ShoppingBag, group: 'امکانات تکمیلی', roles: ['creator', 'admin', 'sarraaf'] },
+  { id: 'home', label: 'میز کار', path: '/dashboard', icon: Home, group: 'عمومی', roles: ['creator','admin','sarraaf','employee'] },
+
+  { id: 'customers', label: 'مشتریان', path: '/customers', icon: Users, group: 'طرف‌حساب‌ها و نمایندگی‌ها', roles: ['creator','admin','sarraaf','employee'] },
+  { id: 'customerLedger', label: 'دفتر حساب مشتریان', pending: true, icon: BookOpen, group: 'طرف‌حساب‌ها و نمایندگی‌ها', roles: ['creator','admin','sarraaf'] },
+  { id: 'agents', label: 'نمایندگی‌ها', path: '/agents', icon: Building2, group: 'طرف‌حساب‌ها و نمایندگی‌ها', roles: ['creator','admin','sarraaf'] },
+  { id: 'branchLedger', label: 'دفتر حساب نمایندگی‌ها', pending: true, icon: ClipboardList, group: 'طرف‌حساب‌ها و نمایندگی‌ها', roles: ['creator','admin','sarraaf'] },
+  { id: 'internalBranches', label: 'شعب داخلی', pending: true, icon: Construction, group: 'طرف‌حساب‌ها و نمایندگی‌ها', roles: ['creator','admin','sarraaf'] },
+
+  { id: 'cash', label: 'صندوق‌ها و موجودی', path: '/cash', icon: Wallet, group: 'صندوق، بانک و عملیات', roles: ['creator','admin','sarraaf','employee'] },
+  { id: 'banks', label: 'بانک و چک', path: '/bank', icon: Landmark, group: 'صندوق، بانک و عملیات', roles: ['creator','admin','sarraaf'] },
+  { id: 'dadogereft', label: 'داد و گرفت', path: '/dadogereft', icon: Handshake, group: 'صندوق، بانک و عملیات', roles: ['creator','admin','sarraaf','employee'] },
+  { id: 'trade', label: 'خرید و فروش اسعار', path: '/trade', icon: ArrowLeftRight, group: 'صندوق، بانک و عملیات', roles: ['creator','admin','sarraaf','employee'] },
+  { id: 'sendTransfer', label: 'حواله ارسالی', path: '/transfers/send', icon: Send, group: 'صندوق، بانک و عملیات', roles: ['creator','admin','sarraaf','employee'] },
+  { id: 'receiveTransfer', label: 'حواله دریافتی', path: '/transfers/receive', icon: ArrowDownUp, group: 'صندوق، بانک و عملیات', roles: ['creator','admin','sarraaf','employee'] },
+  { id: 'transferBook', label: 'دفتر حواله‌ها', path: '/transfer-book', icon: ScrollText, group: 'صندوق، بانک و عملیات', roles: ['creator','admin','sarraaf','employee'] },
+  { id: 'expenses', label: 'مصارف و پرداخت‌ها', pending: true, icon: Receipt, group: 'صندوق، بانک و عملیات', roles: ['creator','admin','sarraaf'] },
+  { id: 'convert', label: 'تبدیل اسعار', path: '/convert', icon: ArrowDownUp, group: 'صندوق، بانک و عملیات', roles: ['creator','admin','sarraaf','employee'] },
+  { id: 'treasury', label: 'خزانه‌داری', pending: true, icon: TreasuryIcon, group: 'صندوق، بانک و عملیات', roles: ['creator','admin','sarraaf'] },
+  { id: 'interexchange', label: 'حساب‌های بین‌صرافی', pending: true, icon: Network, group: 'صندوق، بانک و عملیات', roles: ['creator','admin','sarraaf'] },
+
+  { id: 'journal', label: 'دفتر روزنامچه', path: '/journal', icon: ScrollText, group: 'حسابداری و دفاتر', roles: ['creator','admin','sarraaf'] },
+  { id: 'journalEntry', label: 'ثبت سند حسابداری', path: '/journal-entry', icon: FileSpreadsheet, group: 'حسابداری و دفاتر', roles: ['creator','admin','sarraaf'] },
+  { id: 'ledger', label: 'دفتر کل', path: '/general-ledger', icon: ClipboardList, group: 'حسابداری و دفاتر', roles: ['creator','admin','sarraaf'] },
+  { id: 'chartAccounts', label: 'کدینگ حساب‌ها', pending: true, icon: Calculator, group: 'حسابداری و دفاتر', roles: ['creator','admin','sarraaf'] },
+  { id: 'subsidiaryLedger', label: 'دفتر معین و تفصیلی', pending: true, icon: BookOpen, group: 'حسابداری و دفاتر', roles: ['creator','admin','sarraaf'] },
+  { id: 'trialBalance', label: 'تراز آزمایشی', pending: true, icon: Scale, group: 'حسابداری و دفاتر', roles: ['creator','admin','sarraaf'] },
+  { id: 'debitCredit', label: 'جمع بدهکاری و بستانکاری', pending: true, icon: ChartNoAxesCombined, group: 'حسابداری و دفاتر', roles: ['creator','admin','sarraaf'] },
+  { id: 'balanceSheet', label: 'بیلانس عمومی', path: '/balance-sheet', icon: Scale, group: 'حسابداری و دفاتر', roles: ['creator','admin','sarraaf'] },
+  { id: 'reconciliation', label: 'مغایرت‌گیری', path: '/reconciliation', icon: FileSearch, group: 'حسابداری و دفاتر', roles: ['creator','admin','sarraaf'] },
+  { id: 'profit', label: 'مفاد و زیان', path: '/profit-loss', icon: BarChart3, group: 'حسابداری و دفاتر', roles: ['creator','admin','sarraaf'] },
+  { id: 'cashFlow', label: 'گردش وجوه نقد', pending: true, icon: Banknote, group: 'حسابداری و دفاتر', roles: ['creator','admin','sarraaf'] },
+  { id: 'debtors', label: 'بدهکاران', path: '/debtors', icon: CircleDollarSign, group: 'حسابداری و دفاتر', roles: ['creator','admin','sarraaf'] },
+  { id: 'receivablePayable', label: 'دریافتنی‌ها و پرداختنی‌ها', pending: true, icon: Activity, group: 'حسابداری و دفاتر', roles: ['creator','admin','sarraaf'] },
+  { id: 'fixedAssets', label: 'دارایی‌های ثابت', pending: true, icon: Building2, group: 'حسابداری و دفاتر', roles: ['creator','admin','sarraaf'] },
+  { id: 'budgets', label: 'بودجه و مراکز هزینه', pending: true, icon: FolderKanban, group: 'حسابداری و دفاتر', roles: ['creator','admin','sarraaf'] },
+  { id: 'fiscalPeriods', label: 'دوره‌های مالی و بستن حساب‌ها', pending: true, icon: CalendarDays, group: 'حسابداری و دفاتر', roles: ['creator','admin','sarraaf'] },
+
+  { id: 'currencies', label: 'تعریف اسعار', path: '/currencies', icon: Coins, group: 'ارز، شبکه و ارتباطات', roles: ['creator','admin','sarraaf'] },
+  { id: 'agencyNetwork', label: 'شبکه نمایندگی‌ها', path: '/agency-network', icon: Network, group: 'ارز، شبکه و ارتباطات', roles: ['creator','admin','sarraaf'] },
+  { id: 'marketRates', label: 'نرخ بازار صراف‌ها', pending: true, icon: ChartNoAxesCombined, group: 'ارز، شبکه و ارتباطات', roles: ['creator','admin','sarraaf'] },
+  { id: 'chat', label: 'گروه و چت صراف‌ها', path: '/chat', icon: MessagesSquare, group: 'ارز، شبکه و ارتباطات', roles: ['creator','admin','sarraaf'] },
+  { id: 'market', label: 'بازار صراف‌ها', path: '/sarraaf-market', icon: ShoppingBag, group: 'ارز، شبکه و ارتباطات', roles: ['creator','admin','sarraaf'] },
+  { id: 'sarraafChat', label: 'چت صراف‌ها', path: '/sarraaf-chat', icon: MessagesSquare, group: 'ارز، شبکه و ارتباطات', roles: ['creator','admin','sarraaf'] },
+  { id: 'multiCompany', label: 'مدیریت چندشرکتی', pending: true, icon: Building2, group: 'ارز، شبکه و ارتباطات', roles: ['creator','admin','sarraaf'] },
+
+  { id: 'reports', label: 'گزارش عملیات', path: '/reports', icon: FileSpreadsheet, group: 'گزارش‌ها و خدمات', roles: ['creator','admin','sarraaf','employee'] },
+  { id: 'onlineProducts', label: 'محصولات آنلاین', path: '/online-products', icon: ShoppingBag, group: 'گزارش‌ها و خدمات', roles: ['creator','admin','sarraaf'] },
+  { id: 'support', label: 'پشتیبانی', path: '/support', icon: Headphones, group: 'گزارش‌ها و خدمات', roles: ['creator','admin','sarraaf','employee'] },
+  { id: 'assistant', label: 'هوش مصنوعی', path: '/assistant', icon: Bot, group: 'گزارش‌ها و خدمات', roles: ['creator','admin','sarraaf','employee'] },
+  { id: 'settings', label: 'تنظیمات', path: '/settings', icon: Settings, group: 'گزارش‌ها و خدمات', roles: ['creator','admin','sarraaf','employee'] },
+  { id: 'paymentGateway', label: 'درگاه پرداخت', path: '/payment-gateway', icon: FileCheck, group: 'گزارش‌ها و خدمات', roles: ['creator','admin','sarraaf'] },
+
+  { id: 'auditLog', label: 'ردپای حسابرسی', pending: true, icon: ClipboardCheck, group: 'امنیت و اسناد', roles: ['creator','admin','sarraaf'] },
+  { id: 'documents', label: 'مرکز اسناد', pending: true, icon: Files, group: 'امنیت و اسناد', roles: ['creator','admin','sarraaf'] },
+  { id: 'approvals', label: 'گردش تأییدها', pending: true, icon: ShieldCheck, group: 'امنیت و اسناد', roles: ['creator','admin','sarraaf'] },
+  { id: 'kyc', label: 'احراز هویت مشتری', pending: true, icon: ShieldCheck, group: 'امنیت و اسناد', roles: ['creator','admin','sarraaf'] },
+  { id: 'compliance', label: 'کنترل داخلی و تطبیق', pending: true, icon: ShieldCheck, group: 'امنیت و اسناد', roles: ['creator','admin','sarraaf'] },
+  { id: 'backup', label: 'پشتیبان‌گیری و بازیابی', path: '/backup', icon: Database, group: 'امنیت و اسناد', roles: ['creator','admin','sarraaf'] },
+  { id: 'notifications', label: 'اعلان‌ها', path: '/notifications', icon: Bell, group: 'امنیت و اسناد', roles: ['creator','admin','sarraaf','employee'] },
 ];
 
-const GROUPS = ['عمومی', 'تعاریف و دفاتر', 'صندوق و بانک', 'عملیات صرافی', 'حسابداری', 'گزارشات', 'تنظیمات', 'امکانات تکمیلی'];
+const GROUPS = [
+  'عمومی', 'طرف‌حساب‌ها و نمایندگی‌ها', 'صندوق، بانک و عملیات',
+  'حسابداری و دفاتر', 'ارز، شبکه و ارتباطات', 'گزارش‌ها و خدمات', 'امنیت و اسناد'
+];
 
 function ModuleLink({ item, compact = false }) {
   const Icon = item.icon;
   if (item.pending) {
     return (
       <div aria-disabled="true" title="این بخش تا اتصال امن به اطلاعات واقعی غیرفعال است"
-        className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-slate-400 cursor-not-allowed ${compact ? 'min-w-max' : ''}`}>
-        <Icon className="h-4 w-4 shrink-0" />
-        <span className="flex-1">{item.label}</span>
-        <span className="text-[10px] whitespace-nowrap">در حال اتصال</span>
+        className={compact
+          ? 'flex min-h-[68px] flex-col items-center justify-center gap-1 rounded-lg border border-dashed border-slate-300 bg-slate-50 px-1 py-2 text-center text-[10px] text-slate-500'
+          : 'flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-slate-400 cursor-not-allowed'}>
+        <Icon className={compact ? 'h-5 w-5' : 'h-4 w-4 shrink-0'} />
+        <span className={compact ? 'leading-tight' : 'flex-1'}>{item.label}</span>
+        {!compact && <span className="text-[10px] whitespace-nowrap">در حال اتصال</span>}
       </div>
     );
   }
   return (
     <NavLink to={item.path} end={item.path === '/dashboard'}
-      className={({ isActive }) => `flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-colors ${compact ? 'min-w-max' : ''} ${isActive ? 'bg-teal-600 text-white shadow-sm' : 'text-slate-200 hover:bg-white/10'}`}>
-      <Icon className="h-4 w-4 shrink-0" />
+      className={({ isActive }) => compact
+        ? `flex min-h-[68px] flex-col items-center justify-center gap-1 rounded-lg border px-1 py-2 text-center text-[10px] leading-tight transition-colors ${isActive ? 'border-teal-600 bg-teal-600 text-white' : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-100'}`
+        : `flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-colors ${isActive ? 'bg-teal-600 text-white shadow-sm' : 'text-slate-200 hover:bg-white/10'}`}>
+      <Icon className={compact ? 'h-5 w-5' : 'h-4 w-4 shrink-0'} />
       <span>{item.label}</span>
     </NavLink>
   );
@@ -106,8 +155,8 @@ export default function Version21Layout() {
               </button>
             </div>
           </div>
-          <nav className="lg:hidden flex gap-1 overflow-x-auto px-3 pb-3">
-            {modules.filter(item => ['home', 'customers', 'cash', 'exchange', 'remittance', 'journal', 'ledger', 'reports'].includes(item.id)).map(item => <ModuleLink key={item.id} item={item} compact />)}
+          <nav className="lg:hidden grid grid-cols-3 gap-2 px-3 pb-3">
+            {modules.map(item => <ModuleLink key={item.id} item={item} compact />)}
           </nav>
         </header>
         <main className="flex-1 min-w-0 p-3 md:p-5 xl:p-7">
