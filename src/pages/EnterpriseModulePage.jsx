@@ -701,6 +701,75 @@ function PeriodCloseReadiness() {
   </div>;
 }
 
+
+function InternalControlsReview() {
+  const exchangeCode = getExchangeCode();
+  const query = useQuery({
+    queryKey: ['enterpriseInternalControls', exchangeCode],
+    enabled: !!exchangeCode,
+    queryFn: async () => {
+      const [documents, entries] = await Promise.all([
+        fetchAllTenantRows('documents', 'id,doc_number,doc_type,created_at,deleted,reversed,exchange_code', exchangeCode),
+        fetchAllTenantRows('ledger_entries', 'id,document_id,currency,debit,credit,deleted,exchange_code', exchangeCode),
+      ]);
+      const docsById = new Map(documents.map(doc => [String(doc.id), doc]));
+      const activeDocs = documents.filter(doc => doc.deleted !== true && doc.reversed !== true);
+      const activeEntries = entries.filter(entry => entry.deleted !== true);
+      const entriesByDoc = new Map();
+      const balances = new Map();
+      for (const entry of activeEntries) {
+        if (entry.document_id == null) continue;
+        const id = String(entry.document_id);
+        entriesByDoc.set(id, (entriesByDoc.get(id) || 0) + 1);
+        const key = id + '|' + String(entry.currency || '—');
+        const total = balances.get(key) || { documentId: id, currency: entry.currency || '—', debit: 0, credit: 0 };
+        total.debit += Number(entry.debit || 0);
+        total.credit += Number(entry.credit || 0);
+        balances.set(key, total);
+      }
+      const missingLedger = activeDocs.filter(doc => !entriesByDoc.has(String(doc.id)));
+      const orphanEntries = activeEntries.filter(entry => entry.document_id != null && !docsById.has(String(entry.document_id)));
+      const unbalanced = [...balances.values()].filter(item => Math.abs(item.debit - item.credit) > 0.000001);
+      const duplicateNumbers = new Map();
+      for (const doc of activeDocs) {
+        const number = String(doc.doc_number || '').trim();
+        if (!number) continue;
+        duplicateNumbers.set(number, (duplicateNumbers.get(number) || 0) + 1);
+      }
+      const duplicates = [...duplicateNumbers.entries()].filter(([, count]) => count > 1);
+      return { documents, entries, activeDocs, activeEntries, missingLedger, orphanEntries, unbalanced, duplicates };
+    },
+    staleTime: 30000,
+  });
+  if (!exchangeCode) return <Card><CardContent className="p-5 text-sm text-muted-foreground">برای اجرای کنترل‌های داخلی، ابتدا با حساب همان صرافی وارد شوید.</CardContent></Card>;
+  const data = query.data;
+  const checks = data ? [
+    { label: 'اسناد فعال بدون ردیف دفترکل', count: data.missingLedger.length },
+    { label: 'ردیف‌های دفترکل با سند ناموجود', count: data.orphanEntries.length },
+    { label: 'اختلاف بدهکار و بستانکار به تفکیک ارز', count: data.unbalanced.length },
+    { label: 'شماره سند تکراری در اسناد فعال', count: data.duplicates.length },
+  ] : [];
+  return <div className="space-y-4">
+    <Card><CardContent className="p-4 space-y-3">
+      <div className="flex items-center justify-between gap-2"><div><h2 className="font-semibold">مرور کنترل‌های داخلی</h2><p className="text-xs text-muted-foreground">کنترل‌های اولیه یکپارچگی اسناد و دفترکل؛ فقط‌خواندنی</p></div><Button size="sm" variant="outline" onClick={() => query.refetch()} disabled={query.isFetching}><RefreshCw className="w-4 h-4"/>بروزرسانی</Button></div>
+      {query.isLoading ? <LoadingState/> : query.isError ? <div className="space-y-2"><p className="text-sm text-destructive">{query.error?.message || 'اجرای کنترل‌ها ناموفق بود'}</p><Button size="sm" onClick={() => query.refetch()}>تلاش دوباره</Button></div> : <>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+          <div className="rounded-lg bg-muted/50 p-3"><p className="text-xs text-muted-foreground">کل اسناد</p><p className="text-xl font-bold">{data.documents.length}</p></div>
+          <div className="rounded-lg bg-muted/50 p-3"><p className="text-xs text-muted-foreground">اسناد فعال</p><p className="text-xl font-bold">{data.activeDocs.length}</p></div>
+          <div className="rounded-lg bg-muted/50 p-3"><p className="text-xs text-muted-foreground">ردیف‌های فعال دفترکل</p><p className="text-xl font-bold">{data.activeEntries.length}</p></div>
+        </div>
+        <div className="space-y-2">{checks.map(item => <div key={item.label} className="flex items-center justify-between gap-3 rounded-lg border p-3 text-sm"><span>{item.label}</span><span className={item.count ? 'font-semibold text-amber-700' : 'font-semibold text-emerald-700'}>{item.count}</span></div>)}</div>
+      </>}
+    </CardContent></Card>
+    {data && <>
+      {data.orphanEntries.length > 0 && <Card><CardContent className="p-4 space-y-2"><h3 className="font-semibold text-sm">ردیف‌های دفترکل بدون سند متناظر</h3>{data.orphanEntries.slice(0,30).map(row=><div key={row.id} className="flex justify-between border-b last:border-0 py-2 text-xs"><span>ردیف دفترکل #{row.id} · سند #{row.document_id}</span><span>{row.currency || '—'} · {formatNumber(Number(row.debit||0)-Number(row.credit||0),4)}</span></div>)}</CardContent></Card>}
+      {data.unbalanced.length > 0 && <Card><CardContent className="p-4 space-y-2"><h3 className="font-semibold text-sm">اختلاف ثبت‌ها</h3>{data.unbalanced.slice(0,30).map((row,index)=><div key={row.documentId+'-'+row.currency+'-'+index} className="flex justify-between gap-2 border-b last:border-0 py-2 text-xs"><span>سند #{row.documentId} · {row.currency}</span><span className="text-destructive">{formatNumber(row.debit-row.credit,4)}</span></div>)}</CardContent></Card>}
+      {data.duplicates.length > 0 && <Card><CardContent className="p-4 space-y-2"><h3 className="font-semibold text-sm">شماره‌های سند تکراری</h3>{data.duplicates.slice(0,30).map(([number,count])=><div key={number} className="flex justify-between border-b last:border-0 py-2 text-xs"><span>{number}</span><span>{count} بار</span></div>)}</CardContent></Card>}
+      <div className="rounded-lg border p-3 text-xs text-muted-foreground">این کنترل‌ها هشدار اولیه‌اند، نه حکم قطعی تخلف یا خطای حسابداری. اصلاح خودکار، حذف، معکوس‌سازی یا تغییر مانده از این صفحه انجام نمی‌شود. کنترل‌های دسترسی، تأیید دو مرحله‌ای، محدودیت دوره بسته و گزارش کامل تغییرات باید جداگانه در سطح سرور و سیاست‌های دیتابیس اعتبارسنجی شوند.</div>
+    </>}
+  </div>;
+}
+
 export default function EnterpriseModulePage() {
   const { moduleKey='' } = useParams();
   const key=String(moduleKey).replace(/-/g,'_');
@@ -714,6 +783,7 @@ export default function EnterpriseModulePage() {
   if(key==='accounts_receivable') return <><PageHeader title="مانده حساب مشتریان" icon={ListTree}/><CustomerBalancesReport/></>;
   if(key==='fiscal_periods') return <><PageHeader title="دوره‌های مالی" icon={CalendarDays}/><FiscalPeriodsManager/></>;
   if(key==='period_close') return <><PageHeader title="بستن دوره مالی" icon={CalendarDays}/><PeriodCloseReadiness/></>;
+  if(key==='internal_controls') return <><PageHeader title="کنترل‌های داخلی" icon={ShieldCheck}/><InternalControlsReview/></>;
   if(key==='cost_centers') return <><PageHeader title="مراکز هزینه و سود" icon={GitBranch}/><CostCentersManager/></>;
   if(key==='document_center') return <><PageHeader title="مرکز اسناد" icon={ListTree}/><DocumentCenter/></>;
   if(key==='treasury') return <><PageHeader title="خزانه‌داری و نقدینگی" icon={ListTree}/><TreasuryOverview/></>;
