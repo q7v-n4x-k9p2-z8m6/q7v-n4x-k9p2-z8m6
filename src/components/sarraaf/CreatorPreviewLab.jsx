@@ -41,18 +41,88 @@ const SCHEMAS = {
  exchange:{title:'معامله اسعار',fields:[['date','تاریخ','date'],['kind','نوع معامله','select',['خرید','فروش','تبدیل']],['fromCurrency','ارز مبدا','select',CURRENCIES],['fromAmount','مبلغ مبدا','number'],['toCurrency','ارز مقصد','select',CURRENCIES],['toAmount','مبلغ مقصد','number'],['rate','نرخ معامله','number'],['profit','مفاد معامله','number'],['party','طرف حساب','text'],['note','یادداشت','text']]},
  journal:{title:'سند روزنامچه',fields:[['date','تاریخ','date'],['number','شماره سند','text'],['description','شرح سند','text'],['debitAccount','حساب بدهکار','text'],['creditAccount','حساب بستانکار','text'],['currency','ارز','select',CURRENCIES],['amount','مبلغ','number'],['status','وضعیت','select',['پیش‌نویس','قطعی']]]}
 };
-const initial = () => ({
+const initial = () => {
+ const sampleDate=new Date().toLocaleDateString('en-CA');
+ return ({
  customers:[
-  {id:'c1',code:'1001',name:'مشتری نمونه اول',kind:'دائمی',phone:'0700000001',currency:'AFN',opening:0,status:'فعال'},
-  {id:'c2',code:'1002',name:'مشتری نمونه دوم',kind:'موقتی',phone:'0700000002',currency:'USD',opening:0,status:'فعال'}
+  {id:'c1',code:'1001',name:'مشتری نمونه احمدی',kind:'دائمی',phone:'0700000001',address:'کابل، شهرنو',currency:'AFN',opening:12000,status:'فعال'},
+  {id:'c2',code:'1002',name:'مشتری نمونه رحیمی',kind:'دائمی',phone:'0700000002',address:'کابل، کارته چهار',currency:'USD',opening:250,status:'فعال'},
+  {id:'demo-c3',code:'1003',name:'مشتری نمونه کریمی',kind:'موقتی',phone:'0700000003',address:'هرات',currency:'AFN',opening:5000,status:'فعال'},
+  {id:'demo-c4',code:'1004',name:'مشتری نمونه محمدی',kind:'دائمی',phone:'0700000004',address:'مزارشریف',currency:'EUR',opening:100,status:'فعال'}
  ],
- branches:[{id:'b1',code:'2001',name:'نمایندگی مرکزی',city:'کابل',currency:'AFN',opening:0,status:'فعال'}],
- cash:[{id:'k1',name:'صندوق مرکزی',currency:'AFN',opening:100000},{id:'k2',name:'صندوق دالر',currency:'USD',opening:5000}],
- banks:[], currencies:CURRENCIES.map((code,i)=>({id:'u'+i,code,name:code,symbol:code,rate:i===0?1:0,active:'فعال'})),
- accounts:[{id:'a1',code:'100',name:'صندوق',level:'کل',nature:'بدهکار'},{id:'a2',code:'200',name:'سرمایه',level:'کل',nature:'بستانکار'},{id:'a3',code:'300',name:'عواید',level:'کل',nature:'بستانکار'},{id:'a4',code:'400',name:'مصارف',level:'کل',nature:'بدهکار'}],
- expenses:[],remittance:[],exchange:[],journal:[],transactions:[]
-});
-const readStore = () => { try { const s=localStorage.getItem(STORE_KEY); return s?{...initial(),...JSON.parse(s)}:initial(); } catch { return initial(); } };
+ branches:[
+  {id:'b1',code:'2001',name:'نمایندگی مرکزی',city:'کابل',phone:'0200000001',currency:'AFN',opening:45000,status:'فعال'},
+  {id:'demo-b2',code:'2002',name:'نمایندگی نمونه هرات',city:'هرات',phone:'0400000002',currency:'AFN',opening:18000,status:'فعال'},
+  {id:'demo-b3',code:'2003',name:'نمایندگی نمونه مزار',city:'مزارشریف',phone:'0500000003',currency:'USD',opening:900,status:'فعال'}
+ ],
+ cash:[
+  {id:'k1',name:'صندوق مرکزی افغانی',currency:'AFN',opening:100000,description:'صندوق اصلی نمونه'},
+  {id:'k2',name:'صندوق دالر',currency:'USD',opening:5000,description:'صندوق اسعار خارجی'},
+  {id:'demo-k3',name:'صندوق یورو',currency:'EUR',opening:2500,description:'صندوق نمونه یورو'}
+ ],
+ banks:[
+  {id:'demo-bank1',name:'بانک نمونه ملی',account:'000123456789',currency:'AFN',opening:250000,description:'حساب آزمایشی'},
+  {id:'demo-bank2',name:'بانک نمونه بین‌المللی',account:'USD-009812',currency:'USD',opening:12000,description:'حساب دالری آزمایشی'}
+ ],
+ currencies:CURRENCIES.map((code,i)=>({id:'u'+i,code,name:({AFN:'افغانی',USD:'دالر امریکا',EUR:'یورو',IRR:'تومان',TRY:'لیره ترکیه',PKR:'کلدار پاکستان',AED:'درهم امارات',SAR:'ریال سعودی',GBP:'پوند',CNY:'یوان'}[code]||code),symbol:code,rate:({AFN:1,USD:70,EUR:76,IRR:0.0011,TRY:2.05,PKR:0.25,AED:19.05,SAR:18.66,GBP:88,CNY:9.7}[code]||0),active:'فعال'})),
+ accounts:[
+  {id:'a1',code:'100',name:'صندوق',level:'کل',nature:'بدهکار',description:'دارایی جاری'},
+  {id:'a2',code:'200',name:'سرمایه',level:'کل',nature:'بستانکار',description:'سرمایه مالک'},
+  {id:'a3',code:'300',name:'عواید',level:'کل',nature:'بستانکار',description:'عواید معاملات'},
+  {id:'a4',code:'400',name:'مصارف',level:'کل',nature:'بدهکار',description:'مصارف عملیاتی'},
+  {id:'demo-a5',code:'110',name:'بانک‌ها',level:'معین',nature:'بدهکار',description:'حساب‌های بانکی'},
+  {id:'demo-a6',code:'120',name:'حسابات مشتریان',level:'معین',nature:'بدهکار',description:'مطالبات و حساب مشتری'},
+  {id:'demo-a7',code:'210',name:'حسابات نمایندگی‌ها',level:'معین',nature:'بستانکار',description:'حساب متقابل نمایندگی‌ها'}
+ ],
+ expenses:[
+  {id:'demo-e1',date:sampleDate,title:'کرایه دفتر نمونه',currency:'AFN',amount:4500,cash:'صندوق مرکزی افغانی',note:'مصرف آزمایشی ماه جاری'},
+  {id:'demo-e2',date:sampleDate,title:'مصرف برق و انترنت',currency:'AFN',amount:1200,cash:'صندوق مرکزی افغانی',note:'رسید نمونه'},
+  {id:'demo-e3',date:sampleDate,title:'هزینه خدمات بانکی',currency:'USD',amount:12,cash:'صندوق دالر',note:'نمونه آزمایشی'}
+ ],
+ remittance:[
+  {id:'demo-r1',date:sampleDate,number:'RM-0001',direction:'ارسالی',sender:'مشتری نمونه احمدی',receiver:'مشتری نمونه رحیمی',branch:'نمایندگی مرکزی',currency:'AFN',amount:15000,fee:150,cash:'صندوق مرکزی افغانی',status:'اجرا شده',note:'حواله نمونه برای نمایش گردش کار'},
+  {id:'demo-r2',date:sampleDate,number:'RM-0002',direction:'دریافتی',sender:'مشتری نمونه کریمی',receiver:'مشتری نمونه محمدی',branch:'نمایندگی نمونه هرات',currency:'USD',amount:300,fee:5,cash:'صندوق دالر',status:'در انتظار',note:'حواله نمونه در انتظار اجرا'},
+  {id:'demo-r3',date:sampleDate,number:'RM-0003',direction:'نامعلوم',sender:'فرستنده نمونه',receiver:'گیرنده نمونه',branch:'نمایندگی مرکزی',currency:'AFN',amount:2500,fee:0,cash:'صندوق مرکزی افغانی',status:'در انتظار',note:'نمونه حواله نامعلوم'}
+ ],
+ exchange:[
+  {id:'demo-x1',date:sampleDate,kind:'خرید',fromCurrency:'USD',fromAmount:500,toCurrency:'AFN',toAmount:35000,rate:70,profit:350,party:'مشتری نمونه احمدی',note:'معامله خرید نمونه'},
+  {id:'demo-x2',date:sampleDate,kind:'فروش',fromCurrency:'AFN',fromAmount:14000,toCurrency:'USD',toAmount:198,rate:70.7,profit:140,party:'مشتری نمونه رحیمی',note:'معامله فروش نمونه'},
+  {id:'demo-x3',date:sampleDate,kind:'تبدیل',fromCurrency:'EUR',fromAmount:100,toCurrency:'USD',toAmount:108,rate:1.08,profit:25,party:'مشتری نمونه محمدی',note:'تبدیل ارز نمونه'}
+ ],
+ journal:[
+  {id:'demo-j1',date:sampleDate,number:'JV-00001',description:'ثبت سرمایه افتتاحی نمونه',debitAccount:'100 — صندوق',creditAccount:'200 — سرمایه',currency:'AFN',amount:100000,status:'قطعی'},
+  {id:'demo-j2',date:sampleDate,number:'JV-00002',description:'ثبت مصرف دفتر نمونه',debitAccount:'400 — مصارف',creditAccount:'صندوق: صندوق مرکزی افغانی',currency:'AFN',amount:4500,status:'قطعی'},
+  {id:'demo-j3',date:sampleDate,number:'JV-00003',description:'واریز به حساب بانکی نمونه',debitAccount:'110 — بانک‌ها',creditAccount:'100 — صندوق',currency:'AFN',amount:20000,status:'قطعی'}
+ ],
+ transactions:[
+  {id:'demo-t1',date:sampleDate,type:'دخل',party:'مشتری نمونه احمدی',partyType:'customer',currency:'AFN',amount:12000,cash:'صندوق مرکزی افغانی',description:'دریافت وجه از مشتری نمونه'},
+  {id:'demo-t2',date:sampleDate,type:'خرج',party:'مشتری نمونه رحیمی',partyType:'customer',currency:'USD',amount:-80,cash:'صندوق دالر',description:'پرداخت به مشتری نمونه'},
+  {id:'demo-t3',date:sampleDate,type:'دخل نمایندگی',party:'نمایندگی نمونه هرات',partyType:'branch',currency:'AFN',amount:8000,cash:'صندوق مرکزی افغانی',description:'تسویه حساب نمایندگی'},
+  {id:'demo-t4',date:sampleDate,type:'حواله ارسالی',party:'مشتری نمونه رحیمی',partyType:'customer',currency:'AFN',amount:-15000,cash:'صندوق مرکزی افغانی',description:'حواله RM-0001'},
+  {id:'demo-t5',date:sampleDate,type:'حواله دریافتی',party:'مشتری نمونه محمدی',partyType:'customer',currency:'USD',amount:300,cash:'صندوق دالر',description:'دریافت حواله نمونه'},
+  {id:'demo-t6',date:sampleDate,type:'مصرف',party:'کرایه دفتر نمونه',partyType:'other',currency:'AFN',amount:-4500,cash:'صندوق مرکزی افغانی',description:'مصرف آزمایشی دفتر'},
+  {id:'demo-t7',date:sampleDate,type:'معامله خرید · خروج',party:'مشتری نمونه احمدی',partyType:'customer',currency:'USD',amount:-500,description:'معامله خرید نمونه'},
+  {id:'demo-t8',date:sampleDate,type:'معامله خرید · ورود',party:'مشتری نمونه احمدی',partyType:'customer',currency:'AFN',amount:35000,description:'معامله خرید نمونه'}
+ ]
+ });
+};
+
+const readStore = () => {
+ try {
+  const s=localStorage.getItem(STORE_KEY);
+  if(!s)return initial();
+  const saved=JSON.parse(s);
+  const base=initial();
+  const merged={...base,...saved};
+  Object.keys(base).forEach(key=>{
+   if(Array.isArray(base[key])){
+    const stored=Array.isArray(saved[key])?saved[key]:[];
+    merged[key]=[...base[key].filter(seed=>!stored.some(item=>item.id===seed.id)),...stored];
+   }
+  });
+  return merged;
+ } catch { return initial(); }
+};
 const today = () => new Date().toLocaleDateString('en-CA');
 const n = v => Number(String(v??0).replaceAll(',',''))||0;
 const fmt = v => new Intl.NumberFormat('fa-IR',{maximumFractionDigits:2}).format(n(v));
