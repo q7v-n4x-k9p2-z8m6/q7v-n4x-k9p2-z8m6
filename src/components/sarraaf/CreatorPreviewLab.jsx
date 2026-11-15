@@ -177,7 +177,7 @@ export default function CreatorPreviewLab(){
   if(active==='reports') source=data.transactions;
   const q=query.trim().toLowerCase();
   return source.filter(r=>(!q||Object.values(r).join(' ').toLowerCase().includes(q))&&(filterCurrency==='همه'||!r.currency||r.currency===filterCurrency)&&(!dateFrom||!r.date||r.date>=dateFrom)&&(!dateTo||!r.date||r.date<=dateTo));
- },[data,active,query,filterCurrency,dateFrom,dateTo]);
+ },[data,active,customerDetail,query,filterCurrency,dateFrom,dateTo]);
  const setField=(k,v)=>setDraft(d=>({...d,[k]:v}));
  const openNew=(module=active,extra={})=>{const sc=SCHEMAS[module];const defaults=Object.fromEntries((sc?.fields||[]).map(([k,,type,opts])=>[k,type==='date'?today():type==='select'?(opts?.[0]??''): '']));setActive(module);setDraft({...defaults,date:today(),currency:'AFN',...extra});setSelected(null);setModal(module);};
  const saveRecord=()=>{
