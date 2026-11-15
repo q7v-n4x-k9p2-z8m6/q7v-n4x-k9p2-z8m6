@@ -191,19 +191,22 @@ export default function CreatorPreviewLab() {
     </section>
 
     <div className={device === 'mobile' ? 'mx-auto w-full max-w-[430px] rounded-[30px] border-[6px] border-slate-700 bg-background p-2 shadow-xl' : 'w-full rounded-2xl border bg-background p-3 sm:p-4'}>
-      <header className="flex items-center justify-between gap-3 border-b pb-3">
+       <header className="flex flex-wrap items-center justify-between gap-3 border-b-2 border-slate-300 pb-2 dark:border-slate-700">
         <div className="flex min-w-0 items-center gap-2">
-          <div className="rounded-xl bg-primary p-2 text-primary-foreground"><Calculator className="h-5 w-5" /></div>
-          <div className="min-w-0"><div className="text-sm font-bold">حساب صراف</div><div className="text-[10px] text-muted-foreground">دفتر مالی · شعبه مرکزی نمونه</div></div>
+          <div className="rounded-md bg-primary p-2 text-primary-foreground"><Calculator className="h-5 w-5" /></div>
+          <div className="min-w-0"><div className="text-sm font-bold">حساب صراف | سیستم حسابداری و مدیریت مالی</div><div className="text-[10px] text-muted-foreground">دفتر مرکزی نمونه · دوره مالی ۱۴۰۵ · کاربر آزمایشی</div></div>
         </div>
-        <div className="flex items-center gap-2"><span className="hidden rounded-full bg-muted px-2.5 py-1 text-[10px] sm:inline-flex">مدیر دفتر نمونه</span><button type="button" aria-label="اعلان‌های نمونه" onClick={() => simulateAction('اعلان‌ها')} className="relative rounded-lg border p-2"><Bell className="h-4 w-4" /><span className="absolute -left-1 -top-1 h-2 w-2 rounded-full bg-amber-500" /></button></div>
+        <div className="flex items-center gap-2"><span className="hidden border-r px-3 text-[10px] sm:inline-flex">وضعیت: محیط آزمایشی</span><button type="button" aria-label="اعلان‌های نمونه" onClick={() => simulateAction('اعلان‌ها')} className="relative rounded-md border p-2"><Bell className="h-4 w-4" /></button></div>
       </header>
-
-      <div className="flex items-center gap-2 py-3">
-        <div className="relative flex-1"><Search className="absolute right-3 top-2.5 h-4 w-4 text-muted-foreground" /><input value={query} onChange={event => setQuery(event.target.value)} placeholder="جست‌وجوی بخش، دفتر یا عملیات..." className="h-9 w-full rounded-lg border bg-background pr-9 pl-3 text-xs outline-none focus:ring-2 focus:ring-primary/30" /></div>
-        {device === 'mobile' && <button type="button" onClick={() => setMobileMenu(value => !value)} className="rounded-lg border p-2" aria-label="نمایش منوی اصلی">{mobileMenu ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}</button>}
+      <nav className="flex flex-wrap items-center gap-x-1 gap-y-1 border-b bg-slate-100 px-2 py-1.5 text-[10px] dark:bg-slate-900">
+        {['فایل','اطلاعات پایه','عملیات مالی','حسابداری','حواله و ارزی','گزارشات','امکانات','راهنما'].map(item => <button key={item} type="button" onClick={() => simulateAction('منوی ' + item)} className="rounded px-3 py-1.5 font-semibold hover:bg-white hover:text-primary dark:hover:bg-slate-800">{item}</button>)}
+        <span className="mr-auto rounded border bg-white px-2 py-1 text-[9px] text-slate-600 dark:bg-slate-800 dark:text-slate-300">الگوی ترکیبی آریا + رقم</span>
+      </nav>
+      <div className="flex flex-wrap items-center gap-2 border-b bg-slate-50 px-2 py-2 dark:bg-slate-950">
+        {[[Plus,'ثبت جدید',() => openModuleForm(activeGroup.modules[0][0])],[ReceiptText,'سند حسابداری',() => chooseGroup('ledger')],[Users,'اشخاص',() => chooseGroup('customers')],[Wallet,'صندوق',() => chooseGroup('treasury')],[Send,'حواله',() => chooseGroup('remittances')],[ChartNoAxesCombined,'گزارش‌ها',() => chooseGroup('reports')],[Archive,'پشتیبان',exportLocal]].map(([Icon,label,action]) => <button key={label} type="button" onClick={action} className="inline-flex min-w-[66px] items-center justify-center gap-1.5 rounded border bg-white px-2.5 py-2 text-[10px] shadow-sm hover:border-primary hover:text-primary dark:bg-slate-900"><Icon className="h-3.5 w-3.5" />{label}</button>)}
+        <div className="relative min-w-[180px] flex-1"><Search className="absolute right-3 top-2.5 h-3.5 w-3.5 text-muted-foreground" /><input value={query} onChange={event => setQuery(event.target.value)} placeholder="جست‌وجوی حساب، مشتری یا عملیات..." className="h-8 w-full rounded border bg-background pr-9 pl-3 text-[10px] outline-none focus:ring-2 focus:ring-primary/30" /></div>
+        {device === 'mobile' && <button type="button" onClick={() => setMobileMenu(value => !value)} className="rounded border p-2" aria-label="نمایش منوی اصلی">{mobileMenu ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}</button>}
       </div>
-
       {device === 'mobile' ? <div className="space-y-3">
         {mobileMenu && <nav className="grid grid-cols-2 gap-2 rounded-xl border bg-muted/20 p-2">
           {filteredGroups.map(group => { const Icon = group.icon; return <button key={group.id} type="button" onClick={() => chooseGroup(group.id)} className={'flex items-center gap-2 rounded-lg border p-2 text-right text-[11px] ' + (active === group.id ? 'border-primary bg-primary/10' : 'bg-background')}><Icon className="h-4 w-4 shrink-0" /><span>{group.title}</span></button>; })}
@@ -214,12 +217,12 @@ export default function CreatorPreviewLab() {
         <button type="button" onClick={() => openModuleForm(activeGroup.modules[0][0])} className="w-full rounded-lg bg-primary px-3 py-2 text-xs text-primary-foreground">عملیات جدید</button>
         <WorkspaceContent group={activeGroup} selectedModule={selectedModule} onSelectModule={chooseModule} onAction={simulateAction} notice={notice} records={records[active] || []} draft={draft} setDraft={setDraft} onSave={saveDraft} onEdit={editRecord} onDelete={deleteRecord} editingId={editingId} onExport={exportLocal} onClear={clearLocal} />
       </div> : <div className="flex gap-4 pt-1">
-        <aside className="w-60 shrink-0 border-l pl-3">
-          <div className="mb-2 flex items-center justify-between px-2"><span className="text-[10px] font-semibold text-muted-foreground">منوی اصلی دفتر</span><span className="text-[10px] text-muted-foreground">۱۰ حوزه</span></div>
-          <nav className="space-y-1">
-            {filteredGroups.map(group => { const Icon = group.icon; return <button key={group.id} type="button" onClick={() => chooseGroup(group.id)} className={'flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-right text-xs transition ' + (active === group.id ? 'bg-primary text-primary-foreground shadow-sm' : 'hover:bg-muted')}><Icon className="h-4 w-4 shrink-0" /><span className="flex-1">{group.title}</span><ChevronLeft className="h-3.5 w-3.5 opacity-60" /></button>; })}
+        <aside className="w-60 shrink-0 border-l border-slate-300 pl-2 dark:border-slate-700">
+          <div className="mb-2 flex items-center justify-between border-b bg-slate-100 px-2 py-2 dark:bg-slate-900"><span className="text-[10px] font-bold">فهرست حساب‌ها و عملیات</span><span className="text-[9px] text-muted-foreground">۱۰ گروه</span></div>
+          <nav className="space-y-0.5">
+            {filteredGroups.map((group, index) => { const Icon = group.icon; return <button key={group.id} type="button" onClick={() => chooseGroup(group.id)} className={'flex w-full items-center gap-2 border-b border-dashed px-2 py-2 text-right text-[11px] transition ' + (active === group.id ? 'border-r-2 border-r-primary bg-primary/10 font-bold text-primary' : 'hover:bg-muted')}><Icon className="h-4 w-4 shrink-0" /><span className="min-w-0 flex-1">{String(index + 1).padStart(2,'0')} · {group.title}</span><ChevronLeft className="h-3 w-3 opacity-50" /></button>; })}
           </nav>
-          <div className="mt-4 rounded-xl border bg-muted/30 p-3"><div className="flex items-center gap-2 text-xs font-semibold"><Scale className="h-4 w-4 text-emerald-600" />کنترل حسابداری</div><p className="mt-2 text-[10px] leading-5 text-muted-foreground">هر عملیات فقط یک‌بار ثبت می‌شود؛ سند متناظر باید بدهکار و بستانکار برابر داشته باشد.</p></div>
+          <div className="mt-3 border bg-slate-50 p-2 text-[10px] leading-5 text-muted-foreground dark:bg-slate-900"><div className="mb-1 flex items-center gap-1 font-bold text-foreground"><ShieldCheck className="h-3.5 w-3.5 text-emerald-600" />کنترل تراز سند</div>ثبت عملیات در محیط نمایشی؛ کنترل بدهکار و بستانکار و جلوگیری از ثبت تکراری در طراحی نهایی.</div>
         </aside>
         <main className="min-w-0 flex-1 space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-2"><div><div className="text-[10px] text-muted-foreground">دفتر صرافی / ساختار کاری</div><h3 className="mt-1 text-lg font-bold">{activeGroup.title}</h3><p className="mt-1 text-xs text-muted-foreground">{activeGroup.subtitle}</p></div><button type="button" onClick={() => openModuleForm(activeGroup.modules[0][0])} className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-xs text-primary-foreground"><Plus className="h-4 w-4" />عملیات جدید</button></div>
