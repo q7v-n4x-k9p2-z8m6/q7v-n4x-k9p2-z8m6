@@ -641,6 +641,20 @@ function PeriodCloseReadiness() {
     }
     const activeDocs = docs.filter(doc => doc.deleted !== true && doc.reversed !== true);
     const missingLedger = activeDocs.filter(doc => !activeEntriesByDocument.has(String(doc.id)));
+    const balances = new Map();
+    for (const entry of periodEntries) {
+      if (entry.deleted === true) continue;
+      const key = String(entry.document_id) + '|' + String(entry.currency || '—');
+      const balance = balances.get(key) || { documentId: String(entry.document_id), currency: entry.currency || '—', debit: 0, credit: 0 };
+      balance.debit += Number(entry.debit || 0);
+      balance.credit += Number(entry.credit || 0);
+      balances.set(key, balance);
+    }
+    const documentMap = new Map(docs.map(doc => [String(doc.id), doc]));
+    const unbalanced = [...balances.values()]
+      .filter(item => Math.abs(item.debit - item.credit) > 0.000001)
+      .map(item => ({ ...item, document: documentMap.get(item.documentId) }))
+      .filter(item => item.document && item.document.deleted !== true && item.document.reversed !== true);
     return {
       documents: docs,
       activeDocuments: activeDocs.length,
@@ -648,6 +662,7 @@ function PeriodCloseReadiness() {
       reversedDocuments: docs.filter(doc => doc.reversed === true).length,
       ledgerLines: periodEntries.filter(entry => entry.deleted !== true).length,
       missingLedger,
+      unbalanced,
     };
   }, [selectedPeriod, query.data]);
 
@@ -677,8 +692,9 @@ function PeriodCloseReadiness() {
       </CardContent></Card>
       <Card><CardContent className="p-4 space-y-3">
         <h3 className="font-semibold text-sm">موارد نیازمند بازبینی</h3>
-        <div className="flex flex-wrap gap-2 text-xs"><span className="rounded-md bg-muted px-2 py-1">حذف‌شده: {review.deletedDocuments}</span><span className="rounded-md bg-muted px-2 py-1">معکوس‌شده: {review.reversedDocuments}</span></div>
-        {review.missingLedger.length === 0 ? <p className="text-sm text-muted-foreground">برای اسناد فعال این دوره، موردی بدون ردیف فعال دفترکل پیدا نشد.</p> : <div className="space-y-2">{review.missingLedger.slice(0, 50).map(doc => <div key={doc.id} className="rounded-lg border p-3 text-sm"><div className="flex justify-between gap-2"><span className="font-medium">{doc.doc_number || ('سند ' + doc.id)}</span><span className="text-xs text-muted-foreground">{doc.created_at ? new Date(doc.created_at).toLocaleDateString('fa-IR') : '—'}</span></div><p className="text-xs text-muted-foreground mt-1">{doc.description || doc.doc_type || 'بدون شرح'}</p></div>)}{review.missingLedger.length > 50 && <p className="text-xs text-muted-foreground">۵۰ مورد نخست از {review.missingLedger.length} مورد نمایش داده شده است.</p>}</div>}
+        <div className="flex flex-wrap gap-2 text-xs"><span className="rounded-md bg-muted px-2 py-1">حذف‌شده: {review.deletedDocuments}</span><span className="rounded-md bg-muted px-2 py-1">معکوس‌شده: {review.reversedDocuments}</span><span className="rounded-md bg-muted px-2 py-1">سند نامتوازن: {review.unbalanced.length}</span></div>
+        <div className="space-y-2"><p className="text-xs font-semibold">اسناد فعال بدون ردیف دفترکل</p>{review.missingLedger.length === 0 ? <p className="text-sm text-muted-foreground">موردی پیدا نشد.</p> : <div className="space-y-2">{review.missingLedger.slice(0, 50).map(doc => <div key={doc.id} className="rounded-lg border p-3 text-sm"><div className="flex justify-between gap-2"><span className="font-medium">{doc.doc_number || ('سند ' + doc.id)}</span><span className="text-xs text-muted-foreground">{doc.created_at ? new Date(doc.created_at).toLocaleDateString('fa-IR') : '—'}</span></div><p className="text-xs text-muted-foreground mt-1">{doc.description || doc.doc_type || 'بدون شرح'}</p></div>)}{review.missingLedger.length > 50 && <p className="text-xs text-muted-foreground">۵۰ مورد نخست از {review.missingLedger.length} مورد نمایش داده شده است.</p>}</div>}</div>
+        <div className="space-y-2"><p className="text-xs font-semibold">اسناد نامتوازن به تفکیک ارز</p>{review.unbalanced.length === 0 ? <p className="text-sm text-muted-foreground">در ردیف‌های فعال بررسی‌شده، اختلاف بدهکار و بستانکار پیدا نشد.</p> : <div className="space-y-2">{review.unbalanced.slice(0, 50).map((item, index) => <div key={item.documentId + '-' + item.currency + '-' + index} className="rounded-lg border p-3 text-xs"><div className="flex justify-between gap-2"><span className="font-medium">{item.document?.doc_number || ('سند ' + item.documentId)}</span><span>{item.currency}</span></div><div className="flex justify-between mt-1 text-muted-foreground"><span>بدهکار: {formatNumber(item.debit, 4)}</span><span>بستانکار: {formatNumber(item.credit, 4)}</span></div><p className="mt-1 text-destructive">اختلاف: {formatNumber(item.debit - item.credit, 4)}</p></div>)}{review.unbalanced.length > 50 && <p className="text-xs text-muted-foreground">۵۰ مورد نخست از {review.unbalanced.length} مورد نمایش داده شده است.</p>}</div>}</div>
       </CardContent></Card>
       <div className="rounded-lg border p-3 text-xs text-muted-foreground">این صفحه فقط‌خواندنی است. نبود ردیف دفترکل به‌تنهایی اثبات خطای حسابداری نیست؛ نوع سند باید بررسی شود. کنترل تراز بدهکار و بستانکار، کنترل ثبت‌های معوق و قفل‌کردن ثبت در دوره بسته باید در سمت سرور و در یک عملیات اتمیک تکمیل شود؛ بنابراین از این صفحه هیچ دوره‌ای بسته نمی‌شود و هیچ سند یا مانده‌ای تغییر نمی‌کند.</div>
     </>}
