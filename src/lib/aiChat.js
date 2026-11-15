@@ -205,9 +205,14 @@ export async function sendAssistantVoice(audioBlob, { signal, context = [] } = {
 
 // ── مدیریت تاریخچه محلی ──
 
-export function loadHistory() {
+function getStorageKey(scope = 'guest') {
+  const safeScope = encodeURIComponent(String(scope || 'guest')).slice(0, 240);
+  return `${STORAGE_KEY}:${safeScope}`;
+}
+
+export function loadHistory(scope = 'guest') {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = localStorage.getItem(getStorageKey(scope));
     if (!raw) return [];
     const arr = JSON.parse(raw);
     return Array.isArray(arr) ? arr.slice(-MAX_HISTORY) : [];
@@ -216,18 +221,18 @@ export function loadHistory() {
   }
 }
 
-export function saveHistory(history) {
+export function saveHistory(history, scope = 'guest') {
   try {
     const trimmed = (history || []).slice(-MAX_HISTORY);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(trimmed));
+    localStorage.setItem(getStorageKey(scope), JSON.stringify(trimmed));
   } catch {
     // فضای ذخیره‌سازی پر یا غیرفعال — نادیده می‌گیریم.
   }
 }
 
-export function clearHistory() {
+export function clearHistory(scope = 'guest') {
   try {
-    localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem(getStorageKey(scope));
   } catch {
     // نادیده.
   }
