@@ -142,7 +142,7 @@ export default function Version21Home() {
   const visibleSections = useMemo(() => SECTIONS.map(section => ({
     ...section,
     items: section.items.filter(item =>
-      item.roles.includes(role) &&
+      Array.isArray(item.roles) && item.roles.includes(role) &&
       (!normalizedSearch || item.label.toLocaleLowerCase('fa').includes(normalizedSearch))
     ),
   })).filter(section => section.items.length), [role, normalizedSearch]);
@@ -172,7 +172,7 @@ export default function Version21Home() {
           </div>
           <div className="flex flex-wrap items-center gap-1.5">
             <span className="ml-2 text-xs font-bold text-[#24496d]">دسترسی سریع حسابداری:</span>
-            {ACCOUNTING_SHORTCUTS.filter(item => item.roles.includes(role)).map(item => {
+            {ACCOUNTING_SHORTCUTS.filter(item => !Array.isArray(item.roles) || item.roles.includes(role)).map(item => {
               const Icon = item.icon;
               return item.pending
                 ? <span key={item.label} className="inline-flex min-h-8 items-center gap-1.5 border border-dashed border-[#bdc8cf] bg-[#f2f4f5] px-2.5 text-[11px] text-[#657785]" title="در حال اتصال"><Icon className="h-3.5 w-3.5" />{item.label}</span>
