@@ -29,10 +29,9 @@ const MODULES = [
   {id:'reports',label:'گزارش عملیات',icon:FileSpreadsheet,group:'گزارشات'},
   {id:'profit',label:'مفاد و زیان',icon:BarChart3,group:'گزارشات'},
   {id:'balance',label:'بیلانس عمومی',icon:Scale,group:'گزارشات'},
-  {id:'sarraafGroups',label:'گروه صرافان',icon:MessageSquare,group:'امکانات تکمیلی',skeleton:true},
+  {id:'sarraafGroups',label:'گروه و چت',icon:MessagesSquare,group:'امکانات تکمیلی',skeleton:true,children:['گروه صرافان','ایجاد گروه','گفت‌وگوی گروهی','گفت‌وگوی خصوصی']},
   {id:'assistant',label:'هوش مصنوعی',icon:Bot,group:'امکانات تکمیلی',skeleton:true},
   {id:'products',label:'محصولات آنلاین',icon:ShoppingBag,group:'امکانات تکمیلی',skeleton:true,children:['شارژ موبایل','بسته‌های اینترنت','UC پابجی موبایل']},
-  {id:'groupChat',label:'گروه و چت',icon:MessagesSquare,group:'امکانات تکمیلی',skeleton:true,children:['ایجاد گروه','گفت‌وگوی گروهی','گفت‌وگوی خصوصی']},
   {id:'language',label:'زبان برنامه',icon:Languages,group:'تنظیمات',skeleton:true,children:['فارسی','دری','English','العربية']}
 ];
 const SCHEMAS = {
@@ -141,7 +140,7 @@ const NAV_MENUS = [
  {label:'حسابات',items:[['روزنامچه','journal'],['دفتر کل','ledger'],['حساب مشتریان','customerLedger'],['حساب نمایندگی‌ها','branchLedger']]},
  {label:'گزارشات',items:[['گزارش عملیات روز','reports'],['مفاد و زیان','profit'],['بیلانس عمومی','balance']]},
  {label:'تنظیمات',items:[['تنظیمات محلی','settings'],['انتخاب زبان','language'],['پشتیبانی','support'],['راهنما','help']]},
-  {label:'امکانات تکمیلی',items:[['گروه صرافان','sarraafGroups'],['هوش مصنوعی','assistant']] }
+  {label:'امکانات تکمیلی',items:[['گروه و چت','sarraafGroups'],['هوش مصنوعی','assistant']] }
 ];
 
 function Field({field,value,onChange,choices}) {
@@ -356,7 +355,7 @@ export default function CreatorPreviewLab(){
    {/* ردیف اول: عملیات روی رکورد انتخاب‌شده */}
    <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
     <aside className="shrink-0 grid w-full grid-cols-6 gap-1 border-b border-slate-400 bg-[#e1e8ed] p-2 md:grid-cols-12">
-      {['customerLedger','customers','branches','branchLedger','banks','remittance','cash','exchange','expenses','journal','ledger','sarraafGroups','assistant','products','groupChat','language'].map(id=>{const m=MODULES.find(x=>x.id===id);if(!m)return null;const I=m.icon;return <button key={m.id} title={m.label} onClick={()=>{setActive(m.id);setSelected(null);setCustomerDetail(null);setBranchDetail(null);setQuery('');}} className={'flex min-w-0 flex-col items-center justify-center gap-1 rounded-sm border px-1 py-1.5 text-center '+(active===m.id?'border-blue-300 bg-[#d2e3f1] font-bold text-blue-900':'border-transparent text-[#29465e] hover:border-slate-300 hover:bg-white')}><I className="h-4 w-4"/><span className="w-full truncate text-[9px]">{m.label}</span></button>})}
+      {['customerLedger','customers','branches','branchLedger','banks','remittance','cash','exchange','expenses','journal','ledger','sarraafGroups','assistant','products','language'].map(id=>{const m=MODULES.find(x=>x.id===id);if(!m)return null;const I=m.icon;return <button key={m.id} title={m.label} onClick={()=>{setActive(m.id);setSelected(null);setCustomerDetail(null);setBranchDetail(null);setQuery('');}} className={'flex min-w-0 flex-col items-center justify-center gap-1 rounded-sm border px-1 py-1.5 text-center '+(active===m.id?'border-blue-300 bg-[#d2e3f1] font-bold text-blue-900':'border-transparent text-[#29465e] hover:border-slate-300 hover:bg-white')}><I className="h-4 w-4"/><span className="w-full truncate text-[9px]">{m.label}</span></button>})}
       <button onClick={()=>setShowWorkspace(true)} className="flex min-w-0 flex-col items-center justify-center gap-1 rounded-sm border border-[#9aabb9] bg-white px-1 py-1.5 text-center text-[#24496d] hover:bg-blue-50"><Home className="h-4 w-4"/><span className="w-full truncate text-[9px] font-bold">میزکار</span></button>
      </aside>
     <main className="min-h-0 min-w-0 flex-1 overflow-y-auto bg-[#f9fafb] p-3">
@@ -377,7 +376,7 @@ export default function CreatorPreviewLab(){
         {title:'صندوق و بانک',ids:['cash','banks']},
         {title:'عملیات صرافی',ids:['exchange','remittance','expenses']},
         {title:'حسابداری و گزارشات',ids:['journal','ledger','accounts','currencies','reports','profit','balance']},
-         {title:'امکانات تکمیلی · اسکلت اولیه',ids:['sarraafGroups','assistant','products','groupChat']},
+         {title:'امکانات تکمیلی · اسکلت اولیه',ids:['sarraafGroups','assistant','products']},
         {title:'تنظیمات',ids:['language']}
        ].map(group=><section key={group.title} className="border border-[#9aabb9] bg-[#e8eef3] p-2 shadow-sm">
         <div className="mb-2 flex items-center justify-between border-b border-[#b7c5d0] pb-1"><b className="text-[11px] text-[#294d69]">\${group.title}</b><span className="text-[9px] text-slate-500">فهرست امکانات</span></div>
