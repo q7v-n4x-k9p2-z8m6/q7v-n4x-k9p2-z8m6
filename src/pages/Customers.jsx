@@ -19,7 +19,7 @@ export default function Customers() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editId, setEditId] = useState(null);
-  const [form, setForm] = useState({ name: '', phone: '', code: '', customer_type: 'permanent', customer_group: '', status: 'active', tazkira_id: '', identity_status: 'not_verified', notes: '' });
+  const [form, setForm] = useState({ name: '', phone: '', code: '', customer_type: 'permanent', customer_group: '', status: 'active', tazkira_id: '', notes: '' });
 
   const { data: customers, isLoading } = useCustomers(search);
   const createMut = useCreateCustomer();
@@ -33,7 +33,7 @@ export default function Customers() {
 
   const openCreate = () => {
     setEditId(null);
-    setForm({ name: '', phone: '', code: '', customer_type: 'permanent', customer_group: '', status: 'active', tazkira_id: '', identity_status: 'not_verified', notes: '' });
+    setForm({ name: '', phone: '', code: '', customer_type: 'permanent', customer_group: '', status: 'active', tazkira_id: '', notes: '' });
     setDialogOpen(true);
   };
 
@@ -63,7 +63,7 @@ export default function Customers() {
     setForm({
       name: c.name || '', phone: c.phone || '', code: c.code || '',
       customer_type: c.customer_type || 'permanent', customer_group: c.customer_group || '',
-      status: c.status || 'active', tazkira_id: c.tazkira_id || '', identity_status: c.identity_status || 'not_verified', notes: c.notes || '',
+      status: c.status || 'active', tazkira_id: c.tazkira_id || '', notes: c.notes || '',
     });
     setDialogOpen(true);
   };
@@ -71,12 +71,10 @@ export default function Customers() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const payload = { ...form };
-      if (payload.identity_status === 'verified') payload.identity_verified_at = new Date().toISOString();
       if (editId) {
-        await updateMut.mutateAsync({ id: editId, data: payload });
+        await updateMut.mutateAsync({ id: editId, data: form });
       } else {
-        await createMut.mutateAsync(payload);
+        await createMut.mutateAsync(form);
       }
       setDialogOpen(false);
     } catch (err) {
@@ -169,9 +167,6 @@ export default function Customers() {
                           {typeLabels[c.customer_type] || c.customer_type}
                         </span>
                       )}
-                      <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-md ${c.identity_status === 'verified' ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'}`}>
-                        {c.identity_status === 'verified' ? 'شناسایی تأییدشده' : 'شناسایی بررسی‌نشده'}
-                      </span>
                     </div>
                     <div className="flex items-center gap-2 text-xs text-muted-foreground">
                       {c.phone ? (
@@ -261,19 +256,8 @@ export default function Customers() {
               <Input value={form.customer_group} onChange={e => setForm({...form, customer_group: e.target.value})} />
             </div>
             <div>
-              <Label>شماره شناسایی (اختیاری)</Label>
-              <Input value={form.tazkira_id} onChange={e => setForm({...form, tazkira_id: e.target.value})} placeholder="شماره تذکره یا شناسه مشتری" />
-            </div>
-            <div>
-              <Label>وضعیت بررسی اطلاعات</Label>
-              <Select value={form.identity_status || 'not_verified'} onValueChange={v => setForm({...form, identity_status: v})}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="not_verified">بررسی‌نشده</SelectItem>
-                  <SelectItem value="verified">اطلاعات بررسی و تأیید شد</SelectItem>
-                </SelectContent>
-              </Select>
-              <p className="text-xs text-muted-foreground mt-1">این وضعیت فقط برای ثبت شناسایی مشتری در حسابداری است و احراز هویت بانکی محسوب نمی‌شود.</p>
+              <Label>شماره تذکره</Label>
+              <Input value={form.tazkira_id} onChange={e => setForm({...form, tazkira_id: e.target.value})} />
             </div>
             <div>
               <Label>یادداشت</Label>
