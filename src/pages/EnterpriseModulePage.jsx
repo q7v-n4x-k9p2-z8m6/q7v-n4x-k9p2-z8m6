@@ -771,6 +771,47 @@ function InternalControlsReview() {
 }
 
 
+function AccountsReceivableReadiness() {
+  const exchangeCode = getExchangeCode();
+  const query = useQuery({
+    queryKey: ['accountsReceivableReadiness', exchangeCode],
+    enabled: !!exchangeCode,
+    queryFn: async () => {
+      const [documents, entries, accounts] = await Promise.all([
+        fetchAllTenantRows('documents', 'id,doc_number,doc_type,related_type,related_name,amount,currency,created_at,deleted,reversed,exchange_code', exchangeCode),
+        fetchAllTenantRows('ledger_entries', 'id,document_id,account_type,account_id,account_name,debit,credit,currency,deleted,exchange_code', exchangeCode),
+        fetchAllTenantRows('chart_of_accounts', 'id,account_code,account_name,account_type,is_active,exchange_code', exchangeCode),
+      ]);
+      const isReceivable = row => /receivable|customer_due|customer_debt|دریافتنی|مطالبات/i.test(String(row.related_type || '') + ' ' + String(row.doc_type || ''));
+      const taggedDocuments = documents.filter(row => row.deleted !== true && row.reversed !== true && isReceivable(row));
+      const receivableAccounts = accounts.filter(row => row.is_active !== false && /receivable|دریافتنی|مطالبات/i.test(String(row.account_type || '') + ' ' + String(row.account_name || '') + ' ' + String(row.account_code || '')));
+      const docIds = new Set(taggedDocuments.map(row => String(row.id)));
+      const linkedEntries = entries.filter(row => row.deleted !== true && row.document_id != null && docIds.has(String(row.document_id)));
+      return { taggedDocuments, receivableAccounts, linkedEntries };
+    },
+    staleTime: 30000,
+  });
+  if (!exchangeCode) return <Card><CardContent className="p-5 text-sm text-muted-foreground">برای بررسی دریافتنی‌ها، ابتدا با حساب همان صرافی وارد شوید.</CardContent></Card>;
+  const data = query.data;
+  return <div className="space-y-4">
+    <Card><CardContent className="p-4 space-y-3">
+      <div className="flex items-center justify-between gap-2"><div><h2 className="font-semibold">آمادگی حساب‌های دریافتنی</h2><p className="text-xs text-muted-foreground">بررسی حساب‌ها و اسناد برچسب‌خورده؛ بدون محاسبه مانده ساختگی</p></div><Button size="sm" variant="outline" onClick={() => query.refetch()} disabled={query.isFetching}><RefreshCw className="w-4 h-4"/>بروزرسانی</Button></div>
+      {query.isLoading ? <LoadingState/> : query.isError ? <p className="text-sm text-destructive">{query.error?.message || 'بررسی دریافتنی‌ها ناموفق بود'}</p> : <>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+          <div className="rounded-lg bg-muted/50 p-3"><p className="text-xs text-muted-foreground">حساب‌های دریافتنی فعال</p><p className="text-xl font-bold">{data.receivableAccounts.length}</p></div>
+          <div className="rounded-lg bg-muted/50 p-3"><p className="text-xs text-muted-foreground">اسناد دریافتنی شناسایی‌شده</p><p className="text-xl font-bold">{data.taggedDocuments.length}</p></div>
+          <div className="rounded-lg bg-muted/50 p-3"><p className="text-xs text-muted-foreground">ردیف‌های دفترکل متصل</p><p className="text-xl font-bold">{data.linkedEntries.length}</p></div>
+        </div>
+        {data.receivableAccounts.length > 0 && <div className="rounded-lg border p-3 space-y-2"><h3 className="text-sm font-semibold">حساب‌های مرتبط</h3>{data.receivableAccounts.slice(0,25).map(row=><div key={row.id} className="flex justify-between gap-3 border-b last:border-0 py-2 text-xs"><span>{row.account_name}</span><span className="font-mono text-muted-foreground">{row.account_code || '—'}</span></div>)}</div>}
+        {data.taggedDocuments.length > 0 && <div className="rounded-lg border p-3 space-y-2"><h3 className="text-sm font-semibold">اسناد دارای برچسب دریافتنی</h3>{data.taggedDocuments.slice(0,25).map(row=><div key={row.id} className="flex justify-between gap-3 border-b last:border-0 py-2 text-xs"><span>سند {row.doc_number || row.id} · {row.related_name || row.related_type || row.doc_type || '—'}</span><span>{row.currency || '—'}</span></div>)}</div>}
+        <div className="rounded-lg border p-3 space-y-2"><div className="flex items-center gap-2 text-sm font-semibold"><AlertTriangle className="w-4 h-4 text-amber-600"/>چرخه عملیاتی مطالبات کامل تأیید نشده است</div><p className="text-sm text-muted-foreground">دفتر مستقل فاکتورهای مشتری، تاریخ سررسید، برنامه اقساط، تخصیص دریافت، مانده باز قابل اتکا، گزارش سن مطالبات و تطبیق خودکار دریافت‌ها در ساختار بررسی‌شده تأیید نشده‌اند.</p><p className="text-xs text-muted-foreground">این شمارش‌ها معادل مانده دریافتنی یا مبلغ بدهی مشتری نیستند و هیچ داده مالی تغییر نمی‌کند.</p></div>
+      </>}
+    </CardContent></Card>
+    <div className="rounded-lg border p-3 text-xs text-muted-foreground">برای تکمیل واقعی باید گردش فاکتور/مطالبه، سررسید، دریافت جزئی و کامل، تخصیص وجه، برگشت و تطبیق با دفترکل به‌صورت تراکنشی و قابل ممیزی طراحی شود.</div>
+  </div>;
+}
+
+
 function IntercompanyReadiness() {
   const exchangeCode = getExchangeCode();
   const query = useQuery({
@@ -1007,6 +1048,7 @@ export default function EnterpriseModulePage() {
   if(key==='fx_exposure') return <><PageHeader title="موقعیت و ریسک ارزی" icon={ListTree}/><FxExposureReport/></>;
   if(key==='accounts_receivable') return <><PageHeader title="مانده حساب مشتریان" icon={ListTree}/><CustomerBalancesReport/></>;
   if(key==='accounts_payable') return <><PageHeader title="حساب‌های پرداختنی" icon={ListTree}/><AccountsPayableReadiness/></>;
+  if(key==='accounts_receivable') return <><PageHeader title="حساب‌های دریافتنی" icon={ListTree}/><AccountsReceivableReadiness/></>;
   if(key==='fixed_assets') return <><PageHeader title="دارایی‌های ثابت" icon={ListTree}/><FixedAssetsReadiness/></>;
   if(key==='fiscal_periods') return <><PageHeader title="دوره‌های مالی" icon={CalendarDays}/><FiscalPeriodsManager/></>;
   if(key==='period_close') return <><PageHeader title="بستن دوره مالی" icon={CalendarDays}/><PeriodCloseReadiness/></>;
