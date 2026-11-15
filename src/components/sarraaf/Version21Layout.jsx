@@ -110,7 +110,7 @@ export default function Version21Layout() {
   const location = useLocation();
   const navigate = useNavigate();
   const role = user?.role || 'user';
-  const modules = MODULES.filter(item => item.roles.includes(role));
+  const modules = MODULES.filter(item => Array.isArray(item.roles) && item.roles.includes(role));
   const current = modules.find(item => item.path && (location.pathname === item.path || location.pathname.startsWith(item.path + '/')));
   const isAssistant = location.pathname === '/assistant';
 
