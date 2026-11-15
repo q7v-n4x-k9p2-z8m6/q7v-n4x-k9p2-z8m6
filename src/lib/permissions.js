@@ -28,9 +28,21 @@ export function getTrialDaysRemaining(profile) {
 
 // ── Plan Status ──
 // Returns: 'free' | 'trial' | 'paid_active' | 'paid_expired'
-// همهٔ کاربران دسترسی نامحدود دارند — همیشه 'paid_active' برمی‌گرداند.
+// Level 1 is the free tier. Levels 2 and 3 require a valid paid period.
 export function getPlanStatus(profile) {
-  return 'paid_active';
+  const tier = Number(profile?.entitlement_level);
+  if (tier !== 2 && tier !== 3) return 'free';
+
+  const paidEnd = profile?.paid_end_date || profile?.quota_end_date;
+  if (!paidEnd) return 'paid_expired';
+
+  const end = new Date(paidEnd);
+  if (Number.isNaN(end.getTime())) return 'paid_expired';
+  // Date-only values remain valid through the end of that calendar day.
+  if (/^\\d{4}-\\d{2}-\\d{2}$/.test(String(paidEnd))) {
+    end.setHours(23, 59, 59, 999);
+  }
+  return end >= new Date() ? 'paid_active' : 'paid_expired';
 }
 
 // ── Is Paid ──
