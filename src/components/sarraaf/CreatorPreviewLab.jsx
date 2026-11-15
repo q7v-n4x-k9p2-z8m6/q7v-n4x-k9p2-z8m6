@@ -5,7 +5,8 @@ import {
   ScrollText, Lock, MoreHorizontal, ChevronDown, Save, ClipboardList, FileSpreadsheet,
   Calculator, Download, Upload, Filter, Coins, Banknote, FileText, CalendarDays, MessageSquare, Bot,
   CircleDollarSign, Eye, FilePlus2, ArrowDownCircle, ArrowUpCircle, Scale, Settings2,
-  Archive, RotateCcw, ListChecks, CreditCard, CircleHelp, PrinterCheck
+  Archive, RotateCcw, ListChecks, CreditCard, CircleHelp, PrinterCheck,
+  Languages, ShoppingBag, Smartphone, Wifi, Gamepad2, MessagesSquare, Headphones
 } from 'lucide-react';
 
 const STORE_KEY = 'hisab-sarraf-lab-v2';
@@ -29,7 +30,10 @@ const MODULES = [
   {id:'profit',label:'مفاد و زیان',icon:BarChart3,group:'گزارشات'},
   {id:'balance',label:'بیلانس عمومی',icon:Scale,group:'گزارشات'},
   {id:'sarraafGroups',label:'گروه صرافان',icon:MessageSquare,group:'امکانات تکمیلی',skeleton:true},
-  {id:'assistant',label:'هوش مصنوعی',icon:Bot,group:'امکانات تکمیلی',skeleton:true}
+  {id:'assistant',label:'هوش مصنوعی',icon:Bot,group:'امکانات تکمیلی',skeleton:true},
+  {id:'products',label:'محصولات آنلاین',icon:ShoppingBag,group:'امکانات تکمیلی',skeleton:true,children:['شارژ موبایل','بسته‌های اینترنت','UC پابجی موبایل']},
+  {id:'groupChat',label:'گروه و چت',icon:MessagesSquare,group:'امکانات تکمیلی',skeleton:true,children:['ایجاد گروه','گفت‌وگوی گروهی','گفت‌وگوی خصوصی']},
+  {id:'language',label:'زبان برنامه',icon:Languages,group:'تنظیمات',skeleton:true,children:['فارسی','دری','English','العربية']}
 ];
 const SCHEMAS = {
  customers:{title:'مشتری',fields:[['code','کد مشتری','text'],['name','نام مشتری','text'],['kind','نوع حساب','select',['دائمی','موقتی']],['phone','شماره تماس','text'],['address','آدرس','text'],['currency','ارز اصلی','select',CURRENCIES],['opening','مانده افتتاحیه','number'],['status','وضعیت','select',['فعال','غیرفعال','قفل']]]},
@@ -136,7 +140,7 @@ const NAV_MENUS = [
  {label:'عملیات',items:[['دخل صندوق','cashIn'],['خرج صندوق','cashOut'],['خرید و فروش اسعار','exchange'],['ثبت حواله','remittance'],['ثبت مصرف','expenses']]},
  {label:'حسابات',items:[['روزنامچه','journal'],['دفتر کل','ledger'],['حساب مشتریان','customerLedger'],['حساب نمایندگی‌ها','branchLedger']]},
  {label:'گزارشات',items:[['گزارش عملیات روز','reports'],['مفاد و زیان','profit'],['بیلانس عمومی','balance']]},
- {label:'تنظیمات',items:[['تنظیمات محلی','settings'],['راهنما','help']]},
+ {label:'تنظیمات',items:[['تنظیمات محلی','settings'],['انتخاب زبان','language'],['پشتیبانی','support'],['راهنما','help']]},
   {label:'امکانات تکمیلی',items:[['گروه صرافان','sarraafGroups'],['هوش مصنوعی','assistant']] }
 ];
 
@@ -337,7 +341,7 @@ export default function CreatorPreviewLab(){
   if(action==='restore')return setModal('restore');
   if(action==='print')return printPage();
   if(action==='reset')return reset();
-  if(action==='settings'||action==='help')return setModal(action);
+  if(action==='settings'||action==='help'||action==='support')return setModal(action);
   setActive(action);
  };
  const exportCsv=()=>{const cols=columnsFor(active);const csv=[cols.map(c=>c.label).join(','),...rows.map(r=>cols.map(c=>'"'+String(r[c.key]??'').replaceAll('"','""')+'"').join(','))].join('\n');const blob=new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=active+'-report.csv';a.click();URL.revokeObjectURL(a.href);};
@@ -352,7 +356,7 @@ export default function CreatorPreviewLab(){
    {/* ردیف اول: عملیات روی رکورد انتخاب‌شده */}
    <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
     <aside className="shrink-0 grid w-full grid-cols-6 gap-1 border-b border-slate-400 bg-[#e1e8ed] p-2 md:grid-cols-12">
-      {['customerLedger','customers','branches','branchLedger','banks','remittance','cash','exchange','expenses','journal','ledger','sarraafGroups','assistant'].map(id=>{const m=MODULES.find(x=>x.id===id);if(!m)return null;const I=m.icon;return <button key={m.id} title={m.label} onClick={()=>{setActive(m.id);setSelected(null);setCustomerDetail(null);setBranchDetail(null);setQuery('');}} className={'flex min-w-0 flex-col items-center justify-center gap-1 rounded-sm border px-1 py-1.5 text-center '+(active===m.id?'border-blue-300 bg-[#d2e3f1] font-bold text-blue-900':'border-transparent text-[#29465e] hover:border-slate-300 hover:bg-white')}><I className="h-4 w-4"/><span className="w-full truncate text-[9px]">{m.label}</span></button>})}
+      {['customerLedger','customers','branches','branchLedger','banks','remittance','cash','exchange','expenses','journal','ledger','sarraafGroups','assistant','products','groupChat','language'].map(id=>{const m=MODULES.find(x=>x.id===id);if(!m)return null;const I=m.icon;return <button key={m.id} title={m.label} onClick={()=>{setActive(m.id);setSelected(null);setCustomerDetail(null);setBranchDetail(null);setQuery('');}} className={'flex min-w-0 flex-col items-center justify-center gap-1 rounded-sm border px-1 py-1.5 text-center '+(active===m.id?'border-blue-300 bg-[#d2e3f1] font-bold text-blue-900':'border-transparent text-[#29465e] hover:border-slate-300 hover:bg-white')}><I className="h-4 w-4"/><span className="w-full truncate text-[9px]">{m.label}</span></button>})}
       <button onClick={()=>setShowWorkspace(true)} className="flex min-w-0 flex-col items-center justify-center gap-1 rounded-sm border border-[#9aabb9] bg-white px-1 py-1.5 text-center text-[#24496d] hover:bg-blue-50"><Home className="h-4 w-4"/><span className="w-full truncate text-[9px] font-bold">میزکار</span></button>
      </aside>
     <main className="min-h-0 min-w-0 flex-1 overflow-y-auto bg-[#f9fafb] p-3">
@@ -373,7 +377,8 @@ export default function CreatorPreviewLab(){
         {title:'صندوق و بانک',ids:['cash','banks']},
         {title:'عملیات صرافی',ids:['exchange','remittance','expenses']},
         {title:'حسابداری و گزارشات',ids:['journal','ledger','accounts','currencies','reports','profit','balance']},
-         {title:'امکانات تکمیلی · اسکلت اولیه',ids:['sarraafGroups','assistant']}
+         {title:'امکانات تکمیلی · اسکلت اولیه',ids:['sarraafGroups','assistant','products','groupChat']},
+        {title:'تنظیمات',ids:['language']}
        ].map(group=><section key={group.title} className="border border-[#9aabb9] bg-[#e8eef3] p-2 shadow-sm">
         <div className="mb-2 flex items-center justify-between border-b border-[#b7c5d0] pb-1"><b className="text-[11px] text-[#294d69]">\${group.title}</b><span className="text-[9px] text-slate-500">فهرست امکانات</span></div>
         <div className="flex flex-wrap items-stretch gap-2">{group.ids.map(id=>{const m=MODULES.find(x=>x.id===id);return m?<div key={m.id} className="min-w-[112px] flex-1 basis-[112px]"><Tile icon={m.icon} label={m.label} onClick={()=>{setActive(m.id);setSelected(null);setCustomerDetail(null);setBranchDetail(null);setQuery('');}}/></div>:null;})}</div>
@@ -389,7 +394,7 @@ export default function CreatorPreviewLab(){
         <button onClick={()=>openNew('exchange')} className="border border-[#a8b7c3] bg-[#edf3f7] px-3 py-2 text-[10px] hover:bg-blue-50"><ArrowLeftRight className="ml-1 inline h-4 w-4"/>معامله اسعار</button>
        </div>
       </div>
-     </>:page.skeleton?<section className="min-h-[360px] border-2 border-dashed border-[#9aabb9] bg-white p-6 text-center"><div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-xl border border-[#b6c4cf] bg-[#edf3f7]"><page.icon className="h-7 w-7 text-[#315e80]"/></div><h2 className="text-base font-bold text-[#24496d]">{page.label}</h2><p className="mx-auto mt-2 max-w-xl text-xs leading-6 text-slate-600">اسکلت اولیه این بخش اضافه شده است. فعلاً فقط جایگاه آیکون و عنوان آن مشخص است؛ هیچ عملیات، ثبت، ویرایش، حذف یا اتصال داده‌ای برای این بخش فعال نیست.</p><span className="mt-4 inline-flex rounded-full border border-amber-300 bg-amber-50 px-3 py-1 text-[10px] font-bold text-amber-800">در مرحله طراحی ساختار</span></section>:<>
+     </>:page.skeleton?<section className="min-h-[360px] border-2 border-dashed border-[#9aabb9] bg-white p-6 text-center"><div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-xl border border-[#b6c4cf] bg-[#edf3f7]"><page.icon className="h-7 w-7 text-[#315e80]"/></div><h2 className="text-base font-bold text-[#24496d]">{page.label}</h2><p className="mx-auto mt-2 max-w-xl text-xs leading-6 text-slate-600">اسکلت اولیه این بخش اضافه شده است. فعلاً فقط جایگاه آیکون و عنوان آن مشخص است؛ هیچ عملیات، ثبت، ویرایش، حذف یا اتصال داده‌ای برای این بخش فعال نیست.</p><div className="mx-auto mt-5 flex max-w-2xl flex-wrap justify-center gap-2">{(page.children||[]).map(child=><span key={child} className="rounded border border-[#b6c4cf] bg-[#f2f6f9] px-3 py-2 text-[11px] font-semibold text-[#294d69]">{child}</span>)}</div><span className="mt-4 inline-flex rounded-full border border-amber-300 bg-amber-50 px-3 py-1 text-[10px] font-bold text-amber-800">در مرحله طراحی ساختار · بدون عملیات و اتصال</span></section>:<>
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2 border-b-2 border-[#315e80] pb-2"><div className="flex items-center gap-2"><page.icon className="h-5 w-5 text-[#315e80]"/><div><div className="text-[9px] text-slate-500">سیستم حسابداری / {page.label}</div><h2 className="text-sm font-bold text-[#24496d]">{page.label}</h2></div>{active==='customerLedger'&&customerDetail&&<button onClick={()=>{setCustomerDetail(null);setSelected(null);}} className="mr-2 border bg-white px-2 py-1 text-[10px]">بازگشت به فهرست مشتریان</button>}{active==='branchLedger'&&branchDetail&&<button onClick={()=>{setBranchDetail(null);setSelected(null);}} className="mr-2 border bg-white px-2 py-1 text-[10px]">بازگشت به فهرست نمایندگی‌ها</button>}</div><div className="flex flex-wrap gap-1 text-[10px]"><label>از <input type="date" value={dateFrom} onChange={e=>setDateFrom(e.target.value)} className="border bg-white px-1 py-1"/></label><label>تا <input type="date" value={dateTo} onChange={e=>setDateTo(e.target.value)} className="border bg-white px-1 py-1"/></label><button onClick={()=>{setDateFrom('');setDateTo('');}} className="border bg-white px-2">پاک‌سازی تاریخ</button></div></div>
       {active==='cash'&&<div className="mb-3 flex flex-wrap items-center justify-between gap-2 border border-[#b6c4cf] bg-[#edf3f7] px-3 py-2"><div><b className="text-[11px] text-[#24496d]">فهرست صندوق‌ها</b><div className="mt-1 text-[10px] text-slate-600">هر صندوق در یک ردیف؛ برای دیدن جزئیات، ردیف را انتخاب کنید.</div></div><div className="flex items-center gap-3 text-[10px]"><span>تعداد صندوق‌ها: <b>{fmt(data.cash.length)}</b></span><button onClick={()=>openNew('cash')} className="border border-blue-300 bg-white px-3 py-2 font-bold text-blue-900"><Plus className="ml-1 inline h-3 w-3"/>صندوق جدید</button></div></div>}
       {active==='profit'&&<div className="mb-3 grid gap-2 sm:grid-cols-3">{CURRENCIES.slice(0,4).map(c=><div key={c} className="border bg-emerald-50 p-3"><span className="text-[10px]">گردش خالص {c}</span><b className="block text-lg">{fmt(totalByCurrency(c))}</b></div>)}</div>}
@@ -421,6 +426,7 @@ export default function CreatorPreviewLab(){
    {modal==='cashAction'&&<><div className="grid gap-3 p-4 sm:grid-cols-2">{[['تاریخ','date'],['نوع عملیات','kind'],['نوع طرف حساب','partyType'],['طرف حساب','party'],['ارز','currency'],['مبلغ','amount'],['صندوق','cash'],['شرح','description']].map(([label,key])=><label key={key} className="space-y-1 text-[11px]"><span>{label}</span>{key==='kind'?<select value={draft.kind} onChange={e=>setField(key,e.target.value)} className="h-9 w-full border bg-white px-2"><option>دخل</option><option>خرج</option></select>:key==='partyType'?<select value={draft.partyType||'customer'} onChange={e=>setField(key,e.target.value)} className="h-9 w-full border bg-white px-2"><option value="customer">مشتری</option><option value="branch">نمایندگی</option><option value="other">سایر</option></select>:key==='currency'?<select value={draft.currency} onChange={e=>{const currency=e.target.value;const first=data.cash.find(x=>x.currency===currency);setDraft(d=>({...d,currency,cash:first?.name||''}));}} className="h-9 w-full border bg-white px-2">{CURRENCIES.map(c=><option key={c}>{c}</option>)}</select>:key==='cash'?<select value={draft.cash||''} onChange={e=>setField(key,e.target.value)} className="h-9 w-full border bg-white px-2"><option value="">انتخاب صندوق</option>{data.cash.filter(c=>c.currency===draft.currency).map(c=><option key={c.id} value={c.name}>{c.name} · {c.currency}</option>)}</select>:<input type={key==='amount'?'number':key==='date'?'date':'text'} value={draft[key]||''} onChange={e=>setField(key,e.target.value)} className="h-9 w-full border bg-white px-2"/>}</label>)}</div><div className="flex justify-end border-t bg-slate-100 p-3"><button onClick={saveCashAction} className="border bg-white px-4 py-2 text-xs">ثبت گردش صندوق</button></div></>}
    {modal==='restore'&&<div className="space-y-3 p-4"><p className="text-xs">محتوای فایل پشتیبان JSON آزمایشگاه را اینجا وارد کنید. اطلاعات فعلی جایگزین می‌شود.</p><textarea value={restoreText} onChange={e=>setRestoreText(e.target.value)} rows={9} className="w-full border bg-white p-2 text-xs" placeholder="محتوای JSON..."/><button onClick={restore} className="border bg-white px-4 py-2 text-xs">بازیابی در مرورگر</button></div>}
    {modal==='settings'&&<div className="space-y-2 p-4 text-xs"><p>ذخیره‌سازی: localStorage همین مرورگر</p><p>اتصال شبکه و دیتابیس: غیرفعال</p><p>برای انتقال داده‌ها بین دستگاه‌ها از پشتیبان JSON استفاده کنید.</p><button onClick={backup} className="border bg-white px-3 py-2">گرفتن پشتیبان</button><button onClick={reset} className="mr-2 border bg-white px-3 py-2">بازنشانی داده‌های آزمایشی</button></div>}
+   {modal==='support'&&<div className="space-y-2 p-4 text-xs leading-6"><b>پشتیبانی حساب صراف</b><p>جایگاه پشتیبانی در تنظیمات مشخص شده است؛ روش‌های تماس و ارسال درخواست بعداً طراحی می‌شوند.</p><span className="inline-flex rounded-full border border-amber-300 bg-amber-50 px-3 py-1 text-[10px] font-bold text-amber-800">اسکلت اولیه · غیرفعال</span></div>}
    {modal==='help'&&<div className="space-y-2 p-4 text-xs leading-6"><p>۱. از فهرست سمت راست بخش مورد نظر را باز کنید.</p><p>۲. با دکمه ثبت جدید رکورد آزمایشی اضافه کنید؛ ردیف را انتخاب و ویرایش یا حذف کنید.</p><p>۳. عملیات دخل و خرج در گردش صندوق ثبت و مانده‌ها محاسبه می‌شوند.</p><p>۴. پشتیبان JSON برای نگهداری و بازیابی اطلاعات محلی استفاده می‌شود.</p><p>این محیط به دیتابیس اصلی متصل نیست.</p></div>}
   </div></div>}
   <style>{'@media print{body *{visibility:hidden!important} .print-area,.print-area *{visibility:visible!important}}'}</style>
