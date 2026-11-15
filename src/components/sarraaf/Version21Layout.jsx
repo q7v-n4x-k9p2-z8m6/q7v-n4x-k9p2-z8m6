@@ -2,8 +2,8 @@ import React from 'react';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import {
   Home, Users, Wallet, Landmark, ArrowLeftRight, Send, ScrollText,
-  ClipboardList, Coins, FileSpreadsheet, ChartNoAxesCombined, Scale,
-  MessagesSquare, Bot, ShoppingBag, Settings, Menu, Headphones,
+  ClipboardList, Coins, FileSpreadsheet, BarChart3, Scale,
+  MessagesSquare, Bot, ShoppingBag, Headphones,
   Construction, LogOut
 } from 'lucide-react';
 import { useAuth } from '@/lib/AuthContext';
@@ -26,7 +26,7 @@ const MODULES = [
   { id: 'accounts', label: 'کدینگ حساب‌ها', pending: true, icon: ClipboardList, group: 'حسابداری', roles: ['creator', 'admin', 'sarraaf'] },
   { id: 'currencies', label: 'تعریف اسعار', path: '/currencies', icon: Coins, group: 'تنظیمات', roles: ['creator', 'admin', 'sarraaf'] },
   { id: 'reports', label: 'گزارش عملیات', path: '/reports', icon: FileSpreadsheet, group: 'گزارشات', roles: ['creator', 'admin', 'sarraaf', 'employee'] },
-  { id: 'profit', label: 'مفاد و زیان', path: '/profit-loss', icon: ChartNoAxesCombined, group: 'گزارشات', roles: ['creator', 'admin', 'sarraaf'] },
+  { id: 'profit', label: 'مفاد و زیان', path: '/profit-loss', icon: BarChart3, group: 'گزارشات', roles: ['creator', 'admin', 'sarraaf'] },
   { id: 'balance', label: 'بیلانس عمومی', path: '/balance-sheet', icon: Scale, group: 'گزارشات', roles: ['creator', 'admin', 'sarraaf'] },
   { id: 'sarraafGroups', label: 'گروه و چت', path: '/chat', icon: MessagesSquare, group: 'امکانات تکمیلی', roles: ['creator', 'admin', 'sarraaf'] },
   { id: 'assistant', label: 'هوش مصنوعی', path: '/assistant', icon: Bot, group: 'امکانات تکمیلی', roles: ['creator', 'admin', 'sarraaf', 'employee'] },
