@@ -69,7 +69,7 @@ export default function MobileLayoutPreview() {
       <Card>
         <CardContent className="space-y-3 p-4">
           <div>
-            <h3 className="text-sm font-bold">چیدمان پنجره‌ای موبایل حساب صراف</h3>
+            <h3 className="text-sm font-bold">نسخه جدید چیدمان موبایل حساب صراف</h3>
             <p className="text-[11px] text-muted-foreground">نمایش کلاسیک و پنجره‌ای؛ بدون آیکون و بدون شبکه میانبرها</p>
           </div>
 
