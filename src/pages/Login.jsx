@@ -396,10 +396,11 @@ export default function Login() {
             // مهاجرت موفق بود — از توکن Supabase استفاده کن
             localStorage.setItem('auth_token', migrateResult.token);
             const migratedUser = migrateResult.user || localResult.user;
-            if (migratedUser && migratedUser.role !== 'creator') {
-              localStorage.setItem('auth_user', JSON.stringify(migratedUser));
+            const userRole = normalizeRole(migratedUser?.role);
+            const normalizedMigratedUser = migratedUser ? { ...migratedUser, role: userRole } : migratedUser;
+            if (normalizedMigratedUser && normalizedMigratedUser.role !== 'creator') {
+              localStorage.setItem('auth_user', JSON.stringify(normalizedMigratedUser));
             }
-            const userRole = migratedUser?.role;
             if (userRole !== 'creator' && maintenanceInfo?.enabled !== false) {
               try { localStorage.removeItem('auth_token'); localStorage.removeItem('auth_user'); } catch { /* ignore storage errors */ }
               setMaintenanceBlocked(true);
@@ -430,7 +431,10 @@ export default function Login() {
           if (localResult.user && localResult.user.role !== 'creator') {
             localStorage.setItem('auth_user', JSON.stringify(localResult.user));
           }
-          const userRole = localResult.user?.role;
+          const userRole = normalizeRole(localResult.user?.role);
+          if (localResult.user && userRole !== localResult.user.role) {
+            localStorage.setItem('auth_user', JSON.stringify({ ...localResult.user, role: userRole }));
+          }
           if (userRole !== 'creator' && maintenanceInfo?.enabled !== false) {
             try { localStorage.removeItem('auth_token'); localStorage.removeItem('auth_user'); } catch { /* ignore storage errors */ }
             setMaintenanceBlocked(true);
