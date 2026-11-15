@@ -25,7 +25,10 @@ const SUGGESTED_QUESTIONS = [
 
 export default function Assistant({ embedded = false, onClose }) {
   const { user } = useAuth();
+  // Keep each signed-in account's assistant history isolated on this device.
+  const historyScope = `${String(user?.id || user?.email || user?.username || 'guest')}:${String(user?.role || 'unknown')}`;
   const [messages, setMessages] = useState([]);
+  const [historyLoadedFor, setHistoryLoadedFor] = useState(null);
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
   const [error, setError] = useState(null);
@@ -36,15 +39,16 @@ export default function Assistant({ embedded = false, onClose }) {
   const audioChunksRef = useRef([]);
   const [recording, setRecording] = useState(false);
 
-  // بارگذاری تاریخچه محلی هنگام نمایش صفحه
+  // بارگذاری تاریخچه جداگانه برای هر حساب؛ هنگام تعویض حساب، پیام‌های قبلی مخلوط نمی‌شوند.
   useEffect(() => {
-    setMessages(loadHistory());
-  }, []);
+    setMessages(loadHistory(historyScope));
+    setHistoryLoadedFor(historyScope);
+  }, [historyScope]);
 
-  // ذخیره خودکار تاریخچه
+  // تا پیش از بارگذاری تاریخچه حساب جاری، پیام‌های حساب قبلی ذخیره نشوند.
   useEffect(() => {
-    saveHistory(messages);
-  }, [messages]);
+    if (historyLoadedFor === historyScope) saveHistory(messages, historyScope);
+  }, [messages, historyScope, historyLoadedFor]);
 
   // اسکرول به پایین هنگام افزودن پیام
   useEffect(() => {
@@ -82,7 +86,7 @@ export default function Assistant({ embedded = false, onClose }) {
     setNotConfigured(false);
     const botMsg = { role: 'assistant', text: result.reply, ts: Date.now() };
     setMessages(prev => [...prev, botMsg]);
-  }, [input, sending]);
+  }, [input, sending, messages]);
 
   const stopVoiceRecording = useCallback(() => {
     const recorder = mediaRecorderRef.current;
