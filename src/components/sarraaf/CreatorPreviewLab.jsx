@@ -3,7 +3,7 @@ import {
   Home, Users, Wallet, BookOpen, BookText, Search, Printer, Plus, Pencil, Trash2,
   RefreshCw, Receipt, Landmark, Building2, Send, BarChart3, X, Check, ArrowLeftRight,
   ScrollText, Lock, MoreHorizontal, ChevronDown, Save, ClipboardList, FileSpreadsheet,
-  Calculator, Download, Upload, Filter, Coins, Banknote, FileText, CalendarDays,
+  Calculator, Download, Upload, Filter, Coins, Banknote, FileText, CalendarDays, MessageSquare, Bot,
   CircleDollarSign, Eye, FilePlus2, ArrowDownCircle, ArrowUpCircle, Scale, Settings2,
   Archive, RotateCcw, ListChecks, CreditCard, CircleHelp, PrinterCheck
 } from 'lucide-react';
@@ -27,7 +27,9 @@ const MODULES = [
   {id:'currencies',label:'تعریف اسعار',icon:Coins,group:'تنظیمات'},
   {id:'reports',label:'گزارش عملیات',icon:FileSpreadsheet,group:'گزارشات'},
   {id:'profit',label:'مفاد و زیان',icon:BarChart3,group:'گزارشات'},
-  {id:'balance',label:'بیلانس عمومی',icon:Scale,group:'گزارشات'}
+  {id:'balance',label:'بیلانس عمومی',icon:Scale,group:'گزارشات'},
+  {id:'sarraafGroups',label:'گروه صرافان',icon:MessageSquare,group:'امکانات تکمیلی',skeleton:true},
+  {id:'assistant',label:'هوش مصنوعی',icon:Bot,group:'امکانات تکمیلی',skeleton:true}
 ];
 const SCHEMAS = {
  customers:{title:'مشتری',fields:[['code','کد مشتری','text'],['name','نام مشتری','text'],['kind','نوع حساب','select',['دائمی','موقتی']],['phone','شماره تماس','text'],['address','آدرس','text'],['currency','ارز اصلی','select',CURRENCIES],['opening','مانده افتتاحیه','number'],['status','وضعیت','select',['فعال','غیرفعال','قفل']]]},
@@ -134,7 +136,8 @@ const NAV_MENUS = [
  {label:'عملیات',items:[['دخل صندوق','cashIn'],['خرج صندوق','cashOut'],['خرید و فروش اسعار','exchange'],['ثبت حواله','remittance'],['ثبت مصرف','expenses']]},
  {label:'حسابات',items:[['روزنامچه','journal'],['دفتر کل','ledger'],['حساب مشتریان','customerLedger'],['حساب نمایندگی‌ها','branchLedger']]},
  {label:'گزارشات',items:[['گزارش عملیات روز','reports'],['مفاد و زیان','profit'],['بیلانس عمومی','balance']]},
- {label:'تنظیمات',items:[['تنظیمات محلی','settings'],['راهنما','help']]}
+ {label:'تنظیمات',items:[['تنظیمات محلی','settings'],['راهنما','help']]},
+  {label:'امکانات تکمیلی',items:[['گروه صرافان','sarraafGroups'],['هوش مصنوعی','assistant']] }
 ];
 
 function Field({field,value,onChange,choices}) {
@@ -341,15 +344,15 @@ export default function CreatorPreviewLab(){
  const dailyTransactions=data.transactions.filter(t=>t.date===today());
  const profit=data.exchange.reduce((s,x)=>s+n(x.profit),0);
  const currencies=[...new Set([...data.cash.map(x=>x.currency),...data.transactions.map(x=>x.currency),'AFN'])];
- const mainTitle='سیستم حسابداری صراف — الگوی آزمایشگاهی الهام‌گرفته از آریانا'; return <div dir="rtl" className="space-y-2 text-[#253746]">
-  <div className="flex flex-wrap items-center justify-between gap-2 border border-slate-400 bg-[#eaf0f5] px-3 py-2"><b className="flex items-center gap-2 text-xs text-[#24496d]"><Calculator className="h-4 w-4"/> آزمایشگاه حسابداری صراف — نسخه مرورگری</b><span className="text-[10px] font-bold text-emerald-800">محلی و مستقل · بدون اتصال به سرور یا دیتابیس</span></div>
+ const mainTitle='چیدمان لپ‌تاپ حساب صراف — پیش‌نمایش آزمایشگاهی'; return <div dir="rtl" className="space-y-2 text-[#253746]">
+  <div className="flex flex-wrap items-center justify-between gap-2 border border-slate-400 bg-[#eaf0f5] px-3 py-2"><b className="flex items-center gap-2 text-xs text-[#24496d]"><Calculator className="h-4 w-4"/> چیدمان لپ‌تاپ حساب صراف — نسخه مرورگری</b><span className="text-[10px] font-bold text-emerald-800">محلی و مستقل · بدون اتصال به سرور یا دیتابیس</span></div>
   <section className="flex max-h-[78vh] min-h-[640px] flex-col overflow-hidden border border-[#65798b] bg-[#eef1f4] shadow-md">
    <header className="flex min-h-9 items-center justify-between bg-gradient-to-b from-[#315f80] to-[#173f5d] px-3 py-1.5 text-white"><div className="flex items-center gap-2"><Calculator className="h-4 w-4"/><b className="text-xs">{mainTitle}</b><span className="hidden text-[10px] text-blue-100 sm:inline">— محیط آزمایشی مستقل</span></div><div className="flex gap-1"><button onClick={()=>setModal('settings')} className="border border-white/30 px-2 text-xs">⚙</button><button onClick={()=>setActive('home')} className="border border-white/30 px-2 text-xs">⌂</button></div></header>
    <nav className="flex flex-wrap items-center border-b border-slate-400 bg-gradient-to-b from-[#fdfefe] to-[#dce4ea]">{NAV_MENUS.map(m=><div key={m.label} className="relative"><button onClick={()=>setMenu(menu===m.label?'':m.label)} className={'px-3 py-2 text-[11px] hover:bg-white '+(menu===m.label?'bg-white font-bold text-blue-800':'')}>{m.label}<ChevronDown className="mr-1 inline h-3 w-3"/></button>{menu===m.label&&<div className="absolute right-0 top-full z-40 min-w-48 border border-slate-400 bg-white py-1 shadow-xl">{m.items.map(([label,act])=><button key={act} onClick={()=>menuAction(act)} className="block w-full px-3 py-2 text-right text-[11px] hover:bg-blue-50">{label}</button>)}</div>}</div>)}</nav>
    {/* ردیف اول: عملیات روی رکورد انتخاب‌شده */}
    <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
     <aside className="shrink-0 grid w-full grid-cols-6 gap-1 border-b border-slate-400 bg-[#e1e8ed] p-2 md:grid-cols-12">
-      {['customerLedger','customers','branches','branchLedger','banks','remittance','cash','exchange','expenses','journal','ledger'].map(id=>{const m=MODULES.find(x=>x.id===id);if(!m)return null;const I=m.icon;return <button key={m.id} title={m.label} onClick={()=>{setActive(m.id);setSelected(null);setCustomerDetail(null);setBranchDetail(null);setQuery('');}} className={'flex min-w-0 flex-col items-center justify-center gap-1 rounded-sm border px-1 py-1.5 text-center '+(active===m.id?'border-blue-300 bg-[#d2e3f1] font-bold text-blue-900':'border-transparent text-[#29465e] hover:border-slate-300 hover:bg-white')}><I className="h-4 w-4"/><span className="w-full truncate text-[9px]">{m.label}</span></button>})}
+      {['customerLedger','customers','branches','branchLedger','banks','remittance','cash','exchange','expenses','journal','ledger','sarraafGroups','assistant'].map(id=>{const m=MODULES.find(x=>x.id===id);if(!m)return null;const I=m.icon;return <button key={m.id} title={m.label} onClick={()=>{setActive(m.id);setSelected(null);setCustomerDetail(null);setBranchDetail(null);setQuery('');}} className={'flex min-w-0 flex-col items-center justify-center gap-1 rounded-sm border px-1 py-1.5 text-center '+(active===m.id?'border-blue-300 bg-[#d2e3f1] font-bold text-blue-900':'border-transparent text-[#29465e] hover:border-slate-300 hover:bg-white')}><I className="h-4 w-4"/><span className="w-full truncate text-[9px]">{m.label}</span></button>})}
       <button onClick={()=>setShowWorkspace(true)} className="flex min-w-0 flex-col items-center justify-center gap-1 rounded-sm border border-[#9aabb9] bg-white px-1 py-1.5 text-center text-[#24496d] hover:bg-blue-50"><Home className="h-4 w-4"/><span className="w-full truncate text-[9px] font-bold">میزکار</span></button>
      </aside>
     <main className="min-h-0 min-w-0 flex-1 overflow-y-auto bg-[#f9fafb] p-3">
@@ -369,7 +372,8 @@ export default function CreatorPreviewLab(){
         {title:'تعاریف و دفاتر',ids:['customers','customerLedger','branches','branchLedger']},
         {title:'صندوق و بانک',ids:['cash','banks']},
         {title:'عملیات صرافی',ids:['exchange','remittance','expenses']},
-        {title:'حسابداری و گزارشات',ids:['journal','ledger','accounts','currencies','reports','profit','balance']}
+        {title:'حسابداری و گزارشات',ids:['journal','ledger','accounts','currencies','reports','profit','balance']},
+         {title:'امکانات تکمیلی · اسکلت اولیه',ids:['sarraafGroups','assistant']}
        ].map(group=><section key={group.title} className="border border-[#9aabb9] bg-[#e8eef3] p-2 shadow-sm">
         <div className="mb-2 flex items-center justify-between border-b border-[#b7c5d0] pb-1"><b className="text-[11px] text-[#294d69]">\${group.title}</b><span className="text-[9px] text-slate-500">فهرست امکانات</span></div>
         <div className="flex flex-wrap items-stretch gap-2">{group.ids.map(id=>{const m=MODULES.find(x=>x.id===id);return m?<div key={m.id} className="min-w-[112px] flex-1 basis-[112px]"><Tile icon={m.icon} label={m.label} onClick={()=>{setActive(m.id);setSelected(null);setCustomerDetail(null);setBranchDetail(null);setQuery('');}}/></div>:null;})}</div>
