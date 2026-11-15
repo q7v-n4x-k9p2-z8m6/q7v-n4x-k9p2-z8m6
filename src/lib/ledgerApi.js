@@ -151,19 +151,18 @@ export async function reverseDocument(document_id, reason, exchange_code) {
     });
 
     if (error) {
-      // Fallback: soft-delete document directly
-      if (error.message?.includes('Could not find the function') || error.code === '42883') {
-        const { error: updateError } = await supabase
-          .from('documents')
-          .update({ deleted: true, deleted_date: new Date().toISOString() })
-          .eq('id', document_id);
-        if (updateError) throw new Error(updateError.message || 'reverseDocument_failed');
-        return { success: true };
-      }
+      // Never fall back to soft-deleting a document: that would leave its
+      // ledger entries active and make the accounting balances inconsistent.
       throw new Error(error.message || 'reverseDocument_failed');
     }
+    if (!data || data.error) {
+      throw new Error(data?.error || 'reverseDocument_no_result');
+    }
+    if (!data.reversal_doc_id) {
+      throw new Error('reverseDocument_invalid_result');
+    }
 
-    return data || { success: true };
+    return data;
   } catch (err) {
     throw new Error(err.message || 'reverseDocument_failed');
   }
@@ -172,6 +171,12 @@ export async function reverseDocument(document_id, reason, exchange_code) {
 // ── Edit Document (via Supabase RPC) ──
 export async function editDocument({ document_id, description, amount, currency, edit_note, new_lines, exchange_code }) {
   try {
+    // The SQL routine replaces all existing ledger lines before inserting
+    // new_lines. An empty array would therefore erase the document's ledger.
+    if (!Array.isArray(new_lines) || new_lines.length === 0) {
+      throw new Error('برای ویرایش سند، ردیف‌های جدید و متوازن دفترکل الزامی است؛ سند برای حفظ اطلاعات مالی تغییر نکرد.');
+    }
+
     const user = getSessionUser();
     const userIdRaw = getSessionUserId();
     const userId = userIdRaw && Number.isFinite(Number(userIdRaw)) ? Number(userIdRaw) : null;
@@ -189,27 +194,16 @@ export async function editDocument({ document_id, description, amount, currency,
     });
 
     if (error) {
-      // Fallback: direct update
-      if (error.message?.includes('Could not find the function') || error.code === '42883') {
-        const updates = {};
-        if (description !== undefined) updates.description = description;
-        if (amount !== undefined) updates.amount = Number(amount);
-        if (currency !== undefined) updates.currency = currency;
-        updates.edited = true;
-        updates.edited_date = new Date().toISOString();
-        updates.edit_note = edit_note || '';
-
-        const { error: updateError } = await supabase
-          .from('documents')
-          .update(updates)
-          .eq('id', document_id);
-        if (updateError) throw new Error(updateError.message || 'editDocument_failed');
-        return { success: true };
-      }
       throw new Error(error.message || 'editDocument_failed');
     }
+    if (!data || data.error) {
+      throw new Error(data?.error || 'editDocument_no_result');
+    }
+    if (Number(data.lines_inserted) <= 0) {
+      throw new Error('ویرایش سند بدون ردیف دفترکل معتبر است؛ نتیجه تأیید نشد.');
+    }
 
-    return data || { success: true };
+    return data;
   } catch (err) {
     throw new Error(err.message || 'editDocument_failed');
   }
