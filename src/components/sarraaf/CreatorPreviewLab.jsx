@@ -32,7 +32,7 @@ const MODULES = [
 const SCHEMAS = {
  customers:{title:'مشتری',fields:[['code','کد مشتری','text'],['name','نام مشتری','text'],['kind','نوع حساب','select',['دائمی','موقتی']],['phone','شماره تماس','text'],['address','آدرس','text'],['currency','ارز اصلی','select',CURRENCIES],['opening','مانده افتتاحیه','number'],['status','وضعیت','select',['فعال','غیرفعال','قفل']]]},
  branches:{title:'نمایندگی',fields:[['code','کد نمایندگی','text'],['name','نام نمایندگی','text'],['city','موقعیت','text'],['phone','شماره تماس','text'],['currency','ارز اصلی','select',CURRENCIES],['opening','مانده افتتاحیه','number'],['status','وضعیت','select',['فعال','غیرفعال']]]},
- cash:{title:'صندوق',fields:[['name','نام صندوق','text'],['currency','ارز','select',CURRENCIES],['opening','مانده افتتاحیه','number'],['description','توضیحات','text']]},
+ cash:{title:'صندوق',fields:[['code','کد صندوق','text'],['name','نام صندوق','text'],['currency','ارز','select',CURRENCIES],['opening','مانده افتتاحیه','number'],['status','وضعیت','select',['فعال','غیرفعال']],['description','توضیحات','text']]},
  banks:{title:'حساب بانکی / چک',fields:[['name','نام بانک یا حساب','text'],['account','شماره حساب','text'],['currency','ارز','select',CURRENCIES],['opening','مانده افتتاحیه','number'],['description','توضیحات','text']]},
  currencies:{title:'ارز',fields:[['code','کد ارز','text'],['name','نام ارز','text'],['symbol','نماد','text'],['rate','نرخ مقابل ارز پایه','number'],['active','وضعیت','select',['فعال','غیرفعال']]]},
  accounts:{title:'حساب کل',fields:[['code','کد حساب','text'],['name','نام حساب','text'],['level','سطح','select',['کل','معین','تفصیلی']],['nature','ماهیت','select',['بدهکار','بستانکار']],['description','شرح','text']]},
@@ -56,9 +56,9 @@ const initial = () => {
   {id:'demo-b3',code:'2003',name:'نمایندگی نمونه مزار',city:'مزارشریف',phone:'0500000003',currency:'USD',opening:900,status:'فعال'}
  ],
  cash:[
-  {id:'k1',name:'صندوق مرکزی افغانی',currency:'AFN',opening:100000,description:'صندوق اصلی نمونه'},
-  {id:'k2',name:'صندوق دالر',currency:'USD',opening:5000,description:'صندوق اسعار خارجی'},
-  {id:'demo-k3',name:'صندوق یورو',currency:'EUR',opening:2500,description:'صندوق نمونه یورو'}
+  {id:'k1',code:'C-001',name:'صندوق مرکزی افغانی',currency:'AFN',opening:100000,status:'فعال',description:'صندوق اصلی نمونه'},
+  {id:'k2',code:'C-002',name:'صندوق دالر',currency:'USD',opening:5000,status:'فعال',description:'صندوق اسعار خارجی'},
+  {id:'demo-k3',code:'C-003',name:'صندوق یورو',currency:'EUR',opening:2500,status:'فعال',description:'صندوق نمونه یورو'}
  ],
  banks:[
   {id:'demo-bank1',name:'بانک نمونه ملی',account:'000123456789',currency:'AFN',opening:250000,description:'حساب آزمایشی'},
@@ -227,7 +227,7 @@ export default function CreatorPreviewLab(){
  const totalByCurrency=(currency)=>data.transactions.filter(t=>t.currency===currency).reduce((s,t)=>s+n(t.amount),0);
  const columnsFor=(mod,arr)=>{
   const fields=SCHEMAS[mod]?.fields||[];
-  if(mod==='journal')return [{key:'date',label:'تاریخ'},{key:'number',label:'شماره سند'},{key:'description',label:'شرح'},{key:'debitAccount',label:'بدهکار'},{key:'creditAccount',label:'بستانکار'},{key:'currency',label:'ارز'},{key:'amount',label:'مبلغ',render:r=>fmt(r.amount)},{key:'status',label:'وضعیت'}];
+  if(mod==='cash')return [{key:'code',label:'کد صندوق'},{key:'name',label:'نام صندوق'},{key:'currency',label:'ارز'},{key:'opening',label:'مانده افتتاحیه',render:r=>fmt(r.opening)},{key:'balance',label:'موجودی فعلی',render:r=>fmt(balanceFor(r.currency,r.name))},{key:'status',label:'وضعیت'},{key:'description',label:'توضیحات'}];\n  if(mod==='journal')return [{key:'date',label:'تاریخ'},{key:'number',label:'شماره سند'},{key:'description',label:'شرح'},{key:'debitAccount',label:'بدهکار'},{key:'creditAccount',label:'بستانکار'},{key:'currency',label:'ارز'},{key:'amount',label:'مبلغ',render:r=>fmt(r.amount)},{key:'status',label:'وضعیت'}];
   if(mod==='transactions'||active==='customerLedger'||active==='branchLedger'||active==='reports')return [{key:'date',label:'تاریخ'},{key:'type',label:'نوع عملیات'},{key:'party',label:'طرف حساب'},{key:'description',label:'شرح'},{key:'currency',label:'ارز'},{key:'amount',label:'مبلغ',render:r=>fmt(r.amount)},{key:'cash',label:'صندوق'}];
   return fields.map(([key,label])=>({key,label,render:r=>key==='amount'||key==='opening'||key==='rate'||key==='profit'?fmt(r[key]):undefined}));
  };
@@ -290,7 +290,7 @@ export default function CreatorPreviewLab(){
       </div>
      </>:<>
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2 border-b-2 border-[#315e80] pb-2"><div className="flex items-center gap-2"><page.icon className="h-5 w-5 text-[#315e80]"/><div><div className="text-[9px] text-slate-500">سیستم حسابداری / {page.label}</div><h2 className="text-sm font-bold text-[#24496d]">{page.label}</h2></div></div><div className="flex flex-wrap gap-1 text-[10px]"><label>از <input type="date" value={dateFrom} onChange={e=>setDateFrom(e.target.value)} className="border bg-white px-1 py-1"/></label><label>تا <input type="date" value={dateTo} onChange={e=>setDateTo(e.target.value)} className="border bg-white px-1 py-1"/></label><button onClick={()=>{setDateFrom('');setDateTo('');}} className="border bg-white px-2">پاک‌سازی تاریخ</button></div></div>
-      {active==='cash'&&<div className="mb-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-3">{data.cash.map(c=><div key={c.id} className="border bg-[#edf3f7] p-3"><div className="text-[10px]">{c.name} · {c.currency}</div><b className="text-lg text-blue-900">{fmt(balanceFor(c.currency,c.name))}</b><div className="mt-2 flex gap-1"><button onClick={()=>cashAction('دخل')} className="border bg-white px-2 py-1 text-[10px]">دخل</button><button onClick={()=>cashAction('خرج')} className="border bg-white px-2 py-1 text-[10px]">خرج</button></div></div>)}</div>}
+      {active==='cash'&&<div className="mb-3 flex flex-wrap items-center justify-between gap-2 border border-[#b6c4cf] bg-[#edf3f7] px-3 py-2"><div><b className="text-[11px] text-[#24496d]">فهرست صندوق‌ها</b><div className="mt-1 text-[10px] text-slate-600">هر صندوق در یک ردیف؛ برای دیدن جزئیات، ردیف را انتخاب کنید.</div></div><div className="flex items-center gap-3 text-[10px]"><span>تعداد صندوق‌ها: <b>{fmt(data.cash.length)}</b></span><button onClick={()=>openNew('cash')} className="border border-blue-300 bg-white px-3 py-2 font-bold text-blue-900"><Plus className="ml-1 inline h-3 w-3"/>صندوق جدید</button></div></div>}
       {active==='profit'&&<div className="mb-3 grid gap-2 sm:grid-cols-3">{CURRENCIES.slice(0,4).map(c=><div key={c} className="border bg-emerald-50 p-3"><span className="text-[10px]">گردش خالص {c}</span><b className="block text-lg">{fmt(totalByCurrency(c))}</b></div>)}</div>}
       {active==='balance'&&<div className="mb-3 overflow-auto border bg-white"><table className="w-full text-xs"><thead className="bg-slate-200"><tr><th className="p-2 text-right">ارز</th><th>مانده صندوق</th><th>گردش خالص</th></tr></thead><tbody>{currencies.map(c=><tr key={c} className="border-t"><td className="p-2">{c}</td><td className="text-center">{fmt(data.cash.filter(x=>x.currency===c).reduce((s,x)=>s+balanceFor(c,x.name),0))}</td><td className="text-center">{fmt(totalByCurrency(c))}</td></tr>)}</tbody></table></div>}
       {active==='exchange'&&<div className="mb-2 flex gap-2"><button onClick={()=>openNew('exchange',{kind:'خرید'})} className="border bg-white px-3 py-2 text-[10px]">خرید اسعار</button><button onClick={()=>openNew('exchange',{kind:'فروش'})} className="border bg-white px-3 py-2 text-[10px]">فروش اسعار</button><button onClick={()=>openNew('exchange',{kind:'تبدیل'})} className="border bg-white px-3 py-2 text-[10px]">تبدیل ارز</button></div>}
