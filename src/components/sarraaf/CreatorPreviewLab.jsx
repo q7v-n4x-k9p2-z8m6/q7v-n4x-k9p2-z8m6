@@ -37,7 +37,7 @@ const SCHEMAS = {
  currencies:{title:'ارز',fields:[['code','کد ارز','text'],['name','نام ارز','text'],['symbol','نماد','text'],['rate','نرخ مقابل ارز پایه','number'],['active','وضعیت','select',['فعال','غیرفعال']]]},
  accounts:{title:'حساب کل',fields:[['code','کد حساب','text'],['name','نام حساب','text'],['level','سطح','select',['کل','معین','تفصیلی']],['nature','ماهیت','select',['بدهکار','بستانکار']],['description','شرح','text']]},
  expenses:{title:'مصرف',fields:[['date','تاریخ','date'],['title','شرح مصرف','text'],['currency','ارز','select',CURRENCIES],['amount','مبلغ','number'],['cash','پرداخت از صندوق','text'],['note','یادداشت','text']]},
- remittance:{title:'حواله',fields:[['date','تاریخ','date'],['number','شماره حواله','text'],['direction','نوع حواله','select',['ارسالی','دریافتی','متفرقه','نامعلوم']],['sender','فرستنده','text'],['receiver','گیرنده','text'],['branch','نمایندگی','text'],['currency','ارز','select',CURRENCIES],['amount','مبلغ','number'],['fee','کمیشن','number'],['status','وضعیت','select',['در انتظار','اجرا شده','لغو شده']],['note','یادداشت','text']]},
+ remittance:{title:'حواله',fields:[['date','تاریخ','date'],['number','شماره حواله','text'],['direction','نوع حواله','select',['ارسالی','دریافتی','متفرقه','نامعلوم']],['sender','فرستنده','text'],['receiver','گیرنده','text'],['branch','نمایندگی','text'],['currency','ارز','select',CURRENCIES],['amount','مبلغ','number'],['fee','کمیشن','number'],['cash','صندوق مرتبط','text'],['status','وضعیت','select',['در انتظار','اجرا شده','لغو شده']],['note','یادداشت','text']]},
  exchange:{title:'معامله اسعار',fields:[['date','تاریخ','date'],['kind','نوع معامله','select',['خرید','فروش','تبدیل']],['fromCurrency','ارز مبدا','select',CURRENCIES],['fromAmount','مبلغ مبدا','number'],['toCurrency','ارز مقصد','select',CURRENCIES],['toAmount','مبلغ مقصد','number'],['rate','نرخ معامله','number'],['profit','مفاد معامله','number'],['party','طرف حساب','text'],['note','یادداشت','text']]},
  journal:{title:'سند روزنامچه',fields:[['date','تاریخ','date'],['number','شماره سند','text'],['description','شرح سند','text'],['debitAccount','حساب بدهکار','text'],['creditAccount','حساب بستانکار','text'],['currency','ارز','select',CURRENCIES],['amount','مبلغ','number'],['status','وضعیت','select',['پیش‌نویس','قطعی']]]}
 };
@@ -101,7 +101,7 @@ export default function CreatorPreviewLab(){
   if(active==='customerLedger') source=data.transactions.filter(x=>x.partyType==='customer');
   if(active==='branchLedger') source=data.transactions.filter(x=>x.partyType==='branch');
   if(active==='ledger') source=data.journal;
-  if(active==='reports') source=[...data.transactions,...data.journal];
+  if(active==='reports') source=data.transactions;
   const q=query.trim().toLowerCase();
   return source.filter(r=>(!q||Object.values(r).join(' ').toLowerCase().includes(q))&&(filterCurrency==='همه'||!r.currency||r.currency===filterCurrency)&&(!dateFrom||!r.date||r.date>=dateFrom)&&(!dateTo||!r.date||r.date<=dateTo));
  },[data,active,query,filterCurrency,dateFrom,dateTo]);
@@ -110,17 +110,30 @@ export default function CreatorPreviewLab(){
  const saveRecord=()=>{
   const mod=modal; if(!SCHEMAS[mod])return;
   const record={...draft,id:draft.id||uid()};
-  if(mod==='journal'&&n(record.amount)<=0){notify('مبلغ سند باید بیشتر از صفر باشد.');return;}
-  if(mod==='journal'&&record.debitAccount===record.creditAccount){notify('حساب بدهکار و بستانکار نمی‌تواند یکسان باشد.');return;}
-  if(mod==='journal')record.status='قطعی';
+  if(mod==='journal'){
+   if(!record.date||!record.description||!record.debitAccount||!record.creditAccount||n(record.amount)<=0){notify('تاریخ، شرح، دو حساب و مبلغ مثبت برای سند الزامی است.');return;}
+   if(record.debitAccount===record.creditAccount){notify('حساب بدهکار و بستانکار نمی‌تواند یکسان باشد.');return;}
+   const known=data.accounts.map(a=>[a.code,a.name].join(' ').toLowerCase());
+   if(!known.some(x=>x.includes(String(record.debitAccount).toLowerCase()))||!known.some(x=>x.includes(String(record.creditAccount).toLowerCase()))){notify('حساب بدهکار و بستانکار باید از کدینگ حساب‌ها انتخاب شوند.');return;}
+   record.number=record.number||'JV-'+String(data.journal.length+1).padStart(5,'0');record.status='قطعی';
+  }
+  if(['expenses','exchange','remittance'].includes(mod)&&n(record.amount??record.fromAmount)<=0){notify('مبلغ عملیات باید بیشتر از صفر باشد.');return;}
+  if(mod==='remittance'&&record.status==='اجرا شده'&&!draft.id){
+   const signed=record.direction==='دریافتی'?n(record.amount):-n(record.amount);
+   addTransaction({type:'حواله '+record.direction,party:record.receiver||record.sender,currency:record.currency,amount:signed,date:record.date,cash:record.cash||'',description:'حواله '+(record.number||'')+' · '+(record.note||'')});
+  }
   setData(d=>({...d,[mod]:draft.id?(d[mod]||[]).map(x=>x.id===draft.id?record:x):[record,...(d[mod]||[])]}));
   if(mod==='expenses') addTransaction({type:'مصرف',party:record.title,currency:record.currency,amount:-n(record.amount),date:record.date,description:record.title});
-  if(mod==='exchange') addTransaction({type:'تبدیل اسعار',party:record.party,currency:record.fromCurrency,amount:-n(record.fromAmount),date:record.date,description:record.kind+' '+record.toCurrency+' '+record.toAmount});
+  if(mod==='exchange'){
+   addTransaction({type:'معامله '+record.kind+' · خروج',party:record.party,currency:record.fromCurrency,amount:-n(record.fromAmount),date:record.date,description:'نرخ '+record.rate});
+   addTransaction({type:'معامله '+record.kind+' · ورود',party:record.party,currency:record.toCurrency,amount:n(record.toAmount),date:record.date,description:'طرف دیگر معامله'});
+  }
   setModal('');setSelected(record);notify('اطلاعات در حافظه محلی مرورگر ثبت شد.');
  };
  const addTransaction=tx=>setData(d=>({...d,transactions:[{id:uid(),date:today(),...tx},...d.transactions]}));
  const removeSelected=()=>{
   if(!selected){notify('ابتدا یک ردیف را انتخاب کنید.');return;}
+  if(active==='reports'){notify('گزارش فقط نمایشی است؛ رکورد را از بخش عملیات اصلی حذف کنید.');return;}
   if(!window.confirm('این ردیف فقط از اطلاعات آزمایشی همین مرورگر حذف شود؟'))return;
   const key=active==='customerLedger'||active==='branchLedger'?'transactions':active==='ledger'?'journal':active;
   setData(d=>({...d,[key]:(d[key]||[]).filter(x=>x.id!==selected.id)}));setSelected(null);notify('ردیف آزمایشی حذف شد.');
@@ -129,6 +142,8 @@ export default function CreatorPreviewLab(){
  const cashAction=kind=>{setDraft({date:today(),kind,amount:'',currency:'AFN',cash:data.cash[0]?.name||'صندوق مرکزی',party:'',description:''});setModal('cashAction');};
  const saveCashAction=()=>{
   const amount=n(draft.amount);if(amount<=0){notify('مبلغ باید بیشتر از صفر باشد.');return;}
+  if(!draft.cash){notify('برای ثبت گردش، یک صندوق انتخاب کنید.');return;}
+  if(draft.kind==='خرج'&&balanceFor(draft.currency,draft.cash)<amount){notify('مانده این صندوق برای پرداخت کافی نیست.');return;}
   const sign=draft.kind==='دخل'?1:-1;
   addTransaction({type:draft.kind,party:draft.party,currency:draft.currency,amount:sign*amount,date:draft.date,cash:draft.cash,description:draft.description});
   setModal('');notify('عملیات صندوق در دفتر گردش محلی ثبت شد.');
@@ -142,7 +157,7 @@ export default function CreatorPreviewLab(){
  const columnsFor=(mod,arr)=>{
   const fields=SCHEMAS[mod]?.fields||[];
   if(mod==='journal')return [{key:'date',label:'تاریخ'},{key:'number',label:'شماره سند'},{key:'description',label:'شرح'},{key:'debitAccount',label:'بدهکار'},{key:'creditAccount',label:'بستانکار'},{key:'currency',label:'ارز'},{key:'amount',label:'مبلغ',render:r=>fmt(r.amount)},{key:'status',label:'وضعیت'}];
-  if(mod==='transactions'||active==='customerLedger'||active==='branchLedger')return [{key:'date',label:'تاریخ'},{key:'type',label:'نوع عملیات'},{key:'party',label:'طرف حساب'},{key:'description',label:'شرح'},{key:'currency',label:'ارز'},{key:'amount',label:'مبلغ',render:r=>fmt(r.amount)},{key:'cash',label:'صندوق'}];
+  if(mod==='transactions'||active==='customerLedger'||active==='branchLedger'||active==='reports')return [{key:'date',label:'تاریخ'},{key:'type',label:'نوع عملیات'},{key:'party',label:'طرف حساب'},{key:'description',label:'شرح'},{key:'currency',label:'ارز'},{key:'amount',label:'مبلغ',render:r=>fmt(r.amount)},{key:'cash',label:'صندوق'}];
   return fields.map(([key,label])=>({key,label,render:r=>key==='amount'||key==='opening'||key==='rate'||key==='profit'?fmt(r[key]):undefined}));
  };
  const menuAction=(action)=>{
@@ -179,7 +194,7 @@ export default function CreatorPreviewLab(){
       {active==='exchange'&&<div className="mb-2 flex gap-2"><button onClick={()=>openNew('exchange',{kind:'خرید'})} className="border bg-white px-3 py-2 text-[10px]">خرید اسعار</button><button onClick={()=>openNew('exchange',{kind:'فروش'})} className="border bg-white px-3 py-2 text-[10px]">فروش اسعار</button><button onClick={()=>openNew('exchange',{kind:'تبدیل'})} className="border bg-white px-3 py-2 text-[10px]">تبدیل ارز</button></div>}
       {active==='remittance'&&<div className="mb-2 flex gap-2"><button onClick={()=>openNew('remittance',{direction:'ارسالی'})} className="border bg-white px-3 py-2 text-[10px]">حواله ارسالی</button><button onClick={()=>openNew('remittance',{direction:'دریافتی'})} className="border bg-white px-3 py-2 text-[10px]">حواله دریافتی</button><button onClick={()=>openNew('remittance',{direction:'نامعلوم'})} className="border bg-white px-3 py-2 text-[10px]">حواله نامعلوم</button></div>}
       <div className="mb-2 flex flex-wrap items-center justify-between gap-2"><div className="flex items-center gap-2 text-[10px]"><b>فهرست {page.label}</b><span className="text-slate-500">تعداد: {fmt(rows.length)}</span></div><div className="flex flex-wrap gap-1"><input id="lab-search" value={query} onChange={e=>setQuery(e.target.value)} placeholder="جستجو..." className="h-8 w-36 border bg-white px-2 text-[10px]"/><select value={filterCurrency} onChange={e=>setFilterCurrency(e.target.value)} className="h-8 border bg-white px-2 text-[10px]"><option>همه</option>{CURRENCIES.map(c=><option key={c}>{c}</option>)}</select><button onClick={()=>{setQuery('');setFilterCurrency('همه');}} className="border bg-white px-2 text-[10px]"><Filter className="inline h-3 w-3"/> پاک</button></div></div>
-      <DataTable columns={active==='reports'?columnsFor('journal'):active==='ledger'?columnsFor('journal'):active==='customerLedger'||active==='branchLedger'?columnsFor('transactions'):columnsFor(active)} rows={rows} selected={selected} onSelect={setSelected}/>
+      <DataTable columns={active==='reports'?columnsFor('transactions'):active==='ledger'?columnsFor('journal'):active==='customerLedger'||active==='branchLedger'?columnsFor('transactions'):columnsFor(active)} rows={rows} selected={selected} onSelect={setSelected}/>
       <div className="mt-2 flex flex-wrap items-center justify-between gap-2 border bg-[#e9edf1] px-3 py-2 text-[10px]"><span>ردیف انتخاب‌شده: {selected?.id||'هیچ‌کدام'} · ذخیره‌سازی: محلی</span><div className="flex gap-1"><button onClick={editSelected} className="border bg-white px-2 py-1">ویرایش</button><button onClick={removeSelected} className="border bg-white px-2 py-1">حذف</button><button onClick={exportCsv} className="border bg-white px-2 py-1">CSV</button><button onClick={printPage} className="border bg-white px-2 py-1">چاپ</button></div></div>
       {SCHEMAS[active]&&<button onClick={()=>openNew()} className="mt-2 border border-blue-300 bg-blue-50 px-3 py-2 text-xs font-bold text-blue-900"><Plus className="ml-1 inline h-4 w-4"/>ثبت {SCHEMAS[active].title} جدید</button>}
      </>}
