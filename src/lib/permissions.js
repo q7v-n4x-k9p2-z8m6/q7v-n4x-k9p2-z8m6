@@ -26,22 +26,25 @@ export function getTrialDaysRemaining(profile) {
   return Math.max(0, Math.ceil(ms / (1000 * 60 * 60 * 24)));
 }
 
-// ── Plan Status ──
-// Returns: 'free' | 'trial' | 'paid_active' | 'paid_expired'
-// Level 1 is the free tier. Levels 2 and 3 require a valid paid period.
+// ── Subscription status and entitlement tier ──
+// Level 1 is free. Levels 2 and 3 require an explicitly granted entitlement
+// and an unexpired paid period. Date-only values remain valid through that day.
+function getEntitlementEndDate(profile) {
+  const paidEnd = profile?.paid_end_date || profile?.quota_end_date;
+  if (!paidEnd) return null;
+  const end = new Date(paidEnd);
+  if (Number.isNaN(end.getTime())) return null;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(String(paidEnd))) {
+    end.setHours(23, 59, 59, 999);
+  }
+  return end;
+}
+
 export function getPlanStatus(profile) {
   const tier = Number(profile?.entitlement_level);
   if (tier !== 2 && tier !== 3) return 'free';
-
-  const paidEnd = profile?.paid_end_date || profile?.quota_end_date;
-  if (!paidEnd) return 'paid_expired';
-
-  const end = new Date(paidEnd);
-  if (Number.isNaN(end.getTime())) return 'paid_expired';
-  // Date-only values remain valid through the end of that calendar day.
-  if (/^\\d{4}-\\d{2}-\\d{2}$/.test(String(paidEnd))) {
-    end.setHours(23, 59, 59, 999);
-  }
+  const end = getEntitlementEndDate(profile);
+  if (!end) return 'paid_expired';
   return end >= new Date() ? 'paid_active' : 'paid_expired';
 }
 
@@ -71,19 +74,11 @@ export function getPlanDisplay(profile) {
 }
 
 // ── Three-tier feature access ──
-// Existing plans remain backward compatible: free -> Level 1, paid/trial -> Level 2.
-// Only an explicit enterprise plan selects Level 3.
 export function getPlanTier(profile) {
-  // Existing exchange accounts start at Level 1. Higher tiers require an
-  // explicit admin-granted entitlement and a currently valid paid period.
   const tier = Number(profile?.entitlement_level);
   if (tier !== 2 && tier !== 3) return 1;
-  const paidEnd = profile?.paid_end_date || profile?.quota_end_date;
-  if (!paidEnd) return 1;
-  const end = new Date(paidEnd);
-  if (Number.isNaN(end.getTime())) return 1;
-  end.setHours(23, 59, 59, 999);
-  return end >= new Date() ? tier : 1;
+  const end = getEntitlementEndDate(profile);
+  return end && end >= new Date() ? tier : 1;
 }
 
 export function isFeatureAccessible(features, key, profile, paidSystemEnabled = true) {
