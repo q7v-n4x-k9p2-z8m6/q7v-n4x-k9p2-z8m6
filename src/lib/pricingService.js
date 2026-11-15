@@ -80,12 +80,11 @@ const SETTING_KEY = 'discount_campaign';
 
 // ── Pricing Plans ──
 export async function getAllPlans() {
-  const list = await db.PricingPlan.list('sort_order', 20);
-  if (!list || list.length === 0) {
-    await db.PricingPlan.bulkCreate(DEFAULT_PLANS);
-    return [...DEFAULT_PLANS].sort((a, b) => a.sort_order - b.sort_order);
-  }
-  return list.filter(p => p.is_active !== false);
+  const list = await db.PricingPlan.list('display_order', 20);
+  // Production pricing_plans uses active/display_order (not is_active/sort_order).
+  // Never auto-seed production pricing data from client defaults: an empty or
+  // temporarily unreadable table must not silently create/overwrite commercial terms.
+  return (list || []).filter(p => p.active !== false);
 }
 
 export async function getPlanByKey(planKey) {
