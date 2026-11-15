@@ -7,7 +7,7 @@ export default function DesktopCustomersTable({ customers, onOpen, onEdit }) {
   return (
     <div className="hidden md:block rounded-xl border border-border bg-card overflow-x-auto">
       <table className="w-full text-sm text-right">
-        <thead className="bg-muted/50 text-xs text-muted-foreground"><tr>{['نام مشتری', 'کد', 'موبایل', 'نوع', 'وضعیت', 'شناسایی مشتری', 'عملیات'].map(label => <th key={label} className="px-4 py-3 font-medium whitespace-nowrap">{label}</th>)}</tr></thead>
+        <thead className="bg-muted/50 text-xs text-muted-foreground"><tr>{['نام مشتری', 'کد', 'موبایل', 'نوع', 'وضعیت', 'عملیات'].map(label => <th key={label} className="px-4 py-3 font-medium whitespace-nowrap">{label}</th>)}</tr></thead>
         <tbody className="divide-y divide-border">
           {customers.map(customer => (
             <tr key={customer.id} className="hover:bg-muted/30">
@@ -16,7 +16,6 @@ export default function DesktopCustomersTable({ customers, onOpen, onEdit }) {
               <td className="px-4 py-3 tabular-nums" dir="ltr">{customer.phone || '—'}</td>
               <td className="px-4 py-3 text-muted-foreground">{types[customer.customer_type] || customer.customer_type || '—'}</td>
               <td className="px-4 py-3"><StatusBadge status={customer.status} labels={{ active: 'فعال', inactive: 'غیرفعال' }} /></td>
-              <td className="px-4 py-3"><span className={`inline-flex rounded-full px-2 py-1 text-xs ${customer.identity_status === 'verified' ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'}`}>{customer.identity_status === 'verified' ? 'تأییدشده' : 'بررسی‌نشده'}</span></td>
               <td className="px-4 py-3"><div className="flex gap-2"><button onClick={() => onEdit(customer)} className="rounded-md p-1.5 hover:bg-muted text-muted-foreground" aria-label={`ویرایش ${customer.name}`}><Pencil className="w-4 h-4" /></button><button onClick={() => onOpen(customer)} className="rounded-md p-1.5 hover:bg-muted text-primary" aria-label={`جزئیات ${customer.name}`}><ChevronLeft className="w-4 h-4" /></button></div></td>
             </tr>
           ))}
