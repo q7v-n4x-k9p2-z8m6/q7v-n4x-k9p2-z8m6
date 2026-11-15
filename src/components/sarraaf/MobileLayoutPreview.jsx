@@ -39,6 +39,19 @@ const MOBILE_MENUS = [
 export default function MobileLayoutPreview() {
   const [activeId, setActiveId] = useState('home');
   const [openMenu, setOpenMenu] = useState('');
+  // داده‌های نمونه فقط برای پیش‌نمایش موبایل؛ هیچ اتصال یا تغییری در اطلاعات واقعی ندارد.
+  const [ledgerRows, setLedgerRows] = useState([
+    { id: 1, title: 'حواله دریافتی', usd: '120', afn: '0' },
+    { id: 2, title: 'تبدیل اسعار', usd: '75', afn: '0' },
+    { id: 3, title: 'پرداخت مشتری', usd: '0', afn: '8500' },
+  ]);
+  const [cashRows, setCashRows] = useState([
+    { id: 1, title: 'صندوق اصلی', usd: '1250', afn: '18500' },
+    { id: 2, title: 'صندوق شعبه', usd: '420', afn: '7200' },
+    { id: 3, title: 'صندوق حواله', usd: '300', afn: '0' },
+  ]);
+  const sumField = (rows, field) => rows.reduce((sum, row) => sum + (Number(String(row[field]).replace(/,/g, '')) || 0), 0);
+  const formatAmount = value => new Intl.NumberFormat('fa-IR', { maximumFractionDigits: 2 }).format(value);
   const active = MOBILE_ITEMS[activeId] || MOBILE_ITEMS.home;
   const activeMenu = MOBILE_MENUS.find(menu => menu.id === openMenu);
   const menuItems = useMemo(
@@ -129,17 +142,62 @@ export default function MobileLayoutPreview() {
                       <b className="truncate text-[11px]">{active.label}</b>
                       <button type="button" onClick={() => openWindow('home')} className="shrink-0 rounded border border-slate-400 bg-white px-2 py-1 text-[10px]">بستن پنجره ×</button>
                     </header>
-                    <div className="flex flex-wrap gap-1 border-b border-border bg-muted/40 p-2">
-                      {['جدید', 'ویرایش', 'حذف', 'جستجو', 'چاپ', 'بستن'].map(action => (
-                        <button key={action} type="button" onClick={() => action === 'بستن' && openWindow('home')} className="rounded border border-border bg-card px-2.5 py-1.5 text-[9px] font-medium">{action}</button>
-                      ))}
+                    <div className="flex flex-wrap items-center gap-1 border-b border-border bg-muted/40 p-2">
+                      <div className="flex flex-wrap gap-1">
+                        {['جدید', 'ویرایش', 'حذف', 'جستجو', 'چاپ'].map(action => (
+                          <button key={action} type="button" className="rounded border border-border bg-card px-2.5 py-1.5 text-[9px] font-medium">{action}</button>
+                        ))}
+                      </div>
+                      <div className="mr-auto rounded-md border border-primary/20 bg-primary/5 px-2 py-1 text-[9px] leading-5">
+                        <b>جمع کل فهرست</b>
+                        <span className="mr-2 tabular-nums" dir="ltr">$ {formatAmount(activeId === 'cash' ? sumField(cashRows, 'usd') : sumField(ledgerRows, 'usd'))}</span>
+                        <span className="mr-2 tabular-nums">{formatAmount(activeId === 'cash' ? sumField(cashRows, 'afn') : sumField(ledgerRows, 'afn'))} ؋</span>
+                      </div>
                     </div>
                     <div className="p-3">
                       <p className="text-[10px] leading-6 text-muted-foreground">{active.description}</p>
-                      <div className="mt-3 rounded border border-dashed border-border bg-muted/20 p-4 text-center">
-                        <b className="text-[11px]">{active.label}</b>
-                        <p className="mt-2 text-[10px] leading-5 text-muted-foreground">محتوای فرم، جدول یا گزارش این بخش در داخل همین پنجره نمایش داده می‌شود.</p>
-                      </div>
+                      {activeId === 'customerLedger' ? (
+                        <div className="mt-3 overflow-hidden rounded-md border border-border">
+                          <div className="grid grid-cols-[1.2fr_.7fr_.7fr] gap-1 bg-muted px-2 py-2 text-[9px] font-bold">
+                            <span>شرح عملیات</span><span className="text-center">دالر</span><span className="text-center">افغانی</span>
+                          </div>
+                          {ledgerRows.map(row => (
+                            <div key={row.id} className="grid grid-cols-[1.2fr_.7fr_.7fr] items-center gap-1 border-t border-border px-2 py-2">
+                              <span className="text-[9px]">{row.title}</span>
+                              <input aria-label={'مبلغ دالر ' + row.title} inputMode="decimal" value={row.usd} onChange={e => setLedgerRows(rows => rows.map(item => item.id === row.id ? {...item, usd:e.target.value} : item))} className="min-w-0 rounded border border-border bg-background px-1 py-1 text-center text-[10px] tabular-nums" />
+                              <input aria-label={'مبلغ افغانی ' + row.title} inputMode="decimal" value={row.afn} onChange={e => setLedgerRows(rows => rows.map(item => item.id === row.id ? {...item, afn:e.target.value} : item))} className="min-w-0 rounded border border-border bg-background px-1 py-1 text-center text-[10px] tabular-nums" />
+                            </div>
+                          ))}
+                          <div className="grid grid-cols-[1.2fr_.7fr_.7fr] gap-1 border-t-2 border-primary/30 bg-primary/5 px-2 py-2 text-[9px] font-bold">
+                            <span>جمع حساب مشتری</span>
+                            <span className="text-center tabular-nums" dir="ltr">$ {formatAmount(sumField(ledgerRows, 'usd'))}</span>
+                            <span className="text-center tabular-nums">{formatAmount(sumField(ledgerRows, 'afn'))} ؋</span>
+                          </div>
+                        </div>
+                      ) : activeId === 'cash' ? (
+                        <div className="mt-3 overflow-hidden rounded-md border border-border">
+                          <div className="grid grid-cols-[1.2fr_.7fr_.7fr] gap-1 bg-muted px-2 py-2 text-[9px] font-bold">
+                            <span>نام صندوق</span><span className="text-center">دالر</span><span className="text-center">افغانی</span>
+                          </div>
+                          {cashRows.map(row => (
+                            <div key={row.id} className="grid grid-cols-[1.2fr_.7fr_.7fr] items-center gap-1 border-t border-border px-2 py-2">
+                              <span className="text-[9px]">{row.title}</span>
+                              <input aria-label={'موجودی دالر ' + row.title} inputMode="decimal" value={row.usd} onChange={e => setCashRows(rows => rows.map(item => item.id === row.id ? {...item, usd:e.target.value} : item))} className="min-w-0 rounded border border-border bg-background px-1 py-1 text-center text-[10px] tabular-nums" />
+                              <input aria-label={'موجودی افغانی ' + row.title} inputMode="decimal" value={row.afn} onChange={e => setCashRows(rows => rows.map(item => item.id === row.id ? {...item, afn:e.target.value} : item))} className="min-w-0 rounded border border-border bg-background px-1 py-1 text-center text-[10px] tabular-nums" />
+                            </div>
+                          ))}
+                          <div className="grid grid-cols-[1.2fr_.7fr_.7fr] gap-1 border-t-2 border-primary/30 bg-primary/5 px-2 py-2 text-[9px] font-bold">
+                            <span>جمع کل صندوق‌ها</span>
+                            <span className="text-center tabular-nums" dir="ltr">$ {formatAmount(sumField(cashRows, 'usd'))}</span>
+                            <span className="text-center tabular-nums">{formatAmount(sumField(cashRows, 'afn'))} ؋</span>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="mt-3 rounded border border-dashed border-border bg-muted/20 p-4 text-center">
+                          <b className="text-[11px]">{active.label}</b>
+                          <p className="mt-2 text-[10px] leading-5 text-muted-foreground">محتوای فرم، جدول یا گزارش این بخش در داخل همین پنجره نمایش داده می‌شود.</p>
+                        </div>
+                      )}
                     </div>
                   </section>
                 )}
