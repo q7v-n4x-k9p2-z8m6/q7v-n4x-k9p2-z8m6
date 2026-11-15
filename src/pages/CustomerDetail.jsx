@@ -52,7 +52,9 @@ export default function CustomerDetail() {
 
   const handleEdit = async (e) => {
     e.preventDefault();
-    await updateMut.mutateAsync({ id: customer.id, data: form });
+    const payload = { ...form };
+    if (payload.identity_status === 'verified') payload.identity_verified_at = new Date().toISOString();
+    await updateMut.mutateAsync({ id: customer.id, data: payload });
     setEditOpen(false);
   };
 
