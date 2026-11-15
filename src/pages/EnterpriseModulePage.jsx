@@ -771,6 +771,47 @@ function InternalControlsReview() {
 }
 
 
+function IntercompanyReadiness() {
+  const exchangeCode = getExchangeCode();
+  const query = useQuery({
+    queryKey: ['intercompanyReadiness', exchangeCode],
+    enabled: !!exchangeCode,
+    queryFn: async () => {
+      const [documents, entries] = await Promise.all([
+        fetchAllTenantRows('documents', 'id,doc_number,doc_type,related_type,related_id,related_name,amount,currency,created_at,deleted,reversed,exchange_code', exchangeCode),
+        fetchAllTenantRows('ledger_entries', 'id,document_id,related_type,account_type,account_id,account_name,debit,credit,currency,deleted,exchange_code', exchangeCode),
+      ]);
+      const matches = value => /inter.?exchange|intercompany|بین.?صراف|صرافی.?متقابل/i.test(String(value || ''));
+      const taggedDocuments = documents.filter(row => row.deleted !== true && row.reversed !== true &&
+        (matches(row.related_type) || matches(row.doc_type)));
+      const taggedEntries = entries.filter(row => row.deleted !== true &&
+        (matches(row.related_type) || matches(row.account_type)));
+      const relatedIds = new Set(taggedDocuments.map(row => String(row.id)));
+      const linkedEntries = taggedEntries.filter(row => row.document_id != null && relatedIds.has(String(row.document_id)));
+      return { documents, entries, taggedDocuments, taggedEntries, linkedEntries };
+    },
+    staleTime: 30000,
+  });
+  if (!exchangeCode) return <Card><CardContent className="p-5 text-sm text-muted-foreground">برای بررسی حساب‌های بین‌صرافی، ابتدا با حساب همان صرافی وارد شوید.</CardContent></Card>;
+  const data = query.data;
+  return <div className="space-y-4">
+    <Card><CardContent className="p-4 space-y-3">
+      <div className="flex items-center justify-between gap-2"><div><h2 className="font-semibold">آمادگی حساب‌های بین‌صرافی</h2><p className="text-xs text-muted-foreground">جست‌وجوی نشانه‌های موجود در اسناد و دفترکل همان صرافی</p></div><Button size="sm" variant="outline" onClick={() => query.refetch()} disabled={query.isFetching}><RefreshCw className="w-4 h-4"/>بروزرسانی</Button></div>
+      {query.isLoading ? <LoadingState/> : query.isError ? <p className="text-sm text-destructive">{query.error?.message || 'بررسی حساب‌های بین‌صرافی ناموفق بود'}</p> : <>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+          <div className="rounded-lg bg-muted/50 p-3"><p className="text-xs text-muted-foreground">اسناد دارای برچسب بین‌صرافی</p><p className="text-xl font-bold">{data.taggedDocuments.length}</p></div>
+          <div className="rounded-lg bg-muted/50 p-3"><p className="text-xs text-muted-foreground">ردیف‌های دفترکل برچسب‌خورده</p><p className="text-xl font-bold">{data.taggedEntries.length}</p></div>
+          <div className="rounded-lg bg-muted/50 p-3"><p className="text-xs text-muted-foreground">ردیف‌های متصل به سند برچسب‌خورده</p><p className="text-xl font-bold">{data.linkedEntries.length}</p></div>
+        </div>
+        {data.taggedDocuments.length > 0 && <div className="rounded-lg border p-3 space-y-2"><h3 className="text-sm font-semibold">اسناد شناسایی‌شده</h3>{data.taggedDocuments.slice(0,25).map(row=><div key={row.id} className="flex justify-between gap-3 border-b last:border-0 py-2 text-xs"><span>سند {row.doc_number || row.id} · {row.related_name || row.related_type || row.doc_type || '—'}</span><span>{row.currency || '—'}</span></div>)}</div>}
+        <div className="rounded-lg border p-3 space-y-2"><div className="flex items-center gap-2 text-sm font-semibold"><AlertTriangle className="w-4 h-4 text-amber-600"/>گردش بین‌صرافی کامل تأیید نشده است</div><p className="text-sm text-muted-foreground">این بررسی فقط برچسب‌های متنی موجود را پیدا می‌کند. در ساختار فعلی، موجودیت مستقل طرف‌حساب بین‌صرافی، شناسه متناظر دوطرف، تسویه متقابل، کنترل نرخ و ارز، تطبیق مانده و ثبت اتمیک دو صرافی تأیید نشده‌اند.</p><p className="text-xs text-muted-foreground">تعداد اسناد برچسب‌خورده به معنی تأیید مانده یا تسویه نیست؛ هیچ انتقال یا ثبت مالی انجام نمی‌شود.</p></div>
+      </>}
+    </CardContent></Card>
+    <div className="rounded-lg border p-3 text-xs text-muted-foreground">برای عملیاتی‌سازی، به طراحی شناسه مشترک امن، طرف‌حساب متقابل، چرخه وضعیت دوطرفه، تطبیق اختلاف‌ها و ثبت دفترکل قابل بازگشت نیاز است. این صفحه فقط‌خواندنی است و داده صرافی دیگری را جست‌وجو نمی‌کند.</div>
+  </div>;
+}
+
+
 function BudgetReadiness() {
   const exchangeCode = getExchangeCode();
   const query = useQuery({
@@ -971,6 +1012,7 @@ export default function EnterpriseModulePage() {
   if(key==='period_close') return <><PageHeader title="بستن دوره مالی" icon={CalendarDays}/><PeriodCloseReadiness/></>;
   if(key==='internal_controls') return <><PageHeader title="کنترل‌های داخلی" icon={ShieldCheck}/><InternalControlsReview/></>;
   if(key==='budgets') return <><PageHeader title="بودجه و پیش‌بینی" icon={ListTree}/><BudgetReadiness/></>;
+  if(key==='intercompany') return <><PageHeader title="حساب‌های بین‌صرافی" icon={GitBranch}/><IntercompanyReadiness/></>;
   if(key==='data_governance') return <><PageHeader title="حاکمیت داده و حریم خصوصی" icon={ShieldCheck}/><DataGovernanceReadiness/></>;
   if(key==='cost_centers') return <><PageHeader title="مراکز هزینه و سود" icon={GitBranch}/><CostCentersManager/></>;
   if(key==='document_center') return <><PageHeader title="مرکز اسناد" icon={ListTree}/><DocumentCenter/></>;
