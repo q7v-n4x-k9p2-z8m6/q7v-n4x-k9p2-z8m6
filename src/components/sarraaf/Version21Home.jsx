@@ -161,7 +161,7 @@ export default function Version21Home() {
           <div className="border border-white/30 bg-white/10 px-3 py-2 text-xs">حساب فعال: {name}</div>
         </header>
 
-        <div className="hidden lg:block sticky top-0 z-20 space-y-2 border-b border-[#b7c5cf] bg-[#e7eef3] p-3 shadow-sm">
+        <div className="hidden lg:block sticky top-[68px] z-20 space-y-2 border-b border-[#b7c5cf] bg-[#e7eef3] p-3 shadow-sm">
           <div className="flex flex-wrap items-center gap-1.5">
             <span className="ml-2 text-xs font-bold text-[#24496d]">عملیات:</span>
             {OPERATION_TOOLS.map(item => <ToolButton key={item.label} item={item} />)}
