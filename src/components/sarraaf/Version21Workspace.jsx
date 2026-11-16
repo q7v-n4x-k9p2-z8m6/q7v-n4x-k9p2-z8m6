@@ -1,4 +1,5 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import {
   Home, Users, Wallet, BookOpen, BookText, Search, Printer, Plus, Pencil, Trash2,
   RefreshCw, Receipt, Landmark, Building2, Send, BarChart3, X, Check, ArrowLeftRight,
@@ -75,7 +76,16 @@ function Tile({icon:Icon,label,onClick}){return <button onClick={onClick} classN
 
 export default function Version21Workspace(){
  const [data,setData]=useState(emptyInitial);
- const [active,setActive]=useState('home');
+ const [searchParams]=useSearchParams();
+ const requestedModule=searchParams.get('module');
+ const [active,setActive]=useState(()=>MODULES.some(x=>x.id===requestedModule)?requestedModule:'home');
+ useEffect(()=>{
+  setActive(MODULES.some(x=>x.id===requestedModule)?requestedModule:'home');
+  setSelected(null);
+  setCustomerDetail(null);
+  setBranchDetail(null);
+  setQuery('');
+ },[requestedModule]);
  const [selected,setSelected]=useState(null);
  const [menu,setMenu]=useState('');
  const [modal,setModal]=useState('');
