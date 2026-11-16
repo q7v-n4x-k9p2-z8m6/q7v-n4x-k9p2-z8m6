@@ -468,9 +468,12 @@ export async function editVersion21Record(module, draft) {
     if (!amount) throw new Error('مبلغ گردش نمی‌تواند صفر باشد.');
     const currency = draft.currency || oldCash.currency || 'AFN';
     const customer = draft.partyType === 'customer' ? await getCustomer(ctx, draft.party) : null;
+    const branch = draft.partyType === 'branch' ? await getBranch(ctx, draft.party) : null;
     const other = customer
       ? { account_type: 'customer', account_id: String(customer.id), account_name: customer.name }
-      : { account_type: 'suspense', account_id: '', account_name: draft.party || 'حساب مقابل' };
+      : branch
+        ? { account_type: 'suspense', account_id: String(branch.id), account_name: branch.name }
+        : { account_type: 'suspense', account_id: '', account_name: draft.party || 'حساب مقابل' };
     const cash = { account_type: 'cash', account_id: String(oldCash.account_id), account_name: oldCash.account_name, currency };
     const lines = amount > 0
       ? [{ ...cash, debit: amount, credit: 0 }, { ...other, currency, debit: 0, credit: amount }]
