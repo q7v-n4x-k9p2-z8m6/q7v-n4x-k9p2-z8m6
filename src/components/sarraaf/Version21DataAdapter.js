@@ -71,7 +71,7 @@ export async function loadVersion21Database() {
   const [
     customers, safes, origins, bankAccounts, rates, chartAccounts,
     documents, ledgerEntries, transfers, conversions, treasuryTransactions,
-    bankTransactions, journalEntries, userPermissions, auditLogs, errorReports,
+    bankTransactions, journalEntries, sessionUser, userPermissions, auditLogs, errorReports,
   ] = await Promise.all([
     readTenantTable('customers', exchangeCode),
     readTenantTable('safes', exchangeCode),
@@ -86,6 +86,13 @@ export async function loadVersion21Database() {
     readTenantTable('treasury_transactions', exchangeCode),
     readTenantTable('bank_transactions', exchangeCode),
     readTenantTable('journal_entries', exchangeCode),
+    (async () => {
+      const { data, error } = await supabase.from('users').select('role')
+        .eq('id', Number(userId)).maybeSingle();
+      if (error) throw new Error(`تأیید نقش کاربر ناموفق بود: ${error.message}`);
+      if (!data?.role) throw new Error('نقش کاربر از سرور دریافت نشد.');
+      return data;
+    })(),
     (async () => {
       const { data, error } = await supabase.from('user_permissions')
         .select('section,can_view,can_create,can_edit,can_delete,can_print,can_report,can_settings')
@@ -368,6 +375,8 @@ export async function loadVersion21Database() {
     },
     permissions: userPermissions,
     data: {
+      role: String(sessionUser.role || '').toLowerCase(),
+      permissions: userPermissions,
       customers: mappedCustomers,
       branches: mappedBranches,
       cash: mappedCash,
