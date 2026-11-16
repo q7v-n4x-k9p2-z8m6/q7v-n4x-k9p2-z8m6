@@ -144,9 +144,7 @@ export default function Layout() {
       <aside className="hidden md:flex w-full shrink-0 flex-col bg-slate-800 text-slate-100 print:hidden">
         {/* Brand header */}
         <div className="px-4 py-3 border-b border-white/10 flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center shrink-0 shadow-md">
-            <ArrowLeftRight className="w-5 h-5 text-white" strokeWidth={2.2} />
-          </div>
+          <ExchangeMark size="md" dark className="shrink-0" />
           <div className="min-w-0">
             <p className="text-base font-bold text-white truncate">حساب صراف</p>
             <p className="text-[11px] text-slate-400 truncate">{profile?.exchange_name || 'مدیریت صرافی'}</p>
