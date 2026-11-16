@@ -21,6 +21,7 @@ const MODULES = [
   {id:'home',label:'مرکز عملیات',icon:Home,group:'عمومی'},
   {id:'customers',label:'تعریف مشتریان',icon:Users,group:'تعاریف و دفاتر'},
   {id:'customerLedger',label:'دفتر حساب مشتریان',icon:BookOpen,group:'تعاریف و دفاتر'},
+  {id:'debtors',label:'بدهکاران و بستانکاران',icon:CircleDollarSign,group:'حسابداری'},
   {id:'branches',label:'تعریف نمایندگی‌ها',icon:Building2,group:'تعاریف و دفاتر'},
   {id:'branchLedger',label:'دفتر حساب نمایندگی‌ها',icon:BookText,group:'تعاریف و دفاتر'},
   {id:'cash',label:'صندوق‌ها و موجودی',icon:Wallet,group:'صندوق و بانک'},
@@ -79,9 +80,19 @@ function Field({field,value,onChange,choices}) {
  <input type={type==='number'?'number':type==='date'?'date':'text'} value={value??''} onChange={e=>onChange(key,e.target.value)} className="h-9 w-full border border-slate-300 bg-white px-2 text-xs" />}</label>;
 }
 function DataTable({columns,rows,onSelect,selected}) {
- return <div className="overflow-auto border border-slate-300 bg-white"><table className="w-full min-w-[760px] border-collapse text-right text-[11px]"><thead className="sticky top-0 bg-[#dce5ed] text-[#203c54]"><tr>{columns.map(c=><th key={c.key} className="border border-slate-300 px-2 py-2">{c.label}</th>)}</tr></thead><tbody>{rows.map((r,i)=><tr key={r.id||i} onClick={()=>onSelect(r)} className={'cursor-pointer '+(selected?.id===r.id?'bg-blue-100':i%2?'bg-slate-50':'bg-white')+' hover:bg-blue-50'}>{columns.map(c=><td key={c.key} className="whitespace-nowrap border border-slate-200 px-2 py-2">{c.render?c.render(r):String(r[c.key]??'—')}</td>)}</tr>)}</tbody></table>{!rows.length&&<div className="p-8 text-center text-xs text-slate-500">موردی برای نمایش وجود ندارد.</div>}</div>;
+ return <div className="v21-data-table overflow-auto rounded-xl border border-[#cbd9e8] bg-white shadow-sm"><table className="w-full min-w-[760px] border-collapse text-right text-xs"><thead className="sticky top-0 bg-gradient-to-l from-[#164b87] to-[#2767a5] text-white"><tr>{columns.map(c=><th key={c.key} className="border-l border-white/15 px-3 py-3 font-bold">{c.label}</th>)}</tr></thead><tbody>{rows.map((r,i)=><tr key={r.id||i} onClick={()=>onSelect(r)} className={'cursor-pointer transition-colors '+(selected?.id===r.id?'bg-blue-100':i%2?'bg-[#f7faff]':'bg-white')+' hover:bg-blue-50'}>{columns.map(c=><td key={c.key} className="whitespace-nowrap border-b border-[#e5edf5] px-3 py-3 text-[#263c55]">{c.render?c.render(r):String(r[c.key]??'—')}</td>)}</tr>)}</tbody></table>{!rows.length&&<div className="p-10 text-center text-sm text-slate-500">موردی برای نمایش وجود ندارد.</div>}</div>;
 }
-function Tile({icon:Icon,label,onClick}){return <button onClick={onClick} className="group flex min-h-[94px] flex-col items-center justify-center gap-2 border border-[#9aabb9] bg-gradient-to-b from-white to-[#edf2f6] px-2 py-3 text-center shadow-sm transition hover:border-[#47799d] hover:from-[#f7fbff] hover:to-[#dceaf4] active:translate-y-px"><span className="grid h-11 w-11 place-items-center rounded-sm border border-[#9eb2c2] bg-gradient-to-b from-[#f9fcff] to-[#d8e5ef] text-[#245777] shadow-sm group-hover:border-[#47799d]"><Icon className="h-6 w-6"/></span><b className="text-[11px] font-semibold text-[#29465e]">{label}</b></button>}
+const MODULE_TONES = {
+ home:'from-blue-700 to-indigo-700', customers:'from-sky-600 to-blue-700', customerLedger:'from-emerald-600 to-teal-700',
+ branches:'from-violet-600 to-indigo-700', branchLedger:'from-cyan-600 to-blue-700', cash:'from-amber-500 to-orange-600',
+ banks:'from-blue-600 to-indigo-700', exchange:'from-fuchsia-600 to-purple-700', remittance:'from-orange-500 to-amber-600',
+ expenses:'from-rose-600 to-red-700', journal:'from-slate-600 to-slate-800', ledger:'from-indigo-600 to-violet-700',
+ accounts:'from-cyan-600 to-teal-700', currencies:'from-lime-600 to-green-700', reports:'from-blue-600 to-cyan-700',
+ profit:'from-emerald-600 to-green-700', activity:'from-slate-600 to-blue-700', errors:'from-rose-600 to-pink-700',
+ balance:'from-violet-600 to-purple-700', debtors:'from-rose-600 to-emerald-700', sarraafGroups:'from-sky-600 to-cyan-700',
+ assistant:'from-indigo-600 to-blue-800', products:'from-orange-500 to-pink-600', language:'from-teal-600 to-cyan-700'
+};
+function Tile({icon:Icon,label,onClick,moduleId}){const tone=MODULE_TONES[moduleId]||'from-blue-600 to-indigo-700';return <button onClick={onClick} className="v21-module-tile group flex min-h-[104px] flex-col items-center justify-center gap-2 rounded-xl border border-[#d2deec] bg-gradient-to-b from-white to-[#f1f6fd] px-2 py-3 text-center shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-blue-300 hover:shadow-md active:translate-y-px"><span className={'v21-module-icon grid h-12 w-12 place-items-center rounded-xl bg-gradient-to-br '+tone+' text-white shadow-md ring-1 ring-white/70 group-hover:scale-105'}><Icon className="h-6 w-6"/></span><b className="text-[11px] font-bold leading-tight text-[#203b5b]">{label}</b></button>}
 
 export default function Version21Workspace(){
  const navigate=useNavigate();
@@ -123,7 +134,7 @@ export default function Version21Workspace(){
  const [showWorkspace,setShowWorkspace]=useState(false);
  const [customerDetail,setCustomerDetail]=useState(null);
  const [branchDetail,setBranchDetail]=useState(null);
- const permissionSectionByModule={home:'dashboard',customers:'customers',customerLedger:'accounts_receivable',transactions:'accounts_receivable',branches:'agents',branchLedger:'agents',cash:'cash',cashAction:'cash',banks:'bank',exchange:'trade',remittance:'transfers',expenses:'cash',journal:'journal',ledger:'general_ledger',accounts:'chart_of_accounts',currencies:'currencies',reports:'reports',profit:'profit_loss',activity:'audit_log',errors:'audit_log',balance:'balance_sheet',sarraafGroups:'chat_groups',assistant:'assistant',products:'online_products',language:'settings'};
+ const permissionSectionByModule={home:'dashboard',customers:'customers',customerLedger:'accounts_receivable',debtors:'accounts_receivable',transactions:'accounts_receivable',branches:'agents',branchLedger:'agents',cash:'cash',cashAction:'cash',banks:'bank',exchange:'trade',remittance:'transfers',expenses:'cash',journal:'journal',ledger:'general_ledger',accounts:'chart_of_accounts',currencies:'currencies',reports:'reports',profit:'profit_loss',activity:'audit_log',errors:'audit_log',balance:'balance_sheet',sarraafGroups:'chat_groups',assistant:'assistant',products:'online_products',language:'settings'};
  const isEmployee=data.role==='employee';
  const canViewModule=id=>!isEmployee||hasPermission(data.permissions,permissionSectionByModule[id],'view');
  const canModuleAction=(id,action)=>!isEmployee||hasPermission(data.permissions,permissionSectionByModule[id]||permissionSectionByModule[id==='cashAction'?'cash':id],action);
@@ -355,8 +366,8 @@ export default function Version21Workspace(){
   ];
   if(mod==='customerLedger'&&customerDetail)return [
    {key:'date',label:'تاریخ'},{key:'type',label:'نوع عملیات'},{key:'description',label:'شرح'},
-   {key:'debit',label:'بدهکار',render:r=>fmt(n(r.amount)<0?Math.abs(n(r.amount)):0)},
-   {key:'credit',label:'بستانکار',render:r=>fmt(n(r.amount)>0?n(r.amount):0)},{key:'currency',label:'ارز'},{key:'status',label:'وضعیت سند'}
+   {key:'debit',label:'بدهکار',render:r=><span className="inline-flex min-w-[82px] justify-center rounded-lg bg-rose-50 px-2 py-1 font-bold text-rose-700">{fmt(n(r.amount)<0?Math.abs(n(r.amount)):0)}</span>},
+   {key:'credit',label:'بستانکار',render:r=><span className="inline-flex min-w-[82px] justify-center rounded-lg bg-emerald-50 px-2 py-1 font-bold text-emerald-700">{fmt(n(r.amount)>0?n(r.amount):0)}</span>},{key:'currency',label:'ارز'},{key:'status',label:'وضعیت سند'}
   ];
   if(mod==='branchLedger'&&!branchDetail)return [
    {key:'code',label:'کد نمایندگی'},{key:'name',label:'نام نمایندگی'},{key:'city',label:'موقعیت'},{key:'currency',label:'ارز اصلی'},
@@ -364,8 +375,8 @@ export default function Version21Workspace(){
   ];
   if(mod==='branchLedger'&&branchDetail)return [
    {key:'date',label:'تاریخ'},{key:'type',label:'نوع عملیات'},{key:'description',label:'شرح'},
-   {key:'debit',label:'بدهکار',render:r=>fmt(n(r.amount)<0?Math.abs(n(r.amount)):0)},
-   {key:'credit',label:'بستانکار',render:r=>fmt(n(r.amount)>0?n(r.amount):0)},{key:'currency',label:'ارز'},{key:'status',label:'وضعیت سند'}
+   {key:'debit',label:'بدهکار',render:r=><span className="inline-flex min-w-[82px] justify-center rounded-lg bg-rose-50 px-2 py-1 font-bold text-rose-700">{fmt(n(r.amount)<0?Math.abs(n(r.amount)):0)}</span>},
+   {key:'credit',label:'بستانکار',render:r=><span className="inline-flex min-w-[82px] justify-center rounded-lg bg-emerald-50 px-2 py-1 font-bold text-emerald-700">{fmt(n(r.amount)>0?n(r.amount):0)}</span>},{key:'currency',label:'ارز'},{key:'status',label:'وضعیت سند'}
   ];
   const fields=SCHEMAS[mod]?.fields||[];
   if(mod==='accounts')return [
@@ -422,7 +433,7 @@ export default function Version21Workspace(){
     <div className="v21-laptop-toolbar">
     <nav className="v21-laptop-menu-bar" aria-label="منوی اصلی">{NAV_MENUS.slice(0,5).map(m=><div key={m.label} className="relative"><button onClick={()=>setMenu(menu===m.label?'':m.label)} className={'v21-laptop-menu-trigger '+(menu===m.label?'is-open':'')}>{m.label}<ChevronDown className="mr-1 inline h-3 w-3"/></button>{menu===m.label&&<div className="v21-laptop-menu-popover">{m.items.map(([label,act])=><button key={act} onClick={()=>menuAction(act)}>{label}</button>)}</div>}</div>)}</nav>
     <aside aria-label="آیکون‌های اصلی و مرکز عملیات" className="v21-module-icon-row shrink-0 grid w-full grid-cols-6 gap-1 border-b border-slate-400 bg-[#e1e8ed] p-2 md:grid-cols-12">
-      {['home','customerLedger','customers','branches','branchLedger','banks','remittance','cash','exchange','expenses','journal','ledger','errors','sarraafGroups','assistant','products','language'].filter(canViewModule).map(id=>{const m=MODULES.find(x=>x.id===id);if(!m)return null;const I=m.icon;return <button key={m.id} title={m.label} onClick={()=>{setActive(m.id);setSelected(null);setCustomerDetail(null);setBranchDetail(null);setQuery('');}} className={'flex min-w-0 flex-col items-center justify-center gap-1 rounded-sm border px-1 py-1.5 text-center '+(active===m.id?'border-blue-300 bg-[#d2e3f1] font-bold text-blue-900':'border-transparent text-[#29465e] hover:border-slate-300 hover:bg-white')}><I className="h-4 w-4"/><span className="w-full truncate text-[9px]">{m.label}</span></button>})}
+      {['home','customerLedger','customers','branches','branchLedger','banks','remittance','cash','exchange','expenses','journal','ledger','debtors','errors','sarraafGroups','assistant','products','language'].filter(canViewModule).map(id=>{const m=MODULES.find(x=>x.id===id);if(!m)return null;const I=m.icon;return <button key={m.id} title={m.label} onClick={()=>{m.id==='debtors'?navigate('/debtors'):(setActive(m.id),setSelected(null),setCustomerDetail(null),setBranchDetail(null),setQuery(''));}} className={'v21-toolbar-module flex min-w-0 flex-col items-center justify-center gap-1.5 rounded-xl border px-1 py-2 text-center transition-all '+(active===m.id?'is-active border-blue-300 bg-blue-50 font-bold text-blue-900 shadow-sm':'border-transparent text-[#29465e] hover:border-blue-200 hover:bg-white')}><span className={'grid h-9 w-9 place-items-center rounded-lg bg-gradient-to-br '+(MODULE_TONES[m.id]||'from-blue-600 to-indigo-700')+' text-white shadow-sm'}><I className="h-4 w-4"/></span><span className="w-full whitespace-normal text-[9px] font-semibold leading-tight">{m.label}</span></button>})}
      </aside>
     </div>
     <main className="min-h-0 min-w-0 flex-1 overflow-y-auto bg-[#f9fafb] p-3">
@@ -442,12 +453,12 @@ export default function Version21Workspace(){
         {title:'تعاریف و دفاتر',ids:['customers','customerLedger','branches','branchLedger']},
         {title:'صندوق و بانک',ids:['cash','banks']},
         {title:'عملیات صرافی',ids:['exchange','remittance','expenses']},
-        {title:'حسابداری و گزارشات',ids:['journal','ledger','accounts','currencies','reports','profit','balance','activity','errors']},
+        {title:'حسابداری و گزارشات',ids:['journal','ledger','accounts','currencies','reports','profit','balance','debtors','activity','errors']},
          {title:'امکانات تکمیلی · ماژول‌های متصل',ids:['sarraafGroups','assistant','products']},
         {title:'تنظیمات',ids:['language']}
        ].map(group=><section key={group.title} className="border border-[#9aabb9] bg-[#e8eef3] p-2 shadow-sm">
         <div className="mb-2 flex items-center justify-between border-b border-[#b7c5d0] pb-1"><b className="text-[11px] text-[#294d69]">{group.title}</b><span className="text-[9px] text-slate-500">فهرست امکانات</span></div>
-        <div className="flex flex-wrap items-stretch gap-2">{group.ids.filter(canViewModule).map(id=>{const m=MODULES.find(x=>x.id===id);return m?<div key={m.id} className="min-w-[112px] flex-1 basis-[112px]"><Tile icon={m.icon} label={m.label} onClick={()=>{setActive(m.id);setSelected(null);setCustomerDetail(null);setBranchDetail(null);setQuery('');}}/></div>:null;})}</div>
+        <div className="flex flex-wrap items-stretch gap-2">{group.ids.filter(canViewModule).map(id=>{const m=MODULES.find(x=>x.id===id);return m?<div key={m.id} className="min-w-[112px] flex-1 basis-[112px]"><Tile icon={m.icon} label={m.label} moduleId={m.id} onClick={()=>{if(m.id==='debtors'){navigate('/debtors');return;}setActive(m.id);setSelected(null);setCustomerDetail(null);setBranchDetail(null);setQuery('');}}/></div>:null;})}</div>
        </section>)}
       </div>
       <div className="mt-3 border border-[#9aabb9] bg-white p-2">
@@ -482,7 +493,7 @@ export default function Version21Workspace(){
     </main>
    </div>
    {showBookSummary&&<div className="shrink-0 border-t border-slate-400 bg-[#e9edf1] p-2">
-    <div className="flex gap-2 overflow-x-auto pb-1">{accountBookTotals().map(x=><div key={x.currency} className="min-w-[250px] flex-1 border border-slate-300 bg-white p-2 text-right"><b className="mb-1 block text-[10px] text-[#294d69]" dir="ltr">{x.currency}</b><div className="grid grid-cols-3 gap-2"><div><span className="block text-[9px] text-slate-500">جمع کل بدهکار</span><b className="text-[11px]">{fmt(x.debit)}</b></div><div><span className="block text-[9px] text-slate-500">جمع کل بستانکار</span><b className="text-[11px]">{fmt(x.credit)}</b></div><div><span className="block text-[9px] text-slate-500">{x.net>0?'مانده بدهکار':x.net<0?'مانده بستانکار':'اختلاف مانده'}</span><b className="text-[11px]">{fmt(Math.abs(x.net))}</b></div></div></div>)}</div>
+    <div className="flex gap-2 overflow-x-auto pb-1">{accountBookTotals().map(x=><div key={x.currency} className="v21-ledger-summary-card min-w-[250px] flex-1 rounded-xl border border-[#d3deeb] bg-white p-3 text-right shadow-sm"><b className="mb-2 block text-xs font-extrabold text-[#1e4776]" dir="ltr">{x.currency}</b><div className="grid grid-cols-3 gap-2"><div className="rounded-lg bg-rose-50 p-2"><span className="block text-[10px] font-semibold text-rose-700">جمع بدهکار</span><b className="text-xs tabular-nums text-rose-800">{fmt(x.debit)}</b></div><div className="rounded-lg bg-emerald-50 p-2"><span className="block text-[10px] font-semibold text-emerald-700">جمع بستانکار</span><b className="text-xs tabular-nums text-emerald-800">{fmt(x.credit)}</b></div><div className="rounded-lg bg-blue-50 p-2"><span className="block text-[10px] font-semibold text-blue-700">{x.net>0?'مانده بدهکار':x.net<0?'مانده بستانکار':'تراز'}</span><b className="text-xs tabular-nums text-blue-800">{fmt(Math.abs(x.net))}</b></div></div></div>)}</div>
    </div>}
    <div className="shrink-0 flex items-center justify-end gap-2 border-t border-slate-400 bg-[#dfe5ea] px-3 py-2"><button onClick={printPage} className="flex items-center gap-1 border border-slate-400 bg-white px-3 py-2 text-[10px]"><Printer className="h-4 w-4 text-[#315d7d]"/>چاپ</button></div>
    <nav className="v21-mobile-bottom" aria-label="دسترسی سریع موبایل"><button onClick={()=>setActive('home')}>مرکز عملیات</button><button onClick={()=>setActive('customers')}>مشتریان</button><button onClick={()=>setActive('cash')}>صندوق</button><button onClick={()=>setShowWorkspace(true)}>همه امکانات</button></nav>
@@ -490,7 +501,7 @@ export default function Version21Workspace(){
   </section>
   {showWorkspace&&<div className="fixed inset-0 z-[90] flex items-center justify-center bg-black/45 p-3"><div className="max-h-[85vh] w-full max-w-4xl overflow-auto border-2 border-slate-600 bg-[#f7f9fb] shadow-2xl"><div className="sticky top-0 flex items-center justify-between bg-gradient-to-b from-[#386b91] to-[#17466c] px-3 py-2 text-white"><b className="text-xs">سایر امکانات برنامه</b><button onClick={()=>setShowWorkspace(false)}><X className="h-4 w-4"/></button></div><div className="space-y-3 p-3">
       {NAV_MENUS.slice(5).map(group=><section key={group.label} className="border border-slate-300 bg-white p-2"><h3 className="mb-2 border-b border-slate-200 pb-1 text-xs font-bold text-[#24496d]">{group.label}</h3><div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">{group.items.map(([label,act])=><button key={act} onClick={()=>{menuAction(act);setShowWorkspace(false);}} className="min-h-10 border border-slate-300 bg-[#f5f8fa] px-2 py-2 text-[11px] text-[#29465e] hover:bg-blue-50">{label}</button>)}</div></section>)}
-      <section><h3 className="mb-2 text-xs font-bold text-[#24496d]">سایر بخش‌ها</h3><div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">{MODULES.filter(m=>m.id!=='home'&&!['customerLedger','customers','branches','branchLedger','banks','remittance','cash','exchange','expenses','journal','ledger'].includes(m.id)).map(m=><Tile key={m.id} icon={m.icon} label={m.label} onClick={()=>{setActive(m.id);setSelected(null);setCustomerDetail(null);setQuery('');setShowWorkspace(false);}}/>)}</div></section>
+      <section><h3 className="mb-2 text-xs font-bold text-[#24496d]">سایر بخش‌ها</h3><div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">{MODULES.filter(m=>m.id!=='home'&&!['customerLedger','customers','branches','branchLedger','banks','remittance','cash','exchange','expenses','journal','ledger'].includes(m.id)).map(m=><Tile key={m.id} icon={m.icon} label={m.label} moduleId={m.id} onClick={()=>{if(m.id==='debtors'){setShowWorkspace(false);navigate('/debtors');return;}setActive(m.id);setSelected(null);setCustomerDetail(null);setQuery('');setShowWorkspace(false);}}/>)}</div></section>
      </div></div></div>}
    {notice&&<div className="flex items-center gap-2 border border-blue-200 bg-blue-50 p-3 text-[11px] text-blue-900"><Check className="h-4 w-4"/>{notice}<button onClick={()=>setNotice('')} className="mr-auto"><X className="h-4 w-4"/></button></div>}
   <p className="text-[10px] leading-5 text-slate-500">اطلاعات مالی پس از ثبت در دیتابیس همان صراف ذخیره می‌شود. پیش‌نویس فرم‌ها و تنظیمات نمایش، جداگانه در حافظه محلی همین مرورگر و برای همین کاربر نگهداری می‌شود.</p>

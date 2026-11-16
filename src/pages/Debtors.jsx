@@ -16,57 +16,53 @@ const TABS = [
 export default function Debtors() {
   const navigate = useNavigate();
   const [search, setSearch] = useState('');
-  const [tab, setTab] = useState('debtors');
+  const [tab, setTab] = useState('all');
 
   const { data: customers, isLoading: customersLoading } = useCustomers();
   const { data: customerBalancesData, isLoading: txsLoading } = useCustomerBalances();
 
   const loading = customersLoading || txsLoading;
 
-  const rows = useMemo(() => {
+  const allRows = useMemo(() => {
     if (!customers || !customerBalancesData) return [];
-    const list = customers
+    return customers
       .map(c => {
         const balRow = customerBalancesData.find(b => String(b.customer_id) === String(c.id));
         const balances = {};
-        if (balRow) {
-          balances[balRow.balance_currency || 'AFN'] = balRow.net_balance || 0;
-        }
-        const net = Object.values(balances).reduce((s, v) => s + (v || 0), 0);
-        const hasBalance = Object.values(balances).some(v => Math.abs(v) > 0.0001);
+        if (balRow) balances[balRow.balance_currency || 'AFN'] = balRow.net_balance || 0;
+        const net = Object.values(balances).reduce((sum, value) => sum + (value || 0), 0);
+        const hasBalance = Object.values(balances).some(value => Math.abs(value) > 0.0001);
         return { customer: c, balances, net, hasBalance };
       })
-      .filter(r => r.hasBalance);
+      .filter(row => row.hasBalance)
+      .sort((a, b) => Math.abs(b.net) - Math.abs(a.net));
+  }, [customers, customerBalancesData]);
 
-    const filtered = list.filter(r => {
-      if (tab === 'debtors' && r.net <= 0) return false;
-      if (tab === 'creditors' && r.net >= 0) return false;
-      if (search) {
-        const s = search.toLowerCase();
-        const c = r.customer;
-        if (
-          !(c.name || '').toLowerCase().includes(s) &&
-          !(c.phone || '').includes(s) &&
-          !(c.code || '').toLowerCase().includes(s)
-        )
-          return false;
-      }
-      return true;
-    });
-
-    return filtered.sort((a, b) => Math.abs(b.net) - Math.abs(a.net));
-  }, [customers, customerBalancesData, tab, search]);
+  const rows = useMemo(() => allRows.filter(row => {
+    if (tab === 'debtors' && row.net <= 0) return false;
+    if (tab === 'creditors' && row.net >= 0) return false;
+    if (search) {
+      const value = search.toLowerCase();
+      const customer = row.customer;
+      if (
+        !(customer.name || '').toLowerCase().includes(value) &&
+        !(customer.phone || '').includes(value) &&
+        !(customer.code || '').toLowerCase().includes(value)
+      ) return false;
+    }
+    return true;
+  }), [allRows, tab, search]);
 
   const totals = useMemo(() => {
-    const debt = rows.filter(r => r.net > 0).reduce((s, r) => s + r.net, 0);
-    const credit = rows.filter(r => r.net < 0).reduce((s, r) => s + Math.abs(r.net), 0);
-    return { debt, credit, count: rows.length };
-  }, [rows]);
+    const debt = allRows.filter(row => row.net > 0).reduce((sum, row) => sum + row.net, 0);
+    const credit = allRows.filter(row => row.net < 0).reduce((sum, row) => sum + Math.abs(row.net), 0);
+    return { debt, credit, count: allRows.length };
+  }, [allRows]);
 
   return (
     <>
       <PageHeader
-        title="بدهکاران"
+        title="بدهکاران و بستانکاران"
         subtitle={`${formatNumber(totals.count)} نفر`}
         icon={Handshake}
       />
@@ -77,13 +73,13 @@ export default function Debtors() {
           label="بدهکار"
           value={formatNumber(totals.debt)}
           icon={TrendingUp}
-          gradient="from-success/90 to-success/70"
+          gradient="from-rose-600 to-rose-500"
         />
         <StatCard
           label="بستانکار"
           value={formatNumber(totals.credit)}
           icon={TrendingDown}
-          gradient="from-destructive/90 to-destructive/70"
+          gradient="from-emerald-600 to-teal-600"
         />
         <StatCard
           label="خالص"
@@ -112,7 +108,7 @@ export default function Debtors() {
             onClick={() => setTab(t.key)}
             className={cn(
               'flex-1 py-1.5 rounded-md text-xs font-medium transition-colors',
-              tab === t.key ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground'
+              tab === t.key ? (t.key==='debtors'?'bg-rose-100 text-rose-800 shadow-sm':t.key==='creditors'?'bg-emerald-100 text-emerald-800 shadow-sm':'bg-blue-100 text-blue-800 shadow-sm') : 'text-muted-foreground'
             )}
           >
             {t.label}
@@ -139,7 +135,7 @@ export default function Debtors() {
                   <div
                     className={cn(
                       'w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm shrink-0',
-                      isDebtor ? 'bg-success/10 text-success' : 'bg-destructive/10 text-destructive'
+                      isDebtor ? 'bg-rose-100 text-rose-700 ring-1 ring-rose-200' : 'bg-emerald-100 text-emerald-700 ring-1 ring-emerald-200'
                     )}
                   >
                     {(customer.name || '?').charAt(0)}
@@ -150,7 +146,7 @@ export default function Debtors() {
                       <StatusBadge
                         status={isDebtor ? 'active' : 'inactive'}
                         labels={{ active: 'بدهکار', inactive: 'بستانکار' }}
-                        variant={isDebtor ? 'success' : 'destructive'}
+                        variant={isDebtor ? 'destructive' : 'success'}
                       />
                     </div>
                     <p className="text-xs text-muted-foreground">
@@ -162,7 +158,7 @@ export default function Debtors() {
                           key={cur}
                           className={cn(
                             'text-xs font-semibold',
-                            val >= 0 ? 'text-success' : 'text-destructive'
+                            val >= 0 ? 'text-rose-700' : 'text-emerald-700'
                           )}
                         >
                           {formatAmount(val, cur)}

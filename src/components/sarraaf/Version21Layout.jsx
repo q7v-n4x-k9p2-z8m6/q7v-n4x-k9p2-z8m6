@@ -116,10 +116,10 @@ function ModuleLink({ item, compact = false }) {
     );
   }
   return (
-    <NavLink to={item.id === 'home' ? '/dashboard' : '/dashboard?module=' + (WORKSPACE_TARGETS[item.id] || 'home')} end={item.id === 'home'}
+    <NavLink to={item.id === 'debtors' ? '/debtors' : (item.id === 'home' ? '/dashboard' : '/dashboard?module=' + (WORKSPACE_TARGETS[item.id] || 'home'))} end={item.id === 'home'}
       className={({ isActive }) => compact
-        ? `flex min-h-[68px] flex-col items-center justify-center gap-1 rounded-lg border px-1 py-2 text-center text-[10px] leading-tight transition-colors ${isActive ? 'border-teal-600 bg-teal-600 text-white' : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-100'}`
-        : `flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-colors ${isActive ? 'bg-teal-600 text-white shadow-sm' : 'text-slate-200 hover:bg-white/10'}`}>
+        ? `flex min-h-[68px] flex-col items-center justify-center gap-1 rounded-xl border px-1 py-2 text-center text-[10px] leading-tight transition-all ${isActive ? 'border-blue-300 bg-blue-50 text-blue-900 shadow-sm' : 'border-slate-200 bg-white text-slate-700 hover:border-blue-200 hover:bg-blue-50'}`
+        : `flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-all ${isActive ? 'bg-gradient-to-l from-blue-700 to-blue-600 text-white shadow-md' : 'text-slate-200 hover:bg-white/10'}`}>
       <Icon className={compact ? 'h-5 w-5' : 'h-4 w-4 shrink-0'} />
       <span>{item.label}</span>
     </NavLink>
@@ -140,9 +140,9 @@ export default function Version21Layout() {
   const isSharedDemoAccount = String(user?.username || '') === '22222222' || String(user?.id ?? user?.user_id ?? '') === '107';
 
   return (
-    <div dir="rtl" className="min-h-screen bg-slate-100 text-slate-900 flex">
-      {location.pathname !== '/dashboard' && <aside className="hidden lg:flex w-64 shrink-0 h-screen sticky top-0 flex-col bg-slate-900 text-white print:hidden">
-        <div className="px-5 py-5 border-b border-white/10">
+    <div dir="rtl" className="v21-app-shell min-h-screen bg-[#f3f7fc] text-slate-900 flex">
+      {location.pathname !== '/dashboard' && <aside className="hidden lg:flex w-64 shrink-0 h-screen sticky top-0 flex-col bg-gradient-to-b from-[#102b4c] via-[#12385f] to-[#0e2745] text-white print:hidden">
+        <div className="px-5 py-5 border-b border-white/10 bg-gradient-to-br from-[#12365f] to-[#174f86]">
           <div className="text-lg font-extrabold">حساب صراف</div>
           <div className="mt-1 text-xs text-slate-400">مدیریت حساب صراف</div>
         </div>
@@ -165,7 +165,7 @@ export default function Version21Layout() {
       </aside>}
 
       <div className="min-w-0 flex-1 flex flex-col">
-        {location.pathname !== '/dashboard' && <header className="sticky top-0 z-30 bg-white border-b border-slate-200 shadow-sm">
+        {location.pathname !== '/dashboard' && <header className="sticky top-0 z-30 bg-gradient-to-l from-white to-[#edf4fd] border-b border-[#d5e2f0] shadow-sm">
           <div className="flex items-center justify-between gap-3 px-4 md:px-6 py-3">
             <div className="min-w-0">
               <div className="font-bold text-sm md:text-base">حساب صراف</div>
