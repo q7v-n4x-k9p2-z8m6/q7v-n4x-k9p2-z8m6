@@ -182,6 +182,24 @@ async function postDocument(ctx, {
   return data;
 }
 
+async function applyDocumentDate(ctx, documentId, date, linkedTable = null, linkedId = null) {
+  if (!date || !documentId) return '';
+  const timestamp = new Date(`${date}T12:00:00.000Z`).toISOString();
+  const warnings = [];
+  const { error: documentError } = await supabase.from('documents').update({ created_at: timestamp })
+    .eq('id', Number(documentId)).eq('exchange_code', ctx.exchangeCode);
+  if (documentError) warnings.push(documentError.message);
+  const { error: ledgerError } = await supabase.from('ledger_entries').update({ created_at: timestamp })
+    .eq('document_id', Number(documentId)).eq('exchange_code', ctx.exchangeCode);
+  if (ledgerError) warnings.push(ledgerError.message);
+  if (linkedTable && linkedId) {
+    const { error: linkedError } = await supabase.from(linkedTable).update({ created_at: timestamp })
+      .eq('id', Number(linkedId)).eq('exchange_code', ctx.exchangeCode);
+    if (linkedError) warnings.push(linkedError.message);
+  }
+  return warnings.join(' | ');
+}
+
 export async function saveVersion21Record(module, draft) {
   const ctx = sessionContext();
   if (TABLES[module]) {
@@ -255,9 +273,10 @@ export async function saveVersion21Record(module, draft) {
         if (!feeDoc?.document_id) warning = 'حواله ثبت شد، اما سند کمیشن باید بررسی شود.';
       } else warning = 'حواله ثبت شد، اما ذخیره کمیشن در رکورد حواله ناموفق بود: ' + transferFeeError.message;
     }
+    const dateWarning = await applyDocumentDate(ctx, data?.document_id, draft.date, 'transfers', data?.transfer_id);
     const auditWarning = await writeAudit(ctx, 'create', 'transfer', data?.transfer_id,
       `ثبت حواله ${data?.transfer_number || ''}`, null, draft);
-    return { id: String(data?.transfer_id || ''), auditWarning, warning };
+    return { id: String(data?.transfer_id || ''), auditWarning, warning: [warning, dateWarning].filter(Boolean).join(' | ') };
   }
 
   if (module === 'cashAction' || module === 'expenses') {
@@ -288,9 +307,10 @@ export async function saveVersion21Record(module, draft) {
       description: draft.description || draft.title || draft.note || (isCashIn ? 'دخل صندوق' : 'خرج صندوق'),
       lines,
     });
+    const dateWarning = await applyDocumentDate(ctx, doc?.document_id, draft.date);
     const auditWarning = await writeAudit(ctx, 'create', isExpense ? 'expense' : 'cash', doc?.document_id,
       isExpense ? 'ثبت مصرف و سند حسابداری' : 'ثبت گردش صندوق و سند حسابداری', null, draft);
-    return { id: String(doc?.document_id || ''), auditWarning };
+    return { id: String(doc?.document_id || ''), auditWarning, warning: dateWarning };
   }
 
   if (module === 'exchange') {
@@ -323,8 +343,9 @@ export async function saveVersion21Record(module, draft) {
         relatedType: 'conversion', relatedId: conversion.id, relatedName: draft.party || '',
         description: draft.note || `تبدیل ${draft.fromCurrency} به ${draft.toCurrency}`, lines,
       });
+      const dateWarning = await applyDocumentDate(ctx, doc?.document_id, draft.date, 'conversions', conversion.id);
       const auditWarning = await writeAudit(ctx, 'create', 'conversion', conversion.id, 'ثبت معامله تبدیل ارز و سندهای دفتر کل', null, draft);
-      return { id: String(conversion.id), documentId: doc?.document_id, auditWarning };
+      return { id: String(conversion.id), documentId: doc?.document_id, auditWarning, warning: dateWarning };
     } catch (error) {
       await supabase.from('conversions').delete().eq('id', conversion.id).eq('exchange_code', ctx.exchangeCode);
       throw error;
@@ -344,8 +365,9 @@ export async function saveVersion21Record(module, draft) {
         { ...credit, debit: 0, credit: amount },
       ],
     });
+    const dateWarning = await applyDocumentDate(ctx, doc?.document_id, draft.date);
     const auditWarning = await writeAudit(ctx, 'create', 'journal', doc?.document_id, 'ثبت سند روزنامچه و سطرهای دفتر کل', null, draft);
-    return { id: String(doc?.document_id || ''), auditWarning };
+    return { id: String(doc?.document_id || ''), auditWarning, warning: dateWarning };
   }
 
   throw new Error(`فرم «${module}» هنوز به عملیات پایگاه داده متصل نشده است.`);
@@ -395,8 +417,9 @@ export async function editVersion21Record(module, draft) {
       { account_type: 'cash', account_id: String(safe.id), account_name: safe.name, currency: draft.currency || 'AFN', debit: 0, credit: amount },
     ];
     const result = await editDocument(ctx, draft.id, draft.title, amount, draft.currency, lines);
+    const dateWarning = await applyDocumentDate(ctx, draft.id, draft.date);
     const auditWarning = await writeAudit(ctx, 'update', 'expense', draft.id, 'ویرایش مصرف و سطرهای دفتر کل', null, draft);
-    return { id: String(draft.id), result, auditWarning };
+    return { id: String(draft.id), result, auditWarning, warning: dateWarning };
   }
 
   if (module === 'journal') {
@@ -411,8 +434,9 @@ export async function editVersion21Record(module, draft) {
       { ...debit, debit: amount, credit: 0 },
       { ...credit, debit: 0, credit: amount },
     ]);
+    const dateWarning = await applyDocumentDate(ctx, draft.id, draft.date);
     const auditWarning = await writeAudit(ctx, 'update', 'journal', draft.id, 'ویرایش سند روزنامچه', null, draft);
-    return { id: String(draft.id), result, auditWarning };
+    return { id: String(draft.id), result, auditWarning, warning: dateWarning };
   }
 
   if (module === 'transactions') {
@@ -436,8 +460,9 @@ export async function editVersion21Record(module, draft) {
       ? [{ ...cash, debit: amount, credit: 0 }, { ...other, currency, debit: 0, credit: amount }]
       : [{ ...other, currency, debit: Math.abs(amount), credit: 0 }, { ...cash, debit: 0, credit: Math.abs(amount) }];
     const result = await editDocument(ctx, documentId, draft.description, Math.abs(amount), currency, lines);
+    const dateWarning = await applyDocumentDate(ctx, documentId, draft.date);
     const auditWarning = await writeAudit(ctx, 'update', 'cash_transaction', documentId, 'ویرایش گردش و سطرهای دفتر کل', null, draft);
-    return { id: String(documentId), result, auditWarning };
+    return { id: String(documentId), result, auditWarning, warning: dateWarning };
   }
 
   if (module === 'exchange') {
@@ -473,6 +498,7 @@ export async function editVersion21Record(module, draft) {
       { account_type: 'suspense', account_id: '', account_name: 'حساب واسط تبدیل ارز', currency: draft.toCurrency, debit: 0, credit: toAmount },
     ];
     await editDocument(ctx, doc.id, draft.note || 'تبدیل ارز', fromAmount, draft.fromCurrency, lines);
+    const dateWarning = await applyDocumentDate(ctx, doc.id, draft.date, 'conversions', draft.id);
     const { error: updateError } = await supabase.from('conversions').update({
       customer_name: draft.party || 'مشتری نقدی', from_currency: draft.fromCurrency,
       from_amount: fromAmount, rate: number(draft.rate) || toAmount / fromAmount,
@@ -481,7 +507,7 @@ export async function editVersion21Record(module, draft) {
     }).eq('id', Number(draft.id)).eq('exchange_code', ctx.exchangeCode);
     if (updateError) throw updateError;
     const auditWarning = await writeAudit(ctx, 'update', 'conversion', draft.id, 'ویرایش تبدیل ارز و سند دفتر کل', conversion, draft);
-    return { id: String(draft.id), auditWarning };
+    return { id: String(draft.id), auditWarning, warning: dateWarning };
   }
 
   if (module === 'remittance') {
@@ -507,6 +533,7 @@ export async function editVersion21Record(module, draft) {
           { account_type: 'customer', account_id: String(customer?.id || ''), account_name: draft.receiver, currency: draft.currency, debit: 0, credit: amount },
         ];
     await editDocument(ctx, doc.id, draft.note || 'حواله', amount, draft.currency, lines);
+    const dateWarning = await applyDocumentDate(ctx, doc.id, draft.date, 'transfers', draft.id);
     const { error: updateError } = await supabase.from('transfers').update({
       sender_name: draft.sender, receiver_name: draft.receiver,
       amount, currency: draft.currency, fee: number(draft.fee),
@@ -537,7 +564,7 @@ export async function editVersion21Record(module, draft) {
       if (reversedFee?.error) throw new Error(reversedFee.error);
     }
     const auditWarning = await writeAudit(ctx, 'update', 'transfer', draft.id, 'ویرایش حواله و سند دفتر کل', transfer, draft);
-    return { id: String(draft.id), auditWarning };
+    return { id: String(draft.id), auditWarning, warning: dateWarning };
   }
 
   throw new Error(`ویرایش واقعی برای بخش ${module} هنوز تعریف نشده است.`);
