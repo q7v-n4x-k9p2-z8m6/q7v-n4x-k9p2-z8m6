@@ -35,6 +35,7 @@ jobs:
           const workspace = fs.readFileSync('src/components/sarraaf/Version21Workspace.jsx', 'utf8');
           const adapter = fs.readFileSync('src/components/sarraaf/Version21WriteAdapter.js', 'utf8');
           const data = fs.readFileSync('src/components/sarraaf/Version21DataAdapter.js', 'utf8');
+          const demo = fs.readFileSync('src/components/sarraaf/Version21DemoAdapter.js', 'utf8');
           const checks = [
             [!workspace.includes('\\${'), 'Workspace contains a literal escaped JSX expression'],
             [adapter.includes('validateBalancedLines'), 'Financial posting/edit balance validation is missing'],
@@ -49,6 +50,12 @@ jobs:
             [adapter.includes('assertDocumentBalancedForReversal'), 'Unbalanced-document reversal guard is missing'],
             [adapter.includes('p_fee: 0'), 'Transfer fee must be posted as a separate balanced document'],
             [workspace.includes('accountingStatus'), 'Accounting status is not displayed in workspace tables'],
+            [workspace.includes('const readOnly=!data.isDemoAccount'), 'Version 21 writes must remain disabled outside the shared demo account'],
+            [workspace.includes('saveDemoPreviewRecord(mod,payload'), 'Demo workspace writes must use isolated temporary storage'],
+            [adapter.includes('assertDemoWriteAccount(ctx'), 'Core Version 21 writes must reject non-demo accounts'],
+            [data.includes('loadDemoPreviewRecords') && data.includes('isDemoAccount'), 'Demo records must load only for the exact demo session'],
+            [demo.includes("record_kind', 'temporary'") && demo.includes('expires_at'), 'Temporary demo records must have a bounded expiry'],
+            [demo.includes('record_kind', 'sample') || demo.includes("record_kind === 'sample'"), 'Fixed demo samples must be distinguished from temporary records'],
           ];
           for (const [ok, message] of checks) {
             if (!ok) throw new Error(message);
