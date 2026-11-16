@@ -1,5 +1,5 @@
 import React from 'react';
-import { Coins } from 'lucide-react';
+import SarraafLogo from '@/components/SarraafLogo';
 import { cn } from '@/lib/utils';
 
 /**
@@ -26,11 +26,11 @@ export default function ExchangeMark({
       className={cn(
         'rounded-lg flex items-center justify-center shrink-0',
         box[size] || box.sm,
-        dark ? 'bg-white/20' : 'bg-primary',
+        'bg-transparent',
         className
       )}
     >
-      <Coins className={cn(icon[size] || icon.sm, dark ? 'text-white' : 'text-primary-foreground')} />
+      <SarraafLogo size={size === 'lg' ? 40 : size === 'md' ? 34 : 28} className="shrink-0" />
     </div>
   );
 }
