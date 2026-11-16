@@ -299,20 +299,8 @@ export async function saveVersion21Record(module, draft) {
     const fromAmount = number(draft.fromAmount);
     const toAmount = number(draft.toAmount);
     if (fromAmount <= 0 || toAmount <= 0) throw new Error('مبالغ هر دو طرف معامله باید مثبت باشند.');
-    let fromSafe, toSafe;
-    if (draft.cashFrom || draft.cashTo || draft.cash) {
-      fromSafe = await getSafe(ctx, draft.cashFrom || draft.cash, draft.fromCurrency);
-      toSafe = await getSafe(ctx, draft.cashTo || draft.cash, draft.toCurrency);
-    } else {
-      const { data: oldLines, error: oldLinesError } = await supabase.from('ledger_entries')
-        .select('account_id,currency').eq('exchange_code', ctx.exchangeCode).eq('document_id', doc.id).eq('account_type', 'cash').eq('deleted', false);
-      if (oldLinesError) throw oldLinesError;
-      const fromLine = oldLines?.find(line => line.currency === draft.fromCurrency);
-      const toLine = oldLines?.find(line => line.currency === draft.toCurrency);
-      if (!fromLine || !toLine) throw new Error('صندوق‌های دو طرف معامله برای ویرایش پیدا نشدند.');
-      fromSafe = await getSafeById(ctx, fromLine.account_id);
-      toSafe = await getSafeById(ctx, toLine.account_id);
-    }
+    const fromSafe = await getSafe(ctx, draft.cashFrom || draft.cash, draft.fromCurrency);
+    const toSafe = await getSafe(ctx, draft.cashTo || draft.cash, draft.toCurrency);
     const { data: conversion, error: conversionError } = await supabase.from('conversions').insert({
       exchange_code: ctx.exchangeCode,
       customer_name: draft.party || 'مشتری نقدی',
@@ -462,8 +450,20 @@ export async function editVersion21Record(module, draft) {
       .eq('related_id', Number(draft.id)).limit(1).maybeSingle();
     if (docError) throw docError;
     if (!doc) throw new Error('سند دفتر کل مرتبط با این تبدیل پیدا نشد؛ ویرایش امن ممکن نیست.');
-    const fromSafe = await getSafe(ctx, draft.cashFrom || draft.cash, draft.fromCurrency);
-    const toSafe = await getSafe(ctx, draft.cashTo || draft.cash, draft.toCurrency);
+    let fromSafe, toSafe;
+    if (draft.cashFrom || draft.cashTo || draft.cash) {
+      fromSafe = await getSafe(ctx, draft.cashFrom || draft.cash, draft.fromCurrency);
+      toSafe = await getSafe(ctx, draft.cashTo || draft.cash, draft.toCurrency);
+    } else {
+      const { data: oldLines, error: oldLinesError } = await supabase.from('ledger_entries')
+        .select('account_id,currency').eq('exchange_code', ctx.exchangeCode).eq('document_id', doc.id).eq('account_type', 'cash').eq('deleted', false);
+      if (oldLinesError) throw oldLinesError;
+      const fromLine = oldLines?.find(line => line.currency === draft.fromCurrency);
+      const toLine = oldLines?.find(line => line.currency === draft.toCurrency);
+      if (!fromLine || !toLine) throw new Error('صندوق‌های دو طرف معامله برای ویرایش پیدا نشدند.');
+      fromSafe = await getSafeById(ctx, fromLine.account_id);
+      toSafe = await getSafeById(ctx, toLine.account_id);
+    }
     const fromAmount = number(draft.fromAmount), toAmount = number(draft.toAmount);
     if (fromAmount <= 0 || toAmount <= 0 || draft.fromCurrency === draft.toCurrency) throw new Error('ارزها و مبالغ معامله معتبر نیستند.');
     const lines = [
