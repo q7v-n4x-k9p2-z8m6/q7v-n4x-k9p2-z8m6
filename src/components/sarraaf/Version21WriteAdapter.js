@@ -918,7 +918,7 @@ export async function deleteVersion21Record(module, record) {
 
   // Production safety: Version 21 never physically deletes user or financial records.
   // Financial documents may only be reversed through the existing accounting RPC.
-  if (record.documentId || ['transactions', 'cashAction', 'expenses', 'journal', 'ledger'].includes(module)) {
+  if ((record.documentId || ['transactions', 'cashAction', 'expenses', 'journal', 'ledger'].includes(module)) && !['remittance', 'exchange'].includes(module)) {
     const documentId = Number(record.documentId || record.id);
     await assertDocumentBalancedForReversal(ctx, documentId);
     const { data, error } = await supabase.rpc('reverse_document_transaction', {
