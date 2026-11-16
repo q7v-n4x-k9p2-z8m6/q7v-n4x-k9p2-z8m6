@@ -38,6 +38,9 @@ jobs:
           const checks = [
             [!workspace.includes('\\${'), 'Workspace contains a literal escaped JSX expression'],
             [adapter.includes('validateBalancedLines'), 'Financial posting/edit balance validation is missing'],
+            [adapter.includes('Number.isFinite(parsed) ? parsed : Number.NaN'), 'Malformed numeric input must not be coerced to zero'],
+            [data.includes('Number(line.debit)') && data.includes('Number(line.credit)'), 'Ledger balance checks must parse raw numeric values'],
+            [adapter.includes('fee_currency: draft.currency || \'AFN\', total: amount + feeAmount'), 'Remittance edit must synchronize fee currency and total'],
             [adapter.includes('requireModulePermission'), 'Server-verified employee permission checks are missing'],
             [!adapter.includes('.delete()'), 'Physical delete call found in financial write adapter'],
             [data.includes(".eq('exchange_code', exchangeCode)"), 'Tenant scoping filter is missing'],
