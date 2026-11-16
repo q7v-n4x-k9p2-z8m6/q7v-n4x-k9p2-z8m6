@@ -133,7 +133,9 @@ export async function loadVersion21Database() {
     for (const line of lines) {
       const currency = String(line.currency || 'AFN');
       const debit = num(line.debit), credit = num(line.credit);
-      if (!Number.isFinite(debit) || !Number.isFinite(credit)) { documentBalanceCache.set(key, false); return false; }
+      if (!Number.isFinite(debit) || !Number.isFinite(credit) || debit < 0 || credit < 0 || (debit > 0 && credit > 0) || (debit === 0 && credit === 0)) {
+        documentBalanceCache.set(key, false); return false;
+      }
       const total = totals.get(currency) || { debit: 0, credit: 0 };
       total.debit += debit; total.credit += credit; totals.set(currency, total);
     }
