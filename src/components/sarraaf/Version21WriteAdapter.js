@@ -105,6 +105,14 @@ async function writeAudit(ctx, action, entityType, entityId, description, oldVal
   return null;
 }
 
+async function getSafeById(ctx, id) {
+  const { data, error } = await supabase.from('safes').select('id,name,currency')
+    .eq('exchange_code', ctx.exchangeCode).eq('id', Number(id)).maybeSingle();
+  if (error) throw error;
+  if (!data) throw new Error('صندوق مرتبط با سند پیدا نشد.');
+  return data;
+}
+
 async function getSafe(ctx, name, currency) {
   const { data, error } = await supabase.from('safes').select('id,name,currency')
     .eq('exchange_code', ctx.exchangeCode).eq('name', name).eq('currency', currency).maybeSingle();
@@ -135,9 +143,10 @@ async function resolveLedgerAccount(ctx, label, currency) {
     const safe = await getSafe(ctx, value.slice(7), currency);
     return { account_type: 'cash', account_id: String(safe.id), account_name: safe.name };
   }
-  const { data, error } = await supabase.from('chart_of_accounts')
-    .select('id,account_code,account_name').eq('exchange_code', ctx.exchangeCode)
-    .or(`account_code.eq.${value.split(' — ')[0]},account_name.eq.${value}`).limit(1).maybeSingle();
+  const accountCode = value.includes(' — ') ? value.split(' — ')[0] : '';
+  let query = supabase.from('chart_of_accounts').select('id,account_code,account_name').eq('exchange_code', ctx.exchangeCode);
+  query = accountCode ? query.eq('account_code', accountCode) : query.eq('account_name', value);
+  const { data, error } = await query.limit(1).maybeSingle();
   if (error) throw error;
   if (!data) throw new Error(`حساب «${value}» در کدینگ همین صرافی پیدا نشد.`);
   return { account_type: 'suspense', account_id: String(data.id), account_name: data.account_name };
@@ -202,7 +211,7 @@ export async function saveVersion21Record(module, draft) {
   if (module === 'remittance') {
     if (!draft.sender || !draft.receiver || number(draft.amount) <= 0) throw new Error('فرستنده، گیرنده و مبلغ مثبت الزامی است.');
     if (draft.id) throw new Error('برای اصلاح حواله ثبت‌شده، ابتدا باید گردش آن معکوس و حواله اصلاحی صادر شود؛ ویرایش مستقیم حواله مالی مجاز نیست.');
-    const customer = await getCustomer(ctx, draft.sender || draft.receiver);
+    const customer = await getCustomer(ctx, draft.direction === 'دریافتی' ? draft.receiver : draft.sender);
     const branch = await getBranch(ctx, draft.branch);
     const operationId = makeOperationId();
     const { data, error } = await supabase.rpc('post_transfer_transaction_v2', {
@@ -290,8 +299,20 @@ export async function saveVersion21Record(module, draft) {
     const fromAmount = number(draft.fromAmount);
     const toAmount = number(draft.toAmount);
     if (fromAmount <= 0 || toAmount <= 0) throw new Error('مبالغ هر دو طرف معامله باید مثبت باشند.');
-    const fromSafe = await getSafe(ctx, draft.cashFrom || draft.cash, draft.fromCurrency);
-    const toSafe = await getSafe(ctx, draft.cashTo || draft.cash, draft.toCurrency);
+    let fromSafe, toSafe;
+    if (draft.cashFrom || draft.cashTo || draft.cash) {
+      fromSafe = await getSafe(ctx, draft.cashFrom || draft.cash, draft.fromCurrency);
+      toSafe = await getSafe(ctx, draft.cashTo || draft.cash, draft.toCurrency);
+    } else {
+      const { data: oldLines, error: oldLinesError } = await supabase.from('ledger_entries')
+        .select('account_id,currency').eq('exchange_code', ctx.exchangeCode).eq('document_id', doc.id).eq('account_type', 'cash').eq('deleted', false);
+      if (oldLinesError) throw oldLinesError;
+      const fromLine = oldLines?.find(line => line.currency === draft.fromCurrency);
+      const toLine = oldLines?.find(line => line.currency === draft.toCurrency);
+      if (!fromLine || !toLine) throw new Error('صندوق‌های دو طرف معامله برای ویرایش پیدا نشدند.');
+      fromSafe = await getSafeById(ctx, fromLine.account_id);
+      toSafe = await getSafeById(ctx, toLine.account_id);
+    }
     const { data: conversion, error: conversionError } = await supabase.from('conversions').insert({
       exchange_code: ctx.exchangeCode,
       customer_name: draft.party || 'مشتری نقدی',
@@ -370,7 +391,15 @@ export async function editVersion21Record(module, draft) {
   if (TABLES[module]) return saveVersion21Record(module, draft);
 
   if (module === 'expenses') {
-    const safe = await getSafe(ctx, draft.cash, draft.currency || 'AFN');
+    let safe;
+    if (draft.cash) safe = await getSafe(ctx, draft.cash, draft.currency || 'AFN');
+    else {
+      const { data: lines, error: linesError } = await supabase.from('ledger_entries').select('account_id')
+        .eq('exchange_code', ctx.exchangeCode).eq('document_id', Number(draft.id)).eq('account_type', 'cash').eq('deleted', false).limit(1);
+      if (linesError) throw linesError;
+      if (!lines?.[0]?.account_id) throw new Error('صندوق مرتبط با مصرف پیدا نشد.');
+      safe = await getSafeById(ctx, lines[0].account_id);
+    }
     const amount = number(draft.amount);
     if (amount <= 0) throw new Error('مبلغ مصرف باید مثبت باشد.');
     const lines = [
