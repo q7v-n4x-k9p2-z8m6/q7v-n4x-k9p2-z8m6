@@ -359,9 +359,9 @@ export default function Version21Workspace(){
        <div className="text-left text-[10px]"><b className="block text-[#24496d]">{today()}</b><span className="text-emerald-700">{dbStatus==='connected'?'اتصال دیتابیس برقرار است':'در انتظار اتصال دیتابیس'}</span></div>
       </div>
       <div className="mb-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
-       <div className="border border-[#b6c4cf] bg-white px-3 py-2 shadow-sm"><span className="text-[10px] text-slate-500">تعداد مشتریان</span><b className="mt-1 block text-lg text-[#24496d]">{fmt(data.customers.length)}</b></div>
-       <div className="border border-[#b6c4cf] bg-white px-3 py-2 shadow-sm"><span className="text-[10px] text-slate-500">صندوق‌های تعریف‌شده</span><b className="mt-1 block text-lg text-[#24496d]">{fmt(data.cash.length)}</b></div>
-       <div className="border border-[#b6c4cf] bg-white px-3 py-2 shadow-sm"><span className="text-[10px] text-slate-500">عملیات امروز</span><b className="mt-1 block text-lg text-[#24496d]">{fmt(dailyTransactions.length)}</b></div>
+       <div className="border border-[#b6c4cf] bg-white px-3 py-2 shadow-sm"><span className="text-[10px] text-slate-500">تعداد مشتریان</span><b className="mt-1 block text-lg text-[#24496d]">{canViewModule('customers')?fmt(data.customers.length):'—'}</b></div>
+       <div className="border border-[#b6c4cf] bg-white px-3 py-2 shadow-sm"><span className="text-[10px] text-slate-500">صندوق‌های تعریف‌شده</span><b className="mt-1 block text-lg text-[#24496d]">{canViewModule('cash')?fmt(data.cash.length):'—'}</b></div>
+       <div className="border border-[#b6c4cf] bg-white px-3 py-2 shadow-sm"><span className="text-[10px] text-slate-500">عملیات امروز</span><b className="mt-1 block text-lg text-[#24496d]">{canViewModule('reports')||canViewModule('cash')?fmt(dailyTransactions.length):'—'}</b></div>
        <div className="border border-[#b6c4cf] bg-white px-3 py-2 shadow-sm"><span className="text-[10px] text-slate-500">سود خالص</span><b className="mt-1 block text-lg text-amber-700">محاسبه نشده</b></div>
       </div>
       <div className="grid gap-3 xl:grid-cols-2">
