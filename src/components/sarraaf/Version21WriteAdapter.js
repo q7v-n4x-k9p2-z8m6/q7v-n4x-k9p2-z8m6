@@ -740,22 +740,22 @@ export async function deleteVersion21Record(module, record) {
 
   if (module === 'remittance' || module === 'exchange') {
     const linkColumn = module === 'remittance' ? 'transfer_id' : 'related_id';
-    let query = supabase.from('documents').select('id,reversed').eq('exchange_code', ctx.exchangeCode);
+    let query = supabase.from('documents').select('id,reversed,deleted').eq('exchange_code', ctx.exchangeCode);
     if (module === 'remittance') query = query.eq(linkColumn, Number(record.id));
     else query = query.eq('related_type', 'conversion').eq(linkColumn, Number(record.id));
     const { data: linkedDoc, error: linkError } = await query.order('id', { ascending: false }).limit(1).maybeSingle();
     if (linkError) throw linkError;
-    if (!linkedDoc) throw new Error('سند مالی مرتبط پیدا نشد؛ هیچ رکوردی حذف یا تغییر داده نشد.');
+    if (!linkedDoc || linkedDoc.deleted) throw new Error('سند مالی فعال و مرتبط پیدا نشد؛ هیچ رکوردی حذف یا تغییر داده نشد.');
 
     const feeDocs = [];
     if (module === 'remittance') {
-      const { data, error: feeLookupError } = await supabase.from('documents').select('id,reversed')
+      const { data, error: feeLookupError } = await supabase.from('documents').select('id,reversed,deleted')
         .eq('exchange_code', ctx.exchangeCode)
         .eq('doc_type', 'transfer_fee')
         .eq('related_type', 'transfer')
         .eq('related_id', Number(record.id));
       if (feeLookupError) throw feeLookupError;
-      feeDocs.push(...(data || []));
+      feeDocs.push(...(data || []).filter(doc => !doc.deleted));
     }
 
     // Validate every active linked document before reversing any of them.
