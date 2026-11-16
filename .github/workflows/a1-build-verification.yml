@@ -56,6 +56,9 @@ jobs:
             [data.includes('loadDemoPreviewRecords') && data.includes('isDemoAccount'), 'Demo records must load only for the exact demo session'],
             [demo.includes("record_kind', 'temporary'") && demo.includes('expires_at'), 'Temporary demo records must have a bounded expiry'],
             [demo.includes("row.record_kind === 'sample'"), 'Fixed demo samples must be distinguished from temporary records'],
+            [workspace.includes('data.isDemoAccount&&!target._demoPreview'), 'Demo delete must never touch existing core accounting records'],
+            [workspace.includes('data.isDemoAccount&&!selected._demoPreview'), 'Demo edit must never touch existing core accounting records'],
+            [demo.includes(".eq('record_kind', 'temporary')") && demo.includes(".eq('owner_user_id', ctx.userId)"), 'Demo mutations must be tenant-scoped and temporary-only'],
           ];
           for (const [ok, message] of checks) {
             if (!ok) throw new Error(message);
