@@ -158,7 +158,7 @@ export default function Debtors() {
                           key={cur}
                           className={cn(
                             'text-xs font-semibold',
-                            val >= 0 ? 'text-success' : 'text-destructive'
+                            val >= 0 ? 'text-rose-700' : 'text-emerald-700'
                           )}
                         >
                           {formatAmount(val, cur)}
