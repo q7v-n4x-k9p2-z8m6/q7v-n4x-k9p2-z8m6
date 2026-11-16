@@ -1,0 +1,174 @@
+/* Version 21 responsive workspace composition.
+   Uses only the module icons and labels already defined by Version21Workspace. */
+.v21-workspace-root { width: 100%; }
+.v21-workspace-shell { width: 100%; }
+.v21-workspace-shell aside.grid {
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+}
+.v21-workspace-shell aside.grid button {
+  min-height: 68px;
+  border-radius: 7px;
+  transition: background-color .16s ease, border-color .16s ease, transform .16s ease;
+}
+.v21-workspace-shell aside.grid button:hover { transform: translateY(-1px); }
+.v21-workspace-shell main section:has(> div.flex.flex-wrap) {
+  border-radius: 9px;
+  box-shadow: 0 2px 8px rgb(35 65 88 / 6%);
+}
+.v21-workspace-shell main section > div.flex.flex-wrap > div {
+  min-width: 116px;
+}
+.v21-workspace-shell main section > div.flex.flex-wrap button {
+  width: 100%;
+  min-height: 104px;
+  border-radius: 8px;
+}
+.v21-workspace-shell main section > div.flex.flex-wrap button span {
+  border-radius: 10px;
+}
+.v21-workspace-shell main > div.grid.gap-3 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.v21-workspace-shell main > div.grid.grid-cols-2 > div {
+  border-radius: 8px;
+}
+.v21-workspace-shell .v21-mobile-bottom { display: none; }
+
+@media (min-width: 1280px) {
+  .v21-workspace-shell main > div.grid.gap-3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+@media (min-width: 641px) and (max-width: 900px) {
+  .v21-workspace-shell aside.grid {
+    grid-template-columns: repeat(8, minmax(0, 1fr));
+  }
+  .v21-workspace-shell main > div.grid.gap-3 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 640px) {
+  .v21-workspace-root { min-height: 100dvh; padding: 0 0 env(safe-area-inset-bottom); }
+  .v21-workspace-shell {
+    min-height: 100dvh !important;
+    max-height: none !important;
+    height: auto !important;
+    overflow: visible !important;
+    border-left: 0;
+    border-right: 0;
+    border-radius: 0 !important;
+    box-shadow: none;
+  }
+  .v21-workspace-shell > header {
+    position: sticky;
+    top: 0;
+    z-index: 35;
+    min-height: 52px;
+    padding: 10px 12px;
+  }
+  .v21-workspace-shell > header b { font-size: 12px; }
+  .v21-workspace-shell > nav {
+    position: sticky;
+    top: 52px;
+    z-index: 34;
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    white-space: nowrap;
+    scrollbar-width: none;
+  }
+  .v21-workspace-shell > nav::-webkit-scrollbar { display: none; }
+  .v21-workspace-shell > nav > div { flex: 0 0 auto; }
+  .v21-workspace-shell > nav button { min-height: 42px; padding: 10px 13px; }
+  .v21-workspace-shell > div.flex.min-h-0 { overflow: visible !important; }
+  .v21-workspace-shell aside.grid {
+    display: flex !important;
+    flex-wrap: nowrap;
+    gap: 7px;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    padding: 8px 10px;
+    scrollbar-width: thin;
+  }
+  .v21-workspace-shell aside.grid button {
+    flex: 0 0 78px;
+    min-height: 66px;
+    padding: 7px 5px;
+    border: 1px solid #c4d0d9;
+    border-radius: 8px;
+    background: #fff;
+  }
+  .v21-workspace-shell aside.grid button svg { width: 21px; height: 21px; }
+  .v21-workspace-shell aside.grid button span {
+    display: block;
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+    line-height: 1.3;
+    font-size: 10px;
+  }
+  .v21-workspace-shell main { overflow: visible !important; padding: 12px 10px 18px; }
+  .v21-workspace-shell main > div.grid.gap-3 {
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 10px;
+  }
+  .v21-workspace-shell main > div.grid.grid-cols-2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 8px;
+  }
+  .v21-workspace-shell main section {
+    border-radius: 9px;
+    padding: 9px;
+  }
+  .v21-workspace-shell main section > div.flex.flex-wrap {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+  .v21-workspace-shell main section > div.flex.flex-wrap > div {
+    min-width: 0 !important;
+    width: 100%;
+  }
+  .v21-workspace-shell main section > div.flex.flex-wrap button {
+    min-height: 92px;
+    padding: 9px 5px;
+    border-radius: 8px;
+  }
+  .v21-workspace-shell main section > div.flex.flex-wrap button span {
+    width: 40px;
+    height: 40px;
+  }
+  .v21-workspace-shell main input,
+  .v21-workspace-shell main select { max-width: 100%; min-height: 40px; }
+  .v21-workspace-shell table { min-width: 640px; }
+  .v21-workspace-shell main > div:has(> table) { overflow-x: auto; }
+  .v21-workspace-shell > div.shrink-0.flex.items-center.justify-between {
+    position: sticky;
+    bottom: calc(58px + env(safe-area-inset-bottom));
+    z-index: 25;
+  }
+  .v21-workspace-shell .v21-mobile-bottom {
+    position: sticky;
+    bottom: 0;
+    z-index: 40;
+    display: grid !important;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 6px;
+    padding: 8px 8px calc(8px + env(safe-area-inset-bottom));
+    background: #e5edf3;
+    border-top: 1px solid #a8bac8;
+  }
+  .v21-workspace-shell .v21-mobile-bottom button {
+    min-height: 46px;
+    border: 1px solid #a8bac8;
+    border-radius: 8px;
+    background: #fff;
+    color: #24496d;
+    font-size: 11px;
+    font-weight: 700;
+  }
+  .v21-workspace-shell footer { gap: 6px; font-size: 9px; }
+  .v21-workspace-shell .fixed.inset-0 { padding: 8px; }
+  .v21-workspace-shell .fixed.inset-0 > div { max-height: 92dvh; }
+}
