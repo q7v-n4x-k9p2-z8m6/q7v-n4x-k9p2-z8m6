@@ -155,9 +155,6 @@ export default function Version21Layout() {
               </button>
             </div>
           </div>
-          <nav className="lg:hidden grid grid-cols-3 gap-2 px-3 pb-3">
-            {modules.map(item => <ModuleLink key={item.id} item={item} compact />)}
-          </nav>
         </header>
         <main className="flex-1 min-w-0 p-3 md:p-5 xl:p-7">
           <div className="mx-auto w-full max-w-[1600px]">
