@@ -88,6 +88,7 @@ export default function Version21Workspace(){
  const [saving,setSaving]=useState(false);
  const [dbStatus,setDbStatus]=useState('loading');
  const [dbError,setDbError]=useState('');
+ const [localPreview,setLocalPreview]=useState(false);
  const [exchangeProfile,setExchangeProfile]=useState(null);
  const [lastLoaded,setLastLoaded]=useState(null);
  const readOnly=false;
@@ -120,10 +121,10 @@ export default function Version21Workspace(){
  const notify=s=>{setNotice(s);setTimeout(()=>setNotice(''),4500);};
  const refreshDatabase=async()=>{
   setDbStatus('loading');setDbError('');
-  try{const result=await loadVersion21Database();setData(result.data);setExchangeProfile(result.exchange);setLastLoaded(result.loadedAt);setDbStatus('connected');setSelected(null);setCustomerDetail(null);setBranchDetail(null);notify('اطلاعات واقعی دیتابیس دوباره بارگذاری شد.');}
+  try{const result=await loadVersion21Database();setData(result.data);setExchangeProfile(result.exchange);setLastLoaded(result.loadedAt);setDbStatus('connected');setLocalPreview(false);setSelected(null);setCustomerDetail(null);setBranchDetail(null);notify('اطلاعات واقعی دیتابیس دوباره بارگذاری شد.');}
   catch(error){setDbStatus('error');setDbError(error?.message||'اتصال به دیتابیس ناموفق بود.');captureVersion21Error(error,'loadDatabase');}
  };
- useEffect(()=>{let activeRequest=true;(async()=>{try{const result=await loadVersion21Database();if(!activeRequest)return;setData(result.data);setExchangeProfile(result.exchange);setLastLoaded(result.loadedAt);setDbStatus('connected');}catch(error){if(!activeRequest)return;setDbStatus('error');setDbError(error?.message||'اتصال به دیتابیس ناموفق بود.');}})();return()=>{activeRequest=false;};},[]);
+ useEffect(()=>{let activeRequest=true;(async()=>{try{const result=await loadVersion21Database();if(!activeRequest)return;setData(result.data);setExchangeProfile(result.exchange);setLastLoaded(result.loadedAt);setDbStatus('connected');setLocalPreview(false);}catch(error){if(!activeRequest)return;setDbStatus('error');setDbError(error?.message||'اتصال به دیتابیس ناموفق بود.');}})();return()=>{activeRequest=false;};},[]);
  const page=MODULES.find(x=>x.id===active)||MODULES[0];
  const schema=SCHEMAS[active];
  const rows=useMemo(()=>{
@@ -140,6 +141,7 @@ export default function Version21Workspace(){
  const saveRecord=async()=>{
   const mod=modal;
   if(!SCHEMAS[mod]||saving)return;
+  if(dbStatus!=='connected'||localPreview){notify('برای جلوگیری از ثبت روی داده اشتباه، ابتدا اطلاعات واقعی همین صراف را تازه‌سازی کنید.');return;}
   setSaving(true);
   const payload={...draft,clientOperationId:draft.clientOperationId||(globalThis.crypto?.randomUUID?.()||('v21-'+Date.now()+'-'+Math.random().toString(36).slice(2)))};
   setDraft(payload);
@@ -157,6 +159,7 @@ export default function Version21Workspace(){
  };
  const addTransaction=tx=>setData(d=>({...d,transactions:[{id:uid(),date:today(),...tx},...d.transactions]}));
  const removeSelected=async()=>{
+  if(dbStatus!=='connected'||localPreview){notify('در پیش‌نمایش محلی عملیات مالی و ابطال غیرفعال است؛ ابتدا اطلاعات واقعی را تازه‌سازی کنید.');return;}
   if(!selected){notify('ابتدا یک ردیف را انتخاب کنید.');return;}
   const targetModule=['customerLedger','branchLedger'].includes(active)?'transactions':active;
   if(active==='ledger'&&!selected.documentId){notify('شناسه سند اصلی برای این سطر موجود نیست؛ برای جلوگیری از ابطال سند اشتباه، عملیات متوقف شد.');return;}
@@ -173,6 +176,7 @@ export default function Version21Workspace(){
   }
  };
  const editSelected=()=>{
+  if(dbStatus!=='connected'||localPreview){notify('در پیش‌نمایش محلی ویرایش غیرفعال است؛ ابتدا اطلاعات واقعی را تازه‌سازی کنید.');return;}
   if(!selected){notify('ابتدا یک ردیف را انتخاب کنید.');return;}
   if(active==='ledger'){notify('دفتر کل گزارش سطرهای ثبت‌شده است؛ برای اصلاح، سند اصلی را در روزنامچه یا بخش عملیات مربوط باز کنید.');return;}
   if(['customerLedger','branchLedger'].includes(active)&&selected.documentId){
@@ -186,6 +190,7 @@ export default function Version21Workspace(){
  const cashAction=kind=>{const first=data.cash.find(x=>x.currency==='AFN')||data.cash[0];setDraft({date:today(),kind,amount:'',currency:first?.currency||'AFN',cash:first?.name||'',party:'',partyType:'customer',description:''});setModal('cashAction');};
  const saveCashAction=async()=>{
   if(saving)return;
+  if(dbStatus!=='connected'||localPreview){notify('برای جلوگیری از ثبت روی داده اشتباه، ابتدا اطلاعات واقعی همین صراف را تازه‌سازی کنید.');return;}
   setSaving(true);
   const payload={...draft,clientOperationId:draft.clientOperationId||(globalThis.crypto?.randomUUID?.()||('v21-'+Date.now()+'-'+Math.random().toString(36).slice(2)))};
   setDraft(payload);
@@ -201,9 +206,9 @@ export default function Version21Workspace(){
   }finally{setSaving(false);}
  };
  const backup=()=>{const blob=new Blob([JSON.stringify({version:2,createdAt:new Date().toISOString(),data},null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='hisab-sarraf-backup.json';a.click();URL.revokeObjectURL(a.href);notify('فایل پشتیبان محلی آماده شد.');};
- const restore=()=>{try{const parsed=JSON.parse(restoreText);const restored=parsed.data||parsed;if(!restored||!Array.isArray(restored.customers)||!Array.isArray(restored.transactions))throw new Error();setData({...emptyInitial(),...restored});setModal('');setRestoreText('');notify('پشتیبان در همین مرورگر بازیابی شد.');}catch{notify('فایل پشتیبان معتبر نیست یا ساختار آن پشتیبانی نمی‌شود.');}};
+ const restore=()=>{try{const parsed=JSON.parse(restoreText);const restored=parsed.data||parsed;if(!restored||!Array.isArray(restored.customers)||!Array.isArray(restored.transactions))throw new Error();setData({...emptyInitial(),...restored});setLocalPreview(true);setModal('');setRestoreText('');setSelected(null);notify('پشتیبان فقط به‌صورت پیش‌نمایش محلی باز شد؛ برای هر عملیات واقعی، ابتدا تازه‌سازی دیتابیس لازم است.');}catch{notify('فایل پشتیبان معتبر نیست یا ساختار آن پشتیبانی نمی‌شود.');}};
  const printPage=()=>window.print();
- const reset=()=>{if(window.confirm('فقط نمای محلی این صفحه بازنشانی شود؟ هیچ رکوردی از دیتابیس حذف نمی‌شود.')){setData(emptyInitial());setSelected(null);notify('داده‌های آزمایشی بازنشانی شد.');}};
+ const reset=()=>{if(window.confirm('فقط نمای محلی این صفحه پاک شود؟ هیچ رکوردی از دیتابیس حذف نمی‌شود.')){setData(emptyInitial());setLocalPreview(true);setSelected(null);notify('نمای محلی پاک شد؛ برای بارگذاری اطلاعات واقعی، تازه‌سازی را بزنید.');}};
  const balanceFor=(currency,cashName)=>{const opening=(data.cash.find(x=>x.currency===currency&&(!cashName||x.name===cashName))?.opening)||0;return opening+data.transactions.filter(t=>t.currency===currency&&(!cashName||t.cash===cashName)).reduce((s,t)=>s+n(t.amount),0);};
  const totalByCurrency=(currency)=>data.transactions.filter(t=>t.currency===currency).reduce((s,t)=>s+n(t.amount),0);
  const customerSummary=(customer)=>{
@@ -319,6 +324,7 @@ export default function Version21Workspace(){
  const mainTitle='چیدمان لپ‌تاپ حساب صراف — نسخه ۲۱'; return <div dir="rtl" className="v21-workspace-root space-y-2 text-[#253746]">
   <div className="flex flex-wrap items-center justify-between gap-2 border border-slate-400 bg-[#eaf0f5] px-3 py-2"><b className="flex items-center gap-2 text-xs text-[#24496d]"><Calculator className="h-4 w-4"/> چیدمان لپ‌تاپ حساب صراف — نسخه ۲۱</b><span className={'text-[10px] font-bold '+(dbStatus==='connected'?'text-emerald-800':dbStatus==='error'?'text-rose-700':'text-amber-700')}>{dbStatus==='connected'?'اتصال امن به دیتابیس A1 · عملیات فعال':dbStatus==='error'?'خطا در اتصال دیتابیس':'در حال اتصال امن به دیتابیس...'}</span></div>
   {dbStatus==='error'&&<div className="border border-rose-300 bg-rose-50 px-3 py-2 text-xs text-rose-800">{dbError}</div>}
+   {localPreview&&<div className="border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-900">پیش‌نمایش محلی پشتیبان/نمای پاک‌شده فعال است؛ ثبت، ویرایش و ابطال تا تازه‌سازی اطلاعات واقعی غیرفعال می‌ماند.</div>}
   {dbStatus==='connected'&&<div className="flex flex-wrap items-center justify-between gap-2 border border-emerald-200 bg-emerald-50 px-3 py-2 text-[10px] text-emerald-900"><span>صراف: <b>{exchangeProfile?.name||'—'}</b> · داده‌ها فقط از نشست همین صراف دریافت می‌شود.</span><span>آخرین بارگذاری: {lastLoaded?new Date(lastLoaded).toLocaleString('fa-IR'):'—'}</span></div>}
   <section className="v21-workspace-shell flex max-h-[78vh] min-h-[640px] flex-col overflow-hidden border border-[#65798b] bg-[#eef1f4] shadow-md">
    <header className="flex min-h-9 items-center justify-between bg-gradient-to-b from-[#315f80] to-[#173f5d] px-3 py-1.5 text-white"><div className="flex items-center gap-2"><Calculator className="h-4 w-4"/><b className="text-xs">{mainTitle}</b><span className="hidden text-[10px] text-blue-100 sm:inline">— ساختار اصلی نسخه ۲۱</span></div><div className="flex gap-1"><button onClick={()=>setModal('settings')} className="border border-white/30 px-2 text-xs">⚙</button></div></header>
@@ -402,7 +408,7 @@ export default function Version21Workspace(){
     ,...(modal==='remittance'?{cash:[{value:'',label:'انتخاب صندوق مرتبط'},...data.cash.filter(x=>x.currency===draft.currency).map(x=>({value:x.name,label:x.name+' ('+x.currency+')'}))],branch:[{value:'',label:'انتخاب نمایندگی'},...data.branches.map(x=>({value:x.name,label:x.name}))]}:{})
    }}/>)}</div><div className="flex justify-end gap-2 border-t bg-slate-100 p-3"><button onClick={saveRecord} disabled={saving} className="flex items-center gap-1 border bg-white px-4 py-2 text-xs disabled:opacity-50"><Save className="h-4 w-4"/>{saving?'در حال ثبت...':'ثبت'}</button><button onClick={()=>setModal('')} className="border bg-white px-4 py-2 text-xs">انصراف</button></div></>}
    {modal==='cashAction'&&<><div className="grid gap-3 p-4 sm:grid-cols-2">{[['تاریخ','date'],['نوع عملیات','kind'],['نوع طرف حساب','partyType'],['طرف حساب','party'],['ارز','currency'],['مبلغ','amount'],['صندوق','cash'],['شرح','description']].map(([label,key])=><label key={key} className="space-y-1 text-[11px]"><span>{label}</span>{key==='kind'?<select value={draft.kind} onChange={e=>setField(key,e.target.value)} className="h-9 w-full border bg-white px-2"><option>دخل</option><option>خرج</option></select>:key==='partyType'?<select value={draft.partyType||'customer'} onChange={e=>setField(key,e.target.value)} className="h-9 w-full border bg-white px-2"><option value="customer">مشتری</option><option value="branch">نمایندگی</option><option value="other">سایر</option></select>:key==='currency'?<select value={draft.currency} onChange={e=>{const currency=e.target.value;const first=data.cash.find(x=>x.currency===currency);setDraft(d=>({...d,currency,cash:first?.name||''}));}} className="h-9 w-full border bg-white px-2">{CURRENCIES.map(c=><option key={c}>{c}</option>)}</select>:key==='cash'?<select value={draft.cash||''} onChange={e=>setField(key,e.target.value)} className="h-9 w-full border bg-white px-2"><option value="">انتخاب صندوق</option>{data.cash.filter(c=>c.currency===draft.currency).map(c=><option key={c.id} value={c.name}>{c.name} · {c.currency}</option>)}</select>:<input type={key==='amount'?'number':key==='date'?'date':'text'} value={draft[key]||''} onChange={e=>setField(key,e.target.value)} className="h-9 w-full border bg-white px-2"/>}</label>)}</div><div className="flex justify-end border-t bg-slate-100 p-3"><button onClick={saveCashAction} disabled={saving} className="border bg-white px-4 py-2 text-xs disabled:opacity-50">{saving?'در حال ثبت...':'ثبت گردش صندوق'}</button></div></>}
-   {modal==='restore'&&<div className="space-y-3 p-4"><p className="text-xs">محتوای فایل پشتیبان JSON آزمایشگاه را اینجا وارد کنید. اطلاعات فعلی جایگزین می‌شود.</p><textarea value={restoreText} onChange={e=>setRestoreText(e.target.value)} rows={9} className="w-full border bg-white p-2 text-xs" placeholder="محتوای JSON..."/><button onClick={restore} className="border bg-white px-4 py-2 text-xs">بازیابی در مرورگر</button></div>}
+   {modal==='restore'&&<div className="space-y-3 p-4"><p className="text-xs">محتوای فایل پشتیبان JSON را وارد کنید. این بازیابی فقط نمای محلی مرورگر را تغییر می‌دهد و هیچ رکوردی در دیتابیس A1 ایجاد، جایگزین یا حذف نمی‌کند.</p><textarea value={restoreText} onChange={e=>setRestoreText(e.target.value)} rows={9} className="w-full border bg-white p-2 text-xs" placeholder="محتوای JSON..."/><button onClick={restore} className="border bg-white px-4 py-2 text-xs">بازیابی در مرورگر</button></div>}
    {modal==='settings'&&<div className="space-y-2 p-4 text-xs"><p>منبع اطلاعات: دیتابیس اصلی A1</p><p>حالت دسترسی: عملیاتی و محدود به کد صرافی نشست واردشده</p><p>تعاریف در جدول‌های واقعی ذخیره می‌شوند؛ اسناد مالی با سند و سطرهای دفتر کل ثبت و برای ابطال با سند معکوس اصلاح می‌شوند.</p><p>خروجی CSV و چاپ برای بررسی اطلاعات در دسترس است.</p><button onClick={refreshDatabase} className="border bg-white px-3 py-2">بارگذاری دوباره اطلاعات</button></div>}
    {modal==='support'&&<div className="space-y-3 p-4 text-xs leading-6"><b>پشتیبانی حساب صراف</b><p>برای مشاهده راه‌های پشتیبانی و ثبت درخواست، صفحه پشتیبانی برنامه را باز کنید.</p><button onClick={()=>{setModal('');navigate('/support');}} className="border border-blue-300 bg-blue-50 px-4 py-2 font-bold text-blue-900">ورود به مرکز پشتیبانی</button></div>}
    {modal==='help'&&<div className="space-y-2 p-4 text-xs leading-6"><p>۱. از فهرست سمت راست بخش مورد نظر را باز کنید.</p><p>۲. اطلاعات صراف از دیتابیس دریافت می‌شود و ثبت‌های جدید در همان حساب ذخیره می‌گردد.</p><p>۳. برای تازه‌سازی، از دکمه «تازه‌سازی» استفاده کنید.</p><p>۴. ثبت و ویرایش در جدول‌های موجود انجام می‌شود؛ عملیات مالی با سند حسابداری و سوابق قابل‌ردیابی ثبت می‌گردد.</p><p>دسترسی اطلاعات به نشست و کد صرافی واردشده محدود است.</p></div>}
