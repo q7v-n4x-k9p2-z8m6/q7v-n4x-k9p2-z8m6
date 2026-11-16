@@ -218,6 +218,7 @@ export async function saveVersion21Record(module, draft) {
     }
     if (module === 'banks' && !payload.account_number) throw new Error('شماره حساب بانکی الزامی است.');
     if (module === 'accounts' && !payload.account_code) throw new Error('کد حساب الزامی است.');
+    if (module === 'currencies' && !payload.currency) throw new Error('کد ارز الزامی است.');
     if (module === 'currencies' && (payload.buy_rate <= 0 || payload.sell_rate <= 0)) {
       throw new Error('نرخ خرید و فروش باید بزرگ‌تر از صفر باشد.');
     }
@@ -302,6 +303,8 @@ export async function saveVersion21Record(module, draft) {
     }
     const customer = module === 'cashAction' && draft.partyType === 'customer' ? await getCustomer(ctx, draft.party) : null;
     const branch = module === 'cashAction' && draft.partyType === 'branch' ? await getBranch(ctx, draft.party) : null;
+    if (module === 'cashAction' && draft.partyType === 'customer' && !customer) throw new Error('مشتری انتخاب‌شده در فهرست همین صراف پیدا نشد؛ ابتدا مشتری را ثبت کنید.');
+    if (module === 'cashAction' && draft.partyType === 'branch' && !branch) throw new Error('نمایندگی انتخاب‌شده در فهرست همین صراف پیدا نشد؛ ابتدا نمایندگی را ثبت کنید.');
     const isCashIn = module === 'cashAction' && draft.kind === 'دخل';
     const isExpense = module === 'expenses';
     const counter = isExpense
