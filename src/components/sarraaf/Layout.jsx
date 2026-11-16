@@ -171,13 +171,13 @@ export default function Layout() {
     <ForceUpdateGate>
     <div className="min-h-screen bg-background flex flex-col">
       {/* Structured workspace navigation; mobile navigation below is unchanged. */}
-      <aside className="hidden md:flex w-full shrink-0 flex-col bg-[#123f78] text-slate-100 print:hidden">
+      <aside className="hidden md:flex w-full shrink-0 flex-col bg-gradient-to-l from-[#0b3f88] via-[#1455a5] to-[#0b3f88] text-white print:hidden">
         {/* Brand header */}
-        <div className="px-4 py-3 border-b border-white/10 flex items-center gap-2.5">
+        <div className="px-4 py-3 border-b border-white/20 bg-[#0b3f88]/35 flex items-center gap-2.5">
           <ExchangeMark size="md" dark className="shrink-0" />
           <div className="min-w-0">
             <p className="text-base font-bold text-white truncate">حساب صراف</p>
-            <p className="text-[11px] text-slate-400 truncate">{profile?.exchange_name || 'مدیریت صرافی'}</p>
+            <p className="text-[11px] text-blue-100 truncate">{profile?.exchange_name || 'مدیریت صرافی'}</p>
           </div>
         </div>
         {/* Navigation */}
@@ -197,7 +197,7 @@ export default function Layout() {
         <WorkspaceHeader items={desktopItems} user={user} profile={profile} paidSystemEnabled={paidSystemEnabled} openUpgrade={openUpgrade} onLogout={handleLogout} />
         {/* Mobile Header — clean, minimal: identity + hamburger */}
         <header
-          className="md:hidden sticky top-0 z-30 bg-card border-b"
+          className="md:hidden sticky top-0 z-30 bg-gradient-to-l from-[#0b3f88] via-[#1455a5] to-[#0b3f88] text-white border-b border-blue-300"
           style={{ paddingTop: 'env(safe-area-inset-top)' }}
         >
           <div className="flex items-center justify-between gap-2 px-4 py-3">
