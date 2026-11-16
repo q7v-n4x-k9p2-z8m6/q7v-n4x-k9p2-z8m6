@@ -250,7 +250,6 @@ export async function loadVersion21Database() {
     };
   });
 
-  const mappedAccountById = new Map(mappedAccounts.map(account => [String(account.id), account]));
   mappedAccounts.filter(account => !account.parentId).forEach(parent => {
     const totals = new Map((parent.balanceByCurrency || []).map(row => [row.currency, { ...row }]));
     mappedAccounts.filter(child => String(child.parentId || '') === String(parent.id)).forEach(child => {
