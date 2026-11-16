@@ -26,7 +26,16 @@ const PERMISSION_SECTION_BY_MODULE = {
 };
 
 async function requireModulePermission(ctx, module, action) {
-  if (ctx.userType !== 'employee') return;
+  // Never trust the role cached in localStorage for authorization.
+  // Read the current user's role under the own-user RLS policy.
+  const { data: verifiedUser, error: roleError } = await supabase.from('users')
+    .select('role').eq('id', ctx.userId).maybeSingle();
+  if (roleError) throw new Error('تأیید نقش کاربر ناموفق بود: ' + roleError.message);
+  if (!verifiedUser?.role) throw new Error('نقش معتبر کاربر از سرور دریافت نشد؛ عملیات متوقف شد.');
+  const role = String(verifiedUser.role).toLowerCase();
+  if (['creator', 'admin', 'exchange', 'sarraaf'].includes(role)) return;
+  if (role !== 'employee') throw new Error('این نقش اجازه اجرای عملیات نسخه ۲۱ را ندارد.');
+
   const section = PERMISSION_SECTION_BY_MODULE[module];
   if (!section) throw new Error('این بخش برای نقش کارمند مجوز عملیاتی تعریف‌شده ندارد.');
   const { data, error } = await supabase.from('user_permissions')
