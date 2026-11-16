@@ -121,6 +121,7 @@ export async function loadVersion21Database() {
 
   const documentsById = new Map(documents.map(row => [String(row.id), row]));
   const safeById = new Map(safes.map(row => [String(row.id), row]));
+  const chartAccountById = new Map(chartAccounts.map(row => [String(row.id), row]));
   const activeLedgerEntries = ledgerEntries.filter(row => !row.deleted);
   const documentBalanceCache = new Map();
   const isDocumentBalanced = documentId => {
@@ -208,7 +209,10 @@ export async function loadVersion21Database() {
     code: row.account_code || '',
     name: row.account_name || '',
     level: row.parent_id ? 'معین' : 'کل',
+    parentId: row.parent_id ? String(row.parent_id) : '',
+    accountType: row.account_type || '',
     nature: row.normal_balance === 'credit' ? 'بستانکار' : 'بدهکار',
+    status: row.is_active === false ? 'غیرفعال' : 'فعال',
     description: row.description || '',
     _sourceTable: 'chart_of_accounts',
   }));
@@ -385,6 +389,58 @@ export async function loadVersion21Database() {
       };
     });
 
+  // Profit & loss is calculated from posted double-entry ledger lines and the
+  // tenant's chart of accounts. Cash/customer/suspense movements are not
+  // treated as income or expense unless they are explicitly linked to a
+  // revenue/expense account in chart_of_accounts.
+  const profitTotals = new Map();
+  const profitAccountTotals = new Map();
+  const unclassifiedProfitLines = [];
+  for (const line of activeLedgerEntries) {
+    const linkedDocument = line.document_id ? documentsById.get(String(line.document_id)) : null;
+    if (linkedDocument?.deleted) continue;
+    const account = line.account_id ? chartAccountById.get(String(line.account_id)) : null;
+    const accountType = String(account?.account_type || line.account_type || '').toLowerCase();
+    if (!['revenue', 'expense'].includes(accountType)) {
+      const label = String(line.account_name || '');
+      if (!account && line.account_type === 'suspense' && /(درآمد|کمیشن|مصارف|هزینه|سود|زیان|income|expense|profit|loss)/i.test(label)) {
+        unclassifiedProfitLines.push({
+          id: String(line.id), date: dateOnly(line.created_at), account: label,
+          currency: line.currency || linkedDocument?.currency || 'AFN',
+          debit: num(line.debit), credit: num(line.credit),
+          documentId: line.document_id || null,
+        });
+      }
+      continue;
+    }
+    const currency = String(line.currency || linkedDocument?.currency || account?.currency || 'AFN');
+    const debit = num(line.debit);
+    const credit = num(line.credit);
+    const normalBalance = account?.normal_balance || (accountType === 'revenue' ? 'credit' : 'debit');
+    const signedAmount = normalBalance === 'credit' ? credit - debit : debit - credit;
+    const key = currency;
+    const totals = profitTotals.get(key) || { currency, revenue: 0, expense: 0, net: 0, lineCount: 0 };
+    if (accountType === 'revenue') totals.revenue += signedAmount;
+    else totals.expense += signedAmount;
+    totals.lineCount += 1;
+    totals.net = totals.revenue - totals.expense;
+    profitTotals.set(key, totals);
+
+    const accountId = String(account?.id || line.account_id || line.account_name || 'unmapped');
+    const accountKey = accountId + '::' + currency;
+    const accountTotals = profitAccountTotals.get(accountKey) || {
+      accountId, code: account?.account_code || '', account: account?.account_name || line.account_name || 'حساب نامشخص',
+      accountType, currency, amount: 0, lineCount: 0,
+    };
+    accountTotals.amount += signedAmount;
+    accountTotals.lineCount += 1;
+    profitAccountTotals.set(accountKey, accountTotals);
+  }
+  const profitByCurrency = [...profitTotals.values()].sort((a, b) => a.currency.localeCompare(b.currency));
+  const profitAccounts = [...profitAccountTotals.values()].sort((a, b) =>
+    a.accountType.localeCompare(b.accountType) || a.account.localeCompare(b.account)
+  );
+
   const mappedErrors = errorReports.map(row => ({
     id: String(row.id), date: dateOnly(row.created_at), error_type: row.error_type || '',
     error_message: row.error_message || '', device: row.device || '',
@@ -429,6 +485,9 @@ export async function loadVersion21Database() {
       reports: mappedReports,
       activity: mappedActivity,
       errors: mappedErrors,
+      profitByCurrency,
+      profitAccounts,
+      unclassifiedProfitLines,
     },
     loadedAt: new Date().toISOString(),
   };
