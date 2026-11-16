@@ -134,6 +134,8 @@ export default function Version21Layout() {
   const modules = MODULES.filter(item => Array.isArray(item.roles) && item.roles.includes(role));
   const current = modules.find(item => item.path && (location.pathname === item.path || location.pathname.startsWith(item.path + '/')));
   const isAssistant = location.pathname === '/assistant';
+  // The shared preview account is identified narrowly; no other tenant sees this notice.
+  const isSharedDemoAccount = String(user?.username || '') === '22222222' || String(user?.id ?? user?.user_id ?? '') === '107';
 
   return (
     <div dir="rtl" className="min-h-screen bg-slate-100 text-slate-900 flex">
@@ -177,6 +179,26 @@ export default function Version21Layout() {
             </div>
           </div>
         </header>}
+        {isSharedDemoAccount && (
+          <section role="status" aria-label="اطلاعیه حساب کاربری" className="mx-3 mt-3 md:mx-5 xl:mx-7 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-amber-950 shadow-sm">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="min-w-0">
+                <div className="font-bold text-sm">این حساب کاربری برای امتحان و آشنایی با امکانات برنامه است.</div>
+                <p className="mt-1 text-xs leading-6 text-amber-900">برای استفاده مستقل از برنامه، حساب کاربری واقعی خود را بسازید.</p>
+              </div>
+              <button
+                type="button"
+                onClick={async () => {
+                  await logout(false);
+                  navigate('/register?tab=sarraaf', { replace: true });
+                }}
+                className="shrink-0 rounded-lg bg-teal-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-teal-800 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2"
+              >
+                ساخت حساب کاربری واقعی
+              </button>
+            </div>
+          </section>
+        )}
         <main className="flex-1 min-w-0 p-3 md:p-5 xl:p-7">
           <div className="mx-auto w-full max-w-[1600px]">
             <Outlet />
