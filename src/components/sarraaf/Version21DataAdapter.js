@@ -235,32 +235,57 @@ export async function loadVersion21Database() {
 
   const journalGroups = new Map();
   activeLedgerEntries.forEach(row => {
-    const key = row.document_id ? String(row.document_id) : `ledger-${row.id}`;
+    const documentKey = row.document_id ? String(row.document_id) : `ledger-${row.id}`;
+    const currency = row.currency || documentsById.get(documentKey)?.currency || 'AFN';
+    const key = `${documentKey}::${currency}`;
     if (!journalGroups.has(key)) journalGroups.set(key, []);
     journalGroups.get(key).push(row);
   });
   const mappedJournal = [...journalGroups.entries()].map(([key, lines]) => {
-    const linkedDocument = documentsById.get(key);
+    const first = lines[0] || {};
+    const documentKey = first.document_id ? String(first.document_id) : `ledger-${first.id}`;
+    const linkedDocument = documentsById.get(documentKey);
+    const currency = first.currency || linkedDocument?.currency || 'AFN';
     const debitTotal = lines.reduce((sum, row) => sum + num(row.debit), 0);
     const creditTotal = lines.reduce((sum, row) => sum + num(row.credit), 0);
     const debitNames = [...new Set(lines.filter(row => num(row.debit) > 0).map(row => row.account_name).filter(Boolean))];
     const creditNames = [...new Set(lines.filter(row => num(row.credit) > 0).map(row => row.account_name).filter(Boolean))];
-    const first = lines[0] || {};
     return {
       id: key,
+      documentId: first.document_id ? String(first.document_id) : null,
       date: dateOnly(first.created_at),
-      number: linkedDocument?.doc_number || `LE-${key}`,
+      number: linkedDocument?.doc_number || `LE-${first.id}`,
       description: linkedDocument?.description || first.description || '',
       debitAccount: debitNames.join(' / '),
       creditAccount: creditNames.join(' / '),
-      currency: first.currency || linkedDocument?.currency || 'AFN',
+      currency,
       amount: debitTotal,
       debitTotal,
       creditTotal,
-      status: Math.abs(debitTotal - creditTotal) < 0.005 ? 'قطعی' : 'نیازمند بررسی',
+      status: linkedDocument?.reversed ? 'ابطال شده' : (Math.abs(debitTotal - creditTotal) < 0.005 ? 'قطعی' : 'نیازمند بررسی'),
       _sourceTable: 'ledger_entries',
     };
   }).sort((a, b) => String(b.date).localeCompare(String(a.date)));
+
+  const mappedReports = documents.filter(row => !row.deleted).map(row => {
+    const lines = activeLedgerEntries.filter(line => String(line.document_id || '') === String(row.id));
+    const cashLine = lines.find(line => line.account_type === 'cash');
+    const cash = cashLine ? (safeById.get(String(cashLine.account_id || ''))?.name || cashLine.account_name || '') : '';
+    return {
+      id: String(row.id), documentId: String(row.id),
+      date: dateOnly(row.created_at),
+      type: documentTypeLabel(row.doc_type, row.description),
+      party: row.related_name || '',
+      partyType: row.related_type === 'customer' ? 'customer' : (row.related_type === 'branch' ? 'branch' : 'other'),
+      currency: row.currency || 'AFN',
+      amount: num(row.amount),
+      cash,
+      description: row.description || '',
+      number: row.doc_number || '',
+      status: row.reversed ? 'ابطال شده' : 'قطعی',
+      _sourceTable: 'documents',
+    };
+  });
 
   const mappedExpenses = documents
     .filter(row => !row.deleted && /expense|cost|masraf|مصرف/i.test(String(row.doc_type || '') + ' ' + String(row.description || '')))
@@ -312,6 +337,7 @@ export async function loadVersion21Database() {
       exchange: mappedConversions,
       journal: mappedJournal,
       transactions: mappedTransactions,
+      reports: mappedReports,
       activity: mappedActivity,
       errors: mappedErrors,
     },
