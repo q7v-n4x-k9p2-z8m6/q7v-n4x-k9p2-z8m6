@@ -4,8 +4,8 @@ import {
   RefreshCw, Receipt, Landmark, Building2, Send, BarChart3, X, Check, ArrowLeftRight,
   ScrollText, Lock, MoreHorizontal, ChevronDown, Save, ClipboardList, FileSpreadsheet,
   Calculator, Download, Upload, Filter, Coins, Banknote, FileText, CalendarDays, MessageSquare, Bot,
-  CircleDollarSign, Eye, FilePlus2, ArrowDownCircle, ArrowUpCircle, Scale, Settings2,
-  Archive, RotateCcw, ListChecks, CreditCard, CircleHelp, PrinterCheck,
+  Eye, FilePlus2, ArrowDownCircle, ArrowUpCircle, Scale, Settings2,
+  Archive, RotateCcw, ListChecks, CreditCard, PrinterCheck,
   Languages, ShoppingBag, Smartphone, Wifi, Gamepad2, MessagesSquare, Headphones
 } from 'lucide-react';
 
@@ -15,7 +15,6 @@ const MODULES = [
   {id:'home',label:'مرکز عملیات',icon:Home,group:'عمومی'},
   {id:'customers',label:'تعریف مشتریان',icon:Users,group:'تعاریف و دفاتر'},
   {id:'customerLedger',label:'دفتر حساب مشتریان',icon:BookOpen,group:'تعاریف و دفاتر'},
-  {id:'debtors',label:'بدهکاران و بستانکاران',icon:CircleDollarSign,group:'حسابداری',skeleton:true},
   {id:'branches',label:'تعریف نمایندگی‌ها',icon:Building2,group:'تعاریف و دفاتر'},
   {id:'branchLedger',label:'دفتر حساب نمایندگی‌ها',icon:BookText,group:'تعاریف و دفاتر'},
   {id:'cash',label:'صندوق‌ها و موجودی',icon:Wallet,group:'صندوق و بانک'},
@@ -29,8 +28,6 @@ const MODULES = [
   {id:'currencies',label:'تعریف اسعار',icon:Coins,group:'تنظیمات'},
   {id:'reports',label:'گزارش عملیات',icon:FileSpreadsheet,group:'گزارشات'},
   {id:'profit',label:'مفاد و زیان',icon:BarChart3,group:'گزارشات'},
-  {id:'activity',label:'سوابق فعالیت',icon:ClipboardList,group:'گزارشات',skeleton:true},
-  {id:'errors',label:'گزارش خطاها و فیلدها',icon:CircleHelp,group:'گزارشات',skeleton:true},
   {id:'balance',label:'بیلانس عمومی',icon:Scale,group:'گزارشات'},
   {id:'sarraafGroups',label:'گروه و چت',icon:MessagesSquare,group:'امکانات تکمیلی',skeleton:true,children:['گروه صرافان','ایجاد گروه','گفت‌وگوی گروهی','گفت‌وگوی خصوصی']},
   {id:'assistant',label:'هوش مصنوعی',icon:Bot,group:'امکانات تکمیلی',skeleton:true},
@@ -156,7 +153,7 @@ function Field({field,value,onChange,choices}) {
 function DataTable({columns,rows,onSelect,selected}) {
  return <div className="overflow-auto border border-slate-300 bg-white"><table className="w-full min-w-[760px] border-collapse text-right text-[11px]"><thead className="sticky top-0 bg-[#dce5ed] text-[#203c54]"><tr>{columns.map(c=><th key={c.key} className="border border-slate-300 px-2 py-2">{c.label}</th>)}</tr></thead><tbody>{rows.map((r,i)=><tr key={r.id||i} onClick={()=>onSelect(r)} className={'cursor-pointer '+(selected?.id===r.id?'bg-blue-100':i%2?'bg-slate-50':'bg-white')+' hover:bg-blue-50'}>{columns.map(c=><td key={c.key} className="whitespace-nowrap border border-slate-200 px-2 py-2">{c.render?c.render(r):String(r[c.key]??'—')}</td>)}</tr>)}</tbody></table>{!rows.length&&<div className="p-8 text-center text-xs text-slate-500">موردی برای نمایش وجود ندارد.</div>}</div>;
 }
-const MODULE_TONES={home:'from-blue-700 to-indigo-700',customers:'from-sky-600 to-blue-700',customerLedger:'from-emerald-600 to-teal-700',debtors:'from-rose-600 to-emerald-700',branches:'from-violet-600 to-indigo-700',branchLedger:'from-cyan-600 to-blue-700',cash:'from-amber-500 to-orange-600',banks:'from-blue-600 to-indigo-700',exchange:'from-fuchsia-600 to-purple-700',remittance:'from-orange-500 to-amber-600',expenses:'from-rose-600 to-red-700',journal:'from-slate-600 to-slate-800',ledger:'from-indigo-600 to-violet-700',accounts:'from-cyan-600 to-teal-700',currencies:'from-lime-600 to-green-700',reports:'from-blue-600 to-cyan-700',profit:'from-emerald-600 to-green-700',activity:'from-slate-600 to-blue-700',errors:'from-rose-600 to-pink-700',balance:'from-violet-600 to-purple-700',sarraafGroups:'from-sky-600 to-cyan-700',assistant:'from-indigo-600 to-blue-800',products:'from-orange-500 to-pink-600',language:'from-teal-600 to-cyan-700'};
+const MODULE_TONES={home:'from-blue-700 to-indigo-700',customers:'from-sky-600 to-blue-700',customerLedger:'from-emerald-600 to-teal-700',branches:'from-violet-600 to-indigo-700',branchLedger:'from-cyan-600 to-blue-700',cash:'from-amber-500 to-orange-600',banks:'from-blue-600 to-indigo-700',exchange:'from-fuchsia-600 to-purple-700',remittance:'from-orange-500 to-amber-600',expenses:'from-rose-600 to-red-700',journal:'from-slate-600 to-slate-800',ledger:'from-indigo-600 to-violet-700',accounts:'from-cyan-600 to-teal-700',currencies:'from-lime-600 to-green-700',reports:'from-blue-600 to-cyan-700',profit:'from-emerald-600 to-green-700',balance:'from-violet-600 to-purple-700',sarraafGroups:'from-sky-600 to-cyan-700',assistant:'from-indigo-600 to-blue-800',products:'from-orange-500 to-pink-600',language:'from-teal-600 to-cyan-700'};
 function Tile({icon:Icon,label,onClick,moduleId}){const tone=MODULE_TONES[moduleId]||'from-blue-600 to-indigo-700';return <button type="button" onClick={onClick} className="group flex min-h-[96px] flex-col items-center justify-center gap-2 rounded-xl border border-[#d2deec] bg-gradient-to-b from-white to-[#f1f6fd] px-2 py-3 text-center shadow-sm transition hover:border-blue-300 hover:shadow-md active:translate-y-px"><span className={'grid h-12 w-12 place-items-center rounded-xl bg-gradient-to-br '+tone+' text-white shadow-md ring-1 ring-white/70'}><Icon className="h-6 w-6"/></span><b className="text-[11px] font-bold leading-tight text-[#203b5b]">{label}</b></button>}
 
 export default function CreatorPreviewLab({ mobileMode = false }){
@@ -379,7 +376,7 @@ export default function CreatorPreviewLab({ mobileMode = false }){
         {title:'تعاریف و دفاتر',ids:['customers','customerLedger','branches','branchLedger']},
         {title:'صندوق و بانک',ids:['cash','banks']},
         {title:'عملیات صرافی',ids:['exchange','remittance','expenses']},
-        {title:'حسابداری و گزارشات',ids:['debtors','journal','ledger','accounts','currencies','reports','profit','activity','errors','balance']},
+        {title:'حسابداری و گزارشات',ids:['journal','ledger','accounts','currencies','reports','profit','balance']},
          {title:'امکانات تکمیلی · اسکلت اولیه',ids:['sarraafGroups','assistant','products']},
         {title:'تنظیمات',ids:['language']}
        ].map(group=><section key={group.title} className="border border-[#9aabb9] bg-[#e8eef3] p-2 shadow-sm">
