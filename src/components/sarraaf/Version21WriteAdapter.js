@@ -880,6 +880,36 @@ async function assertDocumentBalancedForReversal(ctx, documentId) {
   validateBalancedLines(activeLines, 'ابطال سند');
 }
 
+const MASTER_RECORD_DEACTIVATION = {
+  customers: { table: 'customers', patch: { status: 'inactive' } },
+  branches: { table: 'origins', patch: { is_active: false } },
+  cash: { table: 'safes', patch: { active: false } },
+  banks: { table: 'bank_accounts', patch: { active: false } },
+  currencies: { table: 'rates', patch: { is_active: false } },
+  accounts: { table: 'chart_of_accounts', patch: { is_active: false } },
+};
+
+export async function deactivateVersion21MasterRecord(module, record) {
+  const ctx = sessionContext();
+  await assertNotDemoCoreWrite(ctx);
+  if (!record?.id) throw new Error('رکورد انتخاب‌شده معتبر نیست.');
+  const config = MASTER_RECORD_DEACTIVATION[module];
+  if (!config) throw new Error('غیرفعال‌سازی برای این نوع رکورد تعریف نشده است.');
+  await requireModulePermission(ctx, module, 'delete');
+
+  // Keep master data and all financial history. Only switch the tenant-scoped
+  // active flag off; never physically delete a referenced accounting entity.
+  let query = supabase.from(config.table).update(config.patch)
+    .eq('exchange_code', ctx.exchangeCode).eq('id', Number(record.id)).select('id');
+  const { data, error } = await query.maybeSingle();
+  if (error) throw new Error('غیرفعال‌سازی رکورد ناموفق بود: ' + error.message);
+  if (!data) throw new Error('رکورد در همین صراف پیدا نشد یا مجوز تغییر آن وجود ندارد.');
+
+  const auditWarning = await writeAudit(ctx, 'deactivate', module, record.id,
+    'غیرفعال‌سازی اطلاعات پایه؛ سابقه و ارتباطات حفظ شد', record, config.patch);
+  return { deactivated: true, auditWarning };
+}
+
 export async function deleteVersion21Record(module, record) {
   const ctx = sessionContext();
   await assertNotDemoCoreWrite(ctx);
