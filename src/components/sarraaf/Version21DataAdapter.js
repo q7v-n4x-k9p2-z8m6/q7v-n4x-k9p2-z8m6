@@ -250,6 +250,22 @@ export async function loadVersion21Database() {
     };
   });
 
+  const mappedAccountById = new Map(mappedAccounts.map(account => [String(account.id), account]));
+  mappedAccounts.filter(account => !account.parentId).forEach(parent => {
+    const totals = new Map((parent.balanceByCurrency || []).map(row => [row.currency, { ...row }]));
+    mappedAccounts.filter(child => String(child.parentId || '') === String(parent.id)).forEach(child => {
+      (child.balanceByCurrency || []).forEach(balance => {
+        const total = totals.get(balance.currency) || { currency: balance.currency, debit: 0, credit: 0, balance: 0, lineCount: 0 };
+        total.debit += num(balance.debit);
+        total.credit += num(balance.credit);
+        total.lineCount += num(balance.lineCount);
+        total.balance = parent.nature === 'بستانکار' ? total.credit - total.debit : total.debit - total.credit;
+        totals.set(balance.currency, total);
+      });
+    });
+    parent.balanceByCurrency = [...totals.values()].sort((a, b) => a.currency.localeCompare(b.currency));
+  });
+
   const mappedTransfers = transfers.map(row => ({
     ...row,
     id: String(row.id),
