@@ -157,9 +157,10 @@ export default function Version21Workspace(){
  const removeSelected=async()=>{
   if(!selected){notify('ابتدا یک ردیف را انتخاب کنید.');return;}
   const targetModule=['customerLedger','branchLedger'].includes(active)?'transactions':active;
+  if(active==='ledger'&&!selected.documentId){notify('شناسه سند اصلی برای این سطر موجود نیست؛ برای جلوگیری از ابطال سند اشتباه، عملیات متوقف شد.');return;}
   if(!window.confirm('این عملیات روی دیتابیس همین صراف اجرا می‌شود. برای اسناد مالی، سند معکوس ثبت خواهد شد. ادامه می‌دهید؟'))return;
   try{
-   const target=active==='ledger'?{...selected,documentId:selected.documentId||selected.id}:selected;
+   const target=selected;
    const result=await deleteVersion21Record(targetModule,target);
    await refreshDatabase();
    notify(result?.reversed?'سند با ثبت سند معکوس ابطال شد و سابقه اصلی حفظ شد.':'رکورد از دیتابیس حذف شد.');
