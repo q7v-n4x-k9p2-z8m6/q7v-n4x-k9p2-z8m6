@@ -5,6 +5,7 @@ on:
     branches:
       - fix/a1-auth-loading-timeout
       - release/restore-build
+      - feature/demo-qa-tenant
   pull_request:
     branches:
       - release/restore-build
@@ -27,3 +28,44 @@ jobs:
         run: npm install --no-audit --no-fund
       - name: Build production bundle
         run: npm run build
+      - name: Check Version 21 safety invariants
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const workspace = fs.readFileSync('src/components/sarraaf/Version21Workspace.jsx', 'utf8');
+          const adapter = fs.readFileSync('src/components/sarraaf/Version21WriteAdapter.js', 'utf8');
+          const data = fs.readFileSync('src/components/sarraaf/Version21DataAdapter.js', 'utf8');
+          const demo = fs.readFileSync('src/components/sarraaf/Version21DemoAdapter.js', 'utf8');
+          const checks = [
+            [!workspace.includes('\\${'), 'Workspace contains a literal escaped JSX expression'],
+            [adapter.includes('validateBalancedLines'), 'Financial posting/edit balance validation is missing'],
+            [adapter.includes('Number.isFinite(parsed) ? parsed : Number.NaN'), 'Malformed numeric input must not be coerced to zero'],
+            [data.includes('Number(line.debit)') && data.includes('Number(line.credit)'), 'Ledger balance checks must parse raw numeric values'],
+            [adapter.includes('fee_currency: draft.currency || \'AFN\', total: amount + feeAmount'), 'Remittance edit must synchronize fee currency and total'],
+            [adapter.includes('requireModulePermission'), 'Server-verified employee permission checks are missing'],
+            [!adapter.includes('.delete()'), 'Physical delete call found in financial write adapter'],
+            [data.includes(".eq('exchange_code', exchangeCode)"), 'Tenant scoping filter is missing'],
+            [data.includes("from('user_permissions')"), 'Current-user permission loading is missing'],
+            [data.includes('isDocumentBalanced'), 'Document balance status detection is missing'],
+            [adapter.includes('assertDocumentBalancedForReversal'), 'Unbalanced-document reversal guard is missing'],
+            [adapter.includes('p_fee: 0'), 'Transfer fee must be posted as a separate balanced document'],
+            [workspace.includes('accountingStatus'), 'Accounting status is not displayed in workspace tables'],
+            [workspace.includes('const readOnly=!data.isDemoAccount'), 'Version 21 writes must remain disabled outside the shared demo account'],
+            [workspace.includes('saveDemoPreviewRecord(mod,payload'), 'Demo workspace writes must use isolated temporary storage'],
+            [adapter.includes('assertDemoWriteAccount(ctx'), 'Core Version 21 writes must reject non-demo accounts'],
+            [data.includes('loadDemoPreviewRecords') && data.includes('isDemoAccount'), 'Demo records must load only for the exact demo session'],
+            [demo.includes("record_kind', 'temporary'") && demo.includes('expires_at'), 'Temporary demo records must have a bounded expiry'],
+            [demo.includes("row.record_kind === 'sample'"), 'Fixed demo samples must be distinguished from temporary records'],
+          ];
+          for (const [ok, message] of checks) {
+            if (!ok) throw new Error(message);
+            console.log('PASS:', message);
+          }
+          NODE
+      - name: Upload production bundle for review
+        uses: actions/upload-artifact@v4
+        with:
+          name: a1-version21-${{ github.sha }}
+          path: dist/
+          if-no-files-found: error
+          retention-days: 7
