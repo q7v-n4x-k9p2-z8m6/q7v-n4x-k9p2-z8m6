@@ -1,8 +1,9 @@
 import React from 'react';
 import Version21Workspace from './Version21Workspace';
+import './version21-responsive-layout.css';
 
-// Version 21 uses the Builder laptop layout as its complete workspace UI.
-// The workspace starts with empty in-memory data and has no database connection.
+// Version 21 shares one module set across laptop and mobile;
+// the responsive stylesheet changes presentation only.
 export default function Version21Home() {
   return <Version21Workspace />;
 }
