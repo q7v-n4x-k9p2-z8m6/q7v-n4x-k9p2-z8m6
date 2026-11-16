@@ -1793,6 +1793,7 @@
   }
   html body .v21-data-table .v21-record-card {
     display: block !important;
+    cursor: pointer !important;
     min-width: 0 !important;
     min-height: 0 !important;
     padding: 12px !important;
@@ -1944,7 +1945,7 @@
     min-width: 0 !important;
     width: 100% !important;
   }
-  html body .v21-app-shell aside[ class*="w-64"] {
+  html body .v21-app-shell aside.w-64 {
     width: 264px !important;
     flex-basis: 264px !important;
     box-shadow: -6px 0 24px rgb(9 35 68 / 10%) !important;
