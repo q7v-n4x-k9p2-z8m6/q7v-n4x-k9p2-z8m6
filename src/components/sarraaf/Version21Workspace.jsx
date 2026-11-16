@@ -93,7 +93,10 @@ export default function Version21Workspace(){
  const [localPreview,setLocalPreview]=useState(false);
  const [exchangeProfile,setExchangeProfile]=useState(null);
  const [lastLoaded,setLastLoaded]=useState(null);
- const readOnly=!data.isDemoAccount;
+ // Both real exchange tenants and the shared demo workspace may use CRUD UI.
+ // Demo writes are isolated by Version21DemoAdapter; real writes retain server-side
+ // role, employee-permission, and tenant-scoped authorization in Version21WriteAdapter.
+ const readOnly=false;
  const [searchParams]=useSearchParams();
  const requestedModule=searchParams.get('module');
  const [active,setActive]=useState(()=>MODULES.some(x=>x.id===requestedModule)?requestedModule:'home');
