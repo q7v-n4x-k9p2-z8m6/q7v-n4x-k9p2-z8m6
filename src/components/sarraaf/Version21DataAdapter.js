@@ -223,6 +223,7 @@ export async function loadVersion21Database() {
     currency: row.currency || 'AFN',
     amount: num(row.amount),
     fee: num(row.fee),
+    total: Number.isFinite(num(row.total)) && num(row.total) > 0 ? num(row.total) : num(row.amount) + num(row.fee),
     cash: '',
     status: ['paid','done','completed'].includes(String(row.status || '').toLowerCase()) ? 'اجرا شده' : (row.status === 'reversed' ? 'ابطال شده' : row.status === 'pending' ? 'در انتظار' : row.status),
     accountingStatus: (() => {
