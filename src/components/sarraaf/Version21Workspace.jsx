@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { loadVersion21Database } from './Version21DataAdapter';
-import { saveVersion21Record, editVersion21Record, deleteVersion21Record, captureVersion21Error, seedVersion21BaseAccounts } from './Version21WriteAdapter';
+import { saveVersion21Record, editVersion21Record, deleteVersion21Record, deactivateVersion21MasterRecord, captureVersion21Error, seedVersion21BaseAccounts } from './Version21WriteAdapter';
 import { loadVersion21LocalState, saveVersion21LocalState } from './Version21LocalStore';
 import { saveDemoPreviewRecord, deleteDemoPreviewRecord } from './Version21DemoAdapter';
 import { useNavigate, useSearchParams } from 'react-router-dom';
@@ -48,7 +48,7 @@ const SCHEMAS = {
  customers:{title:'مشتری',fields:[['code','کد مشتری','text'],['name','نام مشتری','text'],['kind','نوع حساب','select',['دائمی','موقتی']],['phone','شماره تماس','text'],['address','آدرس','text'],['currency','ارز اصلی','select',CURRENCIES],['opening','مانده افتتاحیه','number'],['status','وضعیت','select',['فعال','غیرفعال','قفل']]]},
  branches:{title:'نمایندگی',fields:[['code','کد نمایندگی','text'],['name','نام نمایندگی','text'],['city','موقعیت','text'],['phone','شماره تماس','text'],['status','وضعیت','select',['فعال','غیرفعال']]]},
  cash:{title:'صندوق',fields:[['name','نام صندوق','text'],['currency','ارز','select',CURRENCIES],['opening','مانده افتتاحیه','number'],['status','وضعیت','select',['فعال','غیرفعال']]]},
- banks:{title:'حساب بانکی / چک',fields:[['name','نام بانک یا حساب','text'],['account','شماره حساب','text'],['currency','ارز','select',CURRENCIES],['opening','مانده افتتاحیه','number'],['description','توضیحات','text']]},
+ banks:{title:'حساب بانکی / چک',fields:[['name','نام بانک یا حساب','text'],['account','شماره حساب','text'],['currency','ارز','select',CURRENCIES],['opening','مانده افتتاحیه','number'],['status','وضعیت','select',['فعال','غیرفعال']],['description','توضیحات','text']]},
  currencies:{title:'ارز',fields:[['code','کد ارز','text'],['name','نام ارز','text'],['symbol','نماد','text'],['rate','نرخ مقابل ارز پایه','number'],['active','وضعیت','select',['فعال','غیرفعال']]]},
  accounts:{title:'حساب کل',fields:[['code','کد حساب','text'],['name','نام حساب','text'],['accountType','نوع حساب','select',[{value:'asset',label:'دارایی'},{value:'liability',label:'بدهی'},{value:'equity',label:'سرمایه'},{value:'revenue',label:'درآمد'},{value:'expense',label:'مصرف'}]],['nature','ماهیت','select',['بدهکار','بستانکار']],['parentId','حساب مادر','select',[]],['currency','ارز اختصاصی (اختیاری)','select',['','AFN','USD','EUR','IRR','TRY','PKR','AED','SAR','GBP','CNY']],['status','وضعیت','select',['فعال','غیرفعال']],['description','شرح','text']]},
  expenses:{title:'مصرف',fields:[['date','تاریخ','date'],['title','شرح مصرف','text'],['expenseAccount','حساب مصرف','select',[]],['currency','ارز','select',CURRENCIES],['amount','مبلغ','number'],['cash','پرداخت از صندوق','text'],['note','یادداشت','text']]},
@@ -213,9 +213,16 @@ export default function Version21Workspace(){
   if(!canModuleAction(active,'delete')){notify('مجوز ابطال یا حذف این بخش برای حساب شما فعال نیست.');return;}
   if(dbStatus!=='connected'||localPreview){notify('در پیش‌نمایش محلی عملیات مالی و ابطال غیرفعال است؛ ابتدا اطلاعات واقعی را تازه‌سازی کنید.');return;}
   if(!selected){notify('ابتدا یک ردیف را انتخاب کنید.');return;}
+  if(active==='customerLedger'&&!customerDetail){notify('برای غیرفعال‌سازی مشتری از بخش «مشتریان» استفاده کنید؛ اینجا فقط گردش حساب قابل ابطال است.');return;}
+  if(active==='branchLedger'&&!branchDetail){notify('برای غیرفعال‌سازی نمایندگی از بخش «نمایندگی‌ها» استفاده کنید؛ اینجا فقط گردش حساب قابل ابطال است.');return;}
   const targetModule=['customerLedger','branchLedger'].includes(active)?'transactions':active;
   if(active==='ledger'&&!selected.documentId){notify('شناسه سند اصلی برای این سطر موجود نیست؛ برای جلوگیری از ابطال سند اشتباه، عملیات متوقف شد.');return;}
-  if(!window.confirm('این عملیات روی دیتابیس همین صراف اجرا می‌شود. برای اسناد مالی، سند معکوس ثبت خواهد شد. ادامه می‌دهید؟'))return;
+  const masterDataModules=['customers','branches','cash','banks','currencies','accounts'];
+  const isMasterData=masterDataModules.includes(targetModule);
+  const confirmMessage=isMasterData
+   ? 'این رکورد حذف فیزیکی نمی‌شود و فقط غیرفعال خواهد شد؛ سوابق مالی و ارتباطات آن حفظ می‌شود. ادامه می‌دهید؟'
+   : 'این عملیات روی دیتابیس همین صراف اجرا می‌شود. برای اسناد مالی، سند معکوس ثبت خواهد شد و سابقه اصلی حفظ می‌شود. ادامه می‌دهید؟';
+  if(!window.confirm(confirmMessage))return;
   try{
    const target=selected;
    if(data.isDemoAccount&&!target._demoPreview){notify('در این حساب فقط رکوردهای موقت قابل حذف هستند؛ اطلاعات اصلی حساب دست‌نخورده می‌ماند.');return;}
@@ -226,9 +233,11 @@ export default function Version21Workspace(){
     notify('رکورد موقت حذف شد.');
     return;
    }
-   const result=await deleteVersion21Record(targetModule,target);
+   const result=isMasterData
+    ? await deactivateVersion21MasterRecord(targetModule,target)
+    : await deleteVersion21Record(targetModule,target);
    await refreshDatabase();
-   const baseMessage=result?.partial?'ابطال ناقص انجام شد؛ برخی اسناد هنوز نیازمند بررسی هستند.':result?.reversed?'سند با ثبت سند معکوس ابطال شد و سابقه اصلی حفظ شد.':result?.warning?'ابطال انجام نشد؛ وضعیت سند را بررسی کنید.':'رکورد از دیتابیس حذف شد.';
+   const baseMessage=isMasterData?'رکورد غیرفعال شد؛ اطلاعات و سوابق آن حفظ شده است.':result?.partial?'ابطال ناقص انجام شد؛ برخی اسناد هنوز نیازمند بررسی هستند.':result?.reversed?'سند با ثبت سند معکوس ابطال شد و سابقه اصلی حفظ شد.':result?.warning?'ابطال انجام نشد؛ وضعیت سند را بررسی کنید.':'عملیات انجام شد؛ سوابق اصلی حفظ شدند.';
    notify([baseMessage,result?.warning,result?.auditWarning].filter(Boolean).join(' '));
   }catch(error){
    await captureVersion21Error(error,'delete:'+active);
@@ -486,7 +495,7 @@ export default function Version21Workspace(){
       {active==='exchange'&&<div className="mb-2 flex gap-2"><button onClick={()=>openNew('exchange',{kind:'خرید'})} className="border bg-white px-3 py-2 text-[10px]">خرید اسعار</button><button onClick={()=>openNew('exchange',{kind:'فروش'})} className="border bg-white px-3 py-2 text-[10px]">فروش اسعار</button><button onClick={()=>openNew('exchange',{kind:'تبدیل'})} className="border bg-white px-3 py-2 text-[10px]">تبدیل ارز</button></div>}
       {active==='remittance'&&<div className="mb-2 flex gap-2"><button onClick={()=>openNew('remittance',{direction:'ارسالی'})} className="border bg-white px-3 py-2 text-[10px]">حواله ارسالی</button><button onClick={()=>openNew('remittance',{direction:'دریافتی'})} className="border bg-white px-3 py-2 text-[10px]">حواله دریافتی</button><button onClick={()=>openNew('remittance',{direction:'نامعلوم'})} className="border bg-white px-3 py-2 text-[10px]">حواله نامعلوم</button></div>}
       <div className="mb-2 flex flex-wrap items-center justify-between gap-2"><div className="flex items-center gap-2 text-[10px]"><b>فهرست {page.label}</b><span className="text-slate-500">تعداد: {fmt(rows.length)}</span></div><div className="flex flex-wrap gap-1"><input id="lab-search" value={query} onChange={e=>setQuery(e.target.value)} placeholder="جستجو..." className="h-8 w-36 border bg-white px-2 text-[10px]"/><select value={filterCurrency} onChange={e=>setFilterCurrency(e.target.value)} className="h-8 border bg-white px-2 text-[10px]"><option>همه</option>{CURRENCIES.map(c=><option key={c}>{c}</option>)}</select><button onClick={()=>{setQuery('');setFilterCurrency('همه');}} className="border bg-white px-2 text-[10px]"><Filter className="inline h-3 w-3"/> پاک</button></div></div>
-      <div className="mb-2 flex flex-wrap gap-1 border border-slate-300 bg-white p-1.5 text-[10px]">{[[RefreshCw,'تازه‌سازی',refreshDatabase],[Search,'تمرکز جستجو',()=>document.getElementById('lab-search')?.focus()],[Download,'خروجی CSV',exportCsv],[Archive,'پشتیبان',backup]].map(([I,label,fn])=><button key={label} onClick={fn} className="flex items-center gap-1 border border-slate-200 bg-[#f8fafc] px-2 py-1.5 hover:bg-blue-50"><I className="h-3.5 w-3.5"/>{label}</button>)}<button onClick={editSelected} disabled={!selected||!canModuleAction(active,'edit')} className="flex items-center gap-1 border border-blue-200 bg-blue-50 px-2 py-1.5 text-blue-900 disabled:cursor-not-allowed disabled:opacity-40"><Pencil className="h-3.5 w-3.5"/>ویرایش انتخاب‌شده</button><button onClick={removeSelected} disabled={!selected||!canModuleAction(active,'delete')} className="flex items-center gap-1 border border-rose-200 bg-rose-50 px-2 py-1.5 text-rose-800 disabled:cursor-not-allowed disabled:opacity-40"><Trash2 className="h-3.5 w-3.5"/>حذف / ابطال انتخاب‌شده</button></div>
+      <div className="mb-2 flex flex-wrap gap-1 border border-slate-300 bg-white p-1.5 text-[10px]">{[[RefreshCw,'تازه‌سازی',refreshDatabase],[Search,'تمرکز جستجو',()=>document.getElementById('lab-search')?.focus()],[Download,'خروجی CSV',exportCsv],[Archive,'پشتیبان',backup]].map(([I,label,fn])=><button key={label} onClick={fn} className="flex items-center gap-1 border border-slate-200 bg-[#f8fafc] px-2 py-1.5 hover:bg-blue-50"><I className="h-3.5 w-3.5"/>{label}</button>)}<button onClick={editSelected} disabled={!selected||!canModuleAction(active,'edit')} className="flex items-center gap-1 border border-blue-200 bg-blue-50 px-2 py-1.5 text-blue-900 disabled:cursor-not-allowed disabled:opacity-40"><Pencil className="h-3.5 w-3.5"/>ویرایش انتخاب‌شده</button><button onClick={removeSelected} disabled={!selected||!canModuleAction(active,'delete')||!(['customers','branches','cash','banks','currencies','accounts','transactions','cashAction','expenses','journal','ledger','remittance','exchange'].includes(active))} className="flex items-center gap-1 border border-rose-200 bg-rose-50 px-2 py-1.5 text-rose-800 disabled:cursor-not-allowed disabled:opacity-40"><Trash2 className="h-3.5 w-3.5"/>{['customers','branches','cash','banks','currencies','accounts'].includes(active)?'غیرفعال‌سازی انتخاب‌شده':['transactions','cashAction','expenses','journal','ledger','remittance','exchange'].includes(active)?'ابطال سند انتخاب‌شده':'عملیات در این بخش موجود نیست'}</button></div>
       <DataTable columns={active==='reports'?columnsFor('transactions'):columnsFor(active)} rows={rows} selected={selected} onSelect={r=>{if(active==='customerLedger'&&!customerDetail){setCustomerDetail(r);setSelected(null);}else if(active==='branchLedger'&&!branchDetail){setBranchDetail(r);setSelected(null);}else setSelected(r);}}/>
       {!readOnly&&SCHEMAS[active]&&canModuleAction(active,'create')&&<button onClick={()=>openNew()} className="mt-2 border border-blue-300 bg-blue-50 px-3 py-2 text-xs font-bold text-blue-900"><Plus className="ml-1 inline h-4 w-4"/>ثبت {SCHEMAS[active].title} جدید</button>}
      </>}
