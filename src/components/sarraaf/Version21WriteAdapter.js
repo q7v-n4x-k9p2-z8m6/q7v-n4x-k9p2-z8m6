@@ -10,6 +10,40 @@ const TABLES = {
   accounts: 'chart_of_accounts',
 };
 
+const PERMISSION_SECTION_BY_MODULE = {
+  customers: 'customers',
+  branches: 'agents',
+  cash: 'cash',
+  banks: 'bank',
+  currencies: 'currencies',
+  accounts: 'chart_of_accounts',
+  remittance: 'transfers',
+  cashAction: 'cash',
+  expenses: 'cash',
+  exchange: 'trade',
+  journal: 'journal',
+  transactions: 'accounts_receivable',
+};
+
+async function requireModulePermission(ctx, module, action) {
+  if (ctx.userType !== 'employee') return;
+  const section = PERMISSION_SECTION_BY_MODULE[module];
+  if (!section) throw new Error('این بخش برای نقش کارمند مجوز عملیاتی تعریف‌شده ندارد.');
+  const { data, error } = await supabase.from('user_permissions')
+    .select('section,can_view,can_create,can_edit,can_delete')
+    .eq('user_id', String(ctx.userId))
+    .eq('section', section)
+    .maybeSingle();
+  if (error) throw new Error('بررسی مجوز کارمند ناموفق بود: ' + error.message);
+  const flag = action === 'create' ? 'can_create'
+    : action === 'edit' ? 'can_edit'
+      : action === 'delete' ? 'can_delete'
+        : 'can_view';
+  if (!data || data.can_view !== true || data[flag] !== true) {
+    throw new Error('برای این عملیات مجوز کافی از مدیر صرافی دریافت نشده است.');
+  }
+}
+
 const number = value => Number(value ?? 0) || 0;
 const today = () => new Date().toISOString().slice(0, 10);
 const makeOperationId = () => {
@@ -232,6 +266,7 @@ async function applyDocumentDate(ctx, documentId, date, linkedTable = null, link
 
 export async function saveVersion21Record(module, draft) {
   const ctx = sessionContext();
+  await requireModulePermission(ctx, module, draft?.id ? 'edit' : 'create');
   if (TABLES[module]) {
     const table = TABLES[module];
     const payload = mapMasterRecord(module, draft, ctx);
@@ -450,6 +485,7 @@ async function editDocument(ctx, documentId, description, amount, currency, line
 export async function editVersion21Record(module, draft) {
   const ctx = sessionContext();
   if (!draft?.id) throw new Error('شناسه رکورد برای ویرایش موجود نیست.');
+  await requireModulePermission(ctx, module, 'edit');
 
   if (TABLES[module]) return saveVersion21Record(module, draft);
 
@@ -637,6 +673,7 @@ export async function editVersion21Record(module, draft) {
 export async function deleteVersion21Record(module, record) {
   const ctx = sessionContext();
   if (!record?.id) throw new Error('رکورد انتخاب‌شده معتبر نیست.');
+  await requireModulePermission(ctx, module, 'delete');
 
   // Production safety: Version 21 never physically deletes user or financial records.
   // Financial documents may only be reversed through the existing accounting RPC.
