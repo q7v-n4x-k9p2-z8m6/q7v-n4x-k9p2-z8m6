@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { loadVersion21Database } from './Version21DataAdapter';
-import { saveVersion21Record, deleteVersion21Record, captureVersion21Error } from './Version21WriteAdapter';
+import { saveVersion21Record, editVersion21Record, deleteVersion21Record, captureVersion21Error } from './Version21WriteAdapter';
 import { loadVersion21LocalState, saveVersion21LocalState } from './Version21LocalStore';
 import { useSearchParams } from 'react-router-dom';
 import {
@@ -39,6 +39,7 @@ const MODULES = [
   {id:'language',label:'زبان برنامه',icon:Languages,group:'تنظیمات',skeleton:true,children:['فارسی','دری','English','العربية']}
 ];
 const SCHEMAS = {
+ transactions:{title:'گردش حساب',fields:[['date','تاریخ','date'],['type','نوع عملیات','text'],['partyType','نوع طرف حساب','select',['customer','branch','other']],['party','طرف حساب','text'],['currency','ارز','select',CURRENCIES],['amount','مبلغ (+ دریافت / - پرداخت)','number'],['description','شرح','text']]},
  customers:{title:'مشتری',fields:[['code','کد مشتری','text'],['name','نام مشتری','text'],['kind','نوع حساب','select',['دائمی','موقتی']],['phone','شماره تماس','text'],['address','آدرس','text'],['currency','ارز اصلی','select',CURRENCIES],['opening','مانده افتتاحیه','number'],['status','وضعیت','select',['فعال','غیرفعال','قفل']]]},
  branches:{title:'نمایندگی',fields:[['code','کد نمایندگی','text'],['name','نام نمایندگی','text'],['city','موقعیت','text'],['phone','شماره تماس','text'],['currency','ارز اصلی','select',CURRENCIES],['opening','مانده افتتاحیه','number'],['status','وضعیت','select',['فعال','غیرفعال']]]},
  cash:{title:'صندوق',fields:[['code','کد صندوق','text'],['name','نام صندوق','text'],['currency','ارز','select',CURRENCIES],['opening','مانده افتتاحیه','number'],['status','وضعیت','select',['فعال','غیرفعال']],['description','توضیحات','text']]},
@@ -136,7 +137,7 @@ export default function Version21Workspace(){
   const mod=modal;
   if(!SCHEMAS[mod])return;
   try{
-   const result=await saveVersion21Record(mod,draft);
+   const result=draft.id?await editVersion21Record(mod,draft):await saveVersion21Record(mod,draft);
    setModal('');
    await refreshDatabase();
    setSelected(null);
@@ -164,11 +165,13 @@ export default function Version21Workspace(){
   }
  };
  const editSelected=()=>{
-  const master=active==='customerLedger'?customerDetail:active==='branchLedger'?branchDetail:null;
-  if(master){const mod=active==='customerLedger'?'customers':'branches';setDraft({...master});setModal(mod);return;}
   if(!selected){notify('ابتدا یک ردیف را انتخاب کنید.');return;}
-  if(!SCHEMAS[active]){notify('ویرایش مستقیم این گزارش ممکن نیست؛ رکورد اصلی را از بخش مربوط باز کنید.');return;}
-  setDraft({...selected});setModal(active);
+  if(['customerLedger','branchLedger'].includes(active)&&selected.documentId){
+   setDraft({...selected});setModal('transactions');return;
+  }
+  const mod=active==='ledger'?'journal':active;
+  if(!SCHEMAS[mod]){notify('ویرایش مستقیم این گزارش ممکن نیست؛ رکورد اصلی را از بخش مربوط باز کنید.');return;}
+  setDraft({...selected});setModal(mod);
  };
  const cashAction=kind=>{const first=data.cash.find(x=>x.currency==='AFN')||data.cash[0];setDraft({date:today(),kind,amount:'',currency:first?.currency||'AFN',cash:first?.name||'',party:'',partyType:'customer',description:''});setModal('cashAction');};
  const saveCashAction=async()=>{
@@ -374,6 +377,7 @@ export default function Version21Workspace(){
   <p className="text-[10px] leading-5 text-slate-500">اطلاعات مالی پس از ثبت در دیتابیس همان صراف ذخیره می‌شود. پیش‌نویس فرم‌ها و تنظیمات نمایش، جداگانه در حافظه محلی همین مرورگر و برای همین کاربر نگهداری می‌شود.</p>
   {modal&&<div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/45 p-3"><div className="max-h-[90vh] w-full max-w-2xl overflow-auto border-2 border-slate-600 bg-[#f7f9fb] shadow-2xl"><div className="sticky top-0 flex items-center justify-between bg-gradient-to-b from-[#386b91] to-[#17466c] px-3 py-2 text-white"><b className="text-xs">{SCHEMAS[modal]?((draft.id?'ویرایش ':'ثبت ')+SCHEMAS[modal].title):modal==='cashAction'?'ثبت گردش صندوق':modal==='restore'?'بازیابی پشتیبان':modal==='settings'?'تنظیمات محلی':'راهنمای حساب صراف'}</b><button onClick={()=>setModal('')}><X className="h-4 w-4"/></button></div>
    {SCHEMAS[modal]&&<><div className="grid gap-3 p-4 sm:grid-cols-2">{SCHEMAS[modal].fields.map(f=><Field key={f[0]} field={f} value={fieldValue(draft,f[0])} onChange={setField} choices={{
+    ...(modal==='transactions'?{partyType:[{value:'customer',label:'مشتری'},{value:'branch',label:'نمایندگی'},{value:'other',label:'سایر'}]}:{}),
     ...(modal==='journal'?{debitAccount:[{value:'',label:'انتخاب حساب بدهکار'},...data.accounts.map(a=>({value:a.code+' — '+a.name,label:a.code+' — '+a.name})),...data.cash.map(x=>({value:'صندوق: '+x.name,label:'صندوق: '+x.name+' ('+x.currency+')'}))],creditAccount:[{value:'',label:'انتخاب حساب بستانکار'},...data.accounts.map(a=>({value:a.code+' — '+a.name,label:a.code+' — '+a.name})),...data.cash.map(x=>({value:'صندوق: '+x.name,label:'صندوق: '+x.name+' ('+x.currency+')'}))]}:{})
     ,...(modal==='exchange'?{cashFrom:[{value:'',label:'انتخاب صندوق ارز مبدا'},...data.cash.filter(x=>x.currency===draft.fromCurrency).map(x=>({value:x.name,label:x.name+' ('+x.currency+')'}))],cashTo:[{value:'',label:'انتخاب صندوق ارز مقصد'},...data.cash.filter(x=>x.currency===draft.toCurrency).map(x=>({value:x.name,label:x.name+' ('+x.currency+')'}))]}:{})
     ,...(modal==='expenses'?{cash:[{value:'',label:'انتخاب صندوق پرداخت'},...data.cash.filter(x=>x.currency===draft.currency).map(x=>({value:x.name,label:x.name+' ('+x.currency+')'}))]}:{})
