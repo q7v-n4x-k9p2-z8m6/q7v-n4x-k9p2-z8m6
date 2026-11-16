@@ -349,7 +349,7 @@ export async function saveVersion21Record(module, draft) {
     let warning = '';
     if (number(draft.fee) > 0) {
       const feeAmount = number(draft.fee);
-      const { error: transferFeeError } = await supabase.from('transfers').update({ fee: feeAmount, fee_currency: draft.currency || 'AFN' })
+      const { error: transferFeeError } = await supabase.from('transfers').update({ fee: feeAmount, fee_currency: draft.currency || 'AFN', total: transferAmount + feeAmount })
         .eq('id', data.transfer_id).eq('exchange_code', ctx.exchangeCode);
       if (!transferFeeError) {
         try {
