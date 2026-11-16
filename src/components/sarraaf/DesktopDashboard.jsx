@@ -33,6 +33,7 @@ export default function DesktopDashboard({ profile, features, userRole, paidSyst
   });
 
   const usedPaths = new Set(GROUPS.flatMap(group => group.paths));
+  const allowedQuickActions = QUICK_ACTIONS.filter(action => links.some(link => link.path === action.path));
   const grouped = [
     ...GROUPS.map(group => ({
       title: group.title,
@@ -81,7 +82,7 @@ export default function DesktopDashboard({ profile, features, userRole, paidSyst
       <section className="rounded-xl border border-blue-200 bg-white p-3 shadow-card">
         <h2 className="mb-2 text-sm font-extrabold text-slate-800">عملیات سریع</h2>
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
-          {QUICK_ACTIONS.map(action => {
+          {allowedQuickActions.map(action => {
             const Icon = action.icon;
             return (
               <Link key={action.path + action.label} to={action.path} className="group flex min-h-[68px] items-center justify-center gap-2 rounded-xl border border-[#d0dced] bg-gradient-to-b from-white to-[#edf4ff] px-2 py-2 text-center text-xs font-bold text-slate-800 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-300 hover:shadow-md">
