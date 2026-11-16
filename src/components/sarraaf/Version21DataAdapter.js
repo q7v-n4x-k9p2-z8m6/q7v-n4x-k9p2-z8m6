@@ -91,11 +91,8 @@ export async function loadVersion21Database() {
   ]);
 
   const documentsById = new Map(documents.map(row => [String(row.id), row]));
-  const safeByCurrency = new Map();
-  safes.forEach(row => {
-    const currency = row.currency || 'AFN';
-    if (!safeByCurrency.has(currency)) safeByCurrency.set(currency, row);
-  });
+  const safeById = new Map(safes.map(row => [String(row.id), row]));
+  const activeLedgerEntries = ledgerEntries.filter(row => !row.deleted);
 
   const mappedCustomers = customers.map(row => ({
     ...row,
@@ -177,7 +174,7 @@ export async function loadVersion21Database() {
     amount: num(row.amount),
     fee: num(row.fee),
     cash: '',
-    status: row.status === 'paid' ? 'اجرا شده' : row.status,
+    status: ['paid','done','completed'].includes(String(row.status || '').toLowerCase()) ? 'اجرا شده' : (row.status === 'reversed' ? 'ابطال شده' : row.status === 'pending' ? 'در انتظار' : row.status),
     note: row.destination || row.agent_route || '',
     _sourceTable: 'transfers',
   }));
@@ -198,7 +195,7 @@ export async function loadVersion21Database() {
     _sourceTable: 'conversions',
   }));
 
-  const mappedTransactions = ledgerEntries.map(row => {
+  const mappedTransactions = activeLedgerEntries.map(row => {
     const linkedDocument = row.document_id ? documentsById.get(String(row.document_id)) : null;
     const accountType = String(row.account_type || '').toLowerCase();
     const isCustomer = accountType === 'customer';
@@ -207,7 +204,7 @@ export async function loadVersion21Database() {
     const debit = num(row.debit);
     const credit = num(row.credit);
     const amount = isCustomer ? credit - debit : debit - credit;
-    const safe = safeByCurrency.get(currency);
+    const safe = isCash ? safeById.get(String(row.account_id || '')) : null;
     return {
       id: String(row.id),
       date: dateOnly(row.created_at),
@@ -217,7 +214,7 @@ export async function loadVersion21Database() {
       partyType: isCustomer ? 'customer' : (accountType === 'origin' || accountType === 'branch' ? 'branch' : 'other'),
       currency,
       amount,
-      cash: isCash ? (safe?.name || 'صندوق') : '',
+      cash: isCash ? (safe?.name || row.account_name || 'صندوق') : '',
       description: row.description || linkedDocument?.description || '',
       number: linkedDocument?.doc_number || '',
       debit,
@@ -231,7 +228,7 @@ export async function loadVersion21Database() {
   });
 
   const journalGroups = new Map();
-  ledgerEntries.forEach(row => {
+  activeLedgerEntries.forEach(row => {
     const key = row.document_id ? String(row.document_id) : `ledger-${row.id}`;
     if (!journalGroups.has(key)) journalGroups.set(key, []);
     journalGroups.get(key).push(row);
@@ -260,7 +257,7 @@ export async function loadVersion21Database() {
   }).sort((a, b) => String(b.date).localeCompare(String(a.date)));
 
   const mappedExpenses = documents
-    .filter(row => /expense|cost|masraf|مصرف/i.test(String(row.doc_type || '') + ' ' + String(row.description || '')))
+    .filter(row => !row.deleted && /expense|cost|masraf|مصرف/i.test(String(row.doc_type || '') + ' ' + String(row.description || '')))
     .map(row => ({
       id: String(row.id),
       date: dateOnly(row.created_at),
