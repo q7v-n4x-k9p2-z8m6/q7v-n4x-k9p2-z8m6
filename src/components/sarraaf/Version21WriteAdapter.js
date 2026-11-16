@@ -596,7 +596,7 @@ export async function saveVersion21Record(module, draft) {
 
 export async function seedVersion21BaseAccounts() {
   const ctx = sessionContext();
-  await assertDemoWriteAccount(ctx);
+  await assertDemoWriteAccount(ctx, { allowCreate: true });
   await requireModulePermission(ctx, 'accounts', 'create');
   const seeds = [
     { code: '1000', name: 'دارایی‌ها', type: 'asset', normal: 'debit' },
