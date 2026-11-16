@@ -4,13 +4,18 @@ import { getExchangeCode } from '@/lib/supabaseApi';
 const num = value => Number(value ?? 0) || 0;
 const dateOnly = value => value ? String(value).slice(0, 10) : '';
 const activeLabel = value => value === false || value === 'inactive' ? 'غیرفعال' : 'فعال';
-const documentTypeLabel = value => ({
-  dadogereft: 'دریافت',
-  pardakht: 'پرداخت',
-  transfer: 'حواله',
-  expense: 'مصرف',
-  exchange: 'معامله اسعار',
-}[String(value || '').toLowerCase()] || String(value || 'سند'));
+const documentTypeLabel = (value, description = '') => {
+  const detail = String(description || '');
+  if (detail.includes('پرداخت')) return 'پرداخت';
+  if (detail.includes('دریافت')) return 'دریافت';
+  return ({
+    dadogereft: 'دریافت',
+    pardakht: 'پرداخت',
+    transfer: 'حواله',
+    expense: 'مصرف',
+    exchange: 'معامله اسعار',
+  }[String(value || '').toLowerCase()] || String(value || 'سند'));
+};
 
 function getSessionUserId() {
   try {
@@ -207,7 +212,7 @@ export async function loadVersion21Database() {
       id: String(row.id),
       date: dateOnly(row.created_at),
       created_at: row.created_at,
-      type: documentTypeLabel(linkedDocument?.doc_type || row.type || accountType),
+      type: documentTypeLabel(linkedDocument?.doc_type || row.type || accountType, linkedDocument?.description || row.description),
       party: row.account_name || linkedDocument?.related_name || '',
       partyType: isCustomer ? 'customer' : (accountType === 'origin' || accountType === 'branch' ? 'branch' : 'other'),
       currency,
