@@ -122,6 +122,25 @@ export async function loadVersion21Database() {
   const documentsById = new Map(documents.map(row => [String(row.id), row]));
   const safeById = new Map(safes.map(row => [String(row.id), row]));
   const activeLedgerEntries = ledgerEntries.filter(row => !row.deleted);
+  const documentBalanceCache = new Map();
+  const isDocumentBalanced = documentId => {
+    if (!documentId) return false;
+    const key = String(documentId);
+    if (documentBalanceCache.has(key)) return documentBalanceCache.get(key);
+    const lines = activeLedgerEntries.filter(row => String(row.document_id || '') === key);
+    if (!lines.length) { documentBalanceCache.set(key, false); return false; }
+    const totals = new Map();
+    for (const line of lines) {
+      const currency = String(line.currency || 'AFN');
+      const debit = num(line.debit), credit = num(line.credit);
+      if (!Number.isFinite(debit) || !Number.isFinite(credit)) { documentBalanceCache.set(key, false); return false; }
+      const total = totals.get(currency) || { debit: 0, credit: 0 };
+      total.debit += debit; total.credit += credit; totals.set(currency, total);
+    }
+    const balanced = [...totals.values()].every(total => Math.abs(total.debit - total.credit) < 0.005);
+    documentBalanceCache.set(key, balanced);
+    return balanced;
+  };
 
   const mappedCustomers = customers.map(row => ({
     ...row,
@@ -204,6 +223,7 @@ export async function loadVersion21Database() {
     fee: num(row.fee),
     cash: '',
     status: ['paid','done','completed'].includes(String(row.status || '').toLowerCase()) ? 'اجرا شده' : (row.status === 'reversed' ? 'ابطال شده' : row.status === 'pending' ? 'در انتظار' : row.status),
+    accountingStatus: (() => { const doc = documents.find(item => Number(item.transfer_id) === Number(row.id)); return !doc ? 'سند ندارد' : (doc.reversed ? 'ابطال شده' : isDocumentBalanced(doc.id) ? 'متوازن' : 'نیازمند بررسی'); })(),
     note: row.destination || row.agent_route || '',
     _sourceTable: 'transfers',
   }));
@@ -218,7 +238,8 @@ export async function loadVersion21Database() {
     toCurrency: row.to_currency || '',
     toAmount: num(row.to_amount),
     rate: num(row.rate),
-    profit: 0,
+    profit: null,
+    accountingStatus: (() => { const doc = documents.find(item => item.related_type === 'conversion' && Number(item.related_id) === Number(row.id)); return !doc ? 'سند ندارد' : (doc.reversed ? 'ابطال شده' : isDocumentBalanced(doc.id) ? 'متوازن' : 'نیازمند بررسی'); })(),
     party: row.customer_name || '',
     note: row.description || '',
     _sourceTable: 'conversions',
@@ -251,6 +272,7 @@ export async function loadVersion21Database() {
       accountType,
       accountId: row.account_id || '',
       documentId: row.document_id || null,
+      status: linkedDocument?.reversed ? 'ابطال شده' : (row.document_id && isDocumentBalanced(row.document_id) ? 'قطعی' : 'نیازمند بررسی'),
       deleted: !!row.deleted,
       _sourceTable: 'ledger_entries',
     };
@@ -306,7 +328,7 @@ export async function loadVersion21Database() {
       credit: num(row.credit),
       amount: num(row.debit) || num(row.credit),
       currency: row.currency || doc?.currency || 'AFN',
-      status: doc?.reversed ? 'ابطال شده' : 'قطعی',
+      status: doc?.reversed ? 'ابطال شده' : (doc?.id && isDocumentBalanced(doc.id) ? 'قطعی' : 'نیازمند بررسی'),
       _sourceTable: 'ledger_entries',
     };
   }).sort((a, b) => String(b.date).localeCompare(String(a.date)));
@@ -326,7 +348,7 @@ export async function loadVersion21Database() {
       cash,
       description: row.description || '',
       number: row.doc_number || '',
-      status: row.reversed ? 'ابطال شده' : 'قطعی',
+      status: row.reversed ? 'ابطال شده' : (isDocumentBalanced(row.id) ? 'قطعی' : 'نیازمند بررسی'),
       _sourceTable: 'documents',
     };
   });
@@ -343,7 +365,7 @@ export async function loadVersion21Database() {
         amount: num(row.amount),
         cash: cashLine ? (safeById.get(String(cashLine.account_id || ''))?.name || cashLine.account_name || '') : '',
         note: row.doc_number || '',
-        status: row.reversed ? 'ابطال شده' : 'قطعی',
+        status: row.reversed ? 'ابطال شده' : (isDocumentBalanced(row.id) ? 'قطعی' : 'نیازمند بررسی'),
         _sourceTable: 'documents',
       };
     });
