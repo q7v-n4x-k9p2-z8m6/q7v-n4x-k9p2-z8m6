@@ -463,9 +463,15 @@ export async function saveVersion21Record(module, draft) {
       return { id: String(conversion.id), documentId: doc?.document_id, auditWarning, warning: dateWarning };
     } catch (error) {
       // Preserve the source conversion record if ledger posting fails.
-      // Report the failure for reconciliation; never physically delete financial data.
+      // Return a visible warning so the user does not unknowingly retry and duplicate it.
       await captureVersion21Error(error, 'conversion-posting');
-      throw error;
+      const auditWarning = await writeAudit(ctx, 'create', 'conversion', conversion.id,
+        'رکورد تبدیل ذخیره شد اما سند حسابداری نیازمند بررسی است.', null, draft);
+      return {
+        id: String(conversion.id),
+        warning: 'ردیف تبدیل ذخیره شد، اما سند حسابداری ثبت نشد. دوباره ثبت نکنید؛ این ردیف با وضعیت «سند ندارد» برای تطبیق نمایش داده می‌شود.',
+        auditWarning,
+      };
     }
   }
 
