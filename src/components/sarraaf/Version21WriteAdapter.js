@@ -231,7 +231,7 @@ export async function saveVersion21Record(module, draft) {
     if (draft.id) throw new Error('برای اصلاح حواله ثبت‌شده، ابتدا باید گردش آن معکوس و حواله اصلاحی صادر شود؛ ویرایش مستقیم حواله مالی مجاز نیست.');
     const customer = await getCustomer(ctx, draft.direction === 'دریافتی' ? draft.receiver : draft.sender);
     const branch = await getBranch(ctx, draft.branch);
-    const operationId = makeOperationId();
+    const operationId = draft.clientOperationId || makeOperationId();
     const { data, error } = await supabase.rpc('post_transfer_transaction_v2', {
       p_exchange_code: ctx.exchangeCode,
       p_direction: draft.direction === 'دریافتی' ? 'receive' : 'send',
@@ -305,7 +305,7 @@ export async function saveVersion21Record(module, draft) {
       currency, amount, relatedType: customer ? 'customer' : 'none',
       relatedId: customer?.id || null, relatedName: draft.party || draft.title || '',
       description: draft.description || draft.title || draft.note || (isCashIn ? 'دخل صندوق' : 'خرج صندوق'),
-      lines,
+      lines, clientOperationId: draft.clientOperationId,
     });
     const dateWarning = await applyDocumentDate(ctx, doc?.document_id, draft.date);
     const auditWarning = await writeAudit(ctx, 'create', isExpense ? 'expense' : 'cash', doc?.document_id,
@@ -341,7 +341,7 @@ export async function saveVersion21Record(module, draft) {
       const doc = await postDocument(ctx, {
         docType: 'convert', currency: draft.fromCurrency, amount: fromAmount,
         relatedType: 'conversion', relatedId: conversion.id, relatedName: draft.party || '',
-        description: draft.note || `تبدیل ${draft.fromCurrency} به ${draft.toCurrency}`, lines,
+        description: draft.note || `تبدیل ${draft.fromCurrency} به ${draft.toCurrency}`, lines, clientOperationId: draft.clientOperationId,
       });
       const dateWarning = await applyDocumentDate(ctx, doc?.document_id, draft.date, 'conversions', conversion.id);
       const auditWarning = await writeAudit(ctx, 'create', 'conversion', conversion.id, 'ثبت معامله تبدیل ارز و سندهای دفتر کل', null, draft);
@@ -360,7 +360,7 @@ export async function saveVersion21Record(module, draft) {
     if (debit.account_id === credit.account_id && debit.account_type === credit.account_type) throw new Error('حساب بدهکار و بستانکار یکسان است.');
     const doc = await postDocument(ctx, {
       docType: 'journal', currency: draft.currency || 'AFN', amount,
-      description: draft.description, lines: [
+      description: draft.description, clientOperationId: draft.clientOperationId, lines: [
         { ...debit, debit: amount, credit: 0 },
         { ...credit, debit: 0, credit: amount },
       ],
