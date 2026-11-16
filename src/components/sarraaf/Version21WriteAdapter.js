@@ -347,31 +347,34 @@ export async function saveVersion21Record(module, draft) {
     if (error) throw error;
     if (!data?.transfer_id) throw new Error('پاسخ ثبت حواله شناسه معتبر ندارد؛ وضعیت عملیات را در دفتر حواله بررسی کنید.');
     let warning = '';
-    if (number(draft.fee) > 0) {
-      const feeAmount = number(draft.fee);
-      const { error: transferFeeError } = await supabase.from('transfers').update({ fee: feeAmount, fee_currency: draft.currency || 'AFN', total: transferAmount + feeAmount })
-        .eq('id', data.transfer_id).eq('exchange_code', ctx.exchangeCode);
-      if (!transferFeeError) {
-        try {
-          const feeDoc = await postDocument(ctx, {
-            docType: 'transfer_fee', currency: draft.currency || 'AFN', amount: feeAmount,
-            relatedType: 'transfer', relatedId: data.transfer_id, relatedName: draft.sender,
-            description: 'کمیشن حواله ' + (data.transfer_number || ''), clientOperationId: operationId + '-fee',
-            lines: [
-              { account_type: 'customer', account_id: String(customer.id), account_name: draft.sender, currency: draft.currency || 'AFN', debit: feeAmount, credit: 0 },
-              { account_type: 'suspense', account_id: '', account_name: 'درآمد کمیشن حواله', currency: draft.currency || 'AFN', debit: 0, credit: feeAmount },
-            ],
-          });
-          if (!feeDoc?.document_id) warning = 'حواله ثبت شد، اما سند کمیشن باید بررسی شود.';
-          else {
-            const feeDateWarning = await applyDocumentDate(ctx, feeDoc.document_id, draft.date);
-            if (feeDateWarning) warning = 'سند کمیشن ثبت شد، اما تاریخ آن کامل همگام نشد: ' + feeDateWarning;
-          }
-        } catch (feeError) {
-          warning = 'حواله ثبت شد، اما سند حسابداری کمیشن ثبت نشد؛ این مورد باید پیگیری شود: ' + (feeError?.message || 'خطای نامشخص');
-          await captureVersion21Error(feeError, 'transfer-fee');
+    const feeAmount = transferFee;
+    const { error: transferFeeError } = await supabase.from('transfers').update({
+      fee: feeAmount,
+      fee_currency: draft.currency || 'AFN',
+      total: transferAmount + feeAmount,
+    }).eq('id', data.transfer_id).eq('exchange_code', ctx.exchangeCode);
+    if (transferFeeError) {
+      warning = 'حواله ثبت شد، اما مبلغ کمیشن و جمع کل در رکورد حواله همگام نشد: ' + transferFeeError.message;
+    } else if (feeAmount > 0) {
+      try {
+        const feeDoc = await postDocument(ctx, {
+          docType: 'transfer_fee', currency: draft.currency || 'AFN', amount: feeAmount,
+          relatedType: 'transfer', relatedId: data.transfer_id, relatedName: draft.sender,
+          description: 'کمیشن حواله ' + (data.transfer_number || ''), clientOperationId: operationId + '-fee',
+          lines: [
+            { account_type: 'customer', account_id: String(customer.id), account_name: draft.sender, currency: draft.currency || 'AFN', debit: feeAmount, credit: 0 },
+            { account_type: 'suspense', account_id: '', account_name: 'درآمد کمیشن حواله', currency: draft.currency || 'AFN', debit: 0, credit: feeAmount },
+          ],
+        });
+        if (!feeDoc?.document_id) warning = 'حواله ثبت شد، اما سند کمیشن باید بررسی شود.';
+        else {
+          const feeDateWarning = await applyDocumentDate(ctx, feeDoc.document_id, draft.date);
+          if (feeDateWarning) warning = 'سند کمیشن ثبت شد، اما تاریخ آن کامل همگام نشد: ' + feeDateWarning;
         }
-      } else warning = 'حواله ثبت شد، اما ذخیره کمیشن در رکورد حواله ناموفق بود: ' + transferFeeError.message;
+      } catch (feeError) {
+        warning = 'حواله ثبت شد، اما سند حسابداری کمیشن ثبت نشد؛ این مورد باید پیگیری شود: ' + (feeError?.message || 'خطای نامشخص');
+        await captureVersion21Error(feeError, 'transfer-fee');
+      }
     }
     const dateWarning = await applyDocumentDate(ctx, data?.document_id, draft.date, 'transfers', data?.transfer_id);
     const auditWarning = await writeAudit(ctx, 'create', 'transfer', data?.transfer_id,
