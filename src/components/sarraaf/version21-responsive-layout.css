@@ -564,3 +564,62 @@
   }
   html body .v21-laptop-toolbar > aside.grid { order: 2 !important; }
 }
+
+
+/* Corrected hierarchy: operations menu first, real module icons directly beneath it.
+   One landing page serves as the Operations Center; no duplicate desktop workspace tile. */
+@media (min-width: 901px) {
+  html body .v21-laptop-toolbar {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 0 !important;
+    padding: 8px !important;
+    background: #e8eef3 !important;
+  }
+  html body .v21-laptop-menu-bar {
+    order: 0 !important;
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    gap: 5px !important;
+    overflow-x: auto !important;
+    padding: 6px 8px !important;
+    border: 1px solid #c6d3dd !important;
+    border-radius: 8px 8px 0 0 !important;
+    background: #fff !important;
+  }
+  html body .v21-laptop-menu-bar > div { flex: 0 0 auto !important; }
+  html body .v21-laptop-menu-trigger {
+    min-height: 34px !important;
+    padding: 6px 12px !important;
+    font-size: 11px !important;
+  }
+  html body .v21-laptop-toolbar > aside.grid {
+    order: 1 !important;
+    display: grid !important;
+    grid-template-columns: repeat(12, minmax(0, 1fr)) !important;
+    align-content: center !important;
+    gap: 6px !important;
+    width: 100% !important;
+    padding: 9px !important;
+    border: 1px solid #c6d3dd !important;
+    border-top: 0 !important;
+    background: #e1e8ed !important;
+    overflow: visible !important;
+  }
+  html body .v21-laptop-toolbar > aside.grid button {
+    min-width: 0 !important;
+    min-height: 66px !important;
+    padding: 7px 3px !important;
+    border: 1px solid #d1dce5 !important;
+    border-radius: 8px !important;
+    background: linear-gradient(180deg,#fff 0%,#f3f7fa 100%) !important;
+  }
+}
+@media (max-width: 900px) {
+  html body .v21-laptop-toolbar { display: flex !important; flex-direction: column !important; }
+  html body .v21-laptop-menu-bar { order: 0 !important; }
+  html body .v21-laptop-toolbar > aside.grid { order: 1 !important; }
+}
