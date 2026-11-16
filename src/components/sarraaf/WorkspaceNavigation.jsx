@@ -16,13 +16,13 @@ export default function WorkspaceNavigation({ items }) {
   const { pathname } = useLocation();
   const activePath = items.filter(item => pathname === item.path || pathname.startsWith(item.path + '/')).sort((a, b) => b.path.length - a.path.length)[0]?.path;
   return (
-    <nav aria-label="منوی اصلی صراف" className="w-full overflow-x-auto bg-[#e8eef8] px-2 py-2">
+    <nav aria-label="منوی اصلی صراف" className="w-full overflow-x-auto bg-gradient-to-b from-[#eaf1fc] to-[#dce8f8] px-2 py-2">
       <div className="flex min-w-max items-start gap-2">
         {GROUPS.map(([title, keys]) => {
           const entries = keys.map(key => items.find(item => item.featureKey === key)).filter(Boolean);
           if (!entries.length) return null;
           return (
-            <section key={title} className="flex max-h-[150px] min-w-[128px] max-w-[420px] flex-col gap-1 overflow-hidden rounded-xl border border-blue-100 bg-white/90 p-1.5 shadow-sm">
+            <section key={title} className="flex max-h-[150px] min-w-[128px] max-w-[420px] flex-col gap-1 overflow-hidden rounded-xl border border-[#b8cbe7] bg-gradient-to-b from-[#ffffff] to-[#edf4ff] p-1.5 shadow-sm">
               <h2 className="px-1 text-center text-[10px] font-bold text-[#244f83]">{title}</h2>
               <div className="flex flex-wrap items-center justify-center gap-1 overflow-y-auto">
                 {entries.map(item => {
@@ -37,11 +37,11 @@ export default function WorkspaceNavigation({ items }) {
                       className={cn(
                         'flex min-h-[58px] min-w-[64px] max-w-[76px] flex-col items-center justify-center gap-1 rounded-lg border px-1 py-1.5 text-center transition-colors',
                         active
-                          ? 'border-blue-400 bg-blue-100 text-blue-900 shadow-sm'
+                          ? 'border-[#7da6df] bg-gradient-to-b from-[#dceaff] to-[#c8ddfa] text-[#0b3f88] shadow-sm'
                           : 'border-transparent text-slate-700 hover:border-blue-200 hover:bg-blue-50'
                       )}
                     >
-                      <Icon className="h-5 w-5 text-[#1456a0]" strokeWidth={2} />
+                      <Icon className="h-5 w-5 text-[#0753ad]" strokeWidth={2} />
                       <span className="text-[9px] font-semibold leading-tight">{item.label}</span>
                       {item.featureStatus === 'updating' && <span className="text-[8px] text-amber-700">به‌روزرسانی</span>}
                     </Link>
