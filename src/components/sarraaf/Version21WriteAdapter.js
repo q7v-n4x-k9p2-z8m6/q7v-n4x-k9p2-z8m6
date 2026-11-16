@@ -261,7 +261,7 @@ async function resolveLedgerAccount(ctx, label, currency) {
   const { data, error } = await query.limit(1).maybeSingle();
   if (error) throw error;
   if (!data) throw new Error(`حساب «${value}» در کدینگ همین صرافی پیدا نشد.`);
-  return { ...chartAccountLedgerRef(data), chartAccountType: data.account_type, normalBalance: data.normal_balance };
+  return chartAccountLedgerRef(data);
 }
 
 async function postDocument(ctx, {
