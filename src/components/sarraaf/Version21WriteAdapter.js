@@ -179,6 +179,13 @@ async function postDocument(ctx, {
   });
   if (error) throw error;
   if (data?.error) throw new Error(data.error);
+  const { error: metadataError } = await supabase.from('documents').update({
+    edited: true,
+    edited_date: new Date().toISOString(),
+    edit_note: 'ویرایش از نسخه ۲۱',
+    edited_by_name: ctx.userName,
+  }).eq('id', Number(documentId)).eq('exchange_code', ctx.exchangeCode);
+  if (metadataError) throw metadataError;
   return data;
 }
 
