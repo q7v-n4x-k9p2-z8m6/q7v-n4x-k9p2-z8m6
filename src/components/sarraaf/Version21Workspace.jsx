@@ -310,8 +310,8 @@ export default function Version21Workspace(){
     <main className="min-h-0 min-w-0 flex-1 overflow-y-auto bg-[#f9fafb] p-3">
      {active==='home'?<>
       <div className="mb-3 flex flex-wrap items-center justify-between border-b-2 border-[#315e80] pb-2">
-       <div><div className="text-[9px] text-slate-500">سیستم حسابداری صراف / مرکز عملیات</div><h2 className="text-sm font-bold text-[#24496d]">مرکز عملیات صرافی</h2><p className="mt-1 text-[10px] text-slate-500">دسترسی مستقیم به دفاتر، صندوق‌ها، حواله‌ها و معاملات</p></div>
-       <div className="text-left text-[10px]"><b className="block text-[#24496d]">\${today()}</b><span className="text-emerald-700">ساختار آماده · بدون اتصال دیتابیس</span></div>
+       <div><div className="text-[9px] text-slate-500">سیستم حسابداری صراف / مرکز عملیات</div><h2 className="text-sm font-bold text-[#24496d]">مرکز عملیات صرافی</h2><p className="mt-1 text-[10px] text-slate-500">دسترسی به اطلاعات واقعی دفاتر، صندوق‌ها، حواله‌ها و معاملات</p></div>
+       <div className="text-left text-[10px]"><b className="block text-[#24496d]">\${today()}</b><span className="text-emerald-700">{dbStatus==='connected'?'اتصال دیتابیس برقرار است':'در انتظار اتصال دیتابیس'}</span></div>
       </div>
       <div className="mb-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
        <div className="border border-[#b6c4cf] bg-white px-3 py-2 shadow-sm"><span className="text-[10px] text-slate-500">تعداد مشتریان</span><b className="mt-1 block text-lg text-[#24496d]">\${fmt(data.customers.length)}</b></div>
@@ -324,7 +324,7 @@ export default function Version21Workspace(){
         {title:'تعاریف و دفاتر',ids:['customers','customerLedger','branches','branchLedger']},
         {title:'صندوق و بانک',ids:['cash','banks']},
         {title:'عملیات صرافی',ids:['exchange','remittance','expenses']},
-        {title:'حسابداری و گزارشات',ids:['journal','ledger','accounts','currencies','reports','profit','balance']},
+        {title:'حسابداری و گزارشات',ids:['journal','ledger','accounts','currencies','reports','profit','balance','activity']},
          {title:'امکانات تکمیلی · اسکلت اولیه',ids:['sarraafGroups','assistant','products']},
         {title:'تنظیمات',ids:['language']}
        ].map(group=><section key={group.title} className="border border-[#9aabb9] bg-[#e8eef3] p-2 shadow-sm">
