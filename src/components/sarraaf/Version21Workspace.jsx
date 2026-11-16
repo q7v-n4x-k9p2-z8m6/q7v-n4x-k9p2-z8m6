@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { loadVersion21Database } from './Version21DataAdapter';
 import { saveVersion21Record, editVersion21Record, deleteVersion21Record, captureVersion21Error, seedVersion21BaseAccounts } from './Version21WriteAdapter';
 import { loadVersion21LocalState, saveVersion21LocalState } from './Version21LocalStore';
+import { saveDemoPreviewRecord, deleteDemoPreviewRecord } from './Version21DemoAdapter';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import LanguageSettings from './LanguageSettings';
 import { hasPermission } from '@/lib/permissions';
@@ -139,6 +140,12 @@ export default function Version21Workspace(){
   if(active==='branchLedger') source=branchDetail?data.transactions.filter(x=>x.partyType==='branch'&&x.party===branchDetail.name):data.branches;
   if(active==='ledger') source=data.ledger||[];
   if(active==='reports') source=data.reports||[];
+  const demoModule = active==='customerLedger' ? (customerDetail?'transactions':'customers') : active==='branchLedger' ? (branchDetail?'transactions':'branches') : active;
+  const demoRows = (data.demoPreviewRecords||[]).filter(r=>r.module_key===demoModule).map(r=>({
+   ...(r.payload||{}), id:'demo-'+r.id, _demoRecordId:r.id, _demoModule:r.module_key,
+   _demoPreview:true, _demoFixed:r.record_kind==='sample'
+  }));
+  source=[...source,...demoRows];
   const q=query.trim().toLowerCase();
   return source.filter(r=>(!q||Object.values(r).join(' ').toLowerCase().includes(q))&&(filterCurrency==='همه'||!r.currency||r.currency===filterCurrency)&&(!dateFrom||!r.date||r.date>=dateFrom)&&(!dateTo||!r.date||r.date<=dateTo));
  },[data,active,customerDetail,branchDetail,query,filterCurrency,dateFrom,dateTo]);
@@ -167,7 +174,9 @@ export default function Version21Workspace(){
   const payload={...draft,clientOperationId:draft.clientOperationId||(globalThis.crypto?.randomUUID?.()||('v21-'+Date.now()+'-'+Math.random().toString(36).slice(2)))};
   setDraft(payload);
   try{
-   const result=payload.id?await editVersion21Record(mod,payload):await saveVersion21Record(mod,payload);
+   const result=data.isDemoAccount
+    ? await saveDemoPreviewRecord(mod,payload,payload._demoRecordId||null)
+    : (payload.id?await editVersion21Record(mod,payload):await saveVersion21Record(mod,payload));
    setModal('');setDraft({});
    await refreshDatabase();
    setSelected(null);
@@ -188,6 +197,13 @@ export default function Version21Workspace(){
   if(!window.confirm('این عملیات روی دیتابیس همین صراف اجرا می‌شود. برای اسناد مالی، سند معکوس ثبت خواهد شد. ادامه می‌دهید؟'))return;
   try{
    const target=selected;
+   if(target._demoPreview){
+    if(target._demoFixed){notify('این رکورد ثابت است و امکان حذف آن وجود ندارد.');return;}
+    await deleteDemoPreviewRecord(target._demoRecordId);
+    await refreshDatabase();
+    notify('رکورد موقت حذف شد.');
+    return;
+   }
    const result=await deleteVersion21Record(targetModule,target);
    await refreshDatabase();
    const baseMessage=result?.partial?'ابطال ناقص انجام شد؛ برخی اسناد هنوز نیازمند بررسی هستند.':result?.reversed?'سند با ثبت سند معکوس ابطال شد و سابقه اصلی حفظ شد.':result?.warning?'ابطال انجام نشد؛ وضعیت سند را بررسی کنید.':'رکورد از دیتابیس حذف شد.';
@@ -202,6 +218,14 @@ export default function Version21Workspace(){
   if(!canModuleAction(active,'edit')){notify('مجوز ویرایش این بخش برای حساب شما فعال نیست.');return;}
   if(dbStatus!=='connected'||localPreview){notify('در پیش‌نمایش محلی ویرایش غیرفعال است؛ ابتدا اطلاعات واقعی را تازه‌سازی کنید.');return;}
   if(!selected){notify('ابتدا یک ردیف را انتخاب کنید.');return;}
+  if(selected._demoPreview){
+   if(selected._demoFixed){notify('این رکورد ثابت است و امکان ویرایش آن وجود ندارد.');return;}
+   const demoEditModule=selected._demoModule;
+   if(!SCHEMAS[demoEditModule]){notify('ویرایش این نوع رکورد از این بخش پشتیبانی نمی‌شود.');return;}
+   setDraft({...selected});
+   setModal(demoEditModule);
+   return;
+  }
   if(active==='ledger'){notify('دفتر کل گزارش سطرهای ثبت‌شده است؛ برای اصلاح، سند اصلی را در روزنامچه یا بخش عملیات مربوط باز کنید.');return;}
   if(['customerLedger','branchLedger'].includes(active)&&selected.documentId){
    setDraft({...selected});setModal('transactions');return;
@@ -220,7 +244,13 @@ export default function Version21Workspace(){
   const payload={...draft,clientOperationId:draft.clientOperationId||(globalThis.crypto?.randomUUID?.()||('v21-'+Date.now()+'-'+Math.random().toString(36).slice(2)))};
   setDraft(payload);
   try{
-   const result=await saveVersion21Record('cashAction',payload);
+   const result=data.isDemoAccount
+    ? await saveDemoPreviewRecord('transactions',{
+      date:payload.date,type:payload.kind,partyType:payload.partyType,party:payload.party,
+      currency:payload.currency,amount:(payload.kind==='خرج'?-1:1)*Number(payload.amount||0),
+      cash:payload.cash,description:payload.description,status:'موقت'
+    })
+    : await saveVersion21Record('cashAction',payload);
    setModal('');setDraft({});
    await refreshDatabase();
    notify(result?.warning||result?.auditWarning?'گردش صندوق ثبت شد؛ '+(result.warning||result.auditWarning):'گردش صندوق و سند حسابداری در دیتابیس ثبت شد.');
