@@ -936,3 +936,444 @@
   .v21-module-tile { min-height: 98px !important; }
   .v21-data-table table { min-width: 680px !important; }
 }
+
+
+/* Android/mobile workspace usability pass — presentation only. */
+@media (max-width: 640px) {
+  html body .v21-app-shell,
+  html body .v21-app-shell > div.min-w-0 {
+    min-width: 0 !important;
+    width: 100% !important;
+  }
+
+  /* Give module shortcuts enough room for readable labels and reliable taps. */
+  html body .v21-workspace-shell aside.grid {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    align-items: stretch !important;
+    gap: 10px !important;
+    padding: 12px !important;
+    overflow: visible !important;
+  }
+  html body .v21-workspace-shell aside.grid > button,
+  html body .v21-workspace-shell aside.grid > a,
+  html body .v21-workspace-shell aside.grid > div {
+    min-width: 0 !important;
+    min-height: 88px !important;
+    padding: 12px 8px !important;
+    gap: 8px !important;
+    justify-content: center !important;
+    border-radius: 12px !important;
+  }
+  html body .v21-workspace-shell aside.grid button svg,
+  html body .v21-workspace-shell aside.grid a svg {
+    width: 25px !important;
+    height: 25px !important;
+    flex: 0 0 25px !important;
+  }
+  html body .v21-workspace-shell aside.grid button span,
+  html body .v21-workspace-shell aside.grid a span,
+  html body .v21-workspace-shell aside.grid > div span {
+    width: 100% !important;
+    font-size: 11px !important;
+    line-height: 1.5 !important;
+    white-space: normal !important;
+    overflow-wrap: anywhere !important;
+    text-align: center !important;
+  }
+
+  /* Page headings and their action buttons must wrap instead of being squeezed. */
+  html body .v21-app-shell main .workspace-page-header {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    justify-content: flex-start !important;
+    gap: 12px !important;
+    width: 100% !important;
+    margin-bottom: 14px !important;
+    padding: 12px !important;
+  }
+  html body .v21-app-shell main .workspace-page-header > :first-child {
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+  html body .v21-app-shell main .workspace-page-actions {
+    display: flex !important;
+    flex: 1 1 auto !important;
+    flex-wrap: wrap !important;
+    align-items: stretch !important;
+    justify-content: flex-start !important;
+    width: 100% !important;
+    gap: 8px !important;
+  }
+  html body .v21-app-shell main .workspace-page-actions > button,
+  html body .v21-app-shell main .workspace-page-actions > a,
+  html body .v21-app-shell main .workspace-page-actions > [role="button"] {
+    flex: 1 1 calc(50% - 8px) !important;
+    min-width: 0 !important;
+    min-height: 44px !important;
+    white-space: normal !important;
+  }
+
+  /* Consistent touch targets across page-level actions, without resizing table cells. */
+  html body .v21-app-shell main button,
+  html body .v21-app-shell main a[role="button"] {
+    min-height: 40px;
+    max-width: 100%;
+  }
+  html body .v21-app-shell main button svg,
+  html body .v21-app-shell main a[role="button"] svg {
+    flex: 0 0 auto;
+  }
+  html body .v21-app-shell main input,
+  html body .v21-app-shell main select,
+  html body .v21-app-shell main textarea {
+    min-height: 44px !important;
+    max-width: 100% !important;
+    font-size: 14px !important;
+  }
+  html body .v21-app-shell main textarea { min-height: 88px !important; }
+
+  /* Keep content cards readable and prevent narrow flex children from overflowing. */
+  html body .v21-app-shell main section,
+  html body .v21-app-shell main .rounded-xl,
+  html body .v21-app-shell main .rounded-2xl {
+    min-width: 0;
+    max-width: 100%;
+  }
+  html body .v21-app-shell main .flex.items-center.justify-between {
+    flex-wrap: wrap !important;
+    row-gap: 9px !important;
+  }
+  html body .v21-app-shell main .grid.grid-cols-2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+  html body .v21-app-shell main table {
+    min-width: 640px;
+  }
+  html body .v21-app-shell main :has(> table) {
+    max-width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+@media (min-width: 641px) {
+  html body .v21-app-shell main .workspace-page-header {
+    min-width: 0;
+  }
+}
+
+
+/* Final Android-first composition for the authenticated exchange workspace.
+   This block is intentionally mobile-only; login markup and desktop breakpoints are untouched. */
+@media (max-width: 640px) {
+  html body .v21-app-shell {
+    display: flex !important;
+    flex-direction: column !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    overflow-x: clip !important;
+  }
+  html body .v21-app-shell > div.min-w-0 {
+    width: 100% !important;
+    min-width: 0 !important;
+    min-height: 100dvh !important;
+  }
+  html body .v21-app-shell > div.min-w-0 > main {
+    width: 100% !important;
+    min-width: 0 !important;
+    padding: 8px !important;
+  }
+  html body .v21-app-shell > div.min-w-0 > header {
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 70 !important;
+    padding-top: max(8px, env(safe-area-inset-top)) !important;
+  }
+
+  /* The existing real module icons become a roomy two-column mobile launcher. */
+  html body .v21-workspace-shell {
+    display: flex !important;
+    flex-direction: column !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    max-height: none !important;
+    min-height: calc(100dvh - 16px) !important;
+    height: auto !important;
+    overflow: visible !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    background: #f1f6fc !important;
+  }
+  html body .v21-workspace-shell > header {
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 65 !important;
+    min-height: 54px !important;
+    padding: 12px 15px !important;
+    border-radius: 0 0 16px 16px !important;
+    background: linear-gradient(115deg,#102f58 0%,#174d87 58%,#1682d4 100%) !important;
+  }
+  html body .v21-workspace-shell > div.flex.min-h-0 {
+    display: flex !important;
+    flex: 1 1 auto !important;
+    flex-direction: column !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+  }
+  html body .v21-workspace-shell .v21-laptop-toolbar {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0 !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    padding: 8px 8px 0 !important;
+    background: linear-gradient(180deg,#eaf2fc 0%,#f1f6fc 100%) !important;
+  }
+  html body .v21-workspace-shell .v21-laptop-menu-bar {
+    order: 0 !important;
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    gap: 7px !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    overflow-x: auto !important;
+    overflow-y: visible !important;
+    padding: 2px 1px 9px !important;
+    border: 0 !important;
+    border-bottom: 1px solid #cfdeee !important;
+    white-space: nowrap !important;
+    -webkit-overflow-scrolling: touch;
+  }
+  html body .v21-workspace-shell .v21-laptop-menu-bar > div {
+    position: relative !important;
+    z-index: 75 !important;
+    flex: 0 0 auto !important;
+  }
+  html body .v21-workspace-shell .v21-laptop-menu-trigger {
+    min-height: 42px !important;
+    padding: 9px 13px !important;
+    border: 1px solid #c9d9ec !important;
+    border-radius: 11px !important;
+    background: #fff !important;
+    color: #174675 !important;
+    font-size: 12px !important;
+    font-weight: 750 !important;
+  }
+  html body .v21-workspace-shell .v21-laptop-menu-popover {
+    position: fixed !important;
+    top: auto !important;
+    right: 8px !important;
+    left: 8px !important;
+    z-index: 9999 !important;
+    max-height: 65dvh !important;
+    overflow: auto !important;
+    border: 1px solid #c6d8ea !important;
+    border-radius: 14px !important;
+    background: #fff !important;
+    box-shadow: 0 14px 35px rgb(16 47 88 / 22%) !important;
+  }
+  html body .v21-workspace-shell .v21-laptop-menu-popover button {
+    width: 100% !important;
+    min-height: 46px !important;
+    padding: 11px 14px !important;
+    border-bottom: 1px solid #edf2f8 !important;
+    color: #1e4167 !important;
+    font-size: 13px !important;
+    text-align: right !important;
+  }
+
+  html body .v21-workspace-shell aside.v21-module-icon-row,
+  html body .v21-workspace-shell .v21-module-icon-row {
+    order: 1 !important;
+    display: grid !important;
+    grid-template-columns: repeat(2,minmax(0,1fr)) !important;
+    grid-auto-flow: row !important;
+    align-items: stretch !important;
+    gap: 10px !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    padding: 12px 10px 14px !important;
+    overflow: visible !important;
+    border: 0 !important;
+    background: transparent !important;
+  }
+  html body .v21-workspace-shell .v21-module-icon-row > button {
+    display: flex !important;
+    flex-direction: row !important;
+    justify-content: flex-start !important;
+    align-items: center !important;
+    gap: 10px !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    min-height: 76px !important;
+    padding: 10px 11px !important;
+    border: 1px solid #d2e0f0 !important;
+    border-radius: 14px !important;
+    background: linear-gradient(145deg,#fff 0%,#f5f9ff 100%) !important;
+    color: #173f68 !important;
+    text-align: right !important;
+    white-space: normal !important;
+    box-shadow: 0 3px 10px rgb(25 65 112 / 7%) !important;
+  }
+  html body .v21-workspace-shell .v21-module-icon-row > button.is-active,
+  html body .v21-workspace-shell .v21-module-icon-row > button[class*="is-active"] {
+    border-color: #79afe5 !important;
+    background: linear-gradient(145deg,#e8f3ff 0%,#dcecff 100%) !important;
+  }
+  html body .v21-workspace-shell .v21-module-icon-row > button > span:first-child {
+    display: grid !important;
+    flex: 0 0 42px !important;
+    width: 42px !important;
+    height: 42px !important;
+    place-items: center !important;
+    border-radius: 12px !important;
+  }
+  html body .v21-workspace-shell .v21-module-icon-row > button > span:first-child svg {
+    width: 23px !important;
+    height: 23px !important;
+  }
+  html body .v21-workspace-shell .v21-module-icon-row > button > span:last-child {
+    display: block !important;
+    width: auto !important;
+    min-width: 0 !important;
+    font-size: 12px !important;
+    font-weight: 750 !important;
+    line-height: 1.55 !important;
+    white-space: normal !important;
+    overflow-wrap: anywhere !important;
+    text-align: right !important;
+  }
+
+  html body .v21-workspace-shell main {
+    flex: 1 0 auto !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    min-height: 45dvh !important;
+    overflow: visible !important;
+    padding: 12px 10px 18px !important;
+    background: linear-gradient(180deg,#f7faff 0%,#edf4fc 100%) !important;
+  }
+  html body .v21-workspace-shell main > div.grid.gap-3,
+  html body .v21-workspace-shell main > div.grid.xl\:grid-cols-2 {
+    grid-template-columns: minmax(0,1fr) !important;
+    gap: 12px !important;
+  }
+  html body .v21-workspace-shell main > div.mb-3.grid.grid-cols-2 {
+    grid-template-columns: repeat(2,minmax(0,1fr)) !important;
+    gap: 9px !important;
+  }
+  html body .v21-workspace-shell main section {
+    min-width: 0 !important;
+    max-width: 100% !important;
+    padding: 12px !important;
+    border: 1px solid #d3e1f0 !important;
+    border-radius: 14px !important;
+    background: #fff !important;
+    box-shadow: 0 3px 12px rgb(26 65 112 / 6%) !important;
+  }
+  html body .v21-workspace-shell .v21-module-tile {
+    display: flex !important;
+    min-width: 0 !important;
+    min-height: 96px !important;
+    height: auto !important;
+    padding: 12px !important;
+    border-radius: 13px !important;
+  }
+
+  /* Forms, filters, and actions remain usable without changing their handlers. */
+  html body .v21-workspace-shell main button,
+  html body .v21-workspace-shell main a[role="button"] {
+    min-height: 44px !important;
+    max-width: 100% !important;
+    white-space: normal !important;
+  }
+  html body .v21-workspace-shell main input,
+  html body .v21-workspace-shell main select,
+  html body .v21-workspace-shell main textarea,
+  html body .v21-app-shell main input,
+  html body .v21-app-shell main select,
+  html body .v21-app-shell main textarea {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-height: 46px !important;
+    font-size: 14px !important;
+  }
+  html body .v21-workspace-shell main textarea,
+  html body .v21-app-shell main textarea { min-height: 96px !important; }
+  html body .v21-workspace-shell main .flex.items-center.justify-between,
+  html body .v21-workspace-shell main .flex.flex-wrap {
+    row-gap: 10px !important;
+  }
+  html body .v21-workspace-shell main table {
+    min-width: 640px !important;
+  }
+  html body .v21-workspace-shell main :has(> table),
+  html body .v21-workspace-shell main .overflow-auto,
+  html body .v21-workspace-shell main .overflow-x-auto {
+    max-width: 100% !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  /* Keep the existing quick-action bar reachable above the phone navigation. */
+  html body .v21-workspace-shell > div.shrink-0.flex.items-center.justify-end {
+    position: sticky !important;
+    bottom: 64px !important;
+    z-index: 35 !important;
+    flex-wrap: wrap !important;
+    padding: 9px 10px !important;
+    background: #edf4fc !important;
+  }
+  html body .v21-workspace-shell .v21-mobile-bottom {
+    position: sticky !important;
+    bottom: 0 !important;
+    z-index: 80 !important;
+    display: grid !important;
+    grid-template-columns: repeat(4,minmax(0,1fr)) !important;
+    gap: 7px !important;
+    margin-top: auto !important;
+    padding: 9px 8px calc(9px + env(safe-area-inset-bottom)) !important;
+    border-top: 1px solid #cfdeee !important;
+    background: rgb(255 255 255 / 97%) !important;
+    box-shadow: 0 -5px 18px rgb(20 56 96 / 9%) !important;
+  }
+  html body .v21-workspace-shell .v21-mobile-bottom button {
+    min-width: 0 !important;
+    min-height: 52px !important;
+    padding: 7px 3px !important;
+    border: 1px solid #d0deed !important;
+    border-radius: 12px !important;
+    background: linear-gradient(180deg,#fff,#eff5fd) !important;
+    color: #1b4e83 !important;
+    font-size: 11px !important;
+    font-weight: 800 !important;
+  }
+
+  /* Modals become phone-friendly sheets; the form and save actions stay unchanged. */
+  html body .v21-workspace-root > .fixed.inset-0 {
+    align-items: flex-end !important;
+    padding: 0 !important;
+  }
+  html body .v21-workspace-root > .fixed.inset-0 > div {
+    width: 100% !important;
+    max-width: 100% !important;
+    max-height: 92dvh !important;
+    border: 0 !important;
+    border-radius: 18px 18px 0 0 !important;
+    overflow: auto !important;
+    padding-bottom: env(safe-area-inset-bottom) !important;
+  }
+  html body .v21-workspace-shell footer { font-size: 10px !important; }
+}
+
+@media (min-width: 641px) {
+  /* Explicit desktop guard: preserve the existing laptop composition. */
+  html body .v21-workspace-shell,
+  html body .v21-workspace-shell .v21-laptop-toolbar,
+  html body .v21-workspace-shell .v21-module-icon-row {
+    max-width: none;
+  }
+}
