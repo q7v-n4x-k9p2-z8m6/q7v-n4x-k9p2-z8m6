@@ -314,6 +314,156 @@ export async function saveVersion21Record(module, draft) {
   throw new Error(`فرم «${module}» هنوز به عملیات پایگاه داده متصل نشده است.`);
 }
 
+async function editDocument(ctx, documentId, description, amount, currency, lines) {
+  const { data, error } = await supabase.rpc('edit_document_transaction', {
+    p_exchange_code: ctx.exchangeCode,
+    p_document_id: Number(documentId),
+    p_description: description || '',
+    p_amount: number(amount),
+    p_currency: currency || 'AFN',
+    p_edit_note: 'ویرایش از نسخه ۲۱',
+    p_new_lines: lines.map((line, index) => ({
+      ...line, line_no: index + 1, currency: line.currency || currency || 'AFN',
+      debit: number(line.debit), credit: number(line.credit),
+      description: line.description || description || '',
+    })),
+    p_registered_by: ctx.userName,
+    p_user_id: ctx.userId,
+  });
+  if (error) throw error;
+  if (data?.error) throw new Error(data.error);
+  return data;
+}
+
+export async function editVersion21Record(module, draft) {
+  const ctx = sessionContext();
+  if (!draft?.id) throw new Error('شناسه رکورد برای ویرایش موجود نیست.');
+
+  if (TABLES[module]) return saveVersion21Record(module, draft);
+
+  if (module === 'expenses') {
+    const safe = await getSafe(ctx, draft.cash, draft.currency || 'AFN');
+    const amount = number(draft.amount);
+    if (amount <= 0) throw new Error('مبلغ مصرف باید مثبت باشد.');
+    const lines = [
+      { account_type: 'suspense', account_id: '', account_name: 'مصارف', currency: draft.currency || 'AFN', debit: amount, credit: 0 },
+      { account_type: 'cash', account_id: String(safe.id), account_name: safe.name, currency: draft.currency || 'AFN', debit: 0, credit: amount },
+    ];
+    const result = await editDocument(ctx, draft.id, draft.title, amount, draft.currency, lines);
+    const auditWarning = await writeAudit(ctx, 'update', 'expense', draft.id, 'ویرایش مصرف و سطرهای دفتر کل', null, draft);
+    return { id: String(draft.id), result, auditWarning };
+  }
+
+  if (module === 'journal') {
+    const amount = number(draft.amount);
+    if (amount <= 0) throw new Error('مبلغ سند باید مثبت باشد.');
+    const debit = await resolveLedgerAccount(ctx, draft.debitAccount, draft.currency || 'AFN');
+    const credit = await resolveLedgerAccount(ctx, draft.creditAccount, draft.currency || 'AFN');
+    if (debit.account_type === credit.account_type && debit.account_id === credit.account_id) {
+      throw new Error('حساب بدهکار و بستانکار یکسان است.');
+    }
+    const result = await editDocument(ctx, draft.id, draft.description, amount, draft.currency, [
+      { ...debit, debit: amount, credit: 0 },
+      { ...credit, debit: 0, credit: amount },
+    ]);
+    const auditWarning = await writeAudit(ctx, 'update', 'journal', draft.id, 'ویرایش سند روزنامچه', null, draft);
+    return { id: String(draft.id), result, auditWarning };
+  }
+
+  if (module === 'transactions') {
+    const documentId = Number(draft.documentId || 0);
+    if (!documentId) throw new Error('سند اصلی این گردش پیدا نشد.');
+    const { data: oldLines, error: lineError } = await supabase.from('ledger_entries')
+      .select('account_type,account_id,account_name,currency')
+      .eq('exchange_code', ctx.exchangeCode).eq('document_id', documentId).eq('deleted', false);
+    if (lineError) throw lineError;
+    const oldCash = (oldLines || []).find(line => line.account_type === 'cash');
+    if (!oldCash?.account_id) throw new Error('صندوق متناظر این سند مشخص نیست؛ ویرایش برای جلوگیری از تغییر نادرست مانده متوقف شد.');
+    const amount = number(draft.amount);
+    if (!amount) throw new Error('مبلغ گردش نمی‌تواند صفر باشد.');
+    const currency = draft.currency || oldCash.currency || 'AFN';
+    const customer = draft.partyType === 'customer' ? await getCustomer(ctx, draft.party) : null;
+    const other = customer
+      ? { account_type: 'customer', account_id: String(customer.id), account_name: customer.name }
+      : { account_type: 'suspense', account_id: '', account_name: draft.party || 'حساب مقابل' };
+    const cash = { account_type: 'cash', account_id: String(oldCash.account_id), account_name: oldCash.account_name, currency };
+    const lines = amount > 0
+      ? [{ ...cash, debit: amount, credit: 0 }, { ...other, currency, debit: 0, credit: amount }]
+      : [{ ...other, currency, debit: Math.abs(amount), credit: 0 }, { ...cash, debit: 0, credit: Math.abs(amount) }];
+    const result = await editDocument(ctx, documentId, draft.description, Math.abs(amount), currency, lines);
+    const auditWarning = await writeAudit(ctx, 'update', 'cash_transaction', documentId, 'ویرایش گردش و سطرهای دفتر کل', null, draft);
+    return { id: String(documentId), result, auditWarning };
+  }
+
+  if (module === 'exchange') {
+    const { data: conversion, error } = await supabase.from('conversions').select('*')
+      .eq('id', Number(draft.id)).eq('exchange_code', ctx.exchangeCode).maybeSingle();
+    if (error) throw error;
+    if (!conversion) throw new Error('معامله تبدیل ارز پیدا نشد.');
+    const { data: doc, error: docError } = await supabase.from('documents').select('id')
+      .eq('exchange_code', ctx.exchangeCode).eq('related_type', 'conversion')
+      .eq('related_id', Number(draft.id)).limit(1).maybeSingle();
+    if (docError) throw docError;
+    if (!doc) throw new Error('سند دفتر کل مرتبط با این تبدیل پیدا نشد؛ ویرایش امن ممکن نیست.');
+    const fromSafe = await getSafe(ctx, draft.cashFrom || draft.cash, draft.fromCurrency);
+    const toSafe = await getSafe(ctx, draft.cashTo || draft.cash, draft.toCurrency);
+    const fromAmount = number(draft.fromAmount), toAmount = number(draft.toAmount);
+    if (fromAmount <= 0 || toAmount <= 0 || draft.fromCurrency === draft.toCurrency) throw new Error('ارزها و مبالغ معامله معتبر نیستند.');
+    const lines = [
+      { account_type: 'cash', account_id: String(fromSafe.id), account_name: fromSafe.name, currency: draft.fromCurrency, debit: 0, credit: fromAmount },
+      { account_type: 'suspense', account_id: '', account_name: 'حساب واسط تبدیل ارز', currency: draft.fromCurrency, debit: fromAmount, credit: 0 },
+      { account_type: 'cash', account_id: String(toSafe.id), account_name: toSafe.name, currency: draft.toCurrency, debit: toAmount, credit: 0 },
+      { account_type: 'suspense', account_id: '', account_name: 'حساب واسط تبدیل ارز', currency: draft.toCurrency, debit: 0, credit: toAmount },
+    ];
+    await editDocument(ctx, doc.id, draft.note || 'تبدیل ارز', fromAmount, draft.fromCurrency, lines);
+    const { error: updateError } = await supabase.from('conversions').update({
+      customer_name: draft.party || 'مشتری نقدی', from_currency: draft.fromCurrency,
+      from_amount: fromAmount, rate: number(draft.rate) || toAmount / fromAmount,
+      to_currency: draft.toCurrency, to_amount: toAmount,
+      description: draft.note || 'معامله تبدیل ارز', updated_at: new Date().toISOString(),
+    }).eq('id', Number(draft.id)).eq('exchange_code', ctx.exchangeCode);
+    if (updateError) throw updateError;
+    const auditWarning = await writeAudit(ctx, 'update', 'conversion', draft.id, 'ویرایش تبدیل ارز و سند دفتر کل', conversion, draft);
+    return { id: String(draft.id), auditWarning };
+  }
+
+  if (module === 'remittance') {
+    const { data: transfer, error } = await supabase.from('transfers').select('*')
+      .eq('id', Number(draft.id)).eq('exchange_code', ctx.exchangeCode).maybeSingle();
+    if (error) throw error;
+    if (!transfer) throw new Error('حواله برای ویرایش پیدا نشد.');
+    const { data: doc, error: docError } = await supabase.from('documents').select('id')
+      .eq('exchange_code', ctx.exchangeCode).eq('transfer_id', Number(draft.id)).limit(1).maybeSingle();
+    if (docError) throw docError;
+    if (!doc) throw new Error('سند مالی حواله پیدا نشد؛ ویرایش امن ممکن نیست.');
+    const customer = await getCustomer(ctx, draft.sender || draft.receiver);
+    const amount = number(draft.amount);
+    if (amount <= 0 || !draft.sender || !draft.receiver) throw new Error('فرستنده، گیرنده و مبلغ مثبت الزامی است.');
+    const direction = draft.direction === 'دریافتی' ? 'receive' : 'send';
+    const lines = direction === 'send'
+      ? [
+          { account_type: 'customer', account_id: String(customer?.id || ''), account_name: draft.sender, currency: draft.currency, debit: amount, credit: 0 },
+          { account_type: 'suspense', account_id: String(draft.id), account_name: 'حواله در جریان', currency: draft.currency, debit: 0, credit: amount },
+        ]
+      : [
+          { account_type: 'suspense', account_id: String(draft.id), account_name: 'حواله در جریان', currency: draft.currency, debit: amount, credit: 0 },
+          { account_type: 'customer', account_id: String(customer?.id || ''), account_name: draft.receiver, currency: draft.currency, debit: 0, credit: amount },
+        ];
+    await editDocument(ctx, doc.id, draft.note || 'حواله', amount, draft.currency, lines);
+    const { error: updateError } = await supabase.from('transfers').update({
+      sender_name: draft.sender, receiver_name: draft.receiver,
+      amount, currency: draft.currency, fee: number(draft.fee),
+      direction, origin: draft.branch || null, destination: draft.note || draft.branch || null,
+      updated_at: new Date().toISOString(),
+    }).eq('id', Number(draft.id)).eq('exchange_code', ctx.exchangeCode);
+    if (updateError) throw updateError;
+    const auditWarning = await writeAudit(ctx, 'update', 'transfer', draft.id, 'ویرایش حواله و سند دفتر کل', transfer, draft);
+    return { id: String(draft.id), auditWarning };
+  }
+
+  throw new Error(`ویرایش واقعی برای بخش ${module} هنوز تعریف نشده است.`);
+}
+
 export async function deleteVersion21Record(module, record) {
   const ctx = sessionContext();
   if (!record?.id) throw new Error('رکورد انتخاب‌شده معتبر نیست.');
