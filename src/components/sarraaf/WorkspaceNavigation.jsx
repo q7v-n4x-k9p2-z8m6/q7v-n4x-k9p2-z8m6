@@ -1,6 +1,5 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const GROUPS = [
@@ -13,49 +12,57 @@ const GROUPS = [
   ['سیستم', ['settings', 'backup', 'support', 'assistant']],
 ];
 
+const GROUP_TONES = [
+  ['from-blue-600 to-sky-600', 'border-blue-200', 'text-blue-800'],
+  ['from-emerald-600 to-teal-600', 'border-emerald-200', 'text-emerald-800'],
+  ['from-violet-600 to-indigo-600', 'border-violet-200', 'text-violet-800'],
+  ['from-amber-500 to-orange-600', 'border-amber-200', 'text-amber-800'],
+  ['from-rose-600 to-pink-600', 'border-rose-200', 'text-rose-800'],
+  ['from-slate-600 to-slate-700', 'border-slate-200', 'text-slate-700'],
+  ['from-cyan-600 to-blue-600', 'border-cyan-200', 'text-cyan-800'],
+];
+
 export default function WorkspaceNavigation({ items }) {
   const { pathname } = useLocation();
   const activePath = items.filter(item => pathname === item.path || pathname.startsWith(item.path + '/')).sort((a, b) => b.path.length - a.path.length)[0]?.path;
   return (
-    <nav aria-label="منوی اصلی صراف" className="flex-1 min-h-0 overflow-y-auto scrollbar-thin px-2 py-3 space-y-1">
-      {GROUPS.map(([title, keys], index) => {
-        const entries = keys.map(key => items.find(item => item.featureKey === key)).filter(Boolean);
-        if (!entries.length) return null;
-        const isDefaultOpen = index === 0 || entries.some(item => item.path === activePath);
-        return (
-          <details key={title} open={isDefaultOpen} className="group">
-            <summary className="flex items-center justify-between gap-2 list-none cursor-pointer rounded-md px-3 py-2 text-[11px] font-bold uppercase tracking-wide text-slate-400 hover:text-slate-200 transition-colors [&::-webkit-details-marker]:hidden">
-              {title}
-              <ChevronDown className="w-3.5 h-3.5 shrink-0 text-slate-500 group-open:rotate-180 transition-transform" />
-            </summary>
-            <div className="space-y-0.5 mt-0.5">
-              {entries.map(item => {
-                const Icon = item.icon;
-                const active = item.path === activePath;
-                return (
-                  <Link
-                    key={item.featureKey}
-                    to={item.path}
-                    aria-current={active ? 'page' : undefined}
-                    className={cn(
-                      'flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-colors',
-                      active
-                        ? 'bg-indigo-600 text-white font-semibold shadow-sm'
-                        : 'text-slate-300 hover:bg-slate-700/60 hover:text-white'
-                    )}
-                  >
-                    <Icon className="w-4 h-4 shrink-0" strokeWidth={1.8} />
-                    <span className="truncate">{item.label}</span>
-                    {item.featureStatus === 'updating' && (
-                      <span title={item.featureMessage || 'این بخش در حال به‌روزرسانی است'} className="mr-auto shrink-0 rounded bg-amber-400/10 px-1.5 py-0.5 text-[9px] text-amber-300">به‌روزرسانی</span>
-                    )}
-                  </Link>
-                );
-              })}
-            </div>
-          </details>
-        );
-      })}
+    <nav aria-label="منوی اصلی صراف" className="w-full overflow-x-auto bg-gradient-to-b from-[#eaf1fc] to-[#dce8f8] px-2 py-2">
+      <div className="flex min-w-max items-start gap-2">
+        {GROUPS.map(([title, keys], groupIndex) => {
+          const [iconTone, borderTone, titleTone] = GROUP_TONES[groupIndex % GROUP_TONES.length];
+          const entries = keys.map(key => items.find(item => item.featureKey === key)).filter(Boolean);
+          if (!entries.length) return null;
+          return (
+            <section key={title} className={`flex max-h-[184px] min-w-[148px] max-w-[420px] flex-col gap-1.5 overflow-hidden rounded-xl border ${borderTone} bg-gradient-to-b from-white to-[#edf4ff] p-2 shadow-sm`}>
+              <h2 className={`flex items-center justify-center rounded-lg bg-white/80 px-1 py-1.5 text-[11px] font-extrabold ${titleTone}`}><span className={`mr-1 inline-block h-2 w-2 rounded-full bg-gradient-to-br ${iconTone}`} />{title}</h2>
+              <div className="flex flex-wrap items-center justify-center gap-1 overflow-y-auto">
+                {entries.map(item => {
+                  const Icon = item.icon;
+                  const active = item.path === activePath;
+                  return (
+                    <Link
+                      key={item.featureKey}
+                      to={item.path}
+                      aria-current={active ? 'page' : undefined}
+                      title={item.label}
+                      className={cn(
+                        'flex min-h-[66px] min-w-[68px] max-w-[82px] flex-col items-center justify-center gap-1.5 rounded-xl border border-transparent px-1.5 py-2 text-center transition-all hover:-translate-y-0.5 hover:shadow-sm',
+                        active
+                          ? 'border-[#7da6df] bg-gradient-to-b from-[#dceaff] to-[#c8ddfa] text-[#0b3f88] shadow-sm'
+                          : 'text-slate-700 hover:border-blue-200 hover:bg-white/90'
+                      )}
+                    >
+                      <span className={`grid h-8 w-8 place-items-center rounded-lg bg-gradient-to-br ${iconTone} text-white shadow-sm ring-1 ring-white/70`}><Icon className="h-4 w-4" strokeWidth={2.1} /></span>
+                      <span className="text-[10px] font-bold leading-tight">{item.label}</span>
+                      {item.featureStatus === 'updating' && <span className="text-[8px] text-amber-700">به‌روزرسانی</span>}
+                    </Link>
+                  );
+                })}
+              </div>
+            </section>
+          );
+        })}
+      </div>
     </nav>
   );
 }
