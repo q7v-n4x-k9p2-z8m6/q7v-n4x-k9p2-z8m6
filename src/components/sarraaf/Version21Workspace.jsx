@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { loadVersion21Database } from './Version21DataAdapter';
 import { saveVersion21Record, deleteVersion21Record, captureVersion21Error } from './Version21WriteAdapter';
+import { loadVersion21LocalState, saveVersion21LocalState } from './Version21LocalStore';
 import { useSearchParams } from 'react-router-dom';
 import {
   Home, Users, Wallet, BookOpen, BookText, Search, Printer, Plus, Pencil, Trash2,
@@ -79,6 +80,7 @@ function Tile({icon:Icon,label,onClick}){return <button onClick={onClick} classN
 
 export default function Version21Workspace(){
  const [data,setData]=useState(emptyInitial);
+ const [localReady,setLocalReady]=useState(false);
  const [dbStatus,setDbStatus]=useState('loading');
  const [dbError,setDbError]=useState('');
  const [exchangeProfile,setExchangeProfile]=useState(null);
@@ -104,6 +106,8 @@ export default function Version21Workspace(){
  const [dateFrom,setDateFrom]=useState('');
  const [dateTo,setDateTo]=useState('');
  const [restoreText,setRestoreText]=useState('');
+ useEffect(()=>{let alive=true;loadVersion21LocalState().then(saved=>{if(!alive)return;if(saved.active&&MODULES.some(x=>x.id===saved.active))setActive(saved.active);if(saved.filterCurrency)setFilterCurrency(saved.filterCurrency);if(saved.dateFrom)setDateFrom(saved.dateFrom);if(saved.dateTo)setDateTo(saved.dateTo);if(saved.draft&&typeof saved.draft==='object')setDraft(saved.draft);if(saved.modal&&(['cashAction','settings','help','support','restore'].includes(saved.modal)||SCHEMAS[saved.modal]))setModal(saved.modal);setLocalReady(true);});return()=>{alive=false;};},[]);
+ useEffect(()=>{if(!localReady)return;saveVersion21LocalState({active,filterCurrency,dateFrom,dateTo,modal,draft});},[localReady,active,filterCurrency,dateFrom,dateTo,modal,draft]);
  const [showHelp,setShowHelp]=useState(false);
  const [showWorkspace,setShowWorkspace]=useState(false);
  const [customerDetail,setCustomerDetail]=useState(null);
@@ -367,10 +371,11 @@ export default function Version21Workspace(){
       <section><h3 className="mb-2 text-xs font-bold text-[#24496d]">سایر بخش‌ها</h3><div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">{MODULES.filter(m=>m.id!=='home'&&!['customerLedger','customers','branches','branchLedger','banks','remittance','cash','exchange','expenses','journal','ledger'].includes(m.id)).map(m=><Tile key={m.id} icon={m.icon} label={m.label} onClick={()=>{setActive(m.id);setSelected(null);setCustomerDetail(null);setQuery('');setShowWorkspace(false);}}/>)}</div></section>
      </div></div></div>}
    {notice&&<div className="flex items-center gap-2 border border-blue-200 bg-blue-50 p-3 text-[11px] text-blue-900"><Check className="h-4 w-4"/>{notice}<button onClick={()=>setNotice('')} className="mr-auto"><X className="h-4 w-4"/></button></div>}
-  <p className="text-[10px] leading-5 text-slate-500">نسخه ۲۱ اطلاعات حساب صراف را با کنترل دسترسی نشست و کد همان صراف می‌خواند. ثبت‌ها و ویرایش‌ها در دیتابیس همان صراف انجام می‌شوند؛ اسناد مالی با ثبت‌های حسابداری و سابقه فعالیت مدیریت می‌شوند.</p>
+  <p className="text-[10px] leading-5 text-slate-500">اطلاعات مالی پس از ثبت در دیتابیس همان صراف ذخیره می‌شود. پیش‌نویس فرم‌ها و تنظیمات نمایش، جداگانه در حافظه محلی همین مرورگر و برای همین کاربر نگهداری می‌شود.</p>
   {modal&&<div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/45 p-3"><div className="max-h-[90vh] w-full max-w-2xl overflow-auto border-2 border-slate-600 bg-[#f7f9fb] shadow-2xl"><div className="sticky top-0 flex items-center justify-between bg-gradient-to-b from-[#386b91] to-[#17466c] px-3 py-2 text-white"><b className="text-xs">{SCHEMAS[modal]?((draft.id?'ویرایش ':'ثبت ')+SCHEMAS[modal].title):modal==='cashAction'?'ثبت گردش صندوق':modal==='restore'?'بازیابی پشتیبان':modal==='settings'?'تنظیمات محلی':'راهنمای حساب صراف'}</b><button onClick={()=>setModal('')}><X className="h-4 w-4"/></button></div>
    {SCHEMAS[modal]&&<><div className="grid gap-3 p-4 sm:grid-cols-2">{SCHEMAS[modal].fields.map(f=><Field key={f[0]} field={f} value={fieldValue(draft,f[0])} onChange={setField} choices={{
     ...(modal==='journal'?{debitAccount:[{value:'',label:'انتخاب حساب بدهکار'},...data.accounts.map(a=>({value:a.code+' — '+a.name,label:a.code+' — '+a.name})),...data.cash.map(x=>({value:'صندوق: '+x.name,label:'صندوق: '+x.name+' ('+x.currency+')'}))],creditAccount:[{value:'',label:'انتخاب حساب بستانکار'},...data.accounts.map(a=>({value:a.code+' — '+a.name,label:a.code+' — '+a.name})),...data.cash.map(x=>({value:'صندوق: '+x.name,label:'صندوق: '+x.name+' ('+x.currency+')'}))]}:{})
+    ,...(modal==='exchange'?{cashFrom:[{value:'',label:'انتخاب صندوق ارز مبدا'},...data.cash.filter(x=>x.currency===draft.fromCurrency).map(x=>({value:x.name,label:x.name+' ('+x.currency+')'}))],cashTo:[{value:'',label:'انتخاب صندوق ارز مقصد'},...data.cash.filter(x=>x.currency===draft.toCurrency).map(x=>({value:x.name,label:x.name+' ('+x.currency+')'}))]}:{})
     ,...(modal==='expenses'?{cash:[{value:'',label:'انتخاب صندوق پرداخت'},...data.cash.filter(x=>x.currency===draft.currency).map(x=>({value:x.name,label:x.name+' ('+x.currency+')'}))]}:{})
     ,...(modal==='remittance'?{cash:[{value:'',label:'انتخاب صندوق مرتبط'},...data.cash.filter(x=>x.currency===draft.currency).map(x=>({value:x.name,label:x.name+' ('+x.currency+')'}))],branch:[{value:'',label:'انتخاب نمایندگی'},...data.branches.map(x=>({value:x.name,label:x.name}))]}:{})
    }}/>)}</div><div className="flex justify-end gap-2 border-t bg-slate-100 p-3"><button onClick={saveRecord} className="flex items-center gap-1 border bg-white px-4 py-2 text-xs"><Save className="h-4 w-4"/>ثبت</button><button onClick={()=>setModal('')} className="border bg-white px-4 py-2 text-xs">انصراف</button></div></>}
