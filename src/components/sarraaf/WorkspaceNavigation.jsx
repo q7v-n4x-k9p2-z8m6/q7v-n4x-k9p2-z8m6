@@ -1,6 +1,5 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const GROUPS = [
@@ -17,45 +16,42 @@ export default function WorkspaceNavigation({ items }) {
   const { pathname } = useLocation();
   const activePath = items.filter(item => pathname === item.path || pathname.startsWith(item.path + '/')).sort((a, b) => b.path.length - a.path.length)[0]?.path;
   return (
-    <nav aria-label="منوی اصلی صراف" className="flex-1 min-h-0 overflow-y-auto scrollbar-thin px-2 py-3 space-y-1">
-      {GROUPS.map(([title, keys], index) => {
-        const entries = keys.map(key => items.find(item => item.featureKey === key)).filter(Boolean);
-        if (!entries.length) return null;
-        const isDefaultOpen = index === 0 || entries.some(item => item.path === activePath);
-        return (
-          <details key={title} open={isDefaultOpen} className="group">
-            <summary className="flex items-center justify-between gap-2 list-none cursor-pointer rounded-md px-3 py-2 text-[11px] font-bold uppercase tracking-wide text-slate-400 hover:text-slate-200 transition-colors [&::-webkit-details-marker]:hidden">
-              {title}
-              <ChevronDown className="w-3.5 h-3.5 shrink-0 text-slate-500 group-open:rotate-180 transition-transform" />
-            </summary>
-            <div className="space-y-0.5 mt-0.5">
-              {entries.map(item => {
-                const Icon = item.icon;
-                const active = item.path === activePath;
-                return (
-                  <Link
-                    key={item.featureKey}
-                    to={item.path}
-                    aria-current={active ? 'page' : undefined}
-                    className={cn(
-                      'flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-colors',
-                      active
-                        ? 'bg-indigo-600 text-white font-semibold shadow-sm'
-                        : 'text-slate-300 hover:bg-slate-700/60 hover:text-white'
-                    )}
-                  >
-                    <Icon className="w-4 h-4 shrink-0" strokeWidth={1.8} />
-                    <span className="truncate">{item.label}</span>
-                    {item.featureStatus === 'updating' && (
-                      <span title={item.featureMessage || 'این بخش در حال به‌روزرسانی است'} className="mr-auto shrink-0 rounded bg-amber-400/10 px-1.5 py-0.5 text-[9px] text-amber-300">به‌روزرسانی</span>
-                    )}
-                  </Link>
-                );
-              })}
-            </div>
-          </details>
-        );
-      })}
+    <nav aria-label="منوی اصلی صراف" className="w-full overflow-x-auto bg-[#e8eef8] px-2 py-2">
+      <div className="flex min-w-max items-start gap-2">
+        {GROUPS.map(([title, keys]) => {
+          const entries = keys.map(key => items.find(item => item.featureKey === key)).filter(Boolean);
+          if (!entries.length) return null;
+          return (
+            <section key={title} className="flex max-h-[150px] min-w-[128px] max-w-[420px] flex-col gap-1 overflow-hidden rounded-xl border border-blue-100 bg-white/90 p-1.5 shadow-sm">
+              <h2 className="px-1 text-center text-[10px] font-bold text-[#244f83]">{title}</h2>
+              <div className="flex flex-wrap items-center justify-center gap-1 overflow-y-auto">
+                {entries.map(item => {
+                  const Icon = item.icon;
+                  const active = item.path === activePath;
+                  return (
+                    <Link
+                      key={item.featureKey}
+                      to={item.path}
+                      aria-current={active ? 'page' : undefined}
+                      title={item.label}
+                      className={cn(
+                        'flex min-h-[58px] min-w-[64px] max-w-[76px] flex-col items-center justify-center gap-1 rounded-lg border px-1 py-1.5 text-center transition-colors',
+                        active
+                          ? 'border-blue-400 bg-blue-100 text-blue-900 shadow-sm'
+                          : 'border-transparent text-slate-700 hover:border-blue-200 hover:bg-blue-50'
+                      )}
+                    >
+                      <Icon className="h-5 w-5 text-[#1456a0]" strokeWidth={2} />
+                      <span className="text-[9px] font-semibold leading-tight">{item.label}</span>
+                      {item.featureStatus === 'updating' && <span className="text-[8px] text-amber-700">به‌روزرسانی</span>}
+                    </Link>
+                  );
+                })}
+              </div>
+            </section>
+          );
+        })}
+      </div>
     </nav>
   );
 }
