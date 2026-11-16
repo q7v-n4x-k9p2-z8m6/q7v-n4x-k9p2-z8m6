@@ -330,7 +330,7 @@ export default function Version21Workspace(){
    {key:'accountType',label:'نوع حساب',render:r=>({asset:'دارایی',liability:'بدهی',equity:'سرمایه',revenue:'درآمد',expense:'مصرف'}[r.accountType]||r.accountType)},
    {key:'level',label:'سطح'},
    {key:'parentId',label:'حساب مادر',render:r=>data.accounts.find(a=>String(a.id)===String(r.parentId))?.code||'—'},
-   {key:'balance',label:'مانده دفتر کل',render:r=><div className="flex flex-wrap gap-1">{(r.balanceByCurrency||[]).map(x=><span key={x.currency} className="rounded bg-slate-100 px-2 py-1 text-[10px]">{fmt(Math.abs(x.balance))} {x.currency} · {x.balance<0?'بستانکار':'بدهکار'}</span>)}</div>},
+   {key:'balance',label:'مانده دفتر کل',render:r=><div className="flex flex-wrap gap-1">{(r.balanceByCurrency||[]).map(x=><span key={x.currency} className="rounded bg-slate-100 px-2 py-1 text-[10px]">{fmt(Math.abs(x.balance))} {x.currency} · {(r.nature==='بستانکار'?x.balance>=0:x.balance<0)?'بستانکار':'بدهکار'}</span>)}</div>},
    {key:'nature',label:'ماهیت'},
    {key:'status',label:'وضعیت'}
   ];
