@@ -189,6 +189,7 @@ export async function loadVersion21Database() {
     name: row.bank_name || row.holder || 'حساب بانکی',
     account: row.account_number || row.card_number || row.sheba || '',
     opening: num(row.balance),
+    status: activeLabel(row.active),
     description: row.notes || '',
     _sourceTable: 'bank_accounts',
   }));
