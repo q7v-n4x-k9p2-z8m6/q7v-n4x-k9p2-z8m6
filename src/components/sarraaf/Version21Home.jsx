@@ -9,7 +9,7 @@ import {
   RefreshCw, Printer, Search, BriefcaseBusiness, BookCheck, ChartNoAxesCombined,
   CalendarDays, ShieldCheck, ClipboardCheck, Files, BadgeDollarSign, GitBranch,
   Banknote, CircleDollarSign, Landmark as TreasuryIcon, FolderKanban,
-  CircleHelp, ArrowLeftRight as ExchangeIcon
+  CircleHelp, ArrowLeftRight as ExchangeIcon, ChevronDown
 } from 'lucide-react';
 
 const SECTIONS = [
@@ -47,6 +47,49 @@ const SECTIONS = [
   ]},
 ];
 
+const NAV_MENUS = [
+  { label: 'فایل', items: [
+    { label: 'پشتیبان‌گیری', path: '/backup' },
+    { label: 'بازیابی پشتیبان', path: '/backup' },
+    { label: 'چاپ صفحه', action: 'print' },
+  ]},
+  { label: 'تعاریف', items: [
+    { label: 'مشتریان', path: '/customers' },
+    { label: 'نمایندگی‌ها', path: '/agents' },
+    { label: 'صندوق‌ها', path: '/cash' },
+    { label: 'بانک و چک', path: '/bank' },
+    { label: 'اسعار', path: '/currencies' },
+    { label: 'کدینگ حساب‌ها', path: '/enterprise/accounts' },
+  ]},
+  { label: 'عملیات', items: [
+    { label: 'دخل و خرج صندوق', path: '/cash' },
+    { label: 'خرید و فروش اسعار', path: '/trade' },
+    { label: 'دفتر حواله‌ها', path: '/transfer-book' },
+    { label: 'مصارف و پرداخت‌ها', path: '/enterprise/expenses' },
+  ]},
+  { label: 'حسابات', items: [
+    { label: 'دفتر روزنامچه', path: '/journal' },
+    { label: 'دفتر کل', path: '/general-ledger' },
+    { label: 'دفتر حساب مشتریان', path: '/dadogereft' },
+    { label: 'دفتر حساب نمایندگی‌ها', path: '/agency-network' },
+  ]},
+  { label: 'گزارشات', items: [
+    { label: 'گزارش عملیات', path: '/reports' },
+    { label: 'مفاد و زیان', path: '/profit-loss' },
+    { label: 'بیلانس عمومی', path: '/balance-sheet' },
+  ]},
+  { label: 'تنظیمات', items: [
+    { label: 'تنظیمات برنامه', path: '/settings' },
+    { label: 'زبان برنامه', path: '/settings' },
+    { label: 'پشتیبانی', path: '/support' },
+  ]},
+  { label: 'امکانات تکمیلی', items: [
+    { label: 'گروه و چت', path: '/chat' },
+    { label: 'هوش مصنوعی', path: '/assistant' },
+    { label: 'محصولات آنلاین', path: '/online-products' },
+  ]},
+];
+
 function Shortcut({ item }) {
   const Icon = item.icon;
   const body = (
@@ -69,6 +112,7 @@ export default function Version21Home() {
   const role = user?.role || 'user';
   const name = user?.full_name || user?.username || 'کاربر';
   const [search, setSearch] = useState('');
+  const [openMenu, setOpenMenu] = useState('');
   const normalizedSearch = search.trim().toLocaleLowerCase('fa');
   const visibleSections = useMemo(() => SECTIONS.map(section => ({
     ...section,
@@ -91,6 +135,25 @@ export default function Version21Home() {
           </div>
           <div className="border border-white/30 bg-white/10 px-3 py-2 text-xs">حساب فعال: {name}</div>
         </header>
+
+        <nav className="relative z-30 flex flex-wrap items-center gap-0.5 border-b border-[#b7c5cf] bg-gradient-to-b from-white to-[#dce5eb] px-2 py-1">
+          {NAV_MENUS.map(menu => (
+            <div key={menu.label} className="relative">
+              <button type="button" onClick={() => setOpenMenu(openMenu === menu.label ? '' : menu.label)} className={'flex items-center gap-1 px-3 py-2 text-xs text-[#294b65] hover:bg-white ' + (openMenu === menu.label ? 'bg-white font-bold text-blue-900' : '')}>
+                {menu.label}<ChevronDown className="h-3 w-3" />
+              </button>
+              {openMenu === menu.label && (
+                <div className="absolute right-0 top-full z-50 min-w-[190px] border border-[#9aabb9] bg-white py-1 shadow-xl">
+                  {menu.items.map(item => item.action === 'print' ? (
+                    <button key={item.label} type="button" onClick={() => { setOpenMenu(''); window.print(); }} className="block w-full px-3 py-2 text-right text-xs text-[#294b65] hover:bg-blue-50">{item.label}</button>
+                  ) : (
+                    <Link key={item.label} to={item.path} onClick={() => setOpenMenu('')} className="block px-3 py-2 text-xs text-[#294b65] hover:bg-blue-50">{item.label}</Link>
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
+        </nav>
 
         <div className="border-b border-[#b7c5cf] bg-[#e7eef3] p-3">
           <label className="mx-auto flex min-h-9 max-w-[360px] items-center gap-2 border border-[#b7c8d4] bg-white px-3 text-[#526779]">
