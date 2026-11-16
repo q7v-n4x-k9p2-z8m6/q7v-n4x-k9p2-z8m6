@@ -55,7 +55,7 @@ jobs:
             [adapter.includes('assertDemoWriteAccount(ctx'), 'Core Version 21 writes must reject non-demo accounts'],
             [data.includes('loadDemoPreviewRecords') && data.includes('isDemoAccount'), 'Demo records must load only for the exact demo session'],
             [demo.includes("record_kind', 'temporary'") && demo.includes('expires_at'), 'Temporary demo records must have a bounded expiry'],
-            [demo.includes('record_kind', 'sample') || demo.includes("record_kind === 'sample'"), 'Fixed demo samples must be distinguished from temporary records'],
+            [demo.includes("row.record_kind === 'sample'"), 'Fixed demo samples must be distinguished from temporary records'],
           ];
           for (const [ok, message] of checks) {
             if (!ok) throw new Error(message);
