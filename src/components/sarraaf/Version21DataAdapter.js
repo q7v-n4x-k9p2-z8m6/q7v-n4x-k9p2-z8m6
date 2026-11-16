@@ -225,7 +225,17 @@ export async function loadVersion21Database() {
     fee: num(row.fee),
     cash: '',
     status: ['paid','done','completed'].includes(String(row.status || '').toLowerCase()) ? 'اجرا شده' : (row.status === 'reversed' ? 'ابطال شده' : row.status === 'pending' ? 'در انتظار' : row.status),
-    accountingStatus: (() => { const doc = documents.find(item => Number(item.transfer_id) === Number(row.id)); return !doc ? 'سند ندارد' : (doc.reversed ? 'ابطال شده' : isDocumentBalanced(doc.id) ? 'متوازن' : 'نیازمند بررسی'); })(),
+    accountingStatus: (() => {
+      const doc = documents.find(item => Number(item.transfer_id) === Number(row.id));
+      const feeDocs = documents.filter(item => item.doc_type === 'transfer_fee' && item.related_type === 'transfer' && Number(item.related_id) === Number(row.id) && !item.deleted);
+      if (!doc) return 'سند ندارد';
+      if (!isDocumentBalanced(doc.id) && !doc.reversed) return 'نیازمند بررسی';
+      if (doc.reversed) return (num(row.fee) > 0 && (!feeDocs.length || feeDocs.some(item => !item.reversed))) ? 'ابطال ناقص' : 'ابطال شده';
+      if (num(row.fee) > 0 && !feeDocs.length) return 'سند کمیشن ندارد';
+      if (feeDocs.some(item => !item.reversed && !isDocumentBalanced(item.id))) return 'نیازمند بررسی';
+      if (num(row.fee) > 0 && feeDocs.length && feeDocs.every(item => item.reversed)) return 'کمیشن ابطال شده';
+      return 'متوازن';
+    })(),
     note: row.destination || row.agent_route || '',
     _sourceTable: 'transfers',
   }));
