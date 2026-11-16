@@ -42,6 +42,10 @@ jobs:
             [!adapter.includes('.delete()'), 'Physical delete call found in financial write adapter'],
             [data.includes(".eq('exchange_code', exchangeCode)"), 'Tenant scoping filter is missing'],
             [data.includes("from('user_permissions')"), 'Current-user permission loading is missing'],
+            [data.includes('isDocumentBalanced'), 'Document balance status detection is missing'],
+            [adapter.includes('assertDocumentBalancedForReversal'), 'Unbalanced-document reversal guard is missing'],
+            [adapter.includes('p_fee: 0'), 'Transfer fee must be posted as a separate balanced document'],
+            [workspace.includes('accountingStatus'), 'Accounting status is not displayed in workspace tables'],
           ];
           for (const [ok, message] of checks) {
             if (!ok) throw new Error(message);
