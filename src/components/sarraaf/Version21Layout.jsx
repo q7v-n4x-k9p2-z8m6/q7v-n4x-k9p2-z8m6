@@ -77,6 +77,7 @@ const MODULES = [
   { id: 'notifications', label: 'اعلان‌ها', path: '/notifications', icon: Bell, group: 'امنیت و اسناد', roles: ['creator','admin','sarraaf','employee'] },
 ];
 
+// Keep shell navigation status aligned with FeatureGate and the shared feature catalog.
 const MODULE_FEATURE_KEYS = {
   home: 'dashboard', customers: 'customers', customerLedger: 'accounts_receivable',
   agents: 'agents', branchLedger: 'agents', internalBranches: 'agency_network',
