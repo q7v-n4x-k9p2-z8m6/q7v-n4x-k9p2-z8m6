@@ -340,9 +340,10 @@ export async function saveVersion21Record(module, draft) {
     if (fromAmount <= 0 || toAmount <= 0) throw new Error('مبالغ هر دو طرف معامله باید مثبت باشند.');
     const fromSafe = await getSafe(ctx, draft.cashFrom || draft.cash, draft.fromCurrency);
     const toSafe = await getSafe(ctx, draft.cashTo || draft.cash, draft.toCurrency);
+    const customer = await getCustomer(ctx, draft.party);
     const { data: conversion, error: conversionError } = await supabase.from('conversions').insert({
       exchange_code: ctx.exchangeCode,
-      customer_name: draft.party || 'مشتری نقدی',
+      customer_id: customer?.id || null, customer_name: draft.party || 'مشتری نقدی', customer_mobile: customer?.mobile || null,
       from_currency: draft.fromCurrency, from_amount: fromAmount,
       rate: number(draft.rate) || toAmount / fromAmount,
       to_currency: draft.toCurrency, to_amount: toAmount,
@@ -351,11 +352,17 @@ export async function saveVersion21Record(module, draft) {
     }).select('id').single();
     if (conversionError) throw conversionError;
     try {
+      const fromCounter = customer
+        ? { account_type: 'customer', account_id: String(customer.id), account_name: customer.name }
+        : { account_type: 'suspense', account_id: '', account_name: 'حساب واسط تبدیل ارز' };
+      const toCounter = customer
+        ? { account_type: 'customer', account_id: String(customer.id), account_name: customer.name }
+        : { account_type: 'suspense', account_id: '', account_name: 'حساب واسط تبدیل ارز' };
       const lines = [
-        { account_type: 'cash', account_id: String(fromSafe.id), account_name: fromSafe.name, currency: draft.fromCurrency, debit: 0, credit: fromAmount },
-        { account_type: 'suspense', account_id: '', account_name: 'حساب واسط تبدیل ارز', currency: draft.fromCurrency, debit: fromAmount, credit: 0 },
-        { account_type: 'cash', account_id: String(toSafe.id), account_name: toSafe.name, currency: draft.toCurrency, debit: toAmount, credit: 0 },
-        { account_type: 'suspense', account_id: '', account_name: 'حساب واسط تبدیل ارز', currency: draft.toCurrency, debit: 0, credit: toAmount },
+        { account_type: 'cash', account_id: String(fromSafe.id), account_name: fromSafe.name, currency: draft.fromCurrency, debit: fromAmount, credit: 0 },
+        { ...fromCounter, currency: draft.fromCurrency, debit: 0, credit: fromAmount },
+        { ...toCounter, currency: draft.toCurrency, debit: toAmount, credit: 0 },
+        { account_type: 'cash', account_id: String(toSafe.id), account_name: toSafe.name, currency: draft.toCurrency, debit: 0, credit: toAmount },
       ];
       const doc = await postDocument(ctx, {
         docType: 'convert', currency: draft.fromCurrency, amount: fromAmount,
@@ -513,17 +520,24 @@ export async function editVersion21Record(module, draft) {
     }
     const fromAmount = number(draft.fromAmount), toAmount = number(draft.toAmount);
     if (fromAmount <= 0 || toAmount <= 0 || draft.fromCurrency === draft.toCurrency) throw new Error('ارزها و مبالغ معامله معتبر نیستند.');
+    const customer = await getCustomer(ctx, draft.party);
+    const fromCounter = customer
+      ? { account_type: 'customer', account_id: String(customer.id), account_name: customer.name }
+      : { account_type: 'suspense', account_id: '', account_name: 'حساب واسط تبدیل ارز' };
+    const toCounter = customer
+      ? { account_type: 'customer', account_id: String(customer.id), account_name: customer.name }
+      : { account_type: 'suspense', account_id: '', account_name: 'حساب واسط تبدیل ارز' };
     const lines = [
-      { account_type: 'cash', account_id: String(fromSafe.id), account_name: fromSafe.name, currency: draft.fromCurrency, debit: 0, credit: fromAmount },
-      { account_type: 'suspense', account_id: '', account_name: 'حساب واسط تبدیل ارز', currency: draft.fromCurrency, debit: fromAmount, credit: 0 },
-      { account_type: 'cash', account_id: String(toSafe.id), account_name: toSafe.name, currency: draft.toCurrency, debit: toAmount, credit: 0 },
-      { account_type: 'suspense', account_id: '', account_name: 'حساب واسط تبدیل ارز', currency: draft.toCurrency, debit: 0, credit: toAmount },
+      { account_type: 'cash', account_id: String(fromSafe.id), account_name: fromSafe.name, currency: draft.fromCurrency, debit: fromAmount, credit: 0 },
+      { ...fromCounter, currency: draft.fromCurrency, debit: 0, credit: fromAmount },
+      { ...toCounter, currency: draft.toCurrency, debit: toAmount, credit: 0 },
+      { account_type: 'cash', account_id: String(toSafe.id), account_name: toSafe.name, currency: draft.toCurrency, debit: 0, credit: toAmount },
     ];
     await editDocument(ctx, doc.id, draft.note || 'تبدیل ارز', fromAmount, draft.fromCurrency, lines);
     const dateWarning = await applyDocumentDate(ctx, doc.id, draft.date, 'conversions', draft.id);
     const { error: updateError } = await supabase.from('conversions').update({
-      customer_name: draft.party || 'مشتری نقدی', from_currency: draft.fromCurrency,
-      from_amount: fromAmount, rate: number(draft.rate) || toAmount / fromAmount,
+      customer_id: customer?.id || null, customer_name: draft.party || 'مشتری نقدی', customer_mobile: customer?.mobile || null,
+      from_currency: draft.fromCurrency, from_amount: fromAmount, rate: number(draft.rate) || toAmount / fromAmount,
       to_currency: draft.toCurrency, to_amount: toAmount,
       description: draft.note || 'معامله تبدیل ارز', updated_at: new Date().toISOString(),
     }).eq('id', Number(draft.id)).eq('exchange_code', ctx.exchangeCode);
