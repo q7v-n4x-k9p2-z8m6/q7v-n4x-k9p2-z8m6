@@ -114,7 +114,7 @@ export default function Version21Workspace(){
  const [dateTo,setDateTo]=useState('');
  const [restoreText,setRestoreText]=useState('');
  useEffect(()=>{let alive=true;loadVersion21LocalState().then(saved=>{if(!alive)return;if(saved.active&&MODULES.some(x=>x.id===saved.active))setActive(saved.active);if(saved.filterCurrency)setFilterCurrency(saved.filterCurrency);if(saved.dateFrom)setDateFrom(saved.dateFrom);if(saved.dateTo)setDateTo(saved.dateTo);setLocalReady(true);});return()=>{alive=false;};},[]);
- useEffect(()=>{if(!localReady)return;saveVersion21LocalState({active,filterCurrency,dateFrom,dateTo});},[localReady,active,filterCurrency,dateFrom,dateTo,modal,draft]);
+ useEffect(()=>{if(!localReady)return;saveVersion21LocalState({active,filterCurrency,dateFrom,dateTo});},[localReady,active,filterCurrency,dateFrom,dateTo]);
  const [showHelp,setShowHelp]=useState(false);
  const [showWorkspace,setShowWorkspace]=useState(false);
  const [customerDetail,setCustomerDetail]=useState(null);
