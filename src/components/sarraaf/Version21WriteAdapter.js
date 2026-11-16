@@ -338,10 +338,11 @@ export async function saveVersion21Record(module, draft) {
       if (payload.parent_id) {
         if (Number(payload.parent_id) === Number(draft.id)) throw new Error('یک حساب نمی‌تواند حساب مادر خودش باشد.');
         const { data: parent, error: parentError } = await supabase.from('chart_of_accounts')
-          .select('id,parent_id').eq('exchange_code', ctx.exchangeCode)
+          .select('id,parent_id,account_type,is_active').eq('exchange_code', ctx.exchangeCode)
           .eq('id', Number(payload.parent_id)).maybeSingle();
         if (parentError) throw parentError;
-        if (!parent || parent.parent_id) throw new Error('حساب مادر باید یک حساب کل فعال از همین صراف باشد.');
+        if (!parent || parent.parent_id || parent.is_active === false) throw new Error('حساب مادر باید یک حساب کل فعال از همین صراف باشد.');
+        if (parent.account_type !== payload.account_type) throw new Error('نوع حساب فرعی باید با نوع حساب مادر یکسان باشد.');
       }
     }
     if (module === 'currencies' && !payload.currency) throw new Error('کد ارز الزامی است.');
