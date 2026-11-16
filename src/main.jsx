@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import ReactDOM from 'react-dom/client'
 import '@/lib/pwaInstallStore'
 import App from '@/App.jsx'
@@ -14,6 +14,15 @@ window.addEventListener('error', (event) => {
 window.addEventListener('unhandledrejection', (event) => {
   console.error('Unhandled promise rejection:', event.reason);
 });
+
+function BootFallbackRemover() {
+  useEffect(() => {
+    // React has committed successfully; remove the static HTML cover now.
+    // This is more reliable than relying on animation frames during startup.
+    document.getElementById('boot-fallback')?.remove();
+  }, []);
+  return null;
+}
 
 function showFatalError(message) {
   // Never let the boot overlay hide the fatal-error screen.
@@ -36,13 +45,8 @@ function showFatalError(message) {
 setupSWUpdate();
 
 ReactDOM.createRoot(document.getElementById('root')).render(
-  <App />
+  <>
+    <BootFallbackRemover />
+    <App />
+  </>
 )
-
-// Remove the static startup overlay once the browser has had a chance to mount React.
-// If React itself fails, showFatalError removes the overlay and displays the error screen.
-requestAnimationFrame(() => {
-  requestAnimationFrame(() => {
-    document.getElementById('boot-fallback')?.remove();
-  });
-});
