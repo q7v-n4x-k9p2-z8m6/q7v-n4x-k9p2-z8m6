@@ -219,15 +219,15 @@ async function getCustomer(ctx, name) {
 
 async function findChartAccountByType(ctx, accountType) {
   const { data, error } = await supabase.from('chart_of_accounts')
-    .select('id,account_code,account_name,account_type,normal_balance')
+    .select('id,account_code,account_name,account_type,normal_balance,parent_id')
     .eq('exchange_code', ctx.exchangeCode)
     .eq('account_type', accountType)
     .eq('is_active', true)
     .order('account_code', { ascending: true })
-    .limit(1)
-    .maybeSingle();
+    .limit(50);
   if (error) throw error;
-  return data || null;
+  const rows = data || [];
+  return rows.find(row => row.parent_id !== null && row.parent_id !== undefined) || rows[0] || null;
 }
 
 function chartAccountLedgerRef(account) {
@@ -235,6 +235,15 @@ function chartAccountLedgerRef(account) {
     account_type: 'suspense',
     account_id: String(account.id),
     account_name: account.account_name,
+  };
+}
+
+async function chartAccountLedgerRefByType(ctx, accountType, fallbackName) {
+  const account = await findChartAccountByType(ctx, accountType);
+  return account ? chartAccountLedgerRef(account) : {
+    account_type: 'suspense',
+    account_id: '',
+    account_name: fallbackName,
   };
 }
 
@@ -405,7 +414,7 @@ export async function saveVersion21Record(module, draft) {
           description: 'کمیشن حواله ' + transferNumber, clientOperationId: operationId + '-fee',
           lines: [
             { account_type: 'customer', account_id: String(customer.id), account_name: draft.sender, currency: draft.currency || 'AFN', debit: feeAmount, credit: 0 },
-            { ...(await findChartAccountByType(ctx, 'revenue') ? chartAccountLedgerRef(await findChartAccountByType(ctx, 'revenue')) : { account_type: 'suspense', account_id: '', account_name: 'درآمد کمیشن حواله' }), currency: draft.currency || 'AFN', debit: 0, credit: feeAmount },
+            { ...(await chartAccountLedgerRefByType(ctx, 'revenue', 'درآمد کمیشن حواله')), currency: draft.currency || 'AFN', debit: 0, credit: feeAmount },
           ],
         });
         if (!feeDoc?.document_id) warning = 'حواله ثبت شد، اما سند کمیشن باید بررسی شود.';
@@ -573,6 +582,7 @@ export async function seedVersion21BaseAccounts() {
     .select('id,account_code').eq('exchange_code', ctx.exchangeCode);
   if (readError) throw readError;
   const ids = new Map((existing || []).map(row => [String(row.account_code), Number(row.id)]));
+  let created = 0;
   const missingParents = seeds.filter(row => !row.parent && !ids.has(row.code));
   if (missingParents.length) {
     const { data, error } = await supabase.from('chart_of_accounts').insert(missingParents.map(row => ({
@@ -581,6 +591,7 @@ export async function seedVersion21BaseAccounts() {
     }))).select('id,account_code');
     if (error) throw error;
     (data || []).forEach(row => ids.set(String(row.account_code), Number(row.id)));
+    created += (data || []).length;
   }
   const missingChildren = seeds.filter(row => row.parent && !ids.has(row.code));
   if (missingChildren.length) {
@@ -596,8 +607,8 @@ export async function seedVersion21BaseAccounts() {
     const { data, error } = await supabase.from('chart_of_accounts').insert(rows).select('id,account_code');
     if (error) throw error;
     (data || []).forEach(row => ids.set(String(row.account_code), Number(row.id)));
+    created += (data || []).length;
   }
-  const created = Math.max(0, seeds.length - (existing || []).length);
   const auditWarning = await writeAudit(ctx, 'create', 'chart_of_accounts', '', 'ایجاد کدینگ پایه حساب‌های نسخه ۲۱', null, { accountCodes: seeds.map(row => row.code) });
   return { created, total: seeds.length, auditWarning };
 }
