@@ -52,7 +52,7 @@ const SCHEMAS = {
  exchange:{title:'معامله اسعار',fields:[['date','تاریخ','date'],['fromCurrency','ارز مبدا','select',CURRENCIES],['fromAmount','مبلغ مبدا','number'],['toCurrency','ارز مقصد','select',CURRENCIES],['toAmount','مبلغ مقصد','number'],['rate','نرخ معامله','number'],['party','طرف حساب','text'],['cashFrom','صندوق پرداخت ارز مبدا','select',[]],['cashTo','صندوق دریافت ارز مقصد','select',[]],['note','یادداشت','text']]},
  journal:{title:'سند روزنامچه',fields:[['date','تاریخ','date'],['description','شرح سند','text'],['debitAccount','حساب بدهکار','text'],['creditAccount','حساب بستانکار','text'],['currency','ارز','select',CURRENCIES],['amount','مبلغ','number']]}
 };
-const emptyInitial = () => ({ customers: [], branches: [], cash: [], banks: [], currencies: [], accounts: [], expenses: [], remittance: [], exchange: [], journal: [], transactions: [], activity: [], errors: [] });
+const emptyInitial = () => ({ customers: [], branches: [], cash: [], banks: [], currencies: [], accounts: [], expenses: [], remittance: [], exchange: [], journal: [], transactions: [], reports: [], activity: [], errors: [] });
 const today = () => new Date().toLocaleDateString('en-CA');
 const n = v => Number(String(v??0).replaceAll(',',''))||0;
 const fmt = v => new Intl.NumberFormat('fa-IR',{maximumFractionDigits:2}).format(n(v));
@@ -128,7 +128,7 @@ export default function Version21Workspace(){
   if(active==='customerLedger') source=customerDetail?data.transactions.filter(x=>x.partyType==='customer'&&x.party===customerDetail.name):data.customers;
   if(active==='branchLedger') source=branchDetail?data.transactions.filter(x=>x.partyType==='branch'&&x.party===branchDetail.name):data.branches;
   if(active==='ledger') source=data.journal;
-  if(active==='reports') source=data.transactions;
+  if(active==='reports') source=data.reports||[];
   const q=query.trim().toLowerCase();
   return source.filter(r=>(!q||Object.values(r).join(' ').toLowerCase().includes(q))&&(filterCurrency==='همه'||!r.currency||r.currency===filterCurrency)&&(!dateFrom||!r.date||r.date>=dateFrom)&&(!dateTo||!r.date||r.date<=dateTo));
  },[data,active,customerDetail,branchDetail,query,filterCurrency,dateFrom,dateTo]);
@@ -155,7 +155,7 @@ export default function Version21Workspace(){
   const targetModule=['customerLedger','branchLedger'].includes(active)?'transactions':active;
   if(!window.confirm('این عملیات روی دیتابیس همین صراف اجرا می‌شود. برای اسناد مالی، سند معکوس ثبت خواهد شد. ادامه می‌دهید؟'))return;
   try{
-   const target=active==='ledger'?{...selected,documentId:selected.id}:selected;
+   const target=active==='ledger'?{...selected,documentId:selected.documentId||selected.id}:selected;
    const result=await deleteVersion21Record(targetModule,target);
    await refreshDatabase();
    notify(result?.reversed?'سند با ثبت سند معکوس ابطال شد و سابقه اصلی حفظ شد.':'رکورد از دیتابیس حذف شد.');
@@ -170,9 +170,10 @@ export default function Version21Workspace(){
   if(['customerLedger','branchLedger'].includes(active)&&selected.documentId){
    setDraft({...selected});setModal('transactions');return;
   }
+  if(active==='ledger'&&!selected.documentId){notify('این ردیف سند مستقل ندارد و قابل ویرایش مستقیم نیست.');return;}
   const mod=active==='ledger'?'journal':active;
   if(!SCHEMAS[mod]){notify('ویرایش مستقیم این گزارش ممکن نیست؛ رکورد اصلی را از بخش مربوط باز کنید.');return;}
-  setDraft({...selected});setModal(mod);
+  setDraft({...selected,...(active==='ledger'?{id:selected.documentId}: {})});setModal(mod);
  };
  const cashAction=kind=>{const first=data.cash.find(x=>x.currency==='AFN')||data.cash[0];setDraft({date:today(),kind,amount:'',currency:first?.currency||'AFN',cash:first?.name||'',party:'',partyType:'customer',description:''});setModal('cashAction');};
  const saveCashAction=async()=>{
