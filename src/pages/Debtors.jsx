@@ -16,52 +16,48 @@ const TABS = [
 export default function Debtors() {
   const navigate = useNavigate();
   const [search, setSearch] = useState('');
-  const [tab, setTab] = useState('debtors');
+  const [tab, setTab] = useState('all');
 
   const { data: customers, isLoading: customersLoading } = useCustomers();
   const { data: customerBalancesData, isLoading: txsLoading } = useCustomerBalances();
 
   const loading = customersLoading || txsLoading;
 
-  const rows = useMemo(() => {
+  const allRows = useMemo(() => {
     if (!customers || !customerBalancesData) return [];
-    const list = customers
+    return customers
       .map(c => {
         const balRow = customerBalancesData.find(b => String(b.customer_id) === String(c.id));
         const balances = {};
-        if (balRow) {
-          balances[balRow.balance_currency || 'AFN'] = balRow.net_balance || 0;
-        }
-        const net = Object.values(balances).reduce((s, v) => s + (v || 0), 0);
-        const hasBalance = Object.values(balances).some(v => Math.abs(v) > 0.0001);
+        if (balRow) balances[balRow.balance_currency || 'AFN'] = balRow.net_balance || 0;
+        const net = Object.values(balances).reduce((sum, value) => sum + (value || 0), 0);
+        const hasBalance = Object.values(balances).some(value => Math.abs(value) > 0.0001);
         return { customer: c, balances, net, hasBalance };
       })
-      .filter(r => r.hasBalance);
+      .filter(row => row.hasBalance)
+      .sort((a, b) => Math.abs(b.net) - Math.abs(a.net));
+  }, [customers, customerBalancesData]);
 
-    const filtered = list.filter(r => {
-      if (tab === 'debtors' && r.net <= 0) return false;
-      if (tab === 'creditors' && r.net >= 0) return false;
-      if (search) {
-        const s = search.toLowerCase();
-        const c = r.customer;
-        if (
-          !(c.name || '').toLowerCase().includes(s) &&
-          !(c.phone || '').includes(s) &&
-          !(c.code || '').toLowerCase().includes(s)
-        )
-          return false;
-      }
-      return true;
-    });
-
-    return filtered.sort((a, b) => Math.abs(b.net) - Math.abs(a.net));
-  }, [customers, customerBalancesData, tab, search]);
+  const rows = useMemo(() => allRows.filter(row => {
+    if (tab === 'debtors' && row.net <= 0) return false;
+    if (tab === 'creditors' && row.net >= 0) return false;
+    if (search) {
+      const value = search.toLowerCase();
+      const customer = row.customer;
+      if (
+        !(customer.name || '').toLowerCase().includes(value) &&
+        !(customer.phone || '').includes(value) &&
+        !(customer.code || '').toLowerCase().includes(value)
+      ) return false;
+    }
+    return true;
+  }), [allRows, tab, search]);
 
   const totals = useMemo(() => {
-    const debt = rows.filter(r => r.net > 0).reduce((s, r) => s + r.net, 0);
-    const credit = rows.filter(r => r.net < 0).reduce((s, r) => s + Math.abs(r.net), 0);
-    return { debt, credit, count: rows.length };
-  }, [rows]);
+    const debt = allRows.filter(row => row.net > 0).reduce((sum, row) => sum + row.net, 0);
+    const credit = allRows.filter(row => row.net < 0).reduce((sum, row) => sum + Math.abs(row.net), 0);
+    return { debt, credit, count: allRows.length };
+  }, [allRows]);
 
   return (
     <>
