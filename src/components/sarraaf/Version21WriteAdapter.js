@@ -609,94 +609,54 @@ export async function editVersion21Record(module, draft) {
 export async function deleteVersion21Record(module, record) {
   const ctx = sessionContext();
   if (!record?.id) throw new Error('رکورد انتخاب‌شده معتبر نیست.');
+
+  // Production safety: Version 21 never physically deletes user or financial records.
+  // Financial documents may only be reversed through the existing accounting RPC.
   if (record.documentId || ['transactions', 'cashAction', 'expenses', 'journal', 'ledger'].includes(module)) {
     const documentId = Number(record.documentId || record.id);
     const { data, error } = await supabase.rpc('reverse_document_transaction', {
       p_exchange_code: ctx.exchangeCode,
       p_document_id: documentId,
       p_registered_by: ctx.userName,
-      p_reason: 'ابطال از نسخه ۲۱ با ثبت سند معکوس؛ حذف فیزیکی انجام نشد.',
+      p_reason: 'ابطال از نسخه ۲۱ با ثبت سند معکوس؛ حذف فیزیکی ممنوع است.',
     });
     if (error) throw error;
     if (data?.error) throw new Error(data.error);
-    await writeAudit(ctx, 'reverse', 'document', documentId, 'معکوس‌سازی سند به‌جای حذف فیزیکی', null, data);
-    if (module === 'remittance') {
-      await supabase.from('transfers').update({ status: 'reversed', updated_at: new Date().toISOString() })
-        .eq('id', Number(record.id)).eq('exchange_code', ctx.exchangeCode);
-    }
-    if (module === 'exchange') {
-      const { error: conversionDeleteError } = await supabase.from('conversions').delete()
-        .eq('id', Number(record.id)).eq('exchange_code', ctx.exchangeCode);
-      if (conversionDeleteError) throw conversionDeleteError;
-    }
-    return { reversed: true };
+    const auditWarning = await writeAudit(ctx, 'reverse', 'document', documentId,
+      'معکوس‌سازی سند به‌جای حذف فیزیکی', null, data);
+    return { reversed: true, auditWarning };
   }
-  if (['customerLedger', 'branchLedger', 'reports', 'profit', 'balance', 'activity'].includes(module)) {
-    throw new Error('این صفحه گزارش یا دفتر تجمیعی است؛ رکورد اصلی را از بخش عملیات مربوط انتخاب کنید.');
-  }
+
   if (module === 'remittance' || module === 'exchange') {
     const table = module === 'remittance' ? 'transfers' : 'conversions';
     const linkColumn = module === 'remittance' ? 'transfer_id' : 'related_id';
-    let documentQuery = supabase.from('documents').select('id').eq('exchange_code', ctx.exchangeCode);
-    if (module === 'remittance') documentQuery = documentQuery.eq('transfer_id', Number(record.id));
-    else documentQuery = documentQuery.eq('related_type', 'conversion').eq('related_id', Number(record.id));
-    const { data: linkedDoc, error: linkError } = await documentQuery.order('id', { ascending: false }).limit(1).maybeSingle();
+    let query = supabase.from('documents').select('id').eq('exchange_code', ctx.exchangeCode);
+    if (module === 'remittance') query = query.eq(linkColumn, Number(record.id));
+    else query = query.eq('related_type', 'conversion').eq(linkColumn, Number(record.id));
+    const { data: linkedDoc, error: linkError } = await query.order('id', { ascending: false }).limit(1).maybeSingle();
     if (linkError) throw linkError;
-    if (!linkedDoc) throw new Error('سند مالی مرتبط پیدا نشد؛ برای جلوگیری از حذف ناقص، عملیات متوقف شد.');
+    if (!linkedDoc) throw new Error('سند مالی مرتبط پیدا نشد؛ هیچ رکوردی حذف یا تغییر داده نشد.');
+
     const { data, error } = await supabase.rpc('reverse_document_transaction', {
-      p_exchange_code: ctx.exchangeCode, p_document_id: linkedDoc.id,
-      p_registered_by: ctx.userName, p_reason: 'ابطال سند مرتبط با رکورد از نسخه ۲۱.',
+      p_exchange_code: ctx.exchangeCode,
+      p_document_id: linkedDoc.id,
+      p_registered_by: ctx.userName,
+      p_reason: 'ابطال سند مرتبط از نسخه ۲۱؛ رکورد اصلی حفظ می‌شود.',
     });
     if (error) throw error;
     if (data?.error) throw new Error(data.error);
-    if (module === 'remittance') {
-      const { error: updateError } = await supabase.from(table).update({ status: 'reversed', updated_at: new Date().toISOString() })
-        .eq('id', Number(record.id)).eq('exchange_code', ctx.exchangeCode);
-      if (updateError) throw updateError;
-    } else {
-      const { error: deleteError } = await supabase.from(table).delete()
-        .eq('id', Number(record.id)).eq('exchange_code', ctx.exchangeCode);
-      if (deleteError) throw deleteError;
-    }
-    await writeAudit(ctx, 'reverse', module, record.id, 'ابطال سند و ثبت سابقه', null, data);
-    return { reversed: true };
+    const auditWarning = await writeAudit(ctx, 'reverse', module, record.id,
+      'ابطال سند مرتبط؛ رکورد اصلی حفظ شد', null, data);
+    return { reversed: true, auditWarning };
   }
-  const table = TABLES[module];
-  if (!table) throw new Error(`حذف برای بخش ${module} تعریف نشده است.`);
-  const id = String(record.id);
-  const referenceChecks = {
-    cash: ['cash', 'account_id'],
-    banks: ['bank', 'account_id'],
-    customers: ['customer', 'account_id'],
-    accounts: ['suspense', 'account_id'],
-    branches: ['suspense', 'account_id'],
-  };
-  if (referenceChecks[module]) {
-    const [accountType, accountColumn] = referenceChecks[module];
-    let query = supabase.from('ledger_entries').select('id', { count: 'exact', head: true })
-      .eq('exchange_code', ctx.exchangeCode).eq('account_type', accountType).eq(accountColumn, id).eq('deleted', false);
-    if (['accounts', 'branches'].includes(module) && record.name) query = query.eq('account_name', record.name);
-    const { count, error: countError } = await query;
-    if (countError) throw countError;
-    if (count > 0) throw new Error('این رکورد در اسناد مالی استفاده شده است؛ حذف فیزیکی مجاز نیست. ابتدا باید آن را غیرفعال کنید.');
+
+  if (['customerLedger', 'branchLedger', 'reports', 'profit', 'balance', 'activity'].includes(module)) {
+    throw new Error('این صفحه گزارش یا دفتر تجمیعی است؛ رکورد اصلی از این بخش قابل حذف نیست.');
   }
-  const relatedChecks = {
-    customers: [{ table: 'transfers', column: 'customer_id' }, { table: 'conversions', column: 'customer_id' }],
-    branches: [{ table: 'transfers', column: 'agent_id' }],
-    banks: [{ table: 'bank_transactions', column: 'bank_id' }],
-  };
-  for (const check of relatedChecks[module] || []) {
-    const { count, error: relatedError } = await supabase.from(check.table).select('id', { count: 'exact', head: true })
-      .eq('exchange_code', ctx.exchangeCode).eq(check.column, Number(record.id));
-    if (relatedError) throw relatedError;
-    if (count > 0) throw new Error('این رکورد در اسناد یا عملیات دیگر استفاده شده است؛ حذف فیزیکی مجاز نیست.');
-  }
-  const { data, error } = await supabase.from(table).delete()
-    .eq('id', Number(record.id)).eq('exchange_code', ctx.exchangeCode).select('id').maybeSingle();
-  if (error) throw error;
-  if (!data) throw new Error('رکورد پیدا نشد یا توسط رکوردهای مالی دیگر استفاده می‌شود.');
-  const auditWarning = await writeAudit(ctx, 'delete', module, record.id, `حذف ${module}`, record, null);
-  return { deleted: true, auditWarning };
+
+  // Master data (customers, branches, cashboxes, banks, currencies, accounts)
+  // are retained. Users can deactivate them through edit/status instead.
+  throw new Error('حذف فیزیکی اطلاعات در نسخه ۲۱ غیرفعال است؛ برای حفظ سوابق، رکورد را غیرفعال کنید.');
 }
 
 export async function captureVersion21Error(error, area = 'Version21Workspace') {
