@@ -707,6 +707,14 @@ export async function editVersion21Record(module, draft) {
   throw new Error(`ویرایش واقعی برای بخش ${module} هنوز تعریف نشده است.`);
 }
 
+async function assertDocumentBalancedForReversal(ctx, documentId) {
+  const { data, error } = await supabase.from('ledger_entries').select('*')
+    .eq('document_id', Number(documentId)).eq('exchange_code', ctx.exchangeCode);
+  if (error) throw new Error('خواندن سطرهای سند برای کنترل توازن ناموفق بود: ' + error.message);
+  const activeLines = (data || []).filter(line => !line.deleted);
+  validateBalancedLines(activeLines, 'ابطال سند');
+}
+
 export async function deleteVersion21Record(module, record) {
   const ctx = sessionContext();
   if (!record?.id) throw new Error('رکورد انتخاب‌شده معتبر نیست.');
@@ -716,6 +724,7 @@ export async function deleteVersion21Record(module, record) {
   // Financial documents may only be reversed through the existing accounting RPC.
   if (record.documentId || ['transactions', 'cashAction', 'expenses', 'journal', 'ledger'].includes(module)) {
     const documentId = Number(record.documentId || record.id);
+    await assertDocumentBalancedForReversal(ctx, documentId);
     const { data, error } = await supabase.rpc('reverse_document_transaction', {
       p_exchange_code: ctx.exchangeCode,
       p_document_id: documentId,
@@ -738,6 +747,7 @@ export async function deleteVersion21Record(module, record) {
     const { data: linkedDoc, error: linkError } = await query.order('id', { ascending: false }).limit(1).maybeSingle();
     if (linkError) throw linkError;
     if (!linkedDoc) throw new Error('سند مالی مرتبط پیدا نشد؛ هیچ رکوردی حذف یا تغییر داده نشد.');
+    await assertDocumentBalancedForReversal(ctx, linkedDoc.id);
 
     const { data, error } = await supabase.rpc('reverse_document_transaction', {
       p_exchange_code: ctx.exchangeCode,
