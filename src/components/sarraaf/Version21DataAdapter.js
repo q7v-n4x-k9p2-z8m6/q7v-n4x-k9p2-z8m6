@@ -90,13 +90,14 @@ export async function loadVersion21Database() {
         .from('audit_logs')
         .select('id,user_id,action,entity_type,entity_id,description,status,created_at,target_name,reason')
         .eq('user_id', userId)
+        .eq('exchange_code', exchangeCode)
         .order('created_at', { ascending: false });
       if (error) throw new Error(`خواندن سوابق فعالیت ناموفق بود: ${error.message}`);
       return data || [];
     })(),
     (async () => {
       const { data, error } = await supabase.from('error_reports').select('id,user_id,exchange_code,error_type,error_message,device,app_version,status,created_at')
-        .eq('user_id', userId).order('created_at', { ascending: false });
+        .eq('user_id', userId).eq('exchange_code', exchangeCode).order('created_at', { ascending: false });
       if (error) throw new Error(`خواندن گزارش خطاها ناموفق بود: ${error.message}`);
       return data || [];
     })(),
