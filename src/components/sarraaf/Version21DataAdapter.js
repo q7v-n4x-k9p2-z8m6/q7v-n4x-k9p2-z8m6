@@ -71,7 +71,7 @@ export async function loadVersion21Database() {
   const [
     customers, safes, origins, bankAccounts, rates, chartAccounts,
     documents, ledgerEntries, transfers, conversions, treasuryTransactions,
-    bankTransactions, journalEntries, auditLogs, errorReports,
+    bankTransactions, journalEntries, userPermissions, auditLogs, errorReports,
   ] = await Promise.all([
     readTenantTable('customers', exchangeCode),
     readTenantTable('safes', exchangeCode),
@@ -86,6 +86,13 @@ export async function loadVersion21Database() {
     readTenantTable('treasury_transactions', exchangeCode),
     readTenantTable('bank_transactions', exchangeCode),
     readTenantTable('journal_entries', exchangeCode),
+    (async () => {
+      const { data, error } = await supabase.from('user_permissions')
+        .select('section,can_view,can_create,can_edit,can_delete,can_print,can_report,can_settings')
+        .eq('user_id', String(userId));
+      if (error) throw new Error(`خواندن مجوزهای کاربر ناموفق بود: ${error.message}`);
+      return data || [];
+    })(),
     // This table has an owner-only SELECT policy for rows whose user_id matches the signed session.
     (async () => {
       const { data, error } = await supabase
@@ -359,6 +366,7 @@ export async function loadVersion21Database() {
       code: exchange.exchange_code,
       ownerUserId: String(exchange.owner_user_id),
     },
+    permissions: userPermissions,
     data: {
       customers: mappedCustomers,
       branches: mappedBranches,
