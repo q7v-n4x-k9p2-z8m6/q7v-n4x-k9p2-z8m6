@@ -642,3 +642,48 @@
     padding-inline: 10px !important;
   }
 }
+
+
+/* Keep open operation menus above the icon row and prevent parent clipping. */
+@media (min-width: 901px) {
+  html body .v21-workspace-shell > div.flex.min-h-0 {
+    overflow: visible !important;
+  }
+  html body .v21-laptop-toolbar {
+    position: relative !important;
+    z-index: 70 !important;
+    overflow: visible !important;
+  }
+  html body .v21-laptop-menu-bar {
+    position: relative !important;
+    z-index: 90 !important;
+    overflow: visible !important;
+  }
+  html body .v21-laptop-menu-bar > div {
+    position: relative !important;
+    z-index: 91 !important;
+  }
+  html body .v21-laptop-menu-popover {
+    top: calc(100% + 4px) !important;
+    right: 0 !important;
+    left: auto !important;
+    z-index: 9999 !important;
+    max-width: min(280px, 80vw) !important;
+  }
+  html body .v21-laptop-toolbar > aside.grid {
+    position: relative !important;
+    z-index: 1 !important;
+  }
+}
+@media (max-width: 900px) {
+  html body .v21-laptop-menu-bar {
+    position: sticky !important;
+    z-index: 60 !important;
+  }
+  html body .v21-laptop-menu-bar > div {
+    position: relative !important;
+  }
+  html body .v21-laptop-menu-popover {
+    z-index: 9999 !important;
+  }
+}
