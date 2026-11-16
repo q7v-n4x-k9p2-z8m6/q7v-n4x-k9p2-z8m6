@@ -1,9 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import {
   Home, Users, Wallet, Landmark, ArrowLeftRight, Send, ScrollText,
   ClipboardList, Coins, FileSpreadsheet, BarChart3, Scale,
-  MessagesSquare, Bot, ShoppingBag, Headphones, Construction, LogOut,
+  MessagesSquare, Bot, ShoppingBag, Headphones, Construction, LogOut, MoreHorizontal, X,
   BookOpen, Building2, Receipt, Calculator, ArrowDownUp, Network,
   Settings, FileSearch, CalendarDays, ShieldCheck, Files, ClipboardCheck,
   Banknote, CircleDollarSign, FolderKanban, Handshake, Activity, Bell,
@@ -124,7 +124,7 @@ const WORKSPACE_TARGETS = {
   backup: 'home', notifications: 'home'
 };
 
-function ModuleLink({ item, compact = false, features = [] }) {
+function ModuleLink({ item, compact = false, features = [], onNavigate }) {
   const Icon = item.icon;
   const featureKey = item.featureKey || MODULE_FEATURE_KEYS[item.id];
   const featureStatus = featureKey ? getFeatureStatus(features || [], featureKey) : 'active';
@@ -143,7 +143,7 @@ function ModuleLink({ item, compact = false, features = [] }) {
     );
   }
   return (
-    <NavLink to={item.id === 'debtors' ? '/debtors' : (item.id === 'home' ? '/dashboard' : '/dashboard?module=' + (WORKSPACE_TARGETS[item.id] || 'home'))} end={item.id === 'home'}
+    <NavLink to={item.id === 'debtors' ? '/debtors' : (item.id === 'home' ? '/dashboard' : '/dashboard?module=' + (WORKSPACE_TARGETS[item.id] || 'home'))} end={item.id === 'home'} onClick={onNavigate}
       className={({ isActive }) => compact
         ? `flex min-h-[68px] flex-col items-center justify-center gap-1 rounded-xl border px-1 py-2 text-center text-[10px] leading-tight transition-all ${isActive ? 'border-blue-300 bg-blue-50 text-blue-900 shadow-sm' : 'border-slate-200 bg-white text-slate-700 hover:border-blue-200 hover:bg-blue-50'}`
         : `flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-all ${isActive ? 'bg-gradient-to-l from-blue-700 to-blue-600 text-white shadow-md' : 'text-slate-200 hover:bg-white/10'}`}>
@@ -158,6 +158,7 @@ export default function Version21Layout() {
   const { data: features = [] } = useFeatures();
   const location = useLocation();
   const navigate = useNavigate();
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
   // A1 stores exchange owners with role='exchange'; the v21 navigation uses 'sarraaf'.
   // Normalize the persisted role so legitimate exchanger accounts retain their modules.
   const role = user?.role === 'exchange' ? 'sarraaf' : (user?.role || 'user');
@@ -237,6 +238,39 @@ export default function Version21Layout() {
         <footer className="border-t border-slate-200 bg-white px-4 py-2 text-center text-[11px] text-slate-500">
           حساب صراف
         </footer>
+        {location.pathname !== '/dashboard' && (
+          <>
+            <nav className="v21-route-mobile-dock" aria-label="ناوبری سریع برنامه">
+              {['home','customers','cash'].map(id => {
+                const item = modules.find(entry => entry.id === id);
+                return item ? <ModuleLink key={id} item={item} compact features={features} /> : null;
+              })}
+              <button type="button" onClick={() => setMobileNavOpen(true)} aria-label="همه بخش‌های برنامه" className="v21-route-more">
+                <MoreHorizontal className="h-5 w-5" /><span>همه بخش‌ها</span>
+              </button>
+            </nav>
+            {mobileNavOpen && (
+              <div className="v21-route-mobile-overlay" role="presentation" onClick={() => setMobileNavOpen(false)}>
+                <section role="dialog" aria-modal="true" aria-label="همه بخش‌های حساب صراف" className="v21-route-mobile-sheet" onClick={event => event.stopPropagation()}>
+                  <header className="flex items-center justify-between gap-3 border-b border-slate-200 px-4 py-3">
+                    <div><b className="text-sm text-slate-900">همه بخش‌های حساب صراف</b><p className="mt-1 text-[11px] text-slate-500">دسترسی بر اساس نقش و مجوز حساب شما</p></div>
+                    <button type="button" onClick={() => setMobileNavOpen(false)} aria-label="بستن فهرست" className="rounded-lg border border-slate-200 p-2 text-slate-600"><X className="h-5 w-5"/></button>
+                  </header>
+                  <nav className="v21-route-mobile-groups" aria-label="فهرست کامل ماژول‌ها">
+                    {GROUPS.map(group => {
+                      const items = modules.filter(item => item.group === group);
+                      if (!items.length) return null;
+                      return <section key={group} className="v21-route-mobile-group">
+                        <h2>{group}</h2>
+                        <div>{items.map(item => <ModuleLink key={item.id} item={item} compact features={features} onNavigate={() => setMobileNavOpen(false)} />)}</div>
+                      </section>;
+                    })}
+                  </nav>
+                </section>
+              </div>
+            )}
+          </>
+        )}
       </div>
     </div>
   );
