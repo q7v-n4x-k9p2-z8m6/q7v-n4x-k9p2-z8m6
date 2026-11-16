@@ -130,7 +130,9 @@ export default function Version21Layout() {
   const { user, logout } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
-  const role = user?.role || 'user';
+  // A1 stores exchange owners with role='exchange'; the v21 navigation uses 'sarraaf'.
+  // Normalize the persisted role so legitimate exchanger accounts retain their modules.
+  const role = user?.role === 'exchange' ? 'sarraaf' : (user?.role || 'user');
   const modules = MODULES.filter(item => Array.isArray(item.roles) && item.roles.includes(role));
   const current = modules.find(item => item.path && (location.pathname === item.path || location.pathname.startsWith(item.path + '/')));
   const isAssistant = location.pathname === '/assistant';
@@ -142,7 +144,7 @@ export default function Version21Layout() {
       {location.pathname !== '/dashboard' && <aside className="hidden lg:flex w-64 shrink-0 h-screen sticky top-0 flex-col bg-slate-900 text-white print:hidden">
         <div className="px-5 py-5 border-b border-white/10">
           <div className="text-lg font-extrabold">حساب صراف</div>
-          <div className="mt-1 text-xs text-slate-400">هسته عملیاتی نسخه ۲۱</div>
+          <div className="mt-1 text-xs text-slate-400">مدیریت حساب صراف</div>
         </div>
         <nav className="flex-1 overflow-y-auto p-3 space-y-4">
           {GROUPS.map(group => {
@@ -166,7 +168,7 @@ export default function Version21Layout() {
         {location.pathname !== '/dashboard' && <header className="sticky top-0 z-30 bg-white border-b border-slate-200 shadow-sm">
           <div className="flex items-center justify-between gap-3 px-4 md:px-6 py-3">
             <div className="min-w-0">
-              <div className="font-bold text-sm md:text-base">حساب صراف <span className="text-teal-700">· نسخه ۲۱</span></div>
+              <div className="font-bold text-sm md:text-base">حساب صراف</div>
               <div className="text-xs text-slate-500 mt-0.5 truncate">{current?.label || (isAssistant ? 'هوش مصنوعی' : 'پنل عملیاتی صرافی')} · {user?.full_name || user?.username || ''}</div>
             </div>
             <div className="flex items-center gap-2">
@@ -205,7 +207,7 @@ export default function Version21Layout() {
           </div>
         </main>
         <footer className="border-t border-slate-200 bg-white px-4 py-2 text-center text-[11px] text-slate-500">
-          نسخه ۲۱ · اطلاعات از حساب و دیتابیس اصلی A1 خوانده می‌شود؛ بخش‌های متصل‌نشده دادهٔ نمونه نمایش نمی‌دهند.
+          حساب صراف
         </footer>
       </div>
     </div>

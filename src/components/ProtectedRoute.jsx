@@ -1,7 +1,7 @@
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '@/lib/AuthContext';
 import { Loader2 } from 'lucide-react';
-import { canAccessRoute, HOME_BY_ROLE } from '@/lib/rbac';
+import { canAccessRoute, HOME_BY_ROLE, normalizeRole } from '@/lib/rbac';
 
 // ── ProtectedRoute ──
 // محافظت از مسیرها بر اساس نقش کاربر
@@ -24,7 +24,9 @@ export default function ProtectedRoute({ unauthenticatedElement, requiredRole, a
     return unauthenticatedElement || <Navigate to="/login" replace />;
   }
 
-  const role = user.role || 'user';
+  // Backend exchange accounts are regular sarraaf-panel users; normalize
+  // the persisted role before route and RBAC checks without changing the token.
+  const role = normalizeRole(user.role || 'user');
 
   // اگر requiredRole مشخص شده و نقش کاربر متفاوت است
   if (requiredRole && role !== requiredRole) {
