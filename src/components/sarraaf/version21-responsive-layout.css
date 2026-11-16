@@ -687,3 +687,89 @@
     z-index: 9999 !important;
   }
 }
+
+
+/* Final laptop alignment: one complete menu row and one complete module-icon row. */
+@media (min-width: 901px) {
+  html body .v21-laptop-toolbar {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 0 !important;
+    overflow: visible !important;
+  }
+  html body .v21-laptop-menu-bar {
+    display: grid !important;
+    grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+    align-items: center !important;
+    gap: 6px !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    overflow: visible !important;
+    white-space: nowrap !important;
+    padding: 6px 8px !important;
+  }
+  html body .v21-laptop-menu-bar > div {
+    min-width: 0 !important;
+    width: 100% !important;
+  }
+  html body .v21-laptop-menu-trigger {
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    white-space: nowrap !important;
+    padding-inline: 5px !important;
+    font-size: 11px !important;
+  }
+  html body .v21-module-icon-row {
+    display: grid !important;
+    grid-template-columns: repeat(16, minmax(0, 1fr)) !important;
+    grid-auto-flow: row !important;
+    align-items: stretch !important;
+    gap: 5px !important;
+    width: 100% !important;
+    overflow: visible !important;
+    padding: 8px !important;
+  }
+  html body .v21-module-icon-row > button {
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    align-items: center !important;
+    min-width: 0 !important;
+    min-height: 64px !important;
+    padding: 5px 2px !important;
+    white-space: normal !important;
+  }
+  html body .v21-module-icon-row > button svg {
+    width: 19px !important;
+    height: 19px !important;
+    flex: 0 0 19px !important;
+  }
+  html body .v21-module-icon-row > button span {
+    display: block !important;
+    width: 100% !important;
+    font-size: 8px !important;
+    line-height: 1.2 !important;
+    white-space: normal !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+    overflow-wrap: anywhere !important;
+    text-align: center !important;
+  }
+  html body .v21-workspace-shell > div.flex.min-h-0 {
+    overflow: visible !important;
+  }
+  html body .v21-laptop-menu-bar > div {
+    position: relative !important;
+    z-index: 91 !important;
+  }
+  html body .v21-laptop-menu-popover {
+    top: calc(100% + 4px) !important;
+    right: 0 !important;
+    left: auto !important;
+    z-index: 9999 !important;
+  }
+}
