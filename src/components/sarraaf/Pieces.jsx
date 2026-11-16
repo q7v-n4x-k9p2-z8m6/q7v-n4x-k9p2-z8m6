@@ -12,7 +12,7 @@ export function PageHeader({ title, subtitle, icon: Icon, actions, children, sho
   const shouldShowBack = showBack ?? isChildPage;
 
   return (
-    <div className="workspace-page-header flex items-center justify-between gap-3 mb-5 md:flex-wrap md:rounded-xl md:border md:border-border md:bg-card md:px-4 md:py-3">
+    <div className="workspace-page-header flex items-center justify-between gap-3 mb-5 rounded-xl border border-[#d3e0ef] bg-gradient-to-l from-white to-[#f0f6ff] px-3 py-3 shadow-sm md:flex-wrap md:px-4">
       <div className="flex items-center gap-2.5 lg:gap-3 min-w-0">
         {shouldShowBack && (
           <button
@@ -24,8 +24,8 @@ export function PageHeader({ title, subtitle, icon: Icon, actions, children, sho
           </button>
         )}
         {Icon && (
-          <div className="w-9 h-9 lg:w-10 lg:h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-            <Icon className="w-5 h-5 lg:w-5.5 lg:h-5.5 text-primary" />
+          <div className="w-10 h-10 lg:w-11 lg:h-11 rounded-xl bg-gradient-to-br from-[#1558a5] to-[#347ed0] flex items-center justify-center shrink-0 text-white shadow-md ring-1 ring-white/70">
+            <Icon className="w-5 h-5 lg:w-5.5 lg:h-5.5 text-white" />
           </div>
         )}
         <div className="min-w-0">
@@ -41,11 +41,11 @@ export function PageHeader({ title, subtitle, icon: Icon, actions, children, sho
 
 export function SectionCard({ title, icon: Icon, children, className, actions }) {
   return (
-    <Card className={cn('overflow-hidden shadow-card', className)}>
+    <Card className={cn('overflow-hidden rounded-xl border border-[#d5e1ef] bg-white shadow-[0_3px_14px_rgba(24,64,112,0.07)]', className)}>
       {(title || Icon) && (
-        <div className="flex items-center justify-between px-4 lg:px-5 py-3 lg:py-3.5 border-b bg-muted/40">
+        <div className="flex items-center justify-between px-4 lg:px-5 py-3 lg:py-3.5 border-b border-[#d9e5f2] bg-gradient-to-l from-[#eaf2fd] to-[#f6f9ff]">
           <div className="flex items-center gap-2">
-            {Icon && <Icon className="w-4 h-4 text-primary" />}
+            {Icon && <span className="grid h-8 w-8 place-items-center rounded-lg bg-gradient-to-br from-blue-600 to-indigo-700 text-white shadow-sm"><Icon className="w-4 h-4" /></span>}
             {title && <h3 className="text-sm lg:text-base font-semibold text-foreground">{title}</h3>}
           </div>
           {actions}
@@ -58,7 +58,7 @@ export function SectionCard({ title, icon: Icon, children, className, actions })
 
 export function StatCard({ label, value, sub, icon: Icon, gradient }) {
   return (
-    <Card className="overflow-hidden border-0 shadow-card">
+    <Card className="overflow-hidden rounded-xl border border-white/30 shadow-[0_4px_14px_rgba(25,60,100,0.12)]">
       <CardContent className={cn('p-3.5 lg:p-5 text-white relative', gradient && `bg-gradient-to-br ${gradient}`)}>
         <div className="flex items-start justify-between mb-1.5 lg:mb-3">
           <span className="text-[11px] lg:text-sm font-medium opacity-90 leading-tight">{label}</span>
@@ -77,7 +77,7 @@ export function StatCard({ label, value, sub, icon: Icon, gradient }) {
 
 export function BalanceCard({ label, amounts, accent = 'text-primary' }) {
   return (
-    <Card className="overflow-hidden shadow-card">
+    <Card className="overflow-hidden rounded-xl border border-[#d5e1ef] bg-gradient-to-b from-white to-[#f5f9ff] shadow-sm">
       <CardContent className="p-4 lg:p-5">
         <p className="text-xs text-muted-foreground mb-2 font-medium">{label}</p>
         {Object.entries(amounts).length === 0 ? (
@@ -150,7 +150,7 @@ export function TransactionRow({ tx, onClick, labels }) {
     <div
       onClick={onClick}
       className={cn(
-        'flex items-center justify-between gap-2 py-2.5 lg:py-3 px-3 lg:px-4 rounded-lg border border-transparent transition-all',
+        'flex items-center justify-between gap-2 py-3 lg:py-3.5 px-3 lg:px-4 rounded-xl border border-[#e0e9f3] bg-white shadow-[0_1px_4px_rgba(30,64,110,0.04)] transition-all',
         onClick && 'cursor-pointer hover:bg-muted/50 hover:border-border'
       )}
     >
