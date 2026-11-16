@@ -63,7 +63,7 @@ export async function loadVersion21Database() {
   const [
     customers, safes, origins, bankAccounts, rates, chartAccounts,
     documents, ledgerEntries, transfers, conversions, treasuryTransactions,
-    bankTransactions, journalEntries, auditLogs,
+    bankTransactions, journalEntries, auditLogs, errorReports,
   ] = await Promise.all([
     readTenantTable('customers', exchangeCode),
     readTenantTable('safes', exchangeCode),
@@ -86,6 +86,12 @@ export async function loadVersion21Database() {
         .eq('user_id', userId)
         .order('created_at', { ascending: false });
       if (error) throw new Error(`خواندن سوابق فعالیت ناموفق بود: ${error.message}`);
+      return data || [];
+    })(),
+    (async () => {
+      const { data, error } = await supabase.from('error_reports').select('id,user_id,exchange_code,error_type,error_message,device,app_version,status,created_at')
+        .eq('user_id', userId).order('created_at', { ascending: false });
+      if (error) throw new Error(`خواندن گزارش خطاها ناموفق بود: ${error.message}`);
       return data || [];
     })(),
   ]);
@@ -269,6 +275,13 @@ export async function loadVersion21Database() {
       _sourceTable: 'documents',
     }));
 
+  const mappedErrors = errorReports.map(row => ({
+    id: String(row.id), date: dateOnly(row.created_at), error_type: row.error_type || '',
+    error_message: row.error_message || '', device: row.device || '',
+    app_version: row.app_version || '', status: row.status || 'new',
+    _sourceTable: 'error_reports',
+  }));
+
   const mappedActivity = auditLogs.map(row => ({
     id: String(row.id),
     date: dateOnly(row.created_at),
@@ -300,6 +313,7 @@ export async function loadVersion21Database() {
       journal: mappedJournal,
       transactions: mappedTransactions,
       activity: mappedActivity,
+      errors: mappedErrors,
     },
     loadedAt: new Date().toISOString(),
   };
