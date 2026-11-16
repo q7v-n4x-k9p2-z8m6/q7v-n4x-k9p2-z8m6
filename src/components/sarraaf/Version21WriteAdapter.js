@@ -784,15 +784,29 @@ export async function deleteVersion21Record(module, record) {
       ...feeDocs.filter(doc => !doc.reversed).map(doc => doc.id),
     ];
     const warnings = [];
+    let reversedCount = 0;
+    let reversalFailed = false;
     for (const documentId of reverseIds) {
-      const { data, error } = await supabase.rpc('reverse_document_transaction', {
-        p_exchange_code: ctx.exchangeCode,
-        p_document_id: documentId,
-        p_registered_by: ctx.userName,
-        p_reason: 'ابطال سند مرتبط از نسخه ۲۱؛ رکورد اصلی حفظ می‌شود.',
-      });
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
+      try {
+        const { data, error } = await supabase.rpc('reverse_document_transaction', {
+          p_exchange_code: ctx.exchangeCode,
+          p_document_id: documentId,
+          p_registered_by: ctx.userName,
+          p_reason: 'ابطال سند مرتبط از نسخه ۲۱؛ رکورد اصلی حفظ می‌شود.',
+        });
+        if (error) throw error;
+        if (data?.error) throw new Error(data.error);
+        reversedCount += 1;
+      } catch (reverseError) {
+        reversalFailed = true;
+        warnings.push('ابطال سند ' + documentId + ' انجام نشد: ' + (reverseError?.message || 'خطای نامشخص'));
+        break;
+      }
+    }
+    if (reversalFailed) {
+      const auditWarning = await writeAudit(ctx, 'reverse_partial', module, record.id,
+        'ابطال اسناد مرتبط به‌صورت ناقص انجام شد؛ بررسی دستی لازم است.', null, { reversedDocumentIds: reverseIds.slice(0, reversedCount), failedDocumentId: reverseIds[reversedCount] });
+      return { reversed: reversedCount > 0, partial: reversedCount > 0, warning: warnings.join(' | '), auditWarning };
     }
 
     if (module === 'remittance') {
