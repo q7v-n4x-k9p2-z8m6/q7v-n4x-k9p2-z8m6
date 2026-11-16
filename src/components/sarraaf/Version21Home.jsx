@@ -8,7 +8,7 @@ import {
   ArrowDownUp, FileSearch, Headphones, Calculator, Plus, Pencil, Trash2,
   RefreshCw, Printer, Search, BriefcaseBusiness, BookCheck, ChartNoAxesCombined,
   CalendarDays, ShieldCheck, ClipboardCheck, Files, BadgeDollarSign, GitBranch,
-  Banknote, CircleDollarSign, Landmark as TreasuryIcon, FolderKanban, Languages,
+  Banknote, CircleDollarSign, Landmark as TreasuryIcon, FolderKanban,
   CircleHelp, ArrowLeftRight as ExchangeIcon
 } from 'lucide-react';
 
@@ -54,8 +54,6 @@ const SECTIONS = [
     { label: 'زبان برنامه', pending: true, icon: Languages, roles: ['creator','admin','sarraaf','employee'] },
   ]},
 ];
-
-function ToolButton
 
 function ToolButton({ item }) {
   const Icon = item.icon;
