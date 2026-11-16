@@ -212,8 +212,14 @@ export async function saveVersion21Record(module, draft) {
   if (TABLES[module]) {
     const table = TABLES[module];
     const payload = mapMasterRecord(module, draft, ctx);
-    if (!payload.name && ['customers', 'branches', 'cash', 'banks', 'accounts'].includes(module)) {
+    const recordName = payload.name || payload.bank_name || payload.account_name;
+    if (!recordName && ['customers', 'branches', 'cash', 'banks', 'accounts'].includes(module)) {
       throw new Error('نام این رکورد الزامی است.');
+    }
+    if (module === 'banks' && !payload.account_number) throw new Error('شماره حساب بانکی الزامی است.');
+    if (module === 'accounts' && !payload.account_code) throw new Error('کد حساب الزامی است.');
+    if (module === 'currencies' && (payload.buy_rate <= 0 || payload.sell_rate <= 0)) {
+      throw new Error('نرخ خرید و فروش باید بزرگ‌تر از صفر باشد.');
     }
     let result;
     if (draft.id) {
