@@ -53,7 +53,11 @@ async function requireModulePermission(ctx, module, action) {
   }
 }
 
-const number = value => Number(value ?? 0) || 0;
+const number = value => {
+  if (value === null || value === undefined || (typeof value === 'string' && value.trim() === '')) return 0;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : Number.NaN;
+};
 const today = () => new Date().toISOString().slice(0, 10);
 const makeOperationId = () => {
   if (globalThis.crypto?.randomUUID) return globalThis.crypto.randomUUID();
