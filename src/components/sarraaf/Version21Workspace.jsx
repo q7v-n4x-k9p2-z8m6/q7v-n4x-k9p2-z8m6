@@ -118,7 +118,7 @@ export default function Version21Workspace(){
  const refreshDatabase=async()=>{
   setDbStatus('loading');setDbError('');
   try{const result=await loadVersion21Database();setData(result.data);setExchangeProfile(result.exchange);setLastLoaded(result.loadedAt);setDbStatus('connected');setSelected(null);setCustomerDetail(null);setBranchDetail(null);notify('اطلاعات واقعی دیتابیس دوباره بارگذاری شد.');}
-  catch(error){setDbStatus('error');setDbError(error?.message||'اتصال به دیتابیس ناموفق بود.');}
+  catch(error){setDbStatus('error');setDbError(error?.message||'اتصال به دیتابیس ناموفق بود.');captureVersion21Error(error,'loadDatabase');}
  };
  useEffect(()=>{let activeRequest=true;(async()=>{try{const result=await loadVersion21Database();if(!activeRequest)return;setData(result.data);setExchangeProfile(result.exchange);setLastLoaded(result.loadedAt);setDbStatus('connected');}catch(error){if(!activeRequest)return;setDbStatus('error');setDbError(error?.message||'اتصال به دیتابیس ناموفق بود.');}})();return()=>{activeRequest=false;};},[]);
  const page=MODULES.find(x=>x.id===active)||MODULES[0];
@@ -139,10 +139,10 @@ export default function Version21Workspace(){
   if(!SCHEMAS[mod])return;
   try{
    const result=draft.id?await editVersion21Record(mod,draft):await saveVersion21Record(mod,draft);
-   setModal('');
+   setModal('');setDraft({});
    await refreshDatabase();
    setSelected(null);
-   notify(result?.auditWarning?'ثبت در دیتابیس انجام شد؛ اما سابقه فعالیت هشدار دارد: '+result.auditWarning:'اطلاعات در دیتابیس همین صراف ثبت شد.');
+   notify(result?.warning||result?.auditWarning?'عملیات در دیتابیس ثبت شد؛ '+(result.warning||result.auditWarning):'اطلاعات در دیتابیس همین صراف ثبت شد.');
   }catch(error){
    await captureVersion21Error(error,'save:'+mod);
    setDbError(error?.message||'ثبت اطلاعات ناموفق بود.');
@@ -178,7 +178,7 @@ export default function Version21Workspace(){
  const saveCashAction=async()=>{
   try{
    const result=await saveVersion21Record('cashAction',draft);
-   setModal('');
+   setModal('');setDraft({});
    await refreshDatabase();
    notify(result?.auditWarning?'گردش صندوق ثبت شد؛ اما سابقه فعالیت هشدار دارد: '+result.auditWarning:'گردش صندوق و سند حسابداری در دیتابیس ثبت شد.');
   }catch(error){
