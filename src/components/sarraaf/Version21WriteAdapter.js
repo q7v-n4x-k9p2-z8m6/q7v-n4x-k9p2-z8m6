@@ -589,7 +589,9 @@ export async function deleteVersion21Record(module, record) {
         .eq('id', Number(record.id)).eq('exchange_code', ctx.exchangeCode);
     }
     if (module === 'exchange') {
-      await supabase.from('conversions').delete().eq('id', Number(record.id)).eq('exchange_code', ctx.exchangeCode);
+      const { error: conversionDeleteError } = await supabase.from('conversions').delete()
+        .eq('id', Number(record.id)).eq('exchange_code', ctx.exchangeCode);
+      if (conversionDeleteError) throw conversionDeleteError;
     }
     return { reversed: true };
   }
@@ -638,6 +640,17 @@ export async function deleteVersion21Record(module, record) {
       .eq('exchange_code', ctx.exchangeCode).eq('account_type', accountType).eq(accountColumn, id).eq('deleted', false);
     if (countError) throw countError;
     if (count > 0) throw new Error('این رکورد در اسناد مالی استفاده شده است؛ حذف فیزیکی مجاز نیست. ابتدا باید آن را غیرفعال کنید.');
+  }
+  const relatedChecks = {
+    customers: [{ table: 'transfers', column: 'customer_id' }, { table: 'conversions', column: 'customer_id' }],
+    branches: [{ table: 'transfers', column: 'agent_id' }],
+    banks: [{ table: 'bank_transactions', column: 'bank_id' }],
+  };
+  for (const check of relatedChecks[module] || []) {
+    const { count, error: relatedError } = await supabase.from(check.table).select('id', { count: 'exact', head: true })
+      .eq('exchange_code', ctx.exchangeCode).eq(check.column, Number(record.id));
+    if (relatedError) throw relatedError;
+    if (count > 0) throw new Error('این رکورد در اسناد یا عملیات دیگر استفاده شده است؛ حذف فیزیکی مجاز نیست.');
   }
   const { data, error } = await supabase.from(table).delete()
     .eq('id', Number(record.id)).eq('exchange_code', ctx.exchangeCode).select('id').maybeSingle();
