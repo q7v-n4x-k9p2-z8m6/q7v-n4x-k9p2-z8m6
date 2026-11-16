@@ -15,9 +15,9 @@ import {
 const SECTIONS = [
   { title: 'تعاریف و دفاتر', items: [
     { label: 'تعریف مشتریان', path: '/customers', icon: Users, roles: ['creator','admin','sarraaf','employee'] },
-    { label: 'دفتر حساب مشتریان', pending: true, icon: BookOpen, roles: ['creator','admin','sarraaf'] },
+    { label: 'دفتر حساب مشتریان', path: '/dadogereft', icon: BookOpen, roles: ['creator','admin','sarraaf'] },
     { label: 'تعریف نمایندگی‌ها', path: '/agents', icon: Building2, roles: ['creator','admin','sarraaf'] },
-    { label: 'دفتر حساب نمایندگی‌ها', pending: true, icon: BookText, roles: ['creator','admin','sarraaf'] },
+    { label: 'دفتر حساب نمایندگی‌ها', path: '/agency-network', icon: BookText, roles: ['creator','admin','sarraaf'] },
   ]},
   { title: 'صندوق و بانک', items: [
     { label: 'صندوق‌ها و موجودی', path: '/cash', icon: Wallet, roles: ['creator','admin','sarraaf','employee'] },
@@ -26,12 +26,12 @@ const SECTIONS = [
   { title: 'عملیات صرافی', items: [
     { label: 'خرید و فروش اسعار', path: '/trade', icon: ArrowLeftRight, roles: ['creator','admin','sarraaf','employee'] },
     { label: 'دفتر حواله‌ها', path: '/transfer-book', icon: Send, roles: ['creator','admin','sarraaf','employee'] },
-    { label: 'مصارف و پرداخت‌ها', pending: true, icon: Receipt, roles: ['creator','admin','sarraaf'] },
+    { label: 'مصارف و پرداخت‌ها', path: '/enterprise/expenses', icon: Receipt, roles: ['creator','admin','sarraaf'] },
   ]},
   { title: 'حسابداری و گزارشات', items: [
     { label: 'دفتر روزنامچه', path: '/journal', icon: ScrollText, roles: ['creator','admin','sarraaf'] },
     { label: 'دفتر کل', path: '/general-ledger', icon: ClipboardList, roles: ['creator','admin','sarraaf'] },
-    { label: 'کدینگ حساب‌ها', pending: true, icon: ListChecks, roles: ['creator','admin','sarraaf'] },
+    { label: 'کدینگ حساب‌ها', path: '/enterprise/accounts', icon: ListChecks, roles: ['creator','admin','sarraaf'] },
     { label: 'تعریف اسعار', path: '/currencies', icon: Coins, roles: ['creator','admin','sarraaf'] },
     { label: 'گزارش عملیات', path: '/reports', icon: FileSpreadsheet, roles: ['creator','admin','sarraaf','employee'] },
     { label: 'مفاد و زیان', path: '/profit-loss', icon: BarChart3, roles: ['creator','admin','sarraaf'] },
@@ -43,7 +43,7 @@ const SECTIONS = [
     { label: 'محصولات آنلاین', path: '/online-products', icon: ShoppingBag, roles: ['creator','admin','sarraaf'] },
   ]},
   { title: 'تنظیمات', items: [
-    { label: 'زبان برنامه', pending: true, icon: Languages, roles: ['creator','admin','sarraaf','employee'] },
+    { label: 'زبان برنامه', path: '/settings', icon: Languages, roles: ['creator','admin','sarraaf','employee'] },
   ]},
 ];
 
