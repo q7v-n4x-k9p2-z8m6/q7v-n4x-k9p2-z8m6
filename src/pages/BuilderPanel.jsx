@@ -38,7 +38,7 @@ import LegacyDataMigrator from '@/components/sarraaf/LegacyDataMigrator';
 import AccountRecoveryManager from '@/components/sarraaf/AccountRecoveryManager';
 import TrialManager from '@/components/sarraaf/TrialManager';
 import MobileLayoutPreview from '@/components/sarraaf/MobileLayoutPreview';
-import CreatorPreviewLab from '@/components/sarraaf/CreatorPreviewLab';
+import ComputerLayoutPreview from '@/components/sarraaf/ComputerLayoutPreview';
 import { lazy } from 'react';
 const BuilderLiveAssistant = lazy(() => import('@/pages/BuilderLiveAssistant'));
 import UCManager from '@/components/sarraaf/UCManager';
@@ -525,7 +525,7 @@ export default function BuilderPanel() {
         {/* آزمایشگاه توسعه — فقط پنل سازنده اصلی و کاملاً جدا از دیتابیس زنده */}
         {isFullCreator && (
           <TabsContent value="creator_preview">
-            <CreatorPreviewLab />
+            <ComputerLayoutPreview />
           </TabsContent>
         )}
 
