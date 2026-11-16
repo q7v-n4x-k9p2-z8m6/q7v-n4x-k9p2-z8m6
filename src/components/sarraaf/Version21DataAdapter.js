@@ -209,15 +209,31 @@ export async function loadVersion21Database() {
       !documentsById.get(String(line.document_id || ''))?.deleted
     );
     const balanceMap = new Map();
-    accountLines.forEach(line => {
-      const currency = String(line.currency || row.currency || 'AFN');
+    const addAccountBalance = (currencyValue, debitValue, creditValue, lineCount = 1) => {
+      const currency = String(currencyValue || row.currency || 'AFN');
       const total = balanceMap.get(currency) || { currency, debit: 0, credit: 0, balance: 0, lineCount: 0 };
-      total.debit += num(line.debit);
-      total.credit += num(line.credit);
+      total.debit += num(debitValue);
+      total.credit += num(creditValue);
       total.balance = row.normal_balance === 'credit' ? total.credit - total.debit : total.debit - total.credit;
-      total.lineCount += 1;
+      total.lineCount += lineCount;
       balanceMap.set(currency, total);
-    });
+    };
+    accountLines.forEach(line => addAccountBalance(line.currency, line.debit, line.credit));
+    // Roll up the existing cash, bank and customer subledgers into their
+    // corresponding control accounts without rewriting legacy ledger rows.
+    if (row.account_code === '1010') {
+      safes.forEach(safe => addAccountBalance(safe.currency, Math.max(0, num(safe.opening_balance)), Math.max(0, -num(safe.opening_balance)), 0));
+      activeLedgerEntries.filter(line => line.account_type === 'cash' && safeById.has(String(line.account_id || '')))
+        .forEach(line => addAccountBalance(line.currency, line.debit, line.credit));
+    } else if (row.account_code === '1020') {
+      bankAccounts.forEach(bank => addAccountBalance(bank.currency, Math.max(0, num(bank.balance)), Math.max(0, -num(bank.balance)), 0));
+      activeLedgerEntries.filter(line => line.account_type === 'bank')
+        .forEach(line => addAccountBalance(line.currency, line.debit, line.credit));
+    } else if (row.account_code === '1030') {
+      customers.forEach(customer => addAccountBalance(customer.balance_currency || 'AFN', Math.max(0, num(customer.opening_balance)), Math.max(0, -num(customer.opening_balance)), 0));
+      activeLedgerEntries.filter(line => line.account_type === 'customer')
+        .forEach(line => addAccountBalance(line.currency, line.debit, line.credit));
+    }
     return {
       ...row,
       id: String(row.id),
