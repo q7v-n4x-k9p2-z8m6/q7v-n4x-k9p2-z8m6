@@ -155,7 +155,10 @@ function mapMasterRecord(module, draft, ctx) {
         account_name: String(draft.name || '').trim(),
         account_type: draft.accountType || 'asset',
         normal_balance: draft.nature === 'بستانکار' ? 'credit' : 'debit',
-        description: draft.description || null, is_active: true,
+        parent_id: draft.parentId ? Number(draft.parentId) : null,
+        currency: draft.currency || null,
+        description: draft.description || null,
+        is_active: draft.status !== 'غیرفعال',
       };
     default:
       throw new Error(`فرم ${module} هنوز به جدول واقعی نگاشت نشده است.`);
@@ -214,6 +217,27 @@ async function getCustomer(ctx, name) {
   return data || null;
 }
 
+async function findChartAccountByType(ctx, accountType) {
+  const { data, error } = await supabase.from('chart_of_accounts')
+    .select('id,account_code,account_name,account_type,normal_balance')
+    .eq('exchange_code', ctx.exchangeCode)
+    .eq('account_type', accountType)
+    .eq('is_active', true)
+    .order('account_code', { ascending: true })
+    .limit(1)
+    .maybeSingle();
+  if (error) throw error;
+  return data || null;
+}
+
+function chartAccountLedgerRef(account) {
+  return {
+    account_type: 'suspense',
+    account_id: String(account.id),
+    account_name: account.account_name,
+  };
+}
+
 async function resolveLedgerAccount(ctx, label, currency) {
   const value = String(label || '');
   if (value.startsWith('صندوق: ')) {
@@ -221,12 +245,14 @@ async function resolveLedgerAccount(ctx, label, currency) {
     return { account_type: 'cash', account_id: String(safe.id), account_name: safe.name };
   }
   const accountCode = value.includes(' — ') ? value.split(' — ')[0] : '';
-  let query = supabase.from('chart_of_accounts').select('id,account_code,account_name').eq('exchange_code', ctx.exchangeCode);
+  let query = supabase.from('chart_of_accounts')
+    .select('id,account_code,account_name,account_type,normal_balance')
+    .eq('exchange_code', ctx.exchangeCode);
   query = accountCode ? query.eq('account_code', accountCode) : query.eq('account_name', value);
   const { data, error } = await query.limit(1).maybeSingle();
   if (error) throw error;
   if (!data) throw new Error(`حساب «${value}» در کدینگ همین صرافی پیدا نشد.`);
-  return { account_type: 'suspense', account_id: String(data.id), account_name: data.account_name };
+  return { ...chartAccountLedgerRef(data), chartAccountType: data.account_type, normalBalance: data.normal_balance };
 }
 
 async function postDocument(ctx, {
@@ -379,7 +405,7 @@ export async function saveVersion21Record(module, draft) {
           description: 'کمیشن حواله ' + transferNumber, clientOperationId: operationId + '-fee',
           lines: [
             { account_type: 'customer', account_id: String(customer.id), account_name: draft.sender, currency: draft.currency || 'AFN', debit: feeAmount, credit: 0 },
-            { account_type: 'suspense', account_id: '', account_name: 'درآمد کمیشن حواله', currency: draft.currency || 'AFN', debit: 0, credit: feeAmount },
+            { ...(await findChartAccountByType(ctx, 'revenue') ? chartAccountLedgerRef(await findChartAccountByType(ctx, 'revenue')) : { account_type: 'suspense', account_id: '', account_name: 'درآمد کمیشن حواله' }), currency: draft.currency || 'AFN', debit: 0, credit: feeAmount },
           ],
         });
         if (!feeDoc?.document_id) warning = 'حواله ثبت شد، اما سند کمیشن باید بررسی شود.';
@@ -412,8 +438,18 @@ export async function saveVersion21Record(module, draft) {
     if (module === 'cashAction' && draft.partyType === 'branch' && !branch) throw new Error('نمایندگی انتخاب‌شده در فهرست همین صراف پیدا نشد؛ ابتدا نمایندگی را ثبت کنید.');
     const isCashIn = module === 'cashAction' && draft.kind === 'دخل';
     const isExpense = module === 'expenses';
+    let expenseCounter = null;
+    if (isExpense) {
+      if (draft.expenseAccount) {
+        expenseCounter = await resolveLedgerAccount(ctx, draft.expenseAccount, currency);
+      } else {
+        const defaultExpense = await findChartAccountByType(ctx, 'expense');
+        if (!defaultExpense) throw new Error('برای ثبت مصرف، ابتدا در کدینگ حساب‌ها یک حساب از نوع «مصرف» ایجاد کنید.');
+        expenseCounter = chartAccountLedgerRef(defaultExpense);
+      }
+    }
     const counter = isExpense
-      ? { account_type: 'suspense', account_id: '', account_name: 'مصارف' }
+      ? expenseCounter
       : customer
         ? { account_type: 'customer', account_id: String(customer.id), account_name: customer.name }
         : branch
@@ -515,6 +551,57 @@ export async function saveVersion21Record(module, draft) {
   throw new Error(`فرم «${module}» هنوز به عملیات پایگاه داده متصل نشده است.`);
 }
 
+export async function seedVersion21BaseAccounts() {
+  const ctx = sessionContext();
+  await requireModulePermission(ctx, 'accounts', 'create');
+  const seeds = [
+    { code: '1000', name: 'دارایی‌ها', type: 'asset', normal: 'debit' },
+    { code: '1010', name: 'صندوق‌ها', type: 'asset', normal: 'debit', parent: '1000' },
+    { code: '1020', name: 'حساب‌های بانکی', type: 'asset', normal: 'debit', parent: '1000' },
+    { code: '1030', name: 'مطالبات مشتریان', type: 'asset', normal: 'debit', parent: '1000' },
+    { code: '2000', name: 'بدهی‌ها', type: 'liability', normal: 'credit' },
+    { code: '2010', name: 'بدهی به مشتریان', type: 'liability', normal: 'credit', parent: '2000' },
+    { code: '3000', name: 'سرمایه', type: 'equity', normal: 'credit' },
+    { code: '4000', name: 'درآمدها', type: 'revenue', normal: 'credit' },
+    { code: '4010', name: 'درآمد کمیشن حواله', type: 'revenue', normal: 'credit', parent: '4000' },
+    { code: '4020', name: 'درآمد معاملات اسعار', type: 'revenue', normal: 'credit', parent: '4000' },
+    { code: '5000', name: 'مصارف', type: 'expense', normal: 'debit' },
+    { code: '5010', name: 'مصارف عملیاتی', type: 'expense', normal: 'debit', parent: '5000' },
+    { code: '5020', name: 'زیان معاملات اسعار', type: 'expense', normal: 'debit', parent: '5000' },
+  ];
+  const { data: existing, error: readError } = await supabase.from('chart_of_accounts')
+    .select('id,account_code').eq('exchange_code', ctx.exchangeCode);
+  if (readError) throw readError;
+  const ids = new Map((existing || []).map(row => [String(row.account_code), Number(row.id)]));
+  const missingParents = seeds.filter(row => !row.parent && !ids.has(row.code));
+  if (missingParents.length) {
+    const { data, error } = await supabase.from('chart_of_accounts').insert(missingParents.map(row => ({
+      exchange_code: ctx.exchangeCode, account_code: row.code, account_name: row.name,
+      account_type: row.type, normal_balance: row.normal, is_system: true, is_active: true,
+    }))).select('id,account_code');
+    if (error) throw error;
+    (data || []).forEach(row => ids.set(String(row.account_code), Number(row.id)));
+  }
+  const missingChildren = seeds.filter(row => row.parent && !ids.has(row.code));
+  if (missingChildren.length) {
+    const rows = missingChildren.map(row => {
+      const parentId = ids.get(row.parent);
+      if (!parentId) throw new Error('حساب مادر ' + row.parent + ' پیدا نشد؛ کدینگ پایه کامل نشد.');
+      return {
+        exchange_code: ctx.exchangeCode, account_code: row.code, account_name: row.name,
+        account_type: row.type, normal_balance: row.normal, parent_id: parentId,
+        is_system: true, is_active: true,
+      };
+    });
+    const { data, error } = await supabase.from('chart_of_accounts').insert(rows).select('id,account_code');
+    if (error) throw error;
+    (data || []).forEach(row => ids.set(String(row.account_code), Number(row.id)));
+  }
+  const created = Math.max(0, seeds.length - (existing || []).length);
+  const auditWarning = await writeAudit(ctx, 'create', 'chart_of_accounts', '', 'ایجاد کدینگ پایه حساب‌های نسخه ۲۱', null, { accountCodes: seeds.map(row => row.code) });
+  return { created, total: seeds.length, auditWarning };
+}
+
 async function editDocument(ctx, documentId, description, amount, currency, lines) {
   validateBalancedLines(lines, 'ویرایش سند');
   const { data, error } = await supabase.rpc('edit_document_transaction', {
@@ -556,8 +643,15 @@ export async function editVersion21Record(module, draft) {
     }
     const amount = number(draft.amount);
     if (amount <= 0) throw new Error('مبلغ مصرف باید مثبت باشد.');
+    let expenseAccount;
+    if (draft.expenseAccount) expenseAccount = await resolveLedgerAccount(ctx, draft.expenseAccount, draft.currency || 'AFN');
+    else {
+      const defaultExpense = await findChartAccountByType(ctx, 'expense');
+      if (!defaultExpense) throw new Error('برای ویرایش این مصرف، ابتدا یک حساب از نوع «مصرف» در کدینگ ایجاد کنید.');
+      expenseAccount = chartAccountLedgerRef(defaultExpense);
+    }
     const lines = [
-      { account_type: 'suspense', account_id: '', account_name: 'مصارف', currency: draft.currency || 'AFN', debit: amount, credit: 0 },
+      { ...expenseAccount, currency: draft.currency || 'AFN', debit: amount, credit: 0 },
       { account_type: 'cash', account_id: String(safe.id), account_name: safe.name, currency: draft.currency || 'AFN', debit: 0, credit: amount },
     ];
     const result = await editDocument(ctx, draft.id, draft.title, amount, draft.currency, lines);
