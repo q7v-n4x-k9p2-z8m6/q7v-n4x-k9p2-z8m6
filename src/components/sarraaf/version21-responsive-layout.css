@@ -1377,3 +1377,759 @@
     max-width: none;
   }
 }
+
+/* A1 unified desktop/mobile workspace refinement — same modules, fields and actions. */
+.v21-data-table-mobile { display: none; }
+.v21-data-table-desktop { display: block; min-width: 0; }
+.v21-workspace-root { min-width: 0; width: 100%; }
+.v21-workspace-shell { min-width: 0; width: 100%; }
+.v21-workspace-shell .v21-module-icon-row { min-width: 0; }
+.v21-workspace-shell button:focus-visible,
+.v21-workspace-shell input:focus-visible,
+.v21-workspace-shell select:focus-visible,
+.v21-workspace-shell textarea:focus-visible {
+  outline: 2px solid #347fc0 !important;
+  outline-offset: 2px !important;
+}
+.v21-workspace-shell .v21-ledger-summary-card {
+  border-color: #cbd9e9 !important;
+  background: #fff !important;
+}
+.v21-workspace-shell .v21-mobile-bottom button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+}
+.v21-workspace-shell .v21-mobile-bottom button.is-current {
+  border-color: #75a9df !important;
+  background: linear-gradient(180deg,#e6f2ff,#d7e9ff) !important;
+  color: #104b88 !important;
+  box-shadow: inset 0 0 0 1px rgb(59 130 196 / 12%);
+}
+
+@media (min-width: 761px) {
+  html body .v21-workspace-root { width: 100%; min-width: 0; }
+  html body .v21-workspace-shell {
+    display: flex !important;
+    flex-direction: column !important;
+    min-width: 0 !important;
+    min-height: 580px !important;
+    max-height: min(84dvh, 920px) !important;
+    overflow: hidden !important;
+    border: 1px solid #c7d8ea !important;
+    border-radius: 16px !important;
+    background: #f3f7fc !important;
+    box-shadow: 0 12px 34px rgb(26 63 105 / 10%) !important;
+  }
+  html body .v21-workspace-shell > div.flex.min-h-0 {
+    display: flex !important;
+    flex: 1 1 auto !important;
+    flex-direction: column !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+  }
+  html body .v21-workspace-shell .v21-laptop-toolbar {
+    display: flex !important;
+    flex: 0 0 auto !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 0 !important;
+    padding: 10px 12px !important;
+    border-bottom: 1px solid #c7d9ea !important;
+    background: linear-gradient(180deg,#eaf2fc 0%,#e3edf8 100%) !important;
+  }
+  html body .v21-workspace-shell .v21-laptop-menu-bar {
+    display: flex !important;
+    flex: 0 0 auto !important;
+    flex-wrap: wrap !important;
+    align-items: center !important;
+    gap: 7px !important;
+    min-width: 0 !important;
+    padding: 0 0 9px !important;
+    border: 0 !important;
+    border-bottom: 1px solid #cfdeee !important;
+    overflow: visible !important;
+    white-space: normal !important;
+    background: transparent !important;
+  }
+  html body .v21-workspace-shell .v21-laptop-menu-bar > div {
+    position: relative !important;
+    flex: 0 0 auto !important;
+    z-index: 92 !important;
+  }
+  html body .v21-workspace-shell .v21-laptop-menu-trigger {
+    min-height: 40px !important;
+    padding: 8px 14px !important;
+    border: 1px solid #c8d9ec !important;
+    border-radius: 10px !important;
+    background: linear-gradient(180deg,#fff,#f3f8fe) !important;
+    color: #174675 !important;
+    font-size: 11px !important;
+    font-weight: 800 !important;
+    box-shadow: 0 2px 5px rgb(20 58 100 / 7%) !important;
+  }
+  html body .v21-workspace-shell .v21-laptop-menu-trigger:hover,
+  html body .v21-workspace-shell .v21-laptop-menu-trigger.is-open {
+    border-color: #76a9df !important;
+    background: #e7f2ff !important;
+    color: #104c91 !important;
+  }
+  html body .v21-workspace-shell .v21-laptop-menu-popover {
+    position: absolute !important;
+    top: calc(100% + 5px) !important;
+    right: 0 !important;
+    left: auto !important;
+    z-index: 9999 !important;
+    min-width: 205px !important;
+    max-height: min(65dvh,520px) !important;
+    overflow: auto !important;
+    border: 1px solid #c6d8ea !important;
+    border-radius: 11px !important;
+    background: #fff !important;
+    box-shadow: 0 12px 28px rgb(20 58 100 / 18%) !important;
+  }
+  html body .v21-workspace-shell .v21-laptop-menu-popover button {
+    width: 100% !important;
+    min-height: 40px !important;
+    padding: 9px 12px !important;
+    border-bottom: 1px solid #edf2f8 !important;
+    color: #29465e !important;
+    font-size: 11px !important;
+    text-align: right !important;
+  }
+  html body .v21-workspace-shell .v21-module-icon-row {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fit,minmax(82px,1fr)) !important;
+    grid-auto-flow: row !important;
+    align-items: stretch !important;
+    gap: 7px !important;
+    width: 100% !important;
+    padding: 10px 0 0 !important;
+    border: 0 !important;
+    background: transparent !important;
+    overflow: visible !important;
+  }
+  html body .v21-workspace-shell .v21-module-icon-row > button {
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    align-items: center !important;
+    min-width: 0 !important;
+    min-height: 76px !important;
+    padding: 7px 4px !important;
+    border: 1px solid #d0deec !important;
+    border-radius: 11px !important;
+    background: linear-gradient(180deg,#fff 0%,#f4f8fd 100%) !important;
+    color: #24496d !important;
+    box-shadow: 0 2px 6px rgb(24 64 112 / 6%) !important;
+  }
+  html body .v21-workspace-shell .v21-module-icon-row > button.is-active {
+    border-color: #78aade !important;
+    background: linear-gradient(180deg,#eaf4ff,#dcecff) !important;
+    color: #104b88 !important;
+    box-shadow: 0 3px 10px rgb(30 100 180 / 12%) !important;
+  }
+  html body .v21-workspace-shell .v21-module-icon-row > button > span:first-child {
+    width: 38px !important;
+    height: 38px !important;
+    border-radius: 11px !important;
+  }
+  html body .v21-workspace-shell .v21-module-icon-row > button > span:last-child {
+    width: 100% !important;
+    font-size: 10px !important;
+    font-weight: 750 !important;
+    line-height: 1.35 !important;
+    overflow-wrap: anywhere !important;
+    text-align: center !important;
+  }
+  html body .v21-workspace-shell > div.flex.min-h-0 > main {
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    overflow: auto !important;
+    padding: 18px !important;
+    background: linear-gradient(180deg,#f8fbff 0%,#f0f6fd 100%) !important;
+  }
+  html body .v21-workspace-shell main > div.grid.gap-3 {
+    grid-template-columns: repeat(auto-fit,minmax(280px,1fr)) !important;
+    gap: 14px !important;
+  }
+  html body .v21-workspace-shell main section {
+    min-width: 0 !important;
+    border: 1px solid #d3e1f0 !important;
+    border-radius: 13px !important;
+    background: #fff !important;
+    box-shadow: 0 3px 12px rgb(26 65 112 / 6%) !important;
+  }
+  html body .v21-workspace-shell main input,
+  html body .v21-workspace-shell main select,
+  html body .v21-workspace-shell main textarea {
+    min-height: 40px;
+    max-width: 100%;
+  }
+  html body .v21-data-table-desktop { display: block !important; }
+  html body .v21-data-table-mobile { display: none !important; }
+}
+
+@media (min-width: 761px) and (max-width: 1024px) {
+  html body .v21-workspace-shell .v21-module-icon-row {
+    grid-template-columns: repeat(6,minmax(0,1fr)) !important;
+  }
+  html body .v21-workspace-shell main { padding: 13px !important; }
+  html body .v21-workspace-shell main > div.grid.gap-3 {
+    grid-template-columns: repeat(2,minmax(0,1fr)) !important;
+  }
+}
+
+@media (max-width: 760px) {
+  html body .v21-workspace-root {
+    width: 100% !important;
+    min-width: 0 !important;
+    min-height: 100dvh !important;
+    padding: 0 0 env(safe-area-inset-bottom) !important;
+  }
+  html body .v21-workspace-shell {
+    display: flex !important;
+    flex-direction: column !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    min-height: 100dvh !important;
+    max-height: none !important;
+    height: auto !important;
+    overflow: visible !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    background: #f1f6fc !important;
+  }
+  html body .v21-workspace-shell > header {
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 120 !important;
+    min-height: 55px !important;
+    padding: max(10px,env(safe-area-inset-top)) 13px 10px !important;
+    border-radius: 0 0 15px 15px !important;
+    background: linear-gradient(115deg,#102f58 0%,#174d87 58%,#236db5 100%) !important;
+  }
+  html body .v21-workspace-shell > div.flex.min-h-0 {
+    display: flex !important;
+    flex: 1 1 auto !important;
+    flex-direction: column !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+  }
+  html body .v21-workspace-shell .v21-laptop-toolbar {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0 !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    padding: 7px 8px 0 !important;
+    background: linear-gradient(180deg,#eaf2fc 0%,#f1f6fc 100%) !important;
+  }
+  html body .v21-workspace-shell .v21-laptop-menu-bar {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    gap: 7px !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    overflow-x: auto !important;
+    overflow-y: visible !important;
+    padding: 2px 1px 9px !important;
+    border: 0 !important;
+    border-bottom: 1px solid #cfdeee !important;
+    white-space: nowrap !important;
+    background: transparent !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+  html body .v21-workspace-shell .v21-laptop-menu-bar > div {
+    position: relative !important;
+    flex: 0 0 auto !important;
+    z-index: 121 !important;
+  }
+  html body .v21-workspace-shell .v21-laptop-menu-trigger {
+    min-height: 43px !important;
+    padding: 9px 13px !important;
+    border: 1px solid #c9d9ec !important;
+    border-radius: 11px !important;
+    background: #fff !important;
+    color: #174675 !important;
+    font-size: 12px !important;
+    font-weight: 800 !important;
+  }
+  html body .v21-workspace-shell .v21-laptop-menu-popover {
+    position: fixed !important;
+    top: auto !important;
+    right: 8px !important;
+    left: 8px !important;
+    z-index: 9999 !important;
+    max-height: 65dvh !important;
+    overflow: auto !important;
+    border: 1px solid #c6d8ea !important;
+    border-radius: 14px !important;
+    background: #fff !important;
+    box-shadow: 0 14px 35px rgb(16 47 88 / 22%) !important;
+  }
+  html body .v21-workspace-shell .v21-laptop-menu-popover button {
+    display: block !important;
+    width: 100% !important;
+    min-height: 46px !important;
+    padding: 11px 14px !important;
+    border-bottom: 1px solid #edf2f8 !important;
+    color: #1e4167 !important;
+    font-size: 13px !important;
+    text-align: right !important;
+  }
+
+  /* All current workspace modules stay one-tap reachable in a horizontal phone rail. */
+  html body .v21-workspace-shell .v21-module-icon-row {
+    display: flex !important;
+    flex: 0 0 auto !important;
+    flex-wrap: nowrap !important;
+    align-items: stretch !important;
+    gap: 8px !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    padding: 10px 2px 12px !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    border: 0 !important;
+    background: transparent !important;
+    overscroll-behavior-x: contain !important;
+    scrollbar-width: thin !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+  html body .v21-workspace-shell .v21-module-icon-row > button {
+    display: flex !important;
+    flex: 0 0 88px !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    align-items: center !important;
+    min-width: 88px !important;
+    min-height: 78px !important;
+    padding: 7px 5px !important;
+    border: 1px solid #d2e0f0 !important;
+    border-radius: 13px !important;
+    background: linear-gradient(145deg,#fff 0%,#f5f9ff 100%) !important;
+    color: #173f68 !important;
+    box-shadow: 0 3px 9px rgb(25 65 112 / 7%) !important;
+  }
+  html body .v21-workspace-shell .v21-module-icon-row > button.is-active {
+    border-color: #79afe5 !important;
+    background: linear-gradient(145deg,#e8f3ff 0%,#dcecff 100%) !important;
+  }
+  html body .v21-workspace-shell .v21-module-icon-row > button > span:first-child {
+    display: grid !important;
+    flex: 0 0 39px !important;
+    width: 39px !important;
+    height: 39px !important;
+    place-items: center !important;
+    border-radius: 12px !important;
+  }
+  html body .v21-workspace-shell .v21-module-icon-row > button > span:first-child svg {
+    width: 22px !important;
+    height: 22px !important;
+  }
+  html body .v21-workspace-shell .v21-module-icon-row > button > span:last-child {
+    display: block !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    margin-top: 4px !important;
+    font-size: 10px !important;
+    font-weight: 750 !important;
+    line-height: 1.35 !important;
+    white-space: normal !important;
+    overflow-wrap: anywhere !important;
+    text-align: center !important;
+  }
+
+  html body .v21-workspace-shell > div.flex.min-h-0 > main {
+    width: 100% !important;
+    min-width: 0 !important;
+    min-height: 48dvh !important;
+    overflow: visible !important;
+    padding: 12px 10px calc(24px + env(safe-area-inset-bottom)) !important;
+    background: linear-gradient(180deg,#f8fbff 0%,#eff5fc 100%) !important;
+  }
+  html body .v21-workspace-shell main > div.grid.gap-3 {
+    grid-template-columns: minmax(0,1fr) !important;
+    gap: 11px !important;
+  }
+  html body .v21-workspace-shell main > div.grid.grid-cols-2,
+  html body .v21-workspace-shell main > div.mb-3.grid.grid-cols-2 {
+    grid-template-columns: repeat(2,minmax(0,1fr)) !important;
+    gap: 8px !important;
+  }
+  html body .v21-workspace-shell main section {
+    min-width: 0 !important;
+    max-width: 100% !important;
+    padding: 11px !important;
+    border: 1px solid #d3e1f0 !important;
+    border-radius: 13px !important;
+    background: #fff !important;
+    box-shadow: 0 3px 12px rgb(26 65 112 / 6%) !important;
+  }
+  html body .v21-workspace-shell .v21-module-tile {
+    display: flex !important;
+    min-width: 0 !important;
+    min-height: 94px !important;
+    height: auto !important;
+    padding: 10px 7px !important;
+    border-radius: 13px !important;
+  }
+
+  /* Phone records expose every existing table column, not a reduced summary. */
+  html body .v21-data-table-desktop { display: none !important; }
+  html body .v21-data-table-mobile {
+    display: grid !important;
+    gap: 9px !important;
+    padding: 9px !important;
+    background: #f2f7fd !important;
+  }
+  html body .v21-data-table .v21-record-card {
+    display: block !important;
+    cursor: pointer !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    padding: 12px !important;
+    border: 1px solid #cddded !important;
+    border-radius: 13px !important;
+    background: linear-gradient(180deg,#fff 0%,#f9fbff 100%) !important;
+    color: #263f5d !important;
+    text-align: right !important;
+    box-shadow: 0 2px 8px rgb(25 65 112 / 6%) !important;
+  }
+  html body .v21-data-table .v21-record-card.is-selected,
+  html body .v21-data-table .v21-record-card[aria-pressed="true"] {
+    border-color: #4d91cf !important;
+    background: linear-gradient(180deg,#edf6ff 0%,#e2efff 100%) !important;
+    box-shadow: 0 0 0 2px rgb(59 130 196 / 12%) !important;
+  }
+  html body .v21-record-card-title {
+    padding-bottom: 8px !important;
+    border-color: #dce7f3 !important;
+    color: #173f68 !important;
+    line-height: 1.55 !important;
+  }
+  html body .v21-record-card-primary-label,
+  html body .v21-record-card-label {
+    color: #64778d !important;
+    font-size: 10px !important;
+    font-weight: 700 !important;
+  }
+  html body .v21-record-card-field {
+    min-width: 0 !important;
+    overflow-wrap: anywhere !important;
+  }
+  html body .v21-record-card-value {
+    color: #223e5e !important;
+    font-size: 12px !important;
+    font-weight: 700 !important;
+    line-height: 1.55 !important;
+  }
+  html body .v21-record-card-select {
+    padding-top: 8px !important;
+    border-top: 1px solid #e3ebf4 !important;
+    color: #2865a0 !important;
+  }
+
+  /* Consistent, readable forms and operation controls on narrow screens. */
+  html body .v21-workspace-shell main button,
+  html body .v21-workspace-shell main a[role="button"] {
+    min-height: 44px !important;
+    max-width: 100% !important;
+  }
+  html body .v21-workspace-shell main input,
+  html body .v21-workspace-shell main select,
+  html body .v21-workspace-shell main textarea {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-height: 46px !important;
+    font-size: 14px !important;
+  }
+  html body .v21-workspace-shell main textarea { min-height: 96px !important; }
+  html body .v21-workspace-shell main table { min-width: 640px !important; }
+  html body .v21-workspace-shell main :has(> table),
+  html body .v21-workspace-shell main .overflow-auto,
+  html body .v21-workspace-shell main .overflow-x-auto {
+    max-width: 100% !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+  html body .v21-workspace-shell .v21-mobile-bottom {
+    position: sticky !important;
+    bottom: 0 !important;
+    z-index: 130 !important;
+    display: grid !important;
+    grid-template-columns: repeat(4,minmax(0,1fr)) !important;
+    gap: 7px !important;
+    margin-top: auto !important;
+    padding: 9px 8px calc(9px + env(safe-area-inset-bottom)) !important;
+    border-top: 1px solid #cfdeee !important;
+    background: rgb(255 255 255 / 98%) !important;
+    box-shadow: 0 -5px 18px rgb(20 56 96 / 9%) !important;
+  }
+  html body .v21-workspace-shell .v21-mobile-bottom button {
+    min-width: 0 !important;
+    min-height: 53px !important;
+    padding: 6px 3px !important;
+    border: 1px solid #d0deed !important;
+    border-radius: 12px !important;
+    background: linear-gradient(180deg,#fff,#eff5fd) !important;
+    color: #1b4e83 !important;
+    font-size: 10px !important;
+    font-weight: 800 !important;
+  }
+  html body .v21-workspace-shell .v21-mobile-bottom button.is-current {
+    border-color: #75a9df !important;
+    background: linear-gradient(180deg,#e6f2ff,#d7e9ff) !important;
+    color: #104b88 !important;
+  }
+
+  /* The same form schema becomes a single-column bottom sheet, not a different form. */
+  html body .v21-workspace-root > .fixed.inset-0 {
+    align-items: flex-end !important;
+    padding: 0 !important;
+  }
+  html body .v21-workspace-root > .fixed.inset-0 > div {
+    width: 100% !important;
+    max-width: 100% !important;
+    max-height: 92dvh !important;
+    border: 0 !important;
+    border-radius: 18px 18px 0 0 !important;
+    overflow: auto !important;
+    padding-bottom: env(safe-area-inset-bottom) !important;
+  }
+  html body .v21-workspace-root > .fixed.inset-0 .grid.gap-3.p-4 {
+    grid-template-columns: minmax(0,1fr) !important;
+    padding: 14px !important;
+  }
+  html body .v21-workspace-shell > div.shrink-0.flex.items-center.justify-end {
+    position: sticky !important;
+    bottom: 62px !important;
+    z-index: 110 !important;
+    flex-wrap: wrap !important;
+    padding: 9px 10px !important;
+    background: #edf4fc !important;
+  }
+  html body .v21-workspace-shell footer { font-size: 10px !important; }
+}
+
+@media (max-width: 380px) {
+  html body .v21-workspace-shell .v21-module-icon-row > button {
+    flex-basis: 80px !important;
+    min-width: 80px !important;
+  }
+  html body .v21-data-table-mobile .v21-record-card .grid {
+    grid-template-columns: minmax(0,1fr) !important;
+  }
+  html body .v21-workspace-shell main > div.grid.grid-cols-2,
+  html body .v21-workspace-shell main > div.mb-3.grid.grid-cols-2 {
+    grid-template-columns: minmax(0,1fr) !important;
+  }
+}
+
+/* Route-level pages: keep module navigation reachable when the workspace is not open. */
+@media (min-width: 1024px) {
+  html body .v21-route-mobile-dock,
+  html body .v21-route-mobile-overlay { display: none !important; }
+  html body .v21-app-shell > div.min-w-0 > main {
+    min-width: 0 !important;
+    overflow-x: clip !important;
+  }
+  html body .v21-app-shell > div.min-w-0 > main > div {
+    min-width: 0 !important;
+    width: 100% !important;
+  }
+  html body .v21-app-shell aside.w-64 {
+    width: 264px !important;
+    flex-basis: 264px !important;
+    box-shadow: -6px 0 24px rgb(9 35 68 / 10%) !important;
+  }
+}
+
+@media (max-width: 1023px) {
+  html body .v21-app-shell {
+    display: flex !important;
+    flex-direction: column !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    min-height: 100dvh !important;
+    overflow-x: clip !important;
+  }
+  html body .v21-app-shell > div.min-w-0 {
+    display: flex !important;
+    flex: 1 1 auto !important;
+    flex-direction: column !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    min-height: 100dvh !important;
+  }
+  html body .v21-app-shell > div.min-w-0 > header {
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 70 !important;
+    min-height: 58px !important;
+    padding-top: max(9px,env(safe-area-inset-top)) !important;
+    background: linear-gradient(110deg,#fff 0%,#edf4fd 100%) !important;
+  }
+  html body .v21-app-shell > div.min-w-0 > main {
+    flex: 1 0 auto !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    padding: 12px 12px calc(88px + env(safe-area-inset-bottom)) !important;
+    overflow-x: clip !important;
+  }
+  html body .v21-app-shell > div.min-w-0 > main > div {
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+  html body .v21-app-shell main form.max-w-md,
+  html body .v21-app-shell main form[class*="max-w-"] {
+    width: 100% !important;
+    max-width: 760px !important;
+    margin-inline: auto !important;
+  }
+  html body .v21-app-shell main input,
+  html body .v21-app-shell main select,
+  html body .v21-app-shell main textarea {
+    min-width: 0 !important;
+    max-width: 100% !important;
+    min-height: 44px !important;
+  }
+  html body .v21-app-shell main :has(> table),
+  html body .v21-app-shell main .overflow-x-auto,
+  html body .v21-app-shell main .overflow-auto {
+    max-width: 100% !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+  html body .v21-app-shell main table {
+    min-width: 620px;
+  }
+  html body .v21-route-mobile-dock {
+    position: fixed !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    z-index: 125 !important;
+    display: grid !important;
+    grid-template-columns: repeat(4,minmax(0,1fr)) !important;
+    gap: 6px !important;
+    width: 100% !important;
+    padding: 8px 8px calc(8px + env(safe-area-inset-bottom)) !important;
+    border-top: 1px solid #cbd9e8 !important;
+    background: rgb(255 255 255 / 97%) !important;
+    box-shadow: 0 -5px 18px rgb(20 56 96 / 9%) !important;
+    backdrop-filter: blur(14px);
+  }
+  html body .v21-route-mobile-dock > a,
+  html body .v21-route-mobile-dock > div,
+  html body .v21-route-mobile-dock > button {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 4px !important;
+    min-width: 0 !important;
+    min-height: 58px !important;
+    padding: 5px 3px !important;
+    border: 1px solid #d5e1ee !important;
+    border-radius: 11px !important;
+    background: linear-gradient(180deg,#fff,#f1f6fd) !important;
+    color: #1b4e83 !important;
+    text-align: center !important;
+    box-shadow: 0 1px 4px rgb(25 65 112 / 6%) !important;
+  }
+  html body .v21-route-mobile-dock svg {
+    width: 19px !important;
+    height: 19px !important;
+  }
+  html body .v21-route-mobile-dock span {
+    font-size: 10px !important;
+    font-weight: 800 !important;
+    line-height: 1.3 !important;
+  }
+  html body .v21-route-mobile-overlay {
+    position: fixed !important;
+    inset: 0 !important;
+    z-index: 220 !important;
+    display: flex !important;
+    align-items: flex-end !important;
+    justify-content: center !important;
+    padding: 0 !important;
+    background: rgb(8 25 45 / 55%) !important;
+    backdrop-filter: blur(3px);
+  }
+  html body .v21-route-mobile-sheet {
+    display: flex !important;
+    flex-direction: column !important;
+    width: 100% !important;
+    max-width: 760px !important;
+    max-height: 90dvh !important;
+    overflow: hidden !important;
+    border: 1px solid #cbd9e8 !important;
+    border-radius: 20px 20px 0 0 !important;
+    background: #f5f9ff !important;
+    box-shadow: 0 -12px 40px rgb(8 25 45 / 24%) !important;
+    padding-bottom: env(safe-area-inset-bottom) !important;
+  }
+  html body .v21-route-mobile-sheet > header {
+    flex: 0 0 auto !important;
+    background: #fff !important;
+  }
+  html body .v21-route-mobile-groups {
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    overflow-y: auto !important;
+    padding: 12px !important;
+    overscroll-behavior: contain;
+  }
+  html body .v21-route-mobile-group {
+    margin-bottom: 13px !important;
+    padding: 10px !important;
+    border: 1px solid #d7e3f0 !important;
+    border-radius: 13px !important;
+    background: #fff !important;
+  }
+  html body .v21-route-mobile-group > h2 {
+    margin-bottom: 9px !important;
+    padding-bottom: 7px !important;
+    border-bottom: 1px solid #e3ebf4 !important;
+    color: #204d78 !important;
+    font-size: 12px !important;
+    font-weight: 850 !important;
+  }
+  html body .v21-route-mobile-group > div {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fit,minmax(100px,1fr)) !important;
+    gap: 8px !important;
+  }
+  html body .v21-route-mobile-group a,
+  html body .v21-route-mobile-group > div > div {
+    min-width: 0 !important;
+    min-height: 70px !important;
+    border-radius: 11px !important;
+    border-color: #d7e3f0 !important;
+    background: #f8fbff !important;
+    color: #294d70 !important;
+  }
+  html body .v21-route-mobile-group a[aria-current="page"] {
+    border-color: #7daee0 !important;
+    background: #e6f2ff !important;
+    color: #104b88 !important;
+  }
+}
+
+@media (max-width: 480px) {
+  html body .v21-app-shell > div.min-w-0 > main {
+    padding: 9px 8px calc(88px + env(safe-area-inset-bottom)) !important;
+  }
+  html body .v21-route-mobile-groups { padding: 9px !important; }
+  html body .v21-route-mobile-group > div {
+    grid-template-columns: repeat(2,minmax(0,1fr)) !important;
+  }
+}

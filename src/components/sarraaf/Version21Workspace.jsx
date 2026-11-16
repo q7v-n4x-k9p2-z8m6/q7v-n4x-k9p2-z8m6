@@ -80,7 +80,26 @@ function Field({field,value,onChange,choices}) {
  <input type={type==='number'?'number':type==='date'?'date':'text'} value={value??''} onChange={e=>onChange(key,e.target.value)} className="h-9 w-full border border-slate-300 bg-white px-2 text-xs" />}</label>;
 }
 function DataTable({columns,rows,onSelect,selected}) {
- return <div className="v21-data-table overflow-auto rounded-xl border border-[#cbd9e8] bg-white shadow-sm"><table className="w-full min-w-[760px] border-collapse text-right text-xs"><thead className="sticky top-0 bg-gradient-to-l from-[#164b87] to-[#2767a5] text-white"><tr>{columns.map(c=><th key={c.key} className="border-l border-white/15 px-3 py-3 font-bold">{c.label}</th>)}</tr></thead><tbody>{rows.map((r,i)=><tr key={r.id||i} onClick={()=>onSelect(r)} className={'cursor-pointer transition-colors '+(selected?.id===r.id?'bg-blue-100':i%2?'bg-[#f7faff]':'bg-white')+' hover:bg-blue-50'}>{columns.map(c=><td key={c.key} className="whitespace-nowrap border-b border-[#e5edf5] px-3 py-3 text-[#263c55]">{c.render?c.render(r):String(r[c.key]??'—')}</td>)}</tr>)}</tbody></table>{!rows.length&&<div className="p-10 text-center text-sm text-slate-500">موردی برای نمایش وجود ندارد.</div>}</div>;
+ const renderValue=(column,row)=>column.render?column.render(row):String(row[column.key]??'—');
+ if(!rows.length)return <div className="v21-data-table rounded-xl border border-[#cbd9e8] bg-white p-10 text-center text-sm text-slate-500">موردی برای نمایش وجود ندارد.</div>;
+ return <div className="v21-data-table rounded-xl border border-[#cbd9e8] bg-white shadow-sm">
+  <div className="v21-data-table-desktop overflow-auto">
+   <table className="w-full min-w-[760px] border-collapse text-right text-xs">
+    <thead className="sticky top-0 bg-gradient-to-l from-[#164b87] to-[#2767a5] text-white"><tr>{columns.map(c=><th key={c.key} className="border-l border-white/15 px-3 py-3 font-bold">{c.label}</th>)}</tr></thead>
+    <tbody>{rows.map((r,i)=><tr key={r.id||i} onClick={()=>onSelect(r)} className={'cursor-pointer transition-colors '+(selected?.id===r.id?'bg-blue-100':i%2?'bg-[#f7faff]':'bg-white')+' hover:bg-blue-50'}>{columns.map(c=><td key={c.key} className="whitespace-nowrap border-b border-[#e5edf5] px-3 py-3 text-[#263c55]">{renderValue(c,r)}</td>)}</tr>)}</tbody>
+   </table>
+  </div>
+  <div className="v21-data-table-mobile">
+   {rows.map((r,i)=><div role="button" tabIndex={0} key={r.id||i} onClick={()=>onSelect(r)} onKeyDown={event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();onSelect(r);}}} aria-pressed={Boolean(selected&&selected.id===r.id)} className={'v21-record-card w-full rounded-xl border p-3 text-right transition '+(selected?.id===r.id?'is-selected':'')}>
+    <div className="v21-record-card-title block border-b pb-2 text-sm font-extrabold">{columns[0]?renderValue(columns[0],r):'رکورد '+(i+1)}</div>
+    {columns[0]&&<span className="v21-record-card-primary-label block pt-1 text-[10px]">{columns[0].label}</span>}
+    <div className="mt-2 grid grid-cols-2 gap-x-3 gap-y-2 text-xs">
+     {columns.slice(1).map(c=><div key={c.key} className="v21-record-card-field flex min-w-0 flex-col gap-1"><span className="v21-record-card-label">{c.label}</span><div className="v21-record-card-value break-words">{renderValue(c,r)}</div></div>)}
+    </div>
+    <span className="v21-record-card-select mt-3 block text-[10px] font-bold">برای مشاهده و عملیات، انتخاب کنید</span>
+   </div>)}
+  </div>
+ </div>;
 }
 const MODULE_TONES = {
  home:'from-blue-700 to-indigo-700', customers:'from-sky-600 to-blue-700', customerLedger:'from-emerald-600 to-teal-700',
@@ -505,7 +524,12 @@ export default function Version21Workspace(){
     <div className="flex gap-2 overflow-x-auto pb-1">{accountBookTotals().map(x=><div key={x.currency} className="v21-ledger-summary-card min-w-[250px] flex-1 rounded-xl border border-[#d3deeb] bg-white p-3 text-right shadow-sm"><b className="mb-2 block text-xs font-extrabold text-[#1e4776]" dir="ltr">{x.currency}</b><div className="grid grid-cols-3 gap-2"><div className="rounded-lg bg-rose-50 p-2"><span className="block text-[10px] font-semibold text-rose-700">جمع بدهکار</span><b className="text-xs tabular-nums text-rose-800">{fmt(x.debit)}</b></div><div className="rounded-lg bg-emerald-50 p-2"><span className="block text-[10px] font-semibold text-emerald-700">جمع بستانکار</span><b className="text-xs tabular-nums text-emerald-800">{fmt(x.credit)}</b></div><div className="rounded-lg bg-blue-50 p-2"><span className="block text-[10px] font-semibold text-blue-700">{x.net>0?'مانده بدهکار':x.net<0?'مانده بستانکار':'تراز'}</span><b className="text-xs tabular-nums text-blue-800">{fmt(Math.abs(x.net))}</b></div></div></div>)}</div>
    </div>}
    <div className="shrink-0 flex items-center justify-end gap-2 border-t border-slate-400 bg-[#dfe5ea] px-3 py-2"><button onClick={printPage} className="flex items-center gap-1 border border-slate-400 bg-white px-3 py-2 text-[10px]"><Printer className="h-4 w-4 text-[#315d7d]"/>چاپ</button></div>
-   <nav className="v21-mobile-bottom" aria-label="دسترسی سریع موبایل"><button onClick={()=>setActive('home')}>مرکز عملیات</button><button onClick={()=>setActive('customers')}>مشتریان</button><button onClick={()=>setActive('cash')}>صندوق</button><button onClick={()=>setShowWorkspace(true)}>همه امکانات</button></nav>
+   <nav className="v21-mobile-bottom" aria-label="دسترسی سریع موبایل">
+    <button type="button" className={active==='home'?'is-current':''} onClick={()=>{setActive('home');setSelected(null);setCustomerDetail(null);setBranchDetail(null);setQuery('');}} aria-label="مرکز عملیات"><Home className="h-5 w-5"/><span>مرکز</span></button>
+    <button type="button" className={active==='customers'?'is-current':''} onClick={()=>{setActive('customers');setSelected(null);setCustomerDetail(null);setBranchDetail(null);setQuery('');}} aria-label="مشتریان"><Users className="h-5 w-5"/><span>مشتریان</span></button>
+    <button type="button" className={active==='cash'?'is-current':''} onClick={()=>{setActive('cash');setSelected(null);setCustomerDetail(null);setBranchDetail(null);setQuery('');}} aria-label="صندوق"><Wallet className="h-5 w-5"/><span>صندوق</span></button>
+    <button type="button" onClick={()=>setShowWorkspace(true)} aria-label="همه امکانات"><MoreHorizontal className="h-5 w-5"/><span>همه امکانات</span></button>
+   </nav>
    <footer className="shrink-0 border-t border-slate-400 bg-[#dfe5ea] px-3 py-2 text-center text-[9px] text-slate-600">حساب صراف</footer>
   </section>
   {showWorkspace&&<div className="fixed inset-0 z-[90] flex items-center justify-center bg-black/45 p-3"><div className="max-h-[85vh] w-full max-w-4xl overflow-auto border-2 border-slate-600 bg-[#f7f9fb] shadow-2xl"><div className="sticky top-0 flex items-center justify-between bg-gradient-to-b from-[#386b91] to-[#17466c] px-3 py-2 text-white"><b className="text-xs">سایر امکانات برنامه</b><button onClick={()=>setShowWorkspace(false)}><X className="h-4 w-4"/></button></div><div className="space-y-3 p-3">
