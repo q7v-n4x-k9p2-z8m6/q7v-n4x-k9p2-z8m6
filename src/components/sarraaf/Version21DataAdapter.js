@@ -375,11 +375,15 @@ export async function loadVersion21Database() {
   const mappedExpenses = documents
     .filter(row => !row.deleted && /expense|cost|masraf|مصرف/i.test(String(row.doc_type || '') + ' ' + String(row.description || '')))
     .map(row => {
-      const cashLine = activeLedgerEntries.find(line => String(line.document_id || '') === String(row.id) && line.account_type === 'cash');
+      const documentLines = activeLedgerEntries.filter(line => String(line.document_id || '') === String(row.id));
+      const cashLine = documentLines.find(line => line.account_type === 'cash');
+      const expenseLine = documentLines.find(line => line.account_type === 'suspense' && line.account_id && chartAccountById.has(String(line.account_id)));
+      const expenseChartAccount = expenseLine ? chartAccountById.get(String(expenseLine.account_id)) : null;
       return {
         id: String(row.id), documentId: String(row.id),
         date: dateOnly(row.created_at),
         title: row.description || documentTypeLabel(row.doc_type),
+        expenseAccount: expenseChartAccount ? expenseChartAccount.account_code + ' — ' + expenseChartAccount.account_name : '',
         currency: row.currency || 'AFN',
         amount: num(row.amount),
         cash: cashLine ? (safeById.get(String(cashLine.account_id || ''))?.name || cashLine.account_name || '') : '',
