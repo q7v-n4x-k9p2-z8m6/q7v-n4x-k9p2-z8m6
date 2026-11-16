@@ -246,7 +246,7 @@ export function getAllowedDashboardLinks(role, allLinks) {
   if (allowed === 'all') return allLinks;
   return allLinks.filter(link => {
     const key = link.path.replace('/', '').replace(/-/g, '_');
-    return allowed.includes(key);
+    return Array.isArray(allowed) && allowed.includes(key);
   });
 }
 
