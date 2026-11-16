@@ -324,9 +324,19 @@ export default function Version21Workspace(){
    {key:'credit',label:'بستانکار',render:r=>fmt(n(r.amount)>0?n(r.amount):0)},{key:'currency',label:'ارز'},{key:'status',label:'وضعیت سند'}
   ];
   const fields=SCHEMAS[mod]?.fields||[];
+  if(mod==='accounts')return [
+   {key:'code',label:'کد حساب'},
+   {key:'name',label:'نام حساب'},
+   {key:'accountType',label:'نوع حساب',render:r=>({asset:'دارایی',liability:'بدهی',equity:'سرمایه',revenue:'درآمد',expense:'مصرف'}[r.accountType]||r.accountType)},
+   {key:'level',label:'سطح'},
+   {key:'parentId',label:'حساب مادر',render:r=>data.accounts.find(a=>String(a.id)===String(r.parentId))?.code||'—'},
+   {key:'balance',label:'مانده دفتر کل',render:r=><div className="flex flex-wrap gap-1">{(r.balanceByCurrency||[]).map(x=><span key={x.currency} className="rounded bg-slate-100 px-2 py-1 text-[10px]">{fmt(Math.abs(x.balance))} {x.currency} · {x.balance<0?'بستانکار':'بدهکار'}</span>)}</div>},
+   {key:'nature',label:'ماهیت'},
+   {key:'status',label:'وضعیت'}
+  ];
   if(mod==='remittance')return [{key:'date',label:'تاریخ'},{key:'number',label:'شماره حواله'},{key:'direction',label:'جهت'},{key:'sender',label:'فرستنده'},{key:'receiver',label:'گیرنده'},{key:'amount',label:'مبلغ',render:r=>fmt(r.amount)},{key:'fee',label:'کمیشن',render:r=>fmt(r.fee)},{key:'total',label:'جمع کل',render:r=>fmt(r.total)},{key:'currency',label:'ارز'},{key:'status',label:'وضعیت حواله'},{key:'accountingStatus',label:'وضعیت سند'}];
   if(mod==='exchange')return [{key:'date',label:'تاریخ'},{key:'fromCurrency',label:'ارز مبدا'},{key:'fromAmount',label:'مبلغ مبدا',render:r=>fmt(r.fromAmount)},{key:'toCurrency',label:'ارز مقصد'},{key:'toAmount',label:'مبلغ مقصد',render:r=>fmt(r.toAmount)},{key:'rate',label:'نرخ'},{key:'party',label:'طرف حساب'},{key:'accountingStatus',label:'وضعیت سند'}];
-  if(mod==='expenses')return [{key:'date',label:'تاریخ'},{key:'title',label:'شرح مصرف'},{key:'cash',label:'صندوق'},{key:'amount',label:'مبلغ',render:r=>fmt(r.amount)},{key:'currency',label:'ارز'},{key:'status',label:'وضعیت سند'}];
+  if(mod==='expenses')return [{key:'date',label:'تاریخ'},{key:'title',label:'شرح مصرف'},{key:'expenseAccount',label:'حساب مصرف'},{key:'cash',label:'صندوق'},{key:'amount',label:'مبلغ',render:r=>fmt(r.amount)},{key:'currency',label:'ارز'},{key:'status',label:'وضعیت سند'}];
   if(mod==='cash')return [{key:'code',label:'کد صندوق'},{key:'name',label:'نام صندوق'},{key:'currency',label:'ارز'},{key:'opening',label:'مانده افتتاحیه',render:r=>fmt(r.opening)},{key:'balance',label:'موجودی فعلی',render:r=>fmt(balanceFor(r.currency,r.name))},{key:'status',label:'وضعیت'},{key:'description',label:'توضیحات'}];
   if(mod==='journal')return [{key:'date',label:'تاریخ'},{key:'number',label:'شماره سند'},{key:'description',label:'شرح'},{key:'debitAccount',label:'بدهکار'},{key:'creditAccount',label:'بستانکار'},{key:'currency',label:'ارز'},{key:'amount',label:'مبلغ',render:r=>fmt(r.amount)},{key:'status',label:'وضعیت'}];
   if(mod==='ledger')return [{key:'date',label:'تاریخ'},{key:'number',label:'شماره سند'},{key:'account',label:'حساب'},{key:'description',label:'شرح'},{key:'debit',label:'بدهکار',render:r=>fmt(r.debit)},{key:'credit',label:'بستانکار',render:r=>fmt(r.credit)},{key:'currency',label:'ارز'},{key:'status',label:'وضعیت'}];
