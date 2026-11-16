@@ -93,7 +93,7 @@ const MODULE_FEATURE_KEYS = {
   market: 'sarraaf_market', sarraafChat: 'sarraaf_chat', multiCompany: 'multi_company',
   reports: 'reports', onlineProducts: 'online_products', support: 'support',
   assistant: 'assistant', settings: 'settings', paymentGateway: 'payment_gateway',
-  auditLog: 'audit_log', documents: 'documents', approvals: 'approvals', kyc: 'kyc',
+  auditLog: 'audit_log', documents: 'document_center', approvals: 'approvals', kyc: 'kyc',
   compliance: 'compliance', backup: 'backup', notifications: 'notifications',
 };
 
