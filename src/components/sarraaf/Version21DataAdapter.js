@@ -56,15 +56,17 @@ export async function loadVersion21Database() {
     throw new Error('برای مشاهده اطلاعات، با حساب همان صراف وارد نسخه ۲۱ شوید.');
   }
 
-  // Validate that the signed-in user owns this exact exchange before loading any tenant data.
+  // Resolve the tenant from the exchange code carried by the signed session.
+  // Do not require owner_user_id here: authorized employees also use the same
+  // exchange tenant. Every tenant table read below is still constrained by
+  // exchange_code and Supabase RLS validates that it matches the signed app_ec().
   const { data: exchange, error: exchangeError } = await supabase
     .from('exchanges')
     .select('id, owner_user_id, exchange_code, exchange_name')
-    .eq('owner_user_id', userId)
     .eq('exchange_code', exchangeCode)
     .maybeSingle();
   if (exchangeError) throw new Error(`تأیید حساب صراف ناموفق بود: ${exchangeError.message}`);
-  if (!exchange) throw new Error('حساب صراف با نشست فعلی مطابقت ندارد؛ برای امنیت، داده‌ای بارگذاری نشد.');
+  if (!exchange) throw new Error('حساب صراف در نشست فعلی پیدا نشد؛ برای امنیت، داده‌ای بارگذاری نشد.');
 
   const [
     customers, safes, origins, bankAccounts, rates, chartAccounts,
