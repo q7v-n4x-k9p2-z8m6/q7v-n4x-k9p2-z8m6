@@ -192,7 +192,7 @@ export default function Version21Home() {
           <div>
             <h2 className="mb-2 text-xs font-bold text-[#24496d]">دسترسی سریع حسابداری</h2>
             <div className="grid grid-cols-2 gap-2">
-              {ACCOUNTING_SHORTCUTS.filter(item => item.roles.includes(role)).map(item => {
+              {ACCOUNTING_SHORTCUTS.filter(item => !Array.isArray(item.roles) || item.roles.includes(role)).map(item => {
                 const Icon = item.icon;
                 const content = <><Icon className="h-4 w-4" /><span>{item.label}</span></>;
                 return item.pending
