@@ -140,10 +140,10 @@ export default function Dashboard() {
         onClick={(e) => e.stopPropagation()}
         className={`${desktop ? 'flex items-center gap-2 p-2 min-h-10 text-right' : 'flex flex-col items-center gap-1 p-1.5'} rounded-lg bg-card border transition-colors relative group ${showTrialBadge ? 'border-purple-300 dark:border-purple-800 ring-1 ring-purple-200 dark:ring-purple-900/50' : 'border-border hover:border-primary/30 hover:shadow-card-hover'}`}
       >
-        <div className={`w-8 h-8 shrink-0 rounded-lg bg-gradient-to-br ${link.gradient} flex items-center justify-center shadow-sm ${isUpdating ? 'opacity-50' : ''} group-hover:scale-105 transition-transform`}>
-          <Icon className="w-4 h-4 text-white" strokeWidth={2.2} />
+        <div className={`w-11 h-11 shrink-0 rounded-xl bg-gradient-to-br ${link.gradient || 'from-blue-600 to-blue-700'} border border-white/70 flex items-center justify-center shadow-md ${isUpdating ? 'opacity-50' : ''} group-hover:scale-105 transition-transform`}>
+          <Icon className="w-5 h-5 text-white" strokeWidth={2.2} />
         </div>
-        <span className={desktop ? 'text-sm font-medium text-foreground' : 'text-[9px] font-medium text-center leading-tight text-foreground'}>{link.label}</span>
+        <span className={desktop ? 'text-sm font-medium text-foreground' : 'text-[11px] font-semibold text-center leading-tight text-foreground'}>{link.label}</span>
         {isUpdating && (
           <span className="absolute -top-1 -left-1 px-1 py-0.5 rounded-full bg-amber-100 text-amber-700 text-[8px] font-bold">
             به‌روزرسانی
@@ -179,6 +179,7 @@ export default function Dashboard() {
           bankLoading={bankLoading}
           debtorCount={debtorStats.debtors}
           plan={plan}
+          links={[...visiblePrimaryLinks, ...visibleSecondaryLinks]}
         />
       </div>
 
