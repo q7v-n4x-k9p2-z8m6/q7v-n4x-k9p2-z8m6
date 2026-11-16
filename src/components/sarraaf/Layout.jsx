@@ -169,26 +169,26 @@ export default function Layout() {
   return (
     <TermsGate role={userRole}>
     <ForceUpdateGate>
-    <div className="min-h-screen bg-background flex">
+    <div className="min-h-screen bg-background flex flex-col">
       {/* Structured workspace navigation; mobile navigation below is unchanged. */}
-      <aside className="hidden md:flex w-56 lg:w-60 xl:w-64 sticky top-0 h-screen flex-col bg-slate-800 text-slate-100 shrink-0 print:hidden">
+      <aside className="hidden md:flex w-full shrink-0 flex-col bg-[#123f78] text-slate-100 print:hidden">
         {/* Brand header */}
-        <div className="px-4 py-4 border-b border-white/10 flex items-center gap-2.5">
+        <div className="px-4 py-3 border-b border-white/10 flex items-center gap-2.5">
           <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center shrink-0 shadow-md">
             <ArrowLeftRight className="w-5 h-5 text-white" strokeWidth={2.2} />
           </div>
           <div className="min-w-0">
-            <p className="text-sm font-bold text-white truncate">حساب صراف</p>
+            <p className="text-base font-bold text-white truncate">حساب صراف</p>
             <p className="text-[11px] text-slate-400 truncate">{profile?.exchange_name || 'مدیریت صرافی'}</p>
           </div>
         </div>
         {/* Navigation */}
         <WorkspaceNavigation key={location.pathname} items={desktopItems} />
         {/* Sidebar footer */}
-        <div className="px-3 py-2 border-t border-white/10 flex items-center justify-between gap-2">
+        <div className="hidden px-3 py-2 border-t border-white/10 items-center justify-between gap-2">
           <SyncIndicator compact />
         </div>
-        <Link to="/support" className="mx-3 mb-3 flex items-center gap-2 rounded-lg bg-slate-700/50 hover:bg-slate-700 px-3 py-2.5 text-xs text-slate-300 hover:text-white transition-colors">
+        <Link to="/support" className="hidden mx-3 mb-3 items-center gap-2 rounded-lg bg-slate-700/50 hover:bg-slate-700 px-3 py-2.5 text-xs text-slate-300 hover:text-white transition-colors">
           <Headphones className="w-4 h-4 shrink-0" />
           <span>پشتیبانی آنلاین</span>
         </Link>
