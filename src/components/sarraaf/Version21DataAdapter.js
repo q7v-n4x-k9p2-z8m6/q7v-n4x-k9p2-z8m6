@@ -203,19 +203,36 @@ export async function loadVersion21Database() {
     _sourceTable: 'rates',
   }));
 
-  const mappedAccounts = chartAccounts.map(row => ({
-    ...row,
-    id: String(row.id),
-    code: row.account_code || '',
-    name: row.account_name || '',
-    level: row.parent_id ? 'معین' : 'کل',
-    parentId: row.parent_id ? String(row.parent_id) : '',
-    accountType: row.account_type || '',
-    nature: row.normal_balance === 'credit' ? 'بستانکار' : 'بدهکار',
-    status: row.is_active === false ? 'غیرفعال' : 'فعال',
-    description: row.description || '',
-    _sourceTable: 'chart_of_accounts',
-  }));
+  const mappedAccounts = chartAccounts.map(row => {
+    const accountLines = activeLedgerEntries.filter(line =>
+      String(line.account_id || '') === String(row.id) &&
+      !documentsById.get(String(line.document_id || ''))?.deleted
+    );
+    const balanceMap = new Map();
+    accountLines.forEach(line => {
+      const currency = String(line.currency || row.currency || 'AFN');
+      const total = balanceMap.get(currency) || { currency, debit: 0, credit: 0, balance: 0, lineCount: 0 };
+      total.debit += num(line.debit);
+      total.credit += num(line.credit);
+      total.balance = row.normal_balance === 'credit' ? total.credit - total.debit : total.debit - total.credit;
+      total.lineCount += 1;
+      balanceMap.set(currency, total);
+    });
+    return {
+      ...row,
+      id: String(row.id),
+      code: row.account_code || '',
+      name: row.account_name || '',
+      level: row.parent_id ? 'معین' : 'کل',
+      parentId: row.parent_id ? String(row.parent_id) : '',
+      accountType: row.account_type || '',
+      nature: row.normal_balance === 'credit' ? 'بستانکار' : 'بدهکار',
+      status: row.is_active === false ? 'غیرفعال' : 'فعال',
+      balanceByCurrency: [...balanceMap.values()].sort((a, b) => a.currency.localeCompare(b.currency)),
+      description: row.description || '',
+      _sourceTable: 'chart_of_accounts',
+    };
+  });
 
   const mappedTransfers = transfers.map(row => ({
     ...row,
