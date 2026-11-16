@@ -166,6 +166,7 @@ export default function Dashboard() {
           bankLoading={bankLoading}
           debtorCount={debtorStats.debtors}
           plan={plan}
+          links={[...primaryLinks, ...secondaryLinks]}
         />
       </div>
 
