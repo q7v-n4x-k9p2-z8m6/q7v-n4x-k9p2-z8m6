@@ -119,7 +119,7 @@ export default function Version21Workspace(){
  const [showWorkspace,setShowWorkspace]=useState(false);
  const [customerDetail,setCustomerDetail]=useState(null);
  const [branchDetail,setBranchDetail]=useState(null);
- const permissionSectionByModule={home:'dashboard',customers:'customers',customerLedger:'accounts_receivable',branches:'agents',branchLedger:'agents',cash:'cash',banks:'bank',exchange:'trade',remittance:'transfers',expenses:'cash',journal:'journal',ledger:'general_ledger',accounts:'chart_of_accounts',currencies:'currencies',reports:'reports',profit:'profit_loss',activity:'audit_log',errors:'audit_log',balance:'balance_sheet',sarraafGroups:'chat_groups',assistant:'assistant',products:'online_products',language:'settings'};
+ const permissionSectionByModule={home:'dashboard',customers:'customers',customerLedger:'accounts_receivable',transactions:'accounts_receivable',branches:'agents',branchLedger:'agents',cash:'cash',cashAction:'cash',banks:'bank',exchange:'trade',remittance:'transfers',expenses:'cash',journal:'journal',ledger:'general_ledger',accounts:'chart_of_accounts',currencies:'currencies',reports:'reports',profit:'profit_loss',activity:'audit_log',errors:'audit_log',balance:'balance_sheet',sarraafGroups:'chat_groups',assistant:'assistant',products:'online_products',language:'settings'};
  const isEmployee=data.role==='employee';
  const canViewModule=id=>!isEmployee||hasPermission(data.permissions,permissionSectionByModule[id],'view');
  const canModuleAction=(id,action)=>!isEmployee||hasPermission(data.permissions,permissionSectionByModule[id]||permissionSectionByModule[id==='cashAction'?'cash':id],action);
@@ -196,7 +196,7 @@ export default function Version21Workspace(){
   if(!SCHEMAS[mod]){notify('ویرایش مستقیم این گزارش ممکن نیست؛ رکورد اصلی را از بخش مربوط باز کنید.');return;}
   setDraft({...selected,...(['ledger','journal'].includes(active)?{id:selected.documentId}: {})});setModal(mod);
  };
- const cashAction=kind=>{const first=data.cash.find(x=>x.currency==='AFN')||data.cash[0];setDraft({date:today(),kind,amount:'',currency:first?.currency||'AFN',cash:first?.name||'',party:'',partyType:'customer',description:''});setModal('cashAction');};
+ const cashAction=kind=>{if(!canModuleAction('cash','create')){notify('مجوز ثبت گردش صندوق برای حساب شما فعال نیست.');return;}const first=data.cash.find(x=>x.currency==='AFN')||data.cash[0];setDraft({date:today(),kind,amount:'',currency:first?.currency||'AFN',cash:first?.name||'',party:'',partyType:'customer',description:''});setModal('cashAction');};
  const saveCashAction=async()=>{
   if(saving)return;
   if(!canModuleAction('cash','create')){notify('مجوز ثبت گردش صندوق برای حساب شما فعال نیست.');return;}
