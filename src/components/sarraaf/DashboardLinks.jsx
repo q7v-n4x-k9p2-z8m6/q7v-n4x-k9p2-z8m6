@@ -103,7 +103,7 @@ export default function DashboardLinks({
       {/* Primary Grid — 3 columns mobile, 6 columns desktop */}
       <Droppable droppableId="main">
         {(provided) => (
-          <div ref={provided.innerRef} {...provided.droppableProps} className="grid grid-cols-3 lg:grid-cols-6 xl:grid-cols-8 2xl:grid-cols-10 gap-2 lg:gap-3 xl:gap-4 mb-3">
+          <div ref={provided.innerRef} {...provided.droppableProps} className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 xl:grid-cols-8 2xl:grid-cols-10 gap-2 lg:gap-3 xl:gap-4 mb-3">
             {primaryItems.map((item, index) => renderItem(item, index))}
             {provided.placeholder}
           </div>
@@ -139,7 +139,7 @@ export default function DashboardLinks({
       {moreOpen && secondaryItems.length > 0 && (
         <Droppable droppableId="main-secondary">
           {(provided) => (
-            <div ref={provided.innerRef} {...provided.droppableProps} className="grid grid-cols-3 lg:grid-cols-6 xl:grid-cols-8 2xl:grid-cols-10 gap-2 lg:gap-3 xl:gap-4 mb-3">
+            <div ref={provided.innerRef} {...provided.droppableProps} className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 xl:grid-cols-8 2xl:grid-cols-10 gap-2 lg:gap-3 xl:gap-4 mb-3">
               {secondaryItems.map((item, index) => renderItem(item, index))}
               {provided.placeholder}
             </div>
