@@ -113,6 +113,14 @@ async function getSafe(ctx, name, currency) {
   return data;
 }
 
+async function getBranch(ctx, name) {
+  if (!name) return null;
+  const { data, error } = await supabase.from('origins').select('id,name')
+    .eq('exchange_code', ctx.exchangeCode).eq('name', name).maybeSingle();
+  if (error) throw error;
+  return data || null;
+}
+
 async function getCustomer(ctx, name) {
   if (!name) return null;
   const { data, error } = await supabase.from('customers').select('id,name,mobile')
@@ -195,6 +203,8 @@ export async function saveVersion21Record(module, draft) {
     if (!draft.sender || !draft.receiver || number(draft.amount) <= 0) throw new Error('فرستنده، گیرنده و مبلغ مثبت الزامی است.');
     if (draft.id) throw new Error('برای اصلاح حواله ثبت‌شده، ابتدا باید گردش آن معکوس و حواله اصلاحی صادر شود؛ ویرایش مستقیم حواله مالی مجاز نیست.');
     const customer = await getCustomer(ctx, draft.sender || draft.receiver);
+    const branch = await getBranch(ctx, draft.branch);
+    const operationId = makeOperationId();
     const { data, error } = await supabase.rpc('post_transfer_transaction_v2', {
       p_exchange_code: ctx.exchangeCode,
       p_direction: draft.direction === 'دریافتی' ? 'receive' : 'send',
@@ -207,20 +217,38 @@ export async function saveVersion21Record(module, draft) {
       p_amount: number(draft.amount),
       p_currency: draft.currency || 'AFN',
       p_rate: number(draft.rate) || null,
-      p_fee: number(draft.fee),
+      p_fee: 0,
       p_fee_currency: draft.currency || 'AFN',
       p_description: draft.note || `حواله ${draft.direction}`,
       p_registered_by: ctx.userName,
       p_doc_type: 'transfer',
       p_user_id: ctx.userId,
-      p_client_operation_id: makeOperationId(),
+      p_client_operation_id: operationId,
       p_customer_id: customer?.id || null,
-      p_agent_id: null,
+      p_agent_id: branch?.id || null,
     });
     if (error) throw error;
+    let warning = '';
+    if (number(draft.fee) > 0) {
+      const feeAmount = number(draft.fee);
+      const { error: transferFeeError } = await supabase.from('transfers').update({ fee: feeAmount, fee_currency: draft.currency || 'AFN' })
+        .eq('id', data.transfer_id).eq('exchange_code', ctx.exchangeCode);
+      if (!transferFeeError) {
+        const feeDoc = await postDocument(ctx, {
+          docType: 'transfer_fee', currency: draft.currency || 'AFN', amount: feeAmount,
+          relatedType: 'transfer', relatedId: data.transfer_id, relatedName: draft.sender,
+          description: 'کمیشن حواله ' + (data.transfer_number || ''), clientOperationId: operationId + '-fee',
+          lines: [
+            { account_type: 'customer', account_id: String(customer?.id || ''), account_name: draft.sender, currency: draft.currency || 'AFN', debit: feeAmount, credit: 0 },
+            { account_type: 'suspense', account_id: '', account_name: 'درآمد کمیشن حواله', currency: draft.currency || 'AFN', debit: 0, credit: feeAmount },
+          ],
+        });
+        if (!feeDoc?.document_id) warning = 'حواله ثبت شد، اما سند کمیشن باید بررسی شود.';
+      } else warning = 'حواله ثبت شد، اما ذخیره کمیشن در رکورد حواله ناموفق بود: ' + transferFeeError.message;
+    }
     const auditWarning = await writeAudit(ctx, 'create', 'transfer', data?.transfer_id,
       `ثبت حواله ${data?.transfer_number || ''}`, null, draft);
-    return { id: String(data?.transfer_id || ''), auditWarning };
+    return { id: String(data?.transfer_id || ''), auditWarning, warning };
   }
 
   if (module === 'cashAction' || module === 'expenses') {
@@ -519,6 +547,20 @@ export async function deleteVersion21Record(module, record) {
   }
   const table = TABLES[module];
   if (!table) throw new Error(`حذف برای بخش ${module} تعریف نشده است.`);
+  const id = String(record.id);
+  const referenceChecks = {
+    cash: ['cash', 'account_id'],
+    banks: ['bank', 'account_id'],
+    customers: ['customer', 'account_id'],
+    accounts: ['suspense', 'account_id'],
+  };
+  if (referenceChecks[module]) {
+    const [accountType, accountColumn] = referenceChecks[module];
+    const { count, error: countError } = await supabase.from('ledger_entries').select('id', { count: 'exact', head: true })
+      .eq('exchange_code', ctx.exchangeCode).eq('account_type', accountType).eq(accountColumn, id).eq('deleted', false);
+    if (countError) throw countError;
+    if (count > 0) throw new Error('این رکورد در اسناد مالی استفاده شده است؛ حذف فیزیکی مجاز نیست. ابتدا باید آن را غیرفعال کنید.');
+  }
   const { data, error } = await supabase.from(table).delete()
     .eq('id', Number(record.id)).eq('exchange_code', ctx.exchangeCode).select('id').maybeSingle();
   if (error) throw error;
