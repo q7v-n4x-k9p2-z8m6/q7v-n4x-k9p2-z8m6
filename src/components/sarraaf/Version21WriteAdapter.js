@@ -363,6 +363,10 @@ export async function saveVersion21Record(module, draft) {
             ],
           });
           if (!feeDoc?.document_id) warning = 'حواله ثبت شد، اما سند کمیشن باید بررسی شود.';
+          else {
+            const feeDateWarning = await applyDocumentDate(ctx, feeDoc.document_id, draft.date);
+            if (feeDateWarning) warning = 'سند کمیشن ثبت شد، اما تاریخ آن کامل همگام نشد: ' + feeDateWarning;
+          }
         } catch (feeError) {
           warning = 'حواله ثبت شد، اما سند حسابداری کمیشن ثبت نشد؛ این مورد باید پیگیری شود: ' + (feeError?.message || 'خطای نامشخص');
           await captureVersion21Error(feeError, 'transfer-fee');
