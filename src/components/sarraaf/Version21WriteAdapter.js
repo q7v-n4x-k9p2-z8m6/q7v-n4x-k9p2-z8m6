@@ -427,10 +427,11 @@ export async function saveVersion21Record(module, draft) {
         ? { account_type: 'customer', account_id: String(customer.id), account_name: customer.name }
         : { account_type: 'suspense', account_id: '', account_name: 'حساب واسط تبدیل ارز' };
       const lines = [
-        { account_type: 'cash', account_id: String(fromSafe.id), account_name: fromSafe.name, currency: draft.fromCurrency, debit: fromAmount, credit: 0 },
-        { ...fromCounter, currency: draft.fromCurrency, debit: 0, credit: fromAmount },
-        { ...toCounter, currency: draft.toCurrency, debit: toAmount, credit: 0 },
-        { account_type: 'cash', account_id: String(toSafe.id), account_name: toSafe.name, currency: draft.toCurrency, debit: 0, credit: toAmount },
+        // The source-currency safe pays out; the destination-currency safe receives funds.
+        { ...fromCounter, currency: draft.fromCurrency, debit: fromAmount, credit: 0 },
+        { account_type: 'cash', account_id: String(fromSafe.id), account_name: fromSafe.name, currency: draft.fromCurrency, debit: 0, credit: fromAmount },
+        { account_type: 'cash', account_id: String(toSafe.id), account_name: toSafe.name, currency: draft.toCurrency, debit: toAmount, credit: 0 },
+        { ...toCounter, currency: draft.toCurrency, debit: 0, credit: toAmount },
       ];
       const doc = await postDocument(ctx, {
         docType: 'convert', currency: draft.fromCurrency, amount: fromAmount,
@@ -600,10 +601,11 @@ export async function editVersion21Record(module, draft) {
       ? { account_type: 'customer', account_id: String(customer.id), account_name: customer.name }
       : { account_type: 'suspense', account_id: '', account_name: 'حساب واسط تبدیل ارز' };
     const lines = [
-      { account_type: 'cash', account_id: String(fromSafe.id), account_name: fromSafe.name, currency: draft.fromCurrency, debit: fromAmount, credit: 0 },
-      { ...fromCounter, currency: draft.fromCurrency, debit: 0, credit: fromAmount },
-      { ...toCounter, currency: draft.toCurrency, debit: toAmount, credit: 0 },
-      { account_type: 'cash', account_id: String(toSafe.id), account_name: toSafe.name, currency: draft.toCurrency, debit: 0, credit: toAmount },
+      // The source-currency safe pays out; the destination-currency safe receives funds.
+      { ...fromCounter, currency: draft.fromCurrency, debit: fromAmount, credit: 0 },
+      { account_type: 'cash', account_id: String(fromSafe.id), account_name: fromSafe.name, currency: draft.fromCurrency, debit: 0, credit: fromAmount },
+      { account_type: 'cash', account_id: String(toSafe.id), account_name: toSafe.name, currency: draft.toCurrency, debit: toAmount, credit: 0 },
+      { ...toCounter, currency: draft.toCurrency, debit: 0, credit: toAmount },
     ];
     await editDocument(ctx, doc.id, draft.note || 'تبدیل ارز', fromAmount, draft.fromCurrency, lines);
     const dateWarning = await applyDocumentDate(ctx, doc.id, draft.date, 'conversions', draft.id);
