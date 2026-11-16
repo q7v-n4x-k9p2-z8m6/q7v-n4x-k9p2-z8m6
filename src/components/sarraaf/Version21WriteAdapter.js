@@ -346,6 +346,18 @@ export async function saveVersion21Record(module, draft) {
     });
     if (error) throw error;
     if (!data?.transfer_id) throw new Error('پاسخ ثبت حواله شناسه معتبر ندارد؛ وضعیت عملیات را در دفتر حواله بررسی کنید.');
+    let transferDocumentId = data.document_id || null;
+    let transferNumber = data.transfer_number || '';
+    if (!transferDocumentId || !transferNumber) {
+      const [documentLookup, transferLookup] = await Promise.all([
+        supabase.from('documents').select('id,doc_number').eq('exchange_code', ctx.exchangeCode).eq('transfer_id', Number(data.transfer_id)).order('id', { ascending: false }).limit(1).maybeSingle(),
+        supabase.from('transfers').select('transfer_number').eq('exchange_code', ctx.exchangeCode).eq('id', Number(data.transfer_id)).maybeSingle(),
+      ]);
+      if (documentLookup.error) throw new Error('بازیابی سند حواله ثبت‌شده ناموفق بود: ' + documentLookup.error.message);
+      if (transferLookup.error) throw new Error('بازیابی شماره حواله ثبت‌شده ناموفق بود: ' + transferLookup.error.message);
+      transferDocumentId = transferDocumentId || documentLookup.data?.id || null;
+      transferNumber = transferNumber || transferLookup.data?.transfer_number || documentLookup.data?.doc_number || '';
+    }
     let warning = '';
     const feeAmount = transferFee;
     const { error: transferFeeError } = await supabase.from('transfers').update({
@@ -360,7 +372,7 @@ export async function saveVersion21Record(module, draft) {
         const feeDoc = await postDocument(ctx, {
           docType: 'transfer_fee', currency: draft.currency || 'AFN', amount: feeAmount,
           relatedType: 'transfer', relatedId: data.transfer_id, relatedName: draft.sender,
-          description: 'کمیشن حواله ' + (data.transfer_number || ''), clientOperationId: operationId + '-fee',
+          description: 'کمیشن حواله ' + transferNumber, clientOperationId: operationId + '-fee',
           lines: [
             { account_type: 'customer', account_id: String(customer.id), account_name: draft.sender, currency: draft.currency || 'AFN', debit: feeAmount, credit: 0 },
             { account_type: 'suspense', account_id: '', account_name: 'درآمد کمیشن حواله', currency: draft.currency || 'AFN', debit: 0, credit: feeAmount },
@@ -376,9 +388,9 @@ export async function saveVersion21Record(module, draft) {
         await captureVersion21Error(feeError, 'transfer-fee');
       }
     }
-    const dateWarning = await applyDocumentDate(ctx, data?.document_id, draft.date, 'transfers', data?.transfer_id);
+    const dateWarning = await applyDocumentDate(ctx, transferDocumentId, draft.date, 'transfers', data?.transfer_id);
     const auditWarning = await writeAudit(ctx, 'create', 'transfer', data?.transfer_id,
-      `ثبت حواله ${data?.transfer_number || ''}`, null, draft);
+      `ثبت حواله ${transferNumber || ''}`, null, draft);
     return { id: String(data?.transfer_id || ''), auditWarning, warning: [warning, dateWarning].filter(Boolean).join(' | ') };
   }
 
