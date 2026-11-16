@@ -83,6 +83,7 @@ function Tile({icon:Icon,label,onClick}){return <button onClick={onClick} classN
 export default function Version21Workspace(){
  const [data,setData]=useState(emptyInitial);
  const [localReady,setLocalReady]=useState(false);
+ const [saving,setSaving]=useState(false);
  const [dbStatus,setDbStatus]=useState('loading');
  const [dbError,setDbError]=useState('');
  const [exchangeProfile,setExchangeProfile]=useState(null);
@@ -136,9 +137,12 @@ export default function Version21Workspace(){
  const openNew=(module=active,extra={})=>{const sc=SCHEMAS[module];const defaults=Object.fromEntries((sc?.fields||[]).map(([k,,type,opts])=>[k,type==='date'?today():type==='select'?(opts?.[0]??''): '']));setActive(module);setDraft({...defaults,date:today(),currency:'AFN',...extra});setSelected(null);setModal(module);};
  const saveRecord=async()=>{
   const mod=modal;
-  if(!SCHEMAS[mod])return;
+  if(!SCHEMAS[mod]||saving)return;
+  setSaving(true);
+  const payload={...draft,clientOperationId:draft.clientOperationId||(globalThis.crypto?.randomUUID?.()||('v21-'+Date.now()+'-'+Math.random().toString(36).slice(2)))};
+  setDraft(payload);
   try{
-   const result=draft.id?await editVersion21Record(mod,draft):await saveVersion21Record(mod,draft);
+   const result=payload.id?await editVersion21Record(mod,payload):await saveVersion21Record(mod,payload);
    setModal('');setDraft({});
    await refreshDatabase();
    setSelected(null);
@@ -147,7 +151,7 @@ export default function Version21Workspace(){
    await captureVersion21Error(error,'save:'+mod);
    setDbError(error?.message||'ثبت اطلاعات ناموفق بود.');
    notify('ثبت انجام نشد: '+(error?.message||'خطای نامشخص'));
-  }
+  }finally{setSaving(false);}
  };
  const addTransaction=tx=>setData(d=>({...d,transactions:[{id:uid(),date:today(),...tx},...d.transactions]}));
  const removeSelected=async()=>{
@@ -177,16 +181,20 @@ export default function Version21Workspace(){
  };
  const cashAction=kind=>{const first=data.cash.find(x=>x.currency==='AFN')||data.cash[0];setDraft({date:today(),kind,amount:'',currency:first?.currency||'AFN',cash:first?.name||'',party:'',partyType:'customer',description:''});setModal('cashAction');};
  const saveCashAction=async()=>{
+  if(saving)return;
+  setSaving(true);
+  const payload={...draft,clientOperationId:draft.clientOperationId||(globalThis.crypto?.randomUUID?.()||('v21-'+Date.now()+'-'+Math.random().toString(36).slice(2)))};
+  setDraft(payload);
   try{
-   const result=await saveVersion21Record('cashAction',draft);
+   const result=await saveVersion21Record('cashAction',payload);
    setModal('');setDraft({});
    await refreshDatabase();
-   notify(result?.auditWarning?'گردش صندوق ثبت شد؛ اما سابقه فعالیت هشدار دارد: '+result.auditWarning:'گردش صندوق و سند حسابداری در دیتابیس ثبت شد.');
+   notify(result?.warning||result?.auditWarning?'گردش صندوق ثبت شد؛ '+(result.warning||result.auditWarning):'گردش صندوق و سند حسابداری در دیتابیس ثبت شد.');
   }catch(error){
    await captureVersion21Error(error,'cashAction');
    setDbError(error?.message||'ثبت گردش صندوق ناموفق بود.');
    notify('گردش صندوق ثبت نشد: '+(error?.message||'خطای نامشخص'));
-  }
+  }finally{setSaving(false);}
  };
  const backup=()=>{const blob=new Blob([JSON.stringify({version:2,createdAt:new Date().toISOString(),data},null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='hisab-sarraf-backup.json';a.click();URL.revokeObjectURL(a.href);notify('فایل پشتیبان محلی آماده شد.');};
  const restore=()=>{try{const parsed=JSON.parse(restoreText);const restored=parsed.data||parsed;if(!restored||!Array.isArray(restored.customers)||!Array.isArray(restored.transactions))throw new Error();setData({...emptyInitial(),...restored});setModal('');setRestoreText('');notify('پشتیبان در همین مرورگر بازیابی شد.');}catch{notify('فایل پشتیبان معتبر نیست یا ساختار آن پشتیبانی نمی‌شود.');}};
@@ -385,8 +393,8 @@ export default function Version21Workspace(){
     ,...(modal==='exchange'?{cashFrom:[{value:'',label:'انتخاب صندوق ارز مبدا'},...data.cash.filter(x=>x.currency===draft.fromCurrency).map(x=>({value:x.name,label:x.name+' ('+x.currency+')'}))],cashTo:[{value:'',label:'انتخاب صندوق ارز مقصد'},...data.cash.filter(x=>x.currency===draft.toCurrency).map(x=>({value:x.name,label:x.name+' ('+x.currency+')'}))]}:{})
     ,...(modal==='expenses'?{cash:[{value:'',label:'انتخاب صندوق پرداخت'},...data.cash.filter(x=>x.currency===draft.currency).map(x=>({value:x.name,label:x.name+' ('+x.currency+')'}))]}:{})
     ,...(modal==='remittance'?{cash:[{value:'',label:'انتخاب صندوق مرتبط'},...data.cash.filter(x=>x.currency===draft.currency).map(x=>({value:x.name,label:x.name+' ('+x.currency+')'}))],branch:[{value:'',label:'انتخاب نمایندگی'},...data.branches.map(x=>({value:x.name,label:x.name}))]}:{})
-   }}/>)}</div><div className="flex justify-end gap-2 border-t bg-slate-100 p-3"><button onClick={saveRecord} className="flex items-center gap-1 border bg-white px-4 py-2 text-xs"><Save className="h-4 w-4"/>ثبت</button><button onClick={()=>setModal('')} className="border bg-white px-4 py-2 text-xs">انصراف</button></div></>}
-   {modal==='cashAction'&&<><div className="grid gap-3 p-4 sm:grid-cols-2">{[['تاریخ','date'],['نوع عملیات','kind'],['نوع طرف حساب','partyType'],['طرف حساب','party'],['ارز','currency'],['مبلغ','amount'],['صندوق','cash'],['شرح','description']].map(([label,key])=><label key={key} className="space-y-1 text-[11px]"><span>{label}</span>{key==='kind'?<select value={draft.kind} onChange={e=>setField(key,e.target.value)} className="h-9 w-full border bg-white px-2"><option>دخل</option><option>خرج</option></select>:key==='partyType'?<select value={draft.partyType||'customer'} onChange={e=>setField(key,e.target.value)} className="h-9 w-full border bg-white px-2"><option value="customer">مشتری</option><option value="branch">نمایندگی</option><option value="other">سایر</option></select>:key==='currency'?<select value={draft.currency} onChange={e=>{const currency=e.target.value;const first=data.cash.find(x=>x.currency===currency);setDraft(d=>({...d,currency,cash:first?.name||''}));}} className="h-9 w-full border bg-white px-2">{CURRENCIES.map(c=><option key={c}>{c}</option>)}</select>:key==='cash'?<select value={draft.cash||''} onChange={e=>setField(key,e.target.value)} className="h-9 w-full border bg-white px-2"><option value="">انتخاب صندوق</option>{data.cash.filter(c=>c.currency===draft.currency).map(c=><option key={c.id} value={c.name}>{c.name} · {c.currency}</option>)}</select>:<input type={key==='amount'?'number':key==='date'?'date':'text'} value={draft[key]||''} onChange={e=>setField(key,e.target.value)} className="h-9 w-full border bg-white px-2"/>}</label>)}</div><div className="flex justify-end border-t bg-slate-100 p-3"><button onClick={saveCashAction} className="border bg-white px-4 py-2 text-xs">ثبت گردش صندوق</button></div></>}
+   }}/>)}</div><div className="flex justify-end gap-2 border-t bg-slate-100 p-3"><button onClick={saveRecord} disabled={saving} className="flex items-center gap-1 border bg-white px-4 py-2 text-xs disabled:opacity-50"><Save className="h-4 w-4"/>{saving?'در حال ثبت...':'ثبت'}</button><button onClick={()=>setModal('')} className="border bg-white px-4 py-2 text-xs">انصراف</button></div></>}
+   {modal==='cashAction'&&<><div className="grid gap-3 p-4 sm:grid-cols-2">{[['تاریخ','date'],['نوع عملیات','kind'],['نوع طرف حساب','partyType'],['طرف حساب','party'],['ارز','currency'],['مبلغ','amount'],['صندوق','cash'],['شرح','description']].map(([label,key])=><label key={key} className="space-y-1 text-[11px]"><span>{label}</span>{key==='kind'?<select value={draft.kind} onChange={e=>setField(key,e.target.value)} className="h-9 w-full border bg-white px-2"><option>دخل</option><option>خرج</option></select>:key==='partyType'?<select value={draft.partyType||'customer'} onChange={e=>setField(key,e.target.value)} className="h-9 w-full border bg-white px-2"><option value="customer">مشتری</option><option value="branch">نمایندگی</option><option value="other">سایر</option></select>:key==='currency'?<select value={draft.currency} onChange={e=>{const currency=e.target.value;const first=data.cash.find(x=>x.currency===currency);setDraft(d=>({...d,currency,cash:first?.name||''}));}} className="h-9 w-full border bg-white px-2">{CURRENCIES.map(c=><option key={c}>{c}</option>)}</select>:key==='cash'?<select value={draft.cash||''} onChange={e=>setField(key,e.target.value)} className="h-9 w-full border bg-white px-2"><option value="">انتخاب صندوق</option>{data.cash.filter(c=>c.currency===draft.currency).map(c=><option key={c.id} value={c.name}>{c.name} · {c.currency}</option>)}</select>:<input type={key==='amount'?'number':key==='date'?'date':'text'} value={draft[key]||''} onChange={e=>setField(key,e.target.value)} className="h-9 w-full border bg-white px-2"/>}</label>)}</div><div className="flex justify-end border-t bg-slate-100 p-3"><button onClick={saveCashAction} disabled={saving} className="border bg-white px-4 py-2 text-xs disabled:opacity-50">{saving?'در حال ثبت...':'ثبت گردش صندوق'}</button></div></>}
    {modal==='restore'&&<div className="space-y-3 p-4"><p className="text-xs">محتوای فایل پشتیبان JSON آزمایشگاه را اینجا وارد کنید. اطلاعات فعلی جایگزین می‌شود.</p><textarea value={restoreText} onChange={e=>setRestoreText(e.target.value)} rows={9} className="w-full border bg-white p-2 text-xs" placeholder="محتوای JSON..."/><button onClick={restore} className="border bg-white px-4 py-2 text-xs">بازیابی در مرورگر</button></div>}
    {modal==='settings'&&<div className="space-y-2 p-4 text-xs"><p>منبع اطلاعات: دیتابیس اصلی A1</p><p>حالت دسترسی: عملیاتی و محدود به کد صرافی نشست واردشده</p><p>تعاریف در جدول‌های واقعی ذخیره می‌شوند؛ اسناد مالی با سند و سطرهای دفتر کل ثبت و برای ابطال با سند معکوس اصلاح می‌شوند.</p><p>خروجی CSV و چاپ برای بررسی اطلاعات در دسترس است.</p><button onClick={refreshDatabase} className="border bg-white px-3 py-2">بارگذاری دوباره اطلاعات</button></div>}
    {modal==='support'&&<div className="space-y-2 p-4 text-xs leading-6"><b>پشتیبانی حساب صراف</b><p>جایگاه پشتیبانی در تنظیمات مشخص شده است؛ روش‌های تماس و ارسال درخواست بعداً طراحی می‌شوند.</p><span className="inline-flex rounded-full border border-amber-300 bg-amber-50 px-3 py-1 text-[10px] font-bold text-amber-800">اسکلت اولیه · غیرفعال</span></div>}
