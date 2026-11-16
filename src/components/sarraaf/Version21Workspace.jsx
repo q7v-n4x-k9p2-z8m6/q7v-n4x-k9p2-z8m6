@@ -90,14 +90,14 @@ function DataTable({columns,rows,onSelect,selected}) {
    </table>
   </div>
   <div className="v21-data-table-mobile">
-   {rows.map((r,i)=><button type="button" key={r.id||i} onClick={()=>onSelect(r)} aria-pressed={Boolean(selected&&selected.id===r.id)} className={'v21-record-card w-full rounded-xl border p-3 text-right transition '+(selected?.id===r.id?'is-selected':'')}>
+   {rows.map((r,i)=><div role="button" tabIndex={0} key={r.id||i} onClick={()=>onSelect(r)} onKeyDown={event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();onSelect(r);}}} aria-pressed={Boolean(selected&&selected.id===r.id)} className={'v21-record-card w-full rounded-xl border p-3 text-right transition '+(selected?.id===r.id?'is-selected':'')}>
     <span className="v21-record-card-title block border-b pb-2 text-sm font-extrabold">{columns[0]?renderValue(columns[0],r):'رکورد '+(i+1)}</span>
     {columns[0]&&<span className="v21-record-card-primary-label block pt-1 text-[10px]">{columns[0].label}</span>}
     <div className="mt-2 grid grid-cols-2 gap-x-3 gap-y-2 text-xs">
      {columns.slice(1).map(c=><div key={c.key} className="v21-record-card-field flex min-w-0 flex-col gap-1"><span className="v21-record-card-label">{c.label}</span><div className="v21-record-card-value break-words">{renderValue(c,r)}</div></div>)}
     </div>
     <span className="v21-record-card-select mt-3 block text-[10px] font-bold">برای مشاهده و عملیات، انتخاب کنید</span>
-   </button>)}
+   </div>)}
   </div>
  </div>;
 }
