@@ -130,7 +130,9 @@ export default function Version21Layout() {
   const { user, logout } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
-  const role = user?.role || 'user';
+  // A1 stores exchange owners with role='exchange'; the v21 navigation uses 'sarraaf'.
+  // Normalize the persisted role so legitimate exchanger accounts retain their modules.
+  const role = user?.role === 'exchange' ? 'sarraaf' : (user?.role || 'user');
   const modules = MODULES.filter(item => Array.isArray(item.roles) && item.roles.includes(role));
   const current = modules.find(item => item.path && (location.pathname === item.path || location.pathname.startsWith(item.path + '/')));
   const isAssistant = location.pathname === '/assistant';
