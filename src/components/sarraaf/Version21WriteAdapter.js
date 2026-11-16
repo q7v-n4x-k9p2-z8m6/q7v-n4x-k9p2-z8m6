@@ -326,7 +326,24 @@ export async function saveVersion21Record(module, draft) {
       throw new Error('مانده افتتاحیه باید عدد معتبر باشد.');
     }
     if (module === 'banks' && !payload.account_number) throw new Error('شماره حساب بانکی الزامی است.');
-    if (module === 'accounts' && !payload.account_code) throw new Error('کد حساب الزامی است.');
+    if (module === 'accounts') {
+      if (!payload.account_code || !payload.account_name) throw new Error('کد و نام حساب الزامی است.');
+      if (!['asset', 'liability', 'equity', 'revenue', 'expense'].includes(payload.account_type)) throw new Error('نوع حساب معتبر نیست.');
+      let duplicateQuery = supabase.from('chart_of_accounts').select('id')
+        .eq('exchange_code', ctx.exchangeCode).eq('account_code', payload.account_code);
+      if (draft.id) duplicateQuery = duplicateQuery.neq('id', Number(draft.id));
+      const { data: duplicates, error: duplicateError } = await duplicateQuery.limit(1);
+      if (duplicateError) throw duplicateError;
+      if (duplicates?.length) throw new Error('این کد حساب قبلاً در کدینگ همین صراف استفاده شده است.');
+      if (payload.parent_id) {
+        if (Number(payload.parent_id) === Number(draft.id)) throw new Error('یک حساب نمی‌تواند حساب مادر خودش باشد.');
+        const { data: parent, error: parentError } = await supabase.from('chart_of_accounts')
+          .select('id,parent_id').eq('exchange_code', ctx.exchangeCode)
+          .eq('id', Number(payload.parent_id)).maybeSingle();
+        if (parentError) throw parentError;
+        if (!parent || parent.parent_id) throw new Error('حساب مادر باید یک حساب کل فعال از همین صراف باشد.');
+      }
+    }
     if (module === 'currencies' && !payload.currency) throw new Error('کد ارز الزامی است.');
     if (module === 'currencies' && (!Number.isFinite(payload.buy_rate) || !Number.isFinite(payload.sell_rate) || payload.buy_rate <= 0 || payload.sell_rate <= 0)) {
       throw new Error('نرخ خرید و فروش باید عدد معتبر و بزرگ‌تر از صفر باشد.');
