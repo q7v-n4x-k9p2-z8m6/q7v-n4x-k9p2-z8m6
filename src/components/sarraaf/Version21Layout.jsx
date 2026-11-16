@@ -178,7 +178,7 @@ export default function Version21Layout() {
   const { data: profile } = useSarraafProfile(user?.id);
   const { data: paidSystemEnabled } = usePaidSystemEnabled();
   const { openUpgrade } = useUpgrade();
-  const accessProfile = profile || user;
+  const accessProfile = { ...(profile || user || {}), role: user?.role || profile?.role };
   const location = useLocation();
   const navigate = useNavigate();
   // A1 stores exchange owners with role='exchange'; the v21 navigation uses 'sarraaf'.
