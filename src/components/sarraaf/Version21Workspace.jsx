@@ -141,7 +141,12 @@ export default function Version21Workspace(){
   if(active==='ledger') source=data.ledger||[];
   if(active==='reports') source=data.reports||[];
   const demoModule = active==='customerLedger' ? (customerDetail?'transactions':'customers') : active==='branchLedger' ? (branchDetail?'transactions':'branches') : active;
-  const demoRows = (data.demoPreviewRecords||[]).filter(r=>r.module_key===demoModule).map(r=>({
+  const demoRows = (data.demoPreviewRecords||[]).filter(r=>{
+   if(r.module_key!==demoModule)return false;
+   if(active==='customerLedger'&&customerDetail)return r.payload?.party===customerDetail.name;
+   if(active==='branchLedger'&&branchDetail)return r.payload?.party===branchDetail.name;
+   return true;
+  }).map(r=>({
    ...(r.payload||{}), id:'demo-'+r.id, _demoRecordId:r.id, _demoModule:r.module_key,
    _demoPreview:true, _demoFixed:r.record_kind==='sample'
   }));
@@ -326,7 +331,7 @@ export default function Version21Workspace(){
   } else if(active==='journal'){
    selectedRows.filter(x=>x.status==='قطعی'||!x.status).forEach(row=>{const currency=row.currency||'AFN';totals[currency]??={debit:0,credit:0};totals[currency].debit+=n(row.debitTotal);totals[currency].credit+=n(row.creditTotal);});
   } else if(active==='ledger'){
-   selectedRows.forEach(row=>{const currency=row.currency||'AFN';totals[currency]??={debit:0,credit:0};totals[currency].debit+=n(row.debit);totals[currency].credit+=n(row.credit);});
+   selectedRows.filter(row=>!row._demoPreview).forEach(row=>{const currency=row.currency||'AFN';totals[currency]??={debit:0,credit:0};totals[currency].debit+=n(row.debit);totals[currency].credit+=n(row.credit);});
   }
   return Object.entries(totals).map(([currency,x])=>({currency,...x,net:x.debit-x.credit}));
  };
