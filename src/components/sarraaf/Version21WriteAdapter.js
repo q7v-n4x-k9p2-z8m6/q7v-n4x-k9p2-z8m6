@@ -739,27 +739,59 @@ export async function deleteVersion21Record(module, record) {
   }
 
   if (module === 'remittance' || module === 'exchange') {
-    const table = module === 'remittance' ? 'transfers' : 'conversions';
     const linkColumn = module === 'remittance' ? 'transfer_id' : 'related_id';
-    let query = supabase.from('documents').select('id').eq('exchange_code', ctx.exchangeCode);
+    let query = supabase.from('documents').select('id,reversed').eq('exchange_code', ctx.exchangeCode);
     if (module === 'remittance') query = query.eq(linkColumn, Number(record.id));
     else query = query.eq('related_type', 'conversion').eq(linkColumn, Number(record.id));
     const { data: linkedDoc, error: linkError } = await query.order('id', { ascending: false }).limit(1).maybeSingle();
     if (linkError) throw linkError;
     if (!linkedDoc) throw new Error('سند مالی مرتبط پیدا نشد؛ هیچ رکوردی حذف یا تغییر داده نشد.');
-    await assertDocumentBalancedForReversal(ctx, linkedDoc.id);
 
-    const { data, error } = await supabase.rpc('reverse_document_transaction', {
-      p_exchange_code: ctx.exchangeCode,
-      p_document_id: linkedDoc.id,
-      p_registered_by: ctx.userName,
-      p_reason: 'ابطال سند مرتبط از نسخه ۲۱؛ رکورد اصلی حفظ می‌شود.',
-    });
-    if (error) throw error;
-    if (data?.error) throw new Error(data.error);
+    const feeDocs = [];
+    if (module === 'remittance') {
+      const { data, error: feeLookupError } = await supabase.from('documents').select('id,reversed')
+        .eq('exchange_code', ctx.exchangeCode)
+        .eq('doc_type', 'transfer_fee')
+        .eq('related_type', 'transfer')
+        .eq('related_id', Number(record.id));
+      if (feeLookupError) throw feeLookupError;
+      feeDocs.push(...(data || []));
+    }
+
+    // Validate every active linked document before reversing any of them.
+    if (!linkedDoc.reversed) await assertDocumentBalancedForReversal(ctx, linkedDoc.id);
+    for (const feeDoc of feeDocs) {
+      if (!feeDoc.reversed) await assertDocumentBalancedForReversal(ctx, feeDoc.id);
+    }
+
+    const reverseIds = [
+      ...(!linkedDoc.reversed ? [linkedDoc.id] : []),
+      ...feeDocs.filter(doc => !doc.reversed).map(doc => doc.id),
+    ];
+    const warnings = [];
+    for (const documentId of reverseIds) {
+      const { data, error } = await supabase.rpc('reverse_document_transaction', {
+        p_exchange_code: ctx.exchangeCode,
+        p_document_id: documentId,
+        p_registered_by: ctx.userName,
+        p_reason: 'ابطال سند مرتبط از نسخه ۲۱؛ رکورد اصلی حفظ می‌شود.',
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+    }
+
+    if (module === 'remittance') {
+      if (number(record.fee) > 0 && feeDocs.length === 0) {
+        warnings.push('برای این حواله کمیشن ثبت شده اما سند حسابداری کمیشن پیدا نشد؛ بررسی دستی لازم است.');
+      }
+      const { error: transferStatusError } = await supabase.from('transfers').update({ status: 'reversed' })
+        .eq('id', Number(record.id)).eq('exchange_code', ctx.exchangeCode);
+      if (transferStatusError) warnings.push('اسناد معکوس شدند اما وضعیت حواله به‌روزرسانی نشد: ' + transferStatusError.message);
+    }
+
     const auditWarning = await writeAudit(ctx, 'reverse', module, record.id,
-      'ابطال سند مرتبط؛ رکورد اصلی حفظ شد', null, data);
-    return { reversed: true, auditWarning };
+      'ابطال سند اصلی و اسناد کمیشن مرتبط؛ رکوردهای اصلی حفظ شدند', null, { documentId: linkedDoc.id, feeDocumentIds: feeDocs.map(x => x.id) });
+    return { reversed: true, auditWarning, warning: warnings.join(' | ') };
   }
 
   if (['customerLedger', 'branchLedger', 'reports', 'profit', 'balance', 'activity'].includes(module)) {
