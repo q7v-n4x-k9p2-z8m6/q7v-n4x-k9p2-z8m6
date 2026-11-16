@@ -66,7 +66,7 @@ export default function Debtors() {
   return (
     <>
       <PageHeader
-        title="بدهکاران"
+        title="بدهکاران و بستانکاران"
         subtitle={`${formatNumber(totals.count)} نفر`}
         icon={Handshake}
       />
@@ -77,13 +77,13 @@ export default function Debtors() {
           label="بدهکار"
           value={formatNumber(totals.debt)}
           icon={TrendingUp}
-          gradient="from-success/90 to-success/70"
+          gradient="from-rose-600 to-rose-500"
         />
         <StatCard
           label="بستانکار"
           value={formatNumber(totals.credit)}
           icon={TrendingDown}
-          gradient="from-destructive/90 to-destructive/70"
+          gradient="from-emerald-600 to-teal-600"
         />
         <StatCard
           label="خالص"
@@ -112,7 +112,7 @@ export default function Debtors() {
             onClick={() => setTab(t.key)}
             className={cn(
               'flex-1 py-1.5 rounded-md text-xs font-medium transition-colors',
-              tab === t.key ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground'
+              tab === t.key ? (t.key==='debtors'?'bg-rose-100 text-rose-800 shadow-sm':t.key==='creditors'?'bg-emerald-100 text-emerald-800 shadow-sm':'bg-blue-100 text-blue-800 shadow-sm') : 'text-muted-foreground'
             )}
           >
             {t.label}
@@ -139,7 +139,7 @@ export default function Debtors() {
                   <div
                     className={cn(
                       'w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm shrink-0',
-                      isDebtor ? 'bg-success/10 text-success' : 'bg-destructive/10 text-destructive'
+                      isDebtor ? 'bg-rose-100 text-rose-700 ring-1 ring-rose-200' : 'bg-emerald-100 text-emerald-700 ring-1 ring-emerald-200'
                     )}
                   >
                     {(customer.name || '?').charAt(0)}
@@ -150,7 +150,7 @@ export default function Debtors() {
                       <StatusBadge
                         status={isDebtor ? 'active' : 'inactive'}
                         labels={{ active: 'بدهکار', inactive: 'بستانکار' }}
-                        variant={isDebtor ? 'success' : 'destructive'}
+                        variant={isDebtor ? 'destructive' : 'success'}
                       />
                     </div>
                     <p className="text-xs text-muted-foreground">
