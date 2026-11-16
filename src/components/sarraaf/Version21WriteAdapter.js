@@ -283,11 +283,14 @@ export async function saveVersion21Record(module, draft) {
     if (!recordName && ['customers', 'branches', 'cash', 'banks', 'accounts'].includes(module)) {
       throw new Error('نام این رکورد الزامی است.');
     }
+    if (['customers', 'cash', 'banks'].includes(module) && !Number.isFinite(number(draft.opening))) {
+      throw new Error('مانده افتتاحیه باید عدد معتبر باشد.');
+    }
     if (module === 'banks' && !payload.account_number) throw new Error('شماره حساب بانکی الزامی است.');
     if (module === 'accounts' && !payload.account_code) throw new Error('کد حساب الزامی است.');
     if (module === 'currencies' && !payload.currency) throw new Error('کد ارز الزامی است.');
-    if (module === 'currencies' && (payload.buy_rate <= 0 || payload.sell_rate <= 0)) {
-      throw new Error('نرخ خرید و فروش باید بزرگ‌تر از صفر باشد.');
+    if (module === 'currencies' && (!Number.isFinite(payload.buy_rate) || !Number.isFinite(payload.sell_rate) || payload.buy_rate <= 0 || payload.sell_rate <= 0)) {
+      throw new Error('نرخ خرید و فروش باید عدد معتبر و بزرگ‌تر از صفر باشد.');
     }
     let result;
     if (draft.id) {
