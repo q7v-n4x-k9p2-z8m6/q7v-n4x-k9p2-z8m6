@@ -102,7 +102,7 @@ export default function DesktopDashboard({ profile, features, userRole, paidSyst
           <RecentTransactionsCard transactions={txs || []} isLoading={txLoading} />
         </div>
         <div className="space-y-4 min-w-0">
-          <DesktopSidePanel currencies={currencies} />
+          <DesktopSidePanel currencies={currencies} features={features} profile={profile} userRole={userRole} paidSystemEnabled={paidSystemEnabled} />
           <DesktopPlanPanel {...plan} />
         </div>
       </div>
