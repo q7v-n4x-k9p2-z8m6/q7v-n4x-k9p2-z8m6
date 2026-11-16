@@ -14,6 +14,12 @@ const documentTypeLabel = (value, description = '') => {
     transfer: 'حواله',
     expense: 'مصرف',
     exchange: 'معامله اسعار',
+    convert: 'تبدیل ارز',
+    cash: 'گردش صندوق',
+    cash_in: 'دخل صندوق',
+    journal: 'سند روزنامچه',
+    transfer_fee: 'کمیشن حواله',
+    reversal: 'سند معکوس',
   }[String(value || '').toLowerCase()] || String(value || 'سند'));
 };
 
@@ -289,16 +295,20 @@ export async function loadVersion21Database() {
 
   const mappedExpenses = documents
     .filter(row => !row.deleted && /expense|cost|masraf|مصرف/i.test(String(row.doc_type || '') + ' ' + String(row.description || '')))
-    .map(row => ({
-      id: String(row.id),
-      date: dateOnly(row.created_at),
-      title: row.description || documentTypeLabel(row.doc_type),
-      currency: row.currency || 'AFN',
-      amount: num(row.amount),
-      cash: '',
-      note: row.doc_number || '',
-      _sourceTable: 'documents',
-    }));
+    .map(row => {
+      const cashLine = activeLedgerEntries.find(line => String(line.document_id || '') === String(row.id) && line.account_type === 'cash');
+      return {
+        id: String(row.id), documentId: String(row.id),
+        date: dateOnly(row.created_at),
+        title: row.description || documentTypeLabel(row.doc_type),
+        currency: row.currency || 'AFN',
+        amount: num(row.amount),
+        cash: cashLine ? (safeById.get(String(cashLine.account_id || ''))?.name || cashLine.account_name || '') : '',
+        note: row.doc_number || '',
+        status: row.reversed ? 'ابطال شده' : 'قطعی',
+        _sourceTable: 'documents',
+      };
+    });
 
   const mappedErrors = errorReports.map(row => ({
     id: String(row.id), date: dateOnly(row.created_at), error_type: row.error_type || '',
