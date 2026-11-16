@@ -28,6 +28,32 @@ jobs:
         run: npm install --no-audit --no-fund
       - name: Build production bundle
         run: npm run build
+      - name: Check Version 21 safety invariants
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const workspace = fs.readFileSync('src/components/sarraaf/Version21Workspace.jsx', 'utf8');
+          const adapter = fs.readFileSync('src/components/sarraaf/Version21WriteAdapter.js', 'utf8');
+          const data = fs.readFileSync('src/components/sarraaf/Version21DataAdapter.js', 'utf8');
+          const checks = [
+            [!workspace.includes('\\\\        uses: actions/upload-artifact@v4
+        with:
+          name: a1-version21-${{ github.sha }}
+          path: dist/
+          if-no-files-found: error
+          retention-days: 7
+ + '{'), 'Workspace contains a literal escaped JSX expression'],
+            [adapter.includes('validateBalancedLines'), 'Financial posting/edit balance validation is missing'],
+            [adapter.includes('requireModulePermission'), 'Server-verified employee permission checks are missing'],
+            [!adapter.includes('.delete()'), 'Physical delete call found in financial write adapter'],
+            [data.includes(".eq('exchange_code', exchangeCode)"), 'Tenant scoping filter is missing'],
+            [data.includes("from('user_permissions')"), 'Current-user permission loading is missing'],
+          ];
+          for (const [ok, message] of checks) {
+            if (!ok) throw new Error(message);
+            console.log('PASS:', message);
+          }
+          NODE
       - name: Upload production bundle for review
         uses: actions/upload-artifact@v4
         with:
