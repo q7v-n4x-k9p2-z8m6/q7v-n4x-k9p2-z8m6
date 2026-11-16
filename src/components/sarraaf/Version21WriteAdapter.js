@@ -637,7 +637,9 @@ export async function editVersion21Record(module, draft) {
       toSafe = await getSafeById(ctx, toLine.account_id);
     }
     const fromAmount = number(draft.fromAmount), toAmount = number(draft.toAmount);
-    if (fromAmount <= 0 || toAmount <= 0 || draft.fromCurrency === draft.toCurrency) throw new Error('ارزها و مبالغ معامله معتبر نیستند.');
+    const exchangeRate = number(draft.rate);
+    if (!Number.isFinite(fromAmount) || !Number.isFinite(toAmount) || fromAmount <= 0 || toAmount <= 0 || draft.fromCurrency === draft.toCurrency) throw new Error('ارزها و مبالغ معامله معتبر نیستند.');
+    if (draft.rate && (!Number.isFinite(exchangeRate) || exchangeRate <= 0)) throw new Error('نرخ تبدیل باید عدد معتبر و مثبت باشد.');
     const customer = await getCustomer(ctx, draft.party);
     const fromCounter = customer
       ? { account_type: 'customer', account_id: String(customer.id), account_name: customer.name }
@@ -656,7 +658,7 @@ export async function editVersion21Record(module, draft) {
     const dateWarning = await applyDocumentDate(ctx, doc.id, draft.date, 'conversions', draft.id);
     const { error: updateError } = await supabase.from('conversions').update({
       customer_id: customer?.id || null, customer_name: draft.party || 'مشتری نقدی', customer_mobile: customer?.mobile || null,
-      from_currency: draft.fromCurrency, from_amount: fromAmount, rate: number(draft.rate) || toAmount / fromAmount,
+      from_currency: draft.fromCurrency, from_amount: fromAmount, rate: exchangeRate || toAmount / fromAmount,
       to_currency: draft.toCurrency, to_amount: toAmount,
       description: draft.note || 'معامله تبدیل ارز', updated_at: new Date().toISOString(),
     }).eq('id', Number(draft.id)).eq('exchange_code', ctx.exchangeCode);
@@ -678,7 +680,9 @@ export async function editVersion21Record(module, draft) {
     const customer = await getCustomer(ctx, direction === 'receive' ? draft.receiver : draft.sender);
     if (!customer) throw new Error('برای اصلاح حواله، طرف حساب باید در فهرست مشتریان همین صراف موجود باشد؛ سند بدون شناسه مشتری اصلاح نمی‌شود.');
     const amount = number(draft.amount);
-    if (amount <= 0 || !draft.sender || !draft.receiver) throw new Error('فرستنده، گیرنده و مبلغ مثبت الزامی است.');
+    const feeAmount = number(draft.fee);
+    if (!Number.isFinite(amount) || amount <= 0 || !draft.sender || !draft.receiver) throw new Error('فرستنده، گیرنده و مبلغ معتبر و مثبت الزامی است.');
+    if (!Number.isFinite(feeAmount) || feeAmount < 0) throw new Error('کمیشن حواله باید عدد معتبر و صفر یا مثبت باشد.');
     const lines = direction === 'send'
       ? [
           { account_type: 'customer', account_id: String(customer?.id || ''), account_name: draft.sender, currency: draft.currency, debit: amount, credit: 0 },
@@ -692,7 +696,8 @@ export async function editVersion21Record(module, draft) {
     const dateWarning = await applyDocumentDate(ctx, doc.id, draft.date, 'transfers', draft.id);
     const { error: updateError } = await supabase.from('transfers').update({
       sender_name: draft.sender, receiver_name: draft.receiver,
-      amount, currency: draft.currency, fee: number(draft.fee),
+      amount, currency: draft.currency, fee: feeAmount,
+      fee_currency: draft.currency || 'AFN', total: amount + feeAmount,
       direction, origin: draft.branch || null, destination: draft.note || draft.branch || null,
       updated_at: new Date().toISOString(),
     }).eq('id', Number(draft.id)).eq('exchange_code', ctx.exchangeCode);
@@ -701,7 +706,6 @@ export async function editVersion21Record(module, draft) {
       .eq('exchange_code', ctx.exchangeCode).eq('related_type', 'transfer')
       .eq('related_id', Number(draft.id)).eq('doc_type', 'transfer_fee').limit(1).maybeSingle();
     if (feeDocError) throw feeDocError;
-    const feeAmount = number(draft.fee);
     if (feeAmount > 0) {
       const feeLines = [
         { account_type: 'customer', account_id: String(customer?.id || ''), account_name: direction === 'send' ? draft.sender : draft.receiver, currency: draft.currency, debit: feeAmount, credit: 0 },
