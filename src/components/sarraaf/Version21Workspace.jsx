@@ -176,7 +176,7 @@ export default function Version21Workspace(){
    const target=selected;
    const result=await deleteVersion21Record(targetModule,target);
    await refreshDatabase();
-   const baseMessage=result?.reversed?'سند با ثبت سند معکوس ابطال شد و سابقه اصلی حفظ شد.':'رکورد از دیتابیس حذف شد.';
+   const baseMessage=result?.partial?'ابطال ناقص انجام شد؛ برخی اسناد هنوز نیازمند بررسی هستند.':result?.reversed?'سند با ثبت سند معکوس ابطال شد و سابقه اصلی حفظ شد.':result?.warning?'ابطال انجام نشد؛ وضعیت سند را بررسی کنید.':'رکورد از دیتابیس حذف شد.';
    notify([baseMessage,result?.warning,result?.auditWarning].filter(Boolean).join(' '));
   }catch(error){
    await captureVersion21Error(error,'delete:'+active);
