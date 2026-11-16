@@ -172,3 +172,123 @@
   .v21-workspace-shell .fixed.inset-0 { padding: 8px; }
   .v21-workspace-shell .fixed.inset-0 > div { max-height: 92dvh; }
 }
+
+
+/* Preview pass: keep the existing A1 module set; adapt only its presentation. */
+@media (min-width: 641px) {
+  html body .v21-workspace-shell aside.grid {
+    display: grid !important;
+    grid-template-columns: repeat(12, minmax(0, 1fr)) !important;
+    align-items: stretch;
+    gap: 7px !important;
+    padding: 10px !important;
+  }
+  html body .v21-workspace-shell aside.grid button {
+    min-height: 74px !important;
+    border: 1px solid #d2dce5 !important;
+    border-radius: 9px !important;
+    background: linear-gradient(180deg, #ffffff 0%, #f4f8fb 100%);
+    box-shadow: 0 1px 2px rgb(24 55 78 / 7%);
+  }
+  html body .v21-workspace-shell aside.grid button:hover {
+    border-color: #8eabc1 !important;
+    background: #edf5fb !important;
+  }
+}
+@media (max-width: 640px) {
+  html body .v21-workspace-root { padding: 0 !important; }
+  html body .v21-workspace-shell {
+    width: 100% !important;
+    min-height: 100dvh !important;
+    border: 0 !important;
+    background: #f2f6f9 !important;
+  }
+  html body .v21-workspace-shell > header {
+    min-height: 54px !important;
+    padding: 11px 14px !important;
+    background: linear-gradient(135deg, #173f5d, #326f98) !important;
+  }
+  html body .v21-workspace-shell > nav {
+    position: sticky !important;
+    top: 54px !important;
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    border-bottom: 1px solid #c6d3dd !important;
+    background: #fff !important;
+  }
+  html body .v21-workspace-shell aside.grid {
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    flex-wrap: initial !important;
+    gap: 9px !important;
+    overflow: visible !important;
+    padding: 12px !important;
+    background: #eaf0f5 !important;
+    border-bottom: 1px solid #c7d4de !important;
+  }
+  html body .v21-workspace-shell aside.grid button {
+    display: flex !important;
+    flex: initial !important;
+    min-width: 0 !important;
+    min-height: 88px !important;
+    padding: 10px 5px !important;
+    gap: 8px !important;
+    border: 1px solid #d1dce5 !important;
+    border-radius: 12px !important;
+    background: #fff !important;
+    box-shadow: 0 2px 7px rgb(26 58 82 / 7%) !important;
+    color: #24496d !important;
+  }
+  html body .v21-workspace-shell aside.grid button:active {
+    background: #e7f1f8 !important;
+    border-color: #83a9c5 !important;
+  }
+  html body .v21-workspace-shell aside.grid button svg {
+    width: 23px !important;
+    height: 23px !important;
+  }
+  html body .v21-workspace-shell aside.grid button span {
+    display: block !important;
+    width: 100% !important;
+    font-size: 10px !important;
+    font-weight: 650 !important;
+    line-height: 1.45 !important;
+    white-space: normal !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+  }
+  html body .v21-workspace-shell main {
+    padding: 12px !important;
+    background: #f7f9fb !important;
+  }
+  html body .v21-workspace-shell main > div.grid.gap-3 {
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 11px !important;
+  }
+  html body .v21-workspace-shell main section {
+    border: 1px solid #d3dee7 !important;
+    border-radius: 12px !important;
+    background: #fff !important;
+    box-shadow: 0 2px 8px rgb(28 57 79 / 5%) !important;
+  }
+  html body .v21-workspace-shell .v21-mobile-bottom {
+    position: sticky !important;
+    bottom: 0 !important;
+    display: grid !important;
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    gap: 7px !important;
+    padding: 9px 9px calc(9px + env(safe-area-inset-bottom)) !important;
+    background: rgb(255 255 255 / 96%) !important;
+    border-top: 1px solid #cbd7e0 !important;
+    box-shadow: 0 -3px 12px rgb(30 60 80 / 7%) !important;
+  }
+  html body .v21-workspace-shell .v21-mobile-bottom button {
+    min-height: 46px !important;
+    border: 1px solid #cbd8e2 !important;
+    border-radius: 10px !important;
+    background: #f5f8fa !important;
+    color: #24496d !important;
+    font-weight: 700 !important;
+  }
+}
