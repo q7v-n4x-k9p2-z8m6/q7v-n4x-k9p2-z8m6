@@ -202,6 +202,8 @@ export default function Version21Workspace(){
   if(!canModuleAction(active,'delete')){notify('مجوز ابطال یا حذف این بخش برای حساب شما فعال نیست.');return;}
   if(dbStatus!=='connected'||localPreview){notify('در پیش‌نمایش محلی عملیات مالی و ابطال غیرفعال است؛ ابتدا اطلاعات واقعی را تازه‌سازی کنید.');return;}
   if(!selected){notify('ابتدا یک ردیف را انتخاب کنید.');return;}
+  if(active==='customerLedger'&&!customerDetail){notify('برای غیرفعال‌سازی مشتری از بخش «مشتریان» استفاده کنید؛ اینجا فقط گردش حساب قابل ابطال است.');return;}
+  if(active==='branchLedger'&&!branchDetail){notify('برای غیرفعال‌سازی نمایندگی از بخش «نمایندگی‌ها» استفاده کنید؛ اینجا فقط گردش حساب قابل ابطال است.');return;}
   const targetModule=['customerLedger','branchLedger'].includes(active)?'transactions':active;
   if(active==='ledger'&&!selected.documentId){notify('شناسه سند اصلی برای این سطر موجود نیست؛ برای جلوگیری از ابطال سند اشتباه، عملیات متوقف شد.');return;}
   const masterDataModules=['customers','branches','cash','banks','currencies','accounts'];
