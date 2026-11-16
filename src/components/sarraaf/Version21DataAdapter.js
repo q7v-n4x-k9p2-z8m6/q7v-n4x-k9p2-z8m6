@@ -242,15 +242,17 @@ export async function loadVersion21Database() {
 
   const journalGroups = new Map();
   activeLedgerEntries.forEach(row => {
-    const documentKey = row.document_id ? String(row.document_id) : `ledger-${row.id}`;
-    const currency = row.currency || documentsById.get(documentKey)?.currency || 'AFN';
+    const linkedDocument = row.document_id ? documentsById.get(String(row.document_id)) : null;
+    if (String(linkedDocument?.doc_type || '').toLowerCase() !== 'journal') return;
+    const documentKey = String(row.document_id);
+    const currency = row.currency || linkedDocument?.currency || 'AFN';
     const key = `${documentKey}::${currency}`;
     if (!journalGroups.has(key)) journalGroups.set(key, []);
     journalGroups.get(key).push(row);
   });
   const mappedJournal = [...journalGroups.entries()].map(([key, lines]) => {
     const first = lines[0] || {};
-    const documentKey = first.document_id ? String(first.document_id) : `ledger-${first.id}`;
+    const documentKey = String(first.document_id);
     const linkedDocument = documentsById.get(documentKey);
     const currency = first.currency || linkedDocument?.currency || 'AFN';
     const debitTotal = lines.reduce((sum, row) => sum + num(row.debit), 0);
@@ -259,9 +261,9 @@ export async function loadVersion21Database() {
     const creditNames = [...new Set(lines.filter(row => num(row.credit) > 0).map(row => row.account_name).filter(Boolean))];
     return {
       id: key,
-      documentId: first.document_id ? String(first.document_id) : null,
+      documentId: documentKey,
       date: dateOnly(first.created_at),
-      number: linkedDocument?.doc_number || `LE-${first.id}`,
+      number: linkedDocument?.doc_number || `JE-${first.id}`,
       description: linkedDocument?.description || first.description || '',
       debitAccount: debitNames.join(' / '),
       creditAccount: creditNames.join(' / '),
@@ -270,6 +272,25 @@ export async function loadVersion21Database() {
       debitTotal,
       creditTotal,
       status: linkedDocument?.reversed ? 'ابطال شده' : (Math.abs(debitTotal - creditTotal) < 0.005 ? 'قطعی' : 'نیازمند بررسی'),
+      _sourceTable: 'documents',
+    };
+  }).sort((a, b) => String(b.date).localeCompare(String(a.date)));
+
+  const mappedLedger = activeLedgerEntries.map(row => {
+    const doc = row.document_id ? documentsById.get(String(row.document_id)) : null;
+    return {
+      id: String(row.id),
+      documentId: row.document_id ? String(row.document_id) : null,
+      date: dateOnly(row.created_at),
+      number: doc?.doc_number || `LE-${row.id}`,
+      description: row.description || doc?.description || '',
+      account: row.account_name || '',
+      accountType: row.account_type || '',
+      debit: num(row.debit),
+      credit: num(row.credit),
+      amount: num(row.debit) || num(row.credit),
+      currency: row.currency || doc?.currency || 'AFN',
+      status: doc?.reversed ? 'ابطال شده' : 'قطعی',
       _sourceTable: 'ledger_entries',
     };
   }).sort((a, b) => String(b.date).localeCompare(String(a.date)));
@@ -347,6 +368,7 @@ export async function loadVersion21Database() {
       remittance: mappedTransfers,
       exchange: mappedConversions,
       journal: mappedJournal,
+      ledger: mappedLedger,
       transactions: mappedTransactions,
       reports: mappedReports,
       activity: mappedActivity,
