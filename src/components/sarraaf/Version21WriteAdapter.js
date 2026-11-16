@@ -669,11 +669,14 @@ export async function deleteVersion21Record(module, record) {
     banks: ['bank', 'account_id'],
     customers: ['customer', 'account_id'],
     accounts: ['suspense', 'account_id'],
+    branches: ['suspense', 'account_id'],
   };
   if (referenceChecks[module]) {
     const [accountType, accountColumn] = referenceChecks[module];
-    const { count, error: countError } = await supabase.from('ledger_entries').select('id', { count: 'exact', head: true })
+    let query = supabase.from('ledger_entries').select('id', { count: 'exact', head: true })
       .eq('exchange_code', ctx.exchangeCode).eq('account_type', accountType).eq(accountColumn, id).eq('deleted', false);
+    if (['accounts', 'branches'].includes(module) && record.name) query = query.eq('account_name', record.name);
+    const { count, error: countError } = await query;
     if (countError) throw countError;
     if (count > 0) throw new Error('این رکورد در اسناد مالی استفاده شده است؛ حذف فیزیکی مجاز نیست. ابتدا باید آن را غیرفعال کنید.');
   }
