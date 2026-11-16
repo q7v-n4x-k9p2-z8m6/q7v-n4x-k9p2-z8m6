@@ -204,6 +204,7 @@ export default function Version21Workspace(){
   if(!window.confirm('این عملیات روی دیتابیس همین صراف اجرا می‌شود. برای اسناد مالی، سند معکوس ثبت خواهد شد. ادامه می‌دهید؟'))return;
   try{
    const target=selected;
+   if(data.isDemoAccount&&!target._demoPreview){notify('در این حساب فقط رکوردهای موقت قابل حذف هستند؛ اطلاعات اصلی حساب دست‌نخورده می‌ماند.');return;}
    if(target._demoPreview){
     if(target._demoFixed){notify('این رکورد ثابت است و امکان حذف آن وجود ندارد.');return;}
     await deleteDemoPreviewRecord(target._demoRecordId);
@@ -226,6 +227,7 @@ export default function Version21Workspace(){
   if(!canModuleAction(active,'edit')){notify('مجوز ویرایش این بخش برای حساب شما فعال نیست.');return;}
   if(dbStatus!=='connected'||localPreview){notify('در پیش‌نمایش محلی ویرایش غیرفعال است؛ ابتدا اطلاعات واقعی را تازه‌سازی کنید.');return;}
   if(!selected){notify('ابتدا یک ردیف را انتخاب کنید.');return;}
+  if(data.isDemoAccount&&!selected._demoPreview){notify('در این حساب فقط رکوردهای موقت قابل ویرایش هستند؛ اطلاعات اصلی حساب دست‌نخورده می‌ماند.');return;}
   if(selected._demoPreview){
    if(selected._demoFixed){notify('این رکورد ثابت است و امکان ویرایش آن وجود ندارد.');return;}
    const demoEditModule=selected._demoModule;
