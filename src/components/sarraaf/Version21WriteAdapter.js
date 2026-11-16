@@ -257,23 +257,13 @@ export async function saveVersion21Record(module, draft) {
   }
 
   if (module === 'exchange') {
-    if (draft.fromCurrency === draft.toCurrency) throw new Error('ارز مبدا و مقصد باید متفاوت باشد.');
+    if (draft.id) throw new Error('برای اصلاح معامله ارزی، از عملیات اصلاح سند مالی استفاده کنید؛ ایجاد معامله تکراری مجاز نیست.');
+    if (draft.fromCurrency === draft.toCurrency) throw new Error('ارز مبدا و مقصد باید متفاوت باشند.');
     const fromAmount = number(draft.fromAmount);
     const toAmount = number(draft.toAmount);
     if (fromAmount <= 0 || toAmount <= 0) throw new Error('مبالغ هر دو طرف معامله باید مثبت باشند.');
     const fromSafe = await getSafe(ctx, draft.cashFrom || draft.cash, draft.fromCurrency);
     const toSafe = await getSafe(ctx, draft.cashTo || draft.cash, draft.toCurrency);
-    const lines = [
-      { account_type: 'cash', account_id: String(fromSafe.id), account_name: fromSafe.name, currency: draft.fromCurrency, debit: 0, credit: fromAmount },
-      { account_type: 'suspense', account_id: '', account_name: 'حساب واسط تبدیل ارز', currency: draft.fromCurrency, debit: fromAmount, credit: 0 },
-      { account_type: 'cash', account_id: String(toSafe.id), account_name: toSafe.name, currency: draft.toCurrency, debit: toAmount, credit: 0 },
-      { account_type: 'suspense', account_id: '', account_name: 'حساب واسط تبدیل ارز', currency: draft.toCurrency, debit: 0, credit: toAmount },
-    ];
-    const doc = await postDocument(ctx, {
-      docType: 'convert', currency: draft.fromCurrency, amount: fromAmount,
-      relatedType: 'none', relatedName: draft.party || '',
-      description: draft.note || `تبدیل ${draft.fromCurrency} به ${draft.toCurrency}`, lines,
-    });
     const { data: conversion, error: conversionError } = await supabase.from('conversions').insert({
       exchange_code: ctx.exchangeCode,
       customer_name: draft.party || 'مشتری نقدی',
@@ -283,15 +273,25 @@ export async function saveVersion21Record(module, draft) {
       description: draft.note || 'معامله تبدیل ارز',
       registered_by: ctx.userName, registered_by_user_id: ctx.userId,
     }).select('id').single();
-    if (conversionError) {
-      await supabase.rpc('reverse_document_transaction', {
-        p_exchange_code: ctx.exchangeCode, p_document_id: doc.document_id,
-        p_registered_by: ctx.userName, p_reason: 'ثبت ردیف تبدیل ارز ناموفق بود؛ سند به‌صورت خودکار معکوس شد.',
+    if (conversionError) throw conversionError;
+    try {
+      const lines = [
+        { account_type: 'cash', account_id: String(fromSafe.id), account_name: fromSafe.name, currency: draft.fromCurrency, debit: 0, credit: fromAmount },
+        { account_type: 'suspense', account_id: '', account_name: 'حساب واسط تبدیل ارز', currency: draft.fromCurrency, debit: fromAmount, credit: 0 },
+        { account_type: 'cash', account_id: String(toSafe.id), account_name: toSafe.name, currency: draft.toCurrency, debit: toAmount, credit: 0 },
+        { account_type: 'suspense', account_id: '', account_name: 'حساب واسط تبدیل ارز', currency: draft.toCurrency, debit: 0, credit: toAmount },
+      ];
+      const doc = await postDocument(ctx, {
+        docType: 'convert', currency: draft.fromCurrency, amount: fromAmount,
+        relatedType: 'conversion', relatedId: conversion.id, relatedName: draft.party || '',
+        description: draft.note || `تبدیل ${draft.fromCurrency} به ${draft.toCurrency}`, lines,
       });
-      throw conversionError;
+      const auditWarning = await writeAudit(ctx, 'create', 'conversion', conversion.id, 'ثبت معامله تبدیل ارز و سندهای دفتر کل', null, draft);
+      return { id: String(conversion.id), documentId: doc?.document_id, auditWarning };
+    } catch (error) {
+      await supabase.from('conversions').delete().eq('id', conversion.id).eq('exchange_code', ctx.exchangeCode);
+      throw error;
     }
-    const auditWarning = await writeAudit(ctx, 'create', 'conversion', conversion.id, 'ثبت معامله تبدیل ارز و سندهای دفتر کل', null, draft);
-    return { id: String(conversion.id), auditWarning };
   }
 
   if (module === 'journal') {
@@ -317,10 +317,7 @@ export async function saveVersion21Record(module, draft) {
 export async function deleteVersion21Record(module, record) {
   const ctx = sessionContext();
   if (!record?.id) throw new Error('رکورد انتخاب‌شده معتبر نیست.');
-  if (['customerLedger', 'branchLedger', 'reports', 'profit', 'balance', 'ledger', 'activity'].includes(module)) {
-    throw new Error('این صفحه گزارش یا دفتر تجمیعی است؛ رکورد اصلی را از بخش عملیات مربوط انتخاب کنید.');
-  }
-  if (['transactions', 'cashAction', 'expenses', 'journal'].includes(module) || record.documentId) {
+  if (record.documentId || ['transactions', 'cashAction', 'expenses', 'journal', 'ledger'].includes(module)) {
     const documentId = Number(record.documentId || record.id);
     const { data, error } = await supabase.rpc('reverse_document_transaction', {
       p_exchange_code: ctx.exchangeCode,
@@ -331,6 +328,43 @@ export async function deleteVersion21Record(module, record) {
     if (error) throw error;
     if (data?.error) throw new Error(data.error);
     await writeAudit(ctx, 'reverse', 'document', documentId, 'معکوس‌سازی سند به‌جای حذف فیزیکی', null, data);
+    if (module === 'remittance') {
+      await supabase.from('transfers').update({ status: 'reversed', updated_at: new Date().toISOString() })
+        .eq('id', Number(record.id)).eq('exchange_code', ctx.exchangeCode);
+    }
+    if (module === 'exchange') {
+      await supabase.from('conversions').delete().eq('id', Number(record.id)).eq('exchange_code', ctx.exchangeCode);
+    }
+    return { reversed: true };
+  }
+  if (['customerLedger', 'branchLedger', 'reports', 'profit', 'balance', 'activity'].includes(module)) {
+    throw new Error('این صفحه گزارش یا دفتر تجمیعی است؛ رکورد اصلی را از بخش عملیات مربوط انتخاب کنید.');
+  }
+  if (module === 'remittance' || module === 'exchange') {
+    const table = module === 'remittance' ? 'transfers' : 'conversions';
+    const linkColumn = module === 'remittance' ? 'transfer_id' : 'related_id';
+    let documentQuery = supabase.from('documents').select('id').eq('exchange_code', ctx.exchangeCode);
+    if (module === 'remittance') documentQuery = documentQuery.eq('transfer_id', Number(record.id));
+    else documentQuery = documentQuery.eq('related_type', 'conversion').eq('related_id', Number(record.id));
+    const { data: linkedDoc, error: linkError } = await documentQuery.order('id', { ascending: false }).limit(1).maybeSingle();
+    if (linkError) throw linkError;
+    if (!linkedDoc) throw new Error('سند مالی مرتبط پیدا نشد؛ برای جلوگیری از حذف ناقص، عملیات متوقف شد.');
+    const { data, error } = await supabase.rpc('reverse_document_transaction', {
+      p_exchange_code: ctx.exchangeCode, p_document_id: linkedDoc.id,
+      p_registered_by: ctx.userName, p_reason: 'ابطال سند مرتبط با رکورد از نسخه ۲۱.',
+    });
+    if (error) throw error;
+    if (data?.error) throw new Error(data.error);
+    if (module === 'remittance') {
+      const { error: updateError } = await supabase.from(table).update({ status: 'reversed', updated_at: new Date().toISOString() })
+        .eq('id', Number(record.id)).eq('exchange_code', ctx.exchangeCode);
+      if (updateError) throw updateError;
+    } else {
+      const { error: deleteError } = await supabase.from(table).delete()
+        .eq('id', Number(record.id)).eq('exchange_code', ctx.exchangeCode);
+      if (deleteError) throw deleteError;
+    }
+    await writeAudit(ctx, 'reverse', module, record.id, 'ابطال سند و ثبت سابقه', null, data);
     return { reversed: true };
   }
   const table = TABLES[module];
