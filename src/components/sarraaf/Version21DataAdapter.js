@@ -399,6 +399,7 @@ export async function loadVersion21Database() {
   // revenue/expense account in chart_of_accounts.
   const profitTotals = new Map();
   const profitAccountTotals = new Map();
+  const profitEntries = [];
   const unclassifiedProfitLines = [];
   for (const line of activeLedgerEntries) {
     const linkedDocument = line.document_id ? documentsById.get(String(line.document_id)) : null;
@@ -422,6 +423,15 @@ export async function loadVersion21Database() {
     const credit = num(line.credit);
     const normalBalance = account?.normal_balance || (accountType === 'revenue' ? 'credit' : 'debit');
     const signedAmount = normalBalance === 'credit' ? credit - debit : debit - credit;
+    profitEntries.push({
+      id: String(line.id), date: dateOnly(line.created_at),
+      documentId: line.document_id || null,
+      accountId: String(account?.id || line.account_id || ''),
+      code: account?.account_code || '',
+      account: account?.account_name || line.account_name || 'حساب نامشخص',
+      accountType, currency, amount: signedAmount,
+      debit, credit,
+    });
     const key = currency;
     const totals = profitTotals.get(key) || { currency, revenue: 0, expense: 0, net: 0, lineCount: 0 };
     if (accountType === 'revenue') totals.revenue += signedAmount;
@@ -491,6 +501,7 @@ export async function loadVersion21Database() {
       errors: mappedErrors,
       profitByCurrency,
       profitAccounts,
+      profitEntries,
       unclassifiedProfitLines,
     },
     loadedAt: new Date().toISOString(),
