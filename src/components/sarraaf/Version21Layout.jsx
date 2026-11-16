@@ -80,6 +80,27 @@ const GROUPS = [
   'حسابداری و دفاتر', 'ارز، شبکه و ارتباطات', 'گزارش‌ها و خدمات', 'امنیت و اسناد'
 ];
 
+const WORKSPACE_TARGETS = {
+  home: 'home', customers: 'customers', customerLedger: 'customerLedger',
+  agents: 'branches', branchLedger: 'branchLedger', internalBranches: 'branches',
+  cash: 'cash', banks: 'banks', dadogereft: 'customerLedger',
+  trade: 'exchange', sendTransfer: 'remittance', receiveTransfer: 'remittance',
+  transferBook: 'remittance', expenses: 'expenses', convert: 'exchange',
+  treasury: 'cash', interexchange: 'branchLedger', journal: 'journal',
+  journalEntry: 'journal', ledger: 'ledger', chartAccounts: 'accounts',
+  subsidiaryLedger: 'ledger', trialBalance: 'balance', debitCredit: 'balance',
+  balanceSheet: 'balance', reconciliation: 'reports', profit: 'profit',
+  cashFlow: 'reports', debtors: 'customerLedger', receivablePayable: 'customerLedger',
+  fixedAssets: 'accounts', budgets: 'expenses', fiscalPeriods: 'reports',
+  currencies: 'currencies', agencyNetwork: 'branches', marketRates: 'exchange',
+  chat: 'sarraafGroups', market: 'products', sarraafChat: 'sarraafGroups',
+  multiCompany: 'branches', reports: 'reports', onlineProducts: 'products',
+  support: 'home', assistant: 'assistant', settings: 'home',
+  paymentGateway: 'products', auditLog: 'reports', documents: 'reports',
+  approvals: 'reports', kyc: 'customers', compliance: 'reports',
+  backup: 'home', notifications: 'home'
+};
+
 function ModuleLink({ item, compact = false }) {
   const Icon = item.icon;
   if (item.pending) {
@@ -95,7 +116,7 @@ function ModuleLink({ item, compact = false }) {
     );
   }
   return (
-    <NavLink to={item.path} end={item.path === '/dashboard'}
+    <NavLink to={item.id === 'home' ? '/dashboard' : '/dashboard?module=' + (WORKSPACE_TARGETS[item.id] || 'home')} end={item.id === 'home'}
       className={({ isActive }) => compact
         ? `flex min-h-[68px] flex-col items-center justify-center gap-1 rounded-lg border px-1 py-2 text-center text-[10px] leading-tight transition-colors ${isActive ? 'border-teal-600 bg-teal-600 text-white' : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-100'}`
         : `flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-colors ${isActive ? 'bg-teal-600 text-white shadow-sm' : 'text-slate-200 hover:bg-white/10'}`}>
