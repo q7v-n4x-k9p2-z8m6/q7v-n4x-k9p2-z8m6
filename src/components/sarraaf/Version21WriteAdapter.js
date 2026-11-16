@@ -156,7 +156,7 @@ function mapMasterRecord(module, draft, ctx) {
         ...common, bank_name: String(draft.name || '').trim(),
         account_number: draft.account || '', currency: draft.currency || 'AFN',
         balance: number(draft.opening), holder: draft.holder || null,
-        notes: draft.description || null, active: true,
+        notes: draft.description || null, active: draft.status !== 'غیرفعال',
       };
     case 'currencies':
       return {
