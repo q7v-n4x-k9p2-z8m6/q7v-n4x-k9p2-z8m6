@@ -366,7 +366,9 @@ export async function saveVersion21Record(module, draft) {
       const auditWarning = await writeAudit(ctx, 'create', 'conversion', conversion.id, 'ثبت معامله تبدیل ارز و سندهای دفتر کل', null, draft);
       return { id: String(conversion.id), documentId: doc?.document_id, auditWarning, warning: dateWarning };
     } catch (error) {
-      await supabase.from('conversions').delete().eq('id', conversion.id).eq('exchange_code', ctx.exchangeCode);
+      // Preserve the source conversion record if ledger posting fails.
+      // Report the failure for reconciliation; never physically delete financial data.
+      await captureVersion21Error(error, 'conversion-posting');
       throw error;
     }
   }
