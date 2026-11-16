@@ -300,14 +300,17 @@ export async function saveVersion21Record(module, draft) {
     if (module === 'cashAction' && draft.kind === 'خرج' && draft.partyType === 'customer') {
       // Customer/cash posting is a paired journal, not a local balance adjustment.
     }
-    const customer = module === 'cashAction' ? await getCustomer(ctx, draft.party) : null;
+    const customer = module === 'cashAction' && draft.partyType === 'customer' ? await getCustomer(ctx, draft.party) : null;
+    const branch = module === 'cashAction' && draft.partyType === 'branch' ? await getBranch(ctx, draft.party) : null;
     const isCashIn = module === 'cashAction' && draft.kind === 'دخل';
     const isExpense = module === 'expenses';
     const counter = isExpense
       ? { account_type: 'suspense', account_id: '', account_name: 'مصارف' }
       : customer
         ? { account_type: 'customer', account_id: String(customer.id), account_name: customer.name }
-        : { account_type: 'suspense', account_id: '', account_name: draft.party || (isExpense ? 'مصارف' : 'حساب مقابل') };
+        : branch
+          ? { account_type: 'suspense', account_id: String(branch.id), account_name: branch.name }
+          : { account_type: 'suspense', account_id: '', account_name: draft.party || (isExpense ? 'مصارف' : 'حساب مقابل') };
     const cashLine = { account_type: 'cash', account_id: String(safe.id), account_name: safe.name, currency };
     const counterLine = { ...counter, currency };
     const lines = isCashIn
@@ -315,8 +318,8 @@ export async function saveVersion21Record(module, draft) {
       : [{ ...counterLine, debit: amount, credit: 0 }, { ...cashLine, debit: 0, credit: amount }];
     const doc = await postDocument(ctx, {
       docType: isExpense ? 'expense' : (isCashIn ? 'cash_in' : 'cash'),
-      currency, amount, relatedType: customer ? 'customer' : 'none',
-      relatedId: customer?.id || null, relatedName: draft.party || draft.title || '',
+      currency, amount, relatedType: customer ? 'customer' : (branch ? 'branch' : 'none'),
+      relatedId: customer?.id || branch?.id || null, relatedName: draft.party || draft.title || '',
       description: draft.description || draft.title || draft.note || (isCashIn ? 'دخل صندوق' : 'خرج صندوق'),
       lines, clientOperationId: draft.clientOperationId,
     });
