@@ -132,7 +132,9 @@ export async function loadVersion21Database() {
     const totals = new Map();
     for (const line of lines) {
       const currency = String(line.currency || 'AFN');
-      const debit = num(line.debit), credit = num(line.credit);
+      // Parse raw database values before validating; never coerce malformed amounts to zero.
+      const debit = line.debit === null || line.debit === undefined || line.debit === '' ? 0 : Number(line.debit);
+      const credit = line.credit === null || line.credit === undefined || line.credit === '' ? 0 : Number(line.credit);
       if (!Number.isFinite(debit) || !Number.isFinite(credit) || debit < 0 || credit < 0 || (debit > 0 && credit > 0) || (debit === 0 && credit === 0)) {
         documentBalanceCache.set(key, false); return false;
       }
