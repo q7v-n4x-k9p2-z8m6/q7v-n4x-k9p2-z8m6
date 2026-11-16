@@ -32,6 +32,7 @@ const MODULES = [
   {id:'reports',label:'گزارش عملیات',icon:FileSpreadsheet,group:'گزارشات'},
   {id:'profit',label:'مفاد و زیان',icon:BarChart3,group:'گزارشات'},
   {id:'activity',label:'سوابق فعالیت',icon:ClipboardList,group:'گزارشات'},
+  {id:'errors',label:'گزارش خطاها و فیلدها',icon:CircleHelp,group:'گزارشات'},
   {id:'balance',label:'بیلانس عمومی',icon:Scale,group:'گزارشات'},
   {id:'sarraafGroups',label:'گروه و چت',icon:MessagesSquare,group:'امکانات تکمیلی',skeleton:true,children:['گروه صرافان','ایجاد گروه','گفت‌وگوی گروهی','گفت‌وگوی خصوصی']},
   {id:'assistant',label:'هوش مصنوعی',icon:Bot,group:'امکانات تکمیلی',skeleton:true},
@@ -51,7 +52,7 @@ const SCHEMAS = {
  exchange:{title:'معامله اسعار',fields:[['date','تاریخ','date'],['kind','نوع معامله','select',['خرید','فروش','تبدیل']],['fromCurrency','ارز مبدا','select',CURRENCIES],['fromAmount','مبلغ مبدا','number'],['toCurrency','ارز مقصد','select',CURRENCIES],['toAmount','مبلغ مقصد','number'],['rate','نرخ معامله','number'],['profit','مفاد معامله','number'],['party','طرف حساب','text'],['cashFrom','صندوق پرداخت ارز مبدا','select',[]],['cashTo','صندوق دریافت ارز مقصد','select',[]],['note','یادداشت','text']]},
  journal:{title:'سند روزنامچه',fields:[['date','تاریخ','date'],['number','شماره سند','text'],['description','شرح سند','text'],['debitAccount','حساب بدهکار','text'],['creditAccount','حساب بستانکار','text'],['currency','ارز','select',CURRENCIES],['amount','مبلغ','number'],['status','وضعیت','select',['پیش‌نویس','قطعی']]]}
 };
-const emptyInitial = () => ({ customers: [], branches: [], cash: [], banks: [], currencies: [], accounts: [], expenses: [], remittance: [], exchange: [], journal: [], transactions: [], activity: [] });
+const emptyInitial = () => ({ customers: [], branches: [], cash: [], banks: [], currencies: [], accounts: [], expenses: [], remittance: [], exchange: [], journal: [], transactions: [], activity: [], errors: [] });
 const today = () => new Date().toLocaleDateString('en-CA');
 const n = v => Number(String(v??0).replaceAll(',',''))||0;
 const fmt = v => new Intl.NumberFormat('fa-IR',{maximumFractionDigits:2}).format(n(v));
@@ -62,7 +63,7 @@ const NAV_MENUS = [
  {label:'تعاریف',items:[['مشتریان','customers'],['نمایندگی‌ها','branches'],['صندوق‌ها','cash'],['بانک و چک','banks'],['اسعار','currencies'],['کدینگ حساب‌ها','accounts']]},
  {label:'عملیات',items:[['دخل صندوق','cashIn'],['خرج صندوق','cashOut'],['خرید و فروش اسعار','exchange'],['ثبت حواله','remittance'],['ثبت مصرف','expenses']]},
  {label:'حسابات',items:[['روزنامچه','journal'],['دفتر کل','ledger'],['حساب مشتریان','customerLedger'],['حساب نمایندگی‌ها','branchLedger']]},
- {label:'گزارشات',items:[['گزارش عملیات روز','reports'],['مفاد و زیان','profit'],['بیلانس عمومی','balance'],['سوابق فعالیت','activity']]},
+ {label:'گزارشات',items:[['گزارش عملیات روز','reports'],['مفاد و زیان','profit'],['بیلانس عمومی','balance'],['سوابق فعالیت','activity'],['گزارش خطاها','errors']]},
  {label:'تنظیمات',items:[['تنظیمات محلی','settings'],['انتخاب زبان','language'],['پشتیبانی','support'],['راهنما','help']]},
   {label:'امکانات تکمیلی',items:[['گروه و چت','sarraafGroups'],['هوش مصنوعی','assistant']] }
 ];
@@ -257,6 +258,7 @@ export default function Version21Workspace(){
  const showBookSummary=['customerLedger','branchLedger','cash','banks','journal','ledger'].includes(active);
  const columnsFor=(mod,arr)=>{
   if(mod==='activity')return [{key:'date',label:'تاریخ'},{key:'action',label:'عملیات'},{key:'entity',label:'بخش'},{key:'entityId',label:'شناسه'},{key:'description',label:'شرح'},{key:'status',label:'وضعیت'}];
+  if(mod==='errors')return [{key:'date',label:'تاریخ'},{key:'error_type',label:'بخش / فیلد'},{key:'error_message',label:'شرح خطا'},{key:'device',label:'دستگاه'},{key:'app_version',label:'نسخه'},{key:'status',label:'وضعیت'}];
   if(mod==='customerLedger'&&!customerDetail)return [
    {key:'code',label:'کد مشتری'},{key:'name',label:'نام مشتری'},{key:'currency',label:'ارز اصلی'},
    {key:'balance',label:'وضعیت و مانده حساب',render:r=><div className="flex flex-wrap gap-1">{customerSummary(r).map(x=><span key={x.currency} className={'rounded px-2 py-1 text-[10px] font-bold '+(x.status==='بدهکار'?'bg-rose-100 text-rose-800':x.status==='بستانکار'?'bg-emerald-100 text-emerald-800':'bg-slate-100 text-slate-700')}>{fmt(Math.abs(x.net))} {x.currency} · {x.status}</span>)}</div>},
@@ -310,7 +312,7 @@ export default function Version21Workspace(){
     <div className="v21-laptop-toolbar">
     <nav className="v21-laptop-menu-bar" aria-label="منوی اصلی">{NAV_MENUS.slice(0,5).map(m=><div key={m.label} className="relative"><button onClick={()=>setMenu(menu===m.label?'':m.label)} className={'v21-laptop-menu-trigger '+(menu===m.label?'is-open':'')}>{m.label}<ChevronDown className="mr-1 inline h-3 w-3"/></button>{menu===m.label&&<div className="v21-laptop-menu-popover">{m.items.map(([label,act])=><button key={act} onClick={()=>menuAction(act)}>{label}</button>)}</div>}</div>)}</nav>
     <aside aria-label="آیکون‌های اصلی و مرکز عملیات" className="v21-module-icon-row shrink-0 grid w-full grid-cols-6 gap-1 border-b border-slate-400 bg-[#e1e8ed] p-2 md:grid-cols-12">
-      {['home','customerLedger','customers','branches','branchLedger','banks','remittance','cash','exchange','expenses','journal','ledger','sarraafGroups','assistant','products','language'].map(id=>{const m=MODULES.find(x=>x.id===id);if(!m)return null;const I=m.icon;return <button key={m.id} title={m.label} onClick={()=>{setActive(m.id);setSelected(null);setCustomerDetail(null);setBranchDetail(null);setQuery('');}} className={'flex min-w-0 flex-col items-center justify-center gap-1 rounded-sm border px-1 py-1.5 text-center '+(active===m.id?'border-blue-300 bg-[#d2e3f1] font-bold text-blue-900':'border-transparent text-[#29465e] hover:border-slate-300 hover:bg-white')}><I className="h-4 w-4"/><span className="w-full truncate text-[9px]">{m.label}</span></button>})}
+      {['home','customerLedger','customers','branches','branchLedger','banks','remittance','cash','exchange','expenses','journal','ledger','errors','sarraafGroups','assistant','products','language'].map(id=>{const m=MODULES.find(x=>x.id===id);if(!m)return null;const I=m.icon;return <button key={m.id} title={m.label} onClick={()=>{setActive(m.id);setSelected(null);setCustomerDetail(null);setBranchDetail(null);setQuery('');}} className={'flex min-w-0 flex-col items-center justify-center gap-1 rounded-sm border px-1 py-1.5 text-center '+(active===m.id?'border-blue-300 bg-[#d2e3f1] font-bold text-blue-900':'border-transparent text-[#29465e] hover:border-slate-300 hover:bg-white')}><I className="h-4 w-4"/><span className="w-full truncate text-[9px]">{m.label}</span></button>})}
      </aside>
     </div>
     <main className="min-h-0 min-w-0 flex-1 overflow-y-auto bg-[#f9fafb] p-3">
@@ -330,7 +332,7 @@ export default function Version21Workspace(){
         {title:'تعاریف و دفاتر',ids:['customers','customerLedger','branches','branchLedger']},
         {title:'صندوق و بانک',ids:['cash','banks']},
         {title:'عملیات صرافی',ids:['exchange','remittance','expenses']},
-        {title:'حسابداری و گزارشات',ids:['journal','ledger','accounts','currencies','reports','profit','balance','activity']},
+        {title:'حسابداری و گزارشات',ids:['journal','ledger','accounts','currencies','reports','profit','balance','activity','errors']},
          {title:'امکانات تکمیلی · اسکلت اولیه',ids:['sarraafGroups','assistant','products']},
         {title:'تنظیمات',ids:['language']}
        ].map(group=><section key={group.title} className="border border-[#9aabb9] bg-[#e8eef3] p-2 shadow-sm">
