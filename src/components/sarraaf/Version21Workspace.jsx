@@ -297,7 +297,7 @@ export default function Version21Workspace(){
   if(mod==='customerLedger'&&customerDetail)return [
    {key:'date',label:'تاریخ'},{key:'type',label:'نوع عملیات'},{key:'description',label:'شرح'},
    {key:'debit',label:'بدهکار',render:r=>fmt(n(r.amount)<0?Math.abs(n(r.amount)):0)},
-   {key:'credit',label:'بستانکار',render:r=>fmt(n(r.amount)>0?n(r.amount):0)},{key:'currency',label:'ارز'}
+   {key:'credit',label:'بستانکار',render:r=>fmt(n(r.amount)>0?n(r.amount):0)},{key:'currency',label:'ارز'},{key:'status',label:'وضعیت سند'}
   ];
   if(mod==='branchLedger'&&!branchDetail)return [
    {key:'code',label:'کد نمایندگی'},{key:'name',label:'نام نمایندگی'},{key:'city',label:'موقعیت'},{key:'currency',label:'ارز اصلی'},
@@ -306,13 +306,16 @@ export default function Version21Workspace(){
   if(mod==='branchLedger'&&branchDetail)return [
    {key:'date',label:'تاریخ'},{key:'type',label:'نوع عملیات'},{key:'description',label:'شرح'},
    {key:'debit',label:'بدهکار',render:r=>fmt(n(r.amount)<0?Math.abs(n(r.amount)):0)},
-   {key:'credit',label:'بستانکار',render:r=>fmt(n(r.amount)>0?n(r.amount):0)},{key:'currency',label:'ارز'}
+   {key:'credit',label:'بستانکار',render:r=>fmt(n(r.amount)>0?n(r.amount):0)},{key:'currency',label:'ارز'},{key:'status',label:'وضعیت سند'}
   ];
   const fields=SCHEMAS[mod]?.fields||[];
+  if(mod==='remittance')return [{key:'date',label:'تاریخ'},{key:'number',label:'شماره حواله'},{key:'direction',label:'جهت'},{key:'sender',label:'فرستنده'},{key:'receiver',label:'گیرنده'},{key:'amount',label:'مبلغ',render:r=>fmt(r.amount)},{key:'fee',label:'کمیشن',render:r=>fmt(r.fee)},{key:'currency',label:'ارز'},{key:'status',label:'وضعیت حواله'},{key:'accountingStatus',label:'وضعیت سند'}];
+  if(mod==='exchange')return [{key:'date',label:'تاریخ'},{key:'fromCurrency',label:'ارز مبدا'},{key:'fromAmount',label:'مبلغ مبدا',render:r=>fmt(r.fromAmount)},{key:'toCurrency',label:'ارز مقصد'},{key:'toAmount',label:'مبلغ مقصد',render:r=>fmt(r.toAmount)},{key:'rate',label:'نرخ'},{key:'party',label:'طرف حساب'},{key:'accountingStatus',label:'وضعیت سند'}];
+  if(mod==='expenses')return [{key:'date',label:'تاریخ'},{key:'title',label:'شرح مصرف'},{key:'cash',label:'صندوق'},{key:'amount',label:'مبلغ',render:r=>fmt(r.amount)},{key:'currency',label:'ارز'},{key:'status',label:'وضعیت سند'}];
   if(mod==='cash')return [{key:'code',label:'کد صندوق'},{key:'name',label:'نام صندوق'},{key:'currency',label:'ارز'},{key:'opening',label:'مانده افتتاحیه',render:r=>fmt(r.opening)},{key:'balance',label:'موجودی فعلی',render:r=>fmt(balanceFor(r.currency,r.name))},{key:'status',label:'وضعیت'},{key:'description',label:'توضیحات'}];
   if(mod==='journal')return [{key:'date',label:'تاریخ'},{key:'number',label:'شماره سند'},{key:'description',label:'شرح'},{key:'debitAccount',label:'بدهکار'},{key:'creditAccount',label:'بستانکار'},{key:'currency',label:'ارز'},{key:'amount',label:'مبلغ',render:r=>fmt(r.amount)},{key:'status',label:'وضعیت'}];
   if(mod==='ledger')return [{key:'date',label:'تاریخ'},{key:'number',label:'شماره سند'},{key:'account',label:'حساب'},{key:'description',label:'شرح'},{key:'debit',label:'بدهکار',render:r=>fmt(r.debit)},{key:'credit',label:'بستانکار',render:r=>fmt(r.credit)},{key:'currency',label:'ارز'},{key:'status',label:'وضعیت'}];
-  if(mod==='transactions'||active==='customerLedger'||active==='branchLedger'||active==='reports')return [{key:'date',label:'تاریخ'},{key:'type',label:'نوع عملیات'},{key:'party',label:'طرف حساب'},{key:'description',label:'شرح'},{key:'currency',label:'ارز'},{key:'amount',label:'مبلغ',render:r=>fmt(r.amount)},{key:'cash',label:'صندوق'}];
+  if(mod==='transactions'||active==='customerLedger'||active==='branchLedger'||active==='reports')return [{key:'date',label:'تاریخ'},{key:'type',label:'نوع عملیات'},{key:'party',label:'طرف حساب'},{key:'description',label:'شرح'},{key:'currency',label:'ارز'},{key:'amount',label:'مبلغ',render:r=>fmt(r.amount)},{key:'cash',label:'صندوق'},{key:'status',label:'وضعیت سند'}];
   return fields.map(([key,label])=>({key,label,render:r=>key==='amount'||key==='opening'||key==='rate'||key==='profit'?fmt(r[key]):undefined}));
  };
  const menuAction=(action)=>{
