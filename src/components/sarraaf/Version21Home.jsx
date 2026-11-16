@@ -12,14 +12,6 @@ import {
   CircleHelp, ArrowLeftRight as ExchangeIcon
 } from 'lucide-react';
 
-const OPERATION_TOOLS = [
-  { label: 'جدید', icon: Plus, disabled: true },
-  { label: 'ویرایش', icon: Pencil, disabled: true },
-  { label: 'حذف', icon: Trash2, disabled: true },
-  { label: 'تازه‌سازی', icon: RefreshCw, action: 'refresh' },
-  { label: 'چاپ', icon: Printer, action: 'print' },
-];
-
 const SECTIONS = [
   { title: 'تعاریف و دفاتر', items: [
     { label: 'تعریف مشتریان', path: '/customers', icon: Users, roles: ['creator','admin','sarraaf','employee'] },
@@ -54,27 +46,6 @@ const SECTIONS = [
     { label: 'زبان برنامه', pending: true, icon: Languages, roles: ['creator','admin','sarraaf','employee'] },
   ]},
 ];
-
-function ToolButton({ item }) {
-  const Icon = item.icon;
-  const onClick = item.action === 'refresh'
-    ? () => window.location.reload()
-    : item.action === 'print'
-      ? () => window.print()
-      : undefined;
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={item.disabled}
-      title={item.disabled ? 'پس از انتخاب یک بخش یا سند فعال می‌شود' : item.label}
-      className="inline-flex min-h-9 items-center justify-center gap-1.5 border border-[#b7c8d4] bg-gradient-to-b from-white to-[#e8eff4] px-3 text-xs font-semibold text-[#294b65] hover:border-[#5b87a4] disabled:cursor-not-allowed disabled:opacity-45"
-    >
-      <Icon className="h-4 w-4" />
-      {item.label}
-    </button>
-  );
-}
 
 function Shortcut({ item }) {
   const Icon = item.icon;
@@ -121,26 +92,14 @@ export default function Version21Home() {
           <div className="border border-white/30 bg-white/10 px-3 py-2 text-xs">حساب فعال: {name}</div>
         </header>
 
-        <div className="hidden lg:block sticky top-[68px] z-20 border-b border-[#b7c5cf] bg-[#e7eef3] p-3 shadow-sm">
-          <div className="flex flex-wrap items-center gap-1.5">
-            <span className="ml-2 text-xs font-bold text-[#24496d]">عملیات:</span>
-            {OPERATION_TOOLS.map(item => <ToolButton key={item.label} item={item} />)}
-            <label className="mr-auto flex min-h-9 min-w-[180px] flex-1 items-center gap-2 border border-[#b7c8d4] bg-white px-2 text-[#526779] sm:max-w-[280px]">
-              <Search className="h-4 w-4 shrink-0" />
-              <input value={search} onChange={event => setSearch(event.target.value)} placeholder="جستجوی بخش‌ها..." className="w-full bg-transparent text-xs outline-none" />
-            </label>
-          </div>
-        </div>
-
-        <div className="space-y-3 border-b border-[#b7c5cf] bg-[#e7eef3] p-3 lg:hidden">
-          <div className="grid grid-cols-3 gap-2">
-            {OPERATION_TOOLS.map(item => <ToolButton key={item.label} item={item} />)}
-          </div>
-          <label className="flex min-h-11 items-center gap-2 border border-[#b7c8d4] bg-white px-3 text-[#526779]">
+        <div className="border-b border-[#b7c5cf] bg-[#e7eef3] p-3">
+          <label className="mx-auto flex min-h-9 max-w-[360px] items-center gap-2 border border-[#b7c8d4] bg-white px-3 text-[#526779]">
             <Search className="h-4 w-4 shrink-0" />
-            <input value={search} onChange={event => setSearch(event.target.value)} placeholder="جستجوی بخش‌ها..." className="w-full bg-transparent text-sm outline-none" />
+            <input value={search} onChange={event => setSearch(event.target.value)} placeholder="جستجوی بخش‌ها..." className="w-full bg-transparent text-xs outline-none" />
           </label>
         </div>
+
+
 
         <div className="grid gap-3 p-3 sm:grid-cols-2 xl:grid-cols-2">
           {visibleSections.map(section => (
