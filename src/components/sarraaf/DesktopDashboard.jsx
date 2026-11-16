@@ -43,7 +43,7 @@ export default function DesktopDashboard({ profile, features, userRole, paidSyst
 
   return (
     <div className="space-y-4">
-      <div className="rounded-xl border border-blue-200 bg-gradient-to-l from-[#174b88] to-[#2866aa] px-4 py-3 text-white shadow-sm">
+      <div className="rounded-xl border border-[#164f9d] bg-gradient-to-l from-[#073b83] via-[#1557a8] to-[#0b438f] px-4 py-3 text-white shadow-sm">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-2">
             <div className="rounded-lg bg-white/15 p-2"><Receipt className="h-5 w-5" /></div>
@@ -61,14 +61,14 @@ export default function DesktopDashboard({ profile, features, userRole, paidSyst
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-3">
         {grouped.map(group => (
-          <section key={group.title} className="overflow-hidden rounded-xl border border-blue-200 bg-white shadow-card">
-            <h2 className="border-b border-blue-100 bg-gradient-to-l from-blue-100 to-slate-50 px-3 py-2 text-sm font-extrabold text-slate-800">{group.title}</h2>
+          <section key={group.title} className="overflow-hidden rounded-xl border border-[#b7cbe8] bg-gradient-to-b from-[#fdfefe] to-[#edf4ff] shadow-card">
+            <h2 className="border-b border-[#c4d5ee] bg-gradient-to-l from-[#d8e7fb] to-[#eef4fd] px-3 py-2 text-sm font-extrabold text-slate-800">{group.title}</h2>
             <div className="grid grid-cols-2 gap-1.5 p-2">
               {group.entries.map(link => {
                 const Icon = link.icon;
                 return (
-                  <Link key={link.path} to={link.path} className="flex min-h-[76px] flex-col items-center justify-center gap-1.5 rounded-lg border border-slate-200 bg-gradient-to-b from-white to-blue-50/60 px-2 py-2 text-center text-slate-800 transition hover:border-blue-300 hover:bg-blue-50">
-                    <Icon className="h-6 w-6 text-blue-700" strokeWidth={2.1} />
+                  <Link key={link.path} to={link.path} className="flex min-h-[76px] flex-col items-center justify-center gap-1.5 rounded-lg border border-[#c6d5e9] bg-gradient-to-b from-[#ffffff] to-[#eaf2ff] px-2 py-2 text-center text-slate-800 transition hover:border-blue-300 hover:bg-blue-50">
+                    <Icon className="h-6 w-6 text-[#0753ad]" strokeWidth={2.1} />
                     <span className="text-xs font-bold leading-tight">{link.label}</span>
                   </Link>
                 );
@@ -84,7 +84,7 @@ export default function DesktopDashboard({ profile, features, userRole, paidSyst
           {QUICK_ACTIONS.map(action => {
             const Icon = action.icon;
             return (
-              <Link key={action.path + action.label} to={action.path} className="flex min-h-[62px] items-center justify-center gap-2 rounded-lg border border-slate-200 bg-[#f5f8fd] px-2 py-2 text-center text-xs font-bold text-slate-800 transition hover:border-blue-300 hover:bg-blue-50">
+              <Link key={action.path + action.label} to={action.path} className="flex min-h-[62px] items-center justify-center gap-2 rounded-lg border border-slate-200 bg-gradient-to-b from-[#fdfefe] to-[#e8f1ff] px-2 py-2 text-center text-xs font-bold text-slate-800 transition hover:border-blue-300 hover:bg-blue-50">
                 <Icon className="h-5 w-5 shrink-0 text-blue-700" />
                 <span>{action.label}</span>
               </Link>
