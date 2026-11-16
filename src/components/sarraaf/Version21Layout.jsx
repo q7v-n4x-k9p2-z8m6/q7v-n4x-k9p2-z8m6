@@ -10,8 +10,11 @@ import {
   Database, BriefcaseBusiness, FileCheck, ChartNoAxesCombined, Landmark as TreasuryIcon
 } from 'lucide-react';
 import { useAuth } from '@/lib/AuthContext';
-import { useFeatures } from '@/lib/useSarraaf';
+import { useFeatures, useSarraafProfile } from '@/lib/useSarraaf';
+import { usePaidSystemEnabled } from '@/lib/usePaidSystem';
+import { useUpgrade } from '@/lib/UpgradeContext';
 import { getFeatureStatus, isFeatureEnabled } from '@/lib/features';
+import { isFeatureAccessible } from '@/lib/permissions';
 
 // Version 21 production shell: one A1 data/authentication layer, responsive
 // navigation, and no demo records or local database.
@@ -124,21 +127,37 @@ const WORKSPACE_TARGETS = {
   backup: 'home', notifications: 'home'
 };
 
-function ModuleLink({ item, compact = false, features = [] }) {
+function ModuleLink({ item, compact = false, features = [], profile, paidSystemEnabled, openUpgrade }) {
   const Icon = item.icon;
   const featureKey = item.featureKey || MODULE_FEATURE_KEYS[item.id];
   const featureStatus = featureKey ? getFeatureStatus(features || [], featureKey) : 'active';
   const featureDisabled = featureKey ? !isFeatureEnabled(features || [], featureKey) || featureStatus === 'disabled' : false;
   const featureUpdating = featureStatus === 'updating';
-  if (featureDisabled || featureUpdating) {
+  const isSystemAdmin = ['creator', 'admin'].includes(String(profile?.role || '').toLowerCase());
+  const tierLocked = Boolean(featureKey && !isSystemAdmin && paidSystemEnabled !== false &&
+    !isFeatureAccessible(features || [], featureKey, profile, paidSystemEnabled));
+  if (featureDisabled || featureUpdating || tierLocked) {
+    const statusLabel = tierLocked ? 'ارتقای اشتراک' : (featureUpdating ? 'در حال تکمیل' : 'غیرفعال');
+    const title = tierLocked ? 'برای دسترسی، سطح اشتراک را ارتقا دهید' :
+      (featureUpdating ? 'این قابلیت در حال تکمیل است' : 'این قابلیت غیرفعال است');
+    const className = compact
+      ? 'flex min-h-[68px] flex-col items-center justify-center gap-1 rounded-lg border border-dashed border-slate-300 bg-slate-50 px-1 py-2 text-center text-[10px] text-slate-500'
+      : 'flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-slate-400 cursor-not-allowed';
+    if (tierLocked) {
+      return (
+        <button type="button" title={title} aria-label={item.label + ' — ' + statusLabel}
+          onClick={() => openUpgrade?.(featureKey)} className={className}>
+          <Icon className={compact ? 'h-5 w-5' : 'h-4 w-4 shrink-0'} />
+          <span className={compact ? 'leading-tight' : 'flex-1 text-right'}>{item.label}</span>
+          <span className="text-[10px] whitespace-nowrap">{compact ? 'قفل' : statusLabel}</span>
+        </button>
+      );
+    }
     return (
-      <div aria-disabled="true" title={featureUpdating ? 'این قابلیت در حال تکمیل است' : 'این قابلیت غیرفعال است'}
-        className={compact
-          ? 'flex min-h-[68px] flex-col items-center justify-center gap-1 rounded-lg border border-dashed border-slate-300 bg-slate-50 px-1 py-2 text-center text-[10px] text-slate-500'
-          : 'flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-slate-400 cursor-not-allowed'}>
+      <div aria-disabled="true" title={title} className={className}>
         <Icon className={compact ? 'h-5 w-5' : 'h-4 w-4 shrink-0'} />
         <span className={compact ? 'leading-tight' : 'flex-1'}>{item.label}</span>
-        {!compact && <span className="text-[10px] whitespace-nowrap">{featureUpdating ? 'در حال تکمیل' : 'غیرفعال'}</span>}
+        {!compact && <span className="text-[10px] whitespace-nowrap">{statusLabel}</span>}
       </div>
     );
   }
@@ -156,6 +175,10 @@ function ModuleLink({ item, compact = false, features = [] }) {
 export default function Version21Layout() {
   const { user, logout } = useAuth();
   const { data: features = [] } = useFeatures();
+  const { data: profile } = useSarraafProfile(user?.id);
+  const { data: paidSystemEnabled } = usePaidSystemEnabled();
+  const { openUpgrade } = useUpgrade();
+  const accessProfile = profile || user;
   const location = useLocation();
   const navigate = useNavigate();
   // A1 stores exchange owners with role='exchange'; the v21 navigation uses 'sarraaf'.
@@ -180,7 +203,7 @@ export default function Version21Layout() {
             if (!items.length) return null;
             return <section key={group}>
               <h2 className="px-3 mb-1 text-[11px] font-semibold text-slate-400">{group}</h2>
-              <div className="space-y-1">{items.map(item => <ModuleLink key={item.id} item={item} features={features} />)}</div>
+              <div className="space-y-1">{items.map(item => <ModuleLink key={item.id} item={item} features={features} profile={accessProfile} paidSystemEnabled={paidSystemEnabled} openUpgrade={openUpgrade} />)}</div>
             </section>;
           })}
         </nav>
