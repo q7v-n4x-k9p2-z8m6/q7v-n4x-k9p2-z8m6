@@ -69,7 +69,7 @@ function validateBalancedLines(lines, label = 'سند') {
     const currency = String(line.currency || 'AFN').trim().toUpperCase();
     const debit = number(line.debit);
     const credit = number(line.credit);
-    if (!currency || debit < 0 || credit < 0 || (debit > 0 && credit > 0) || (debit === 0 && credit === 0)) {
+    if (!currency || !Number.isFinite(debit) || !Number.isFinite(credit) || debit < 0 || credit < 0 || (debit > 0 && credit > 0) || (debit === 0 && credit === 0)) {
       throw new Error(`${label}: مبلغ یا ماهیت بدهکار/بستانکار در سطر ${index + 1} معتبر نیست.`);
     }
     if (!line.account_type || !line.account_name) {
@@ -308,7 +308,12 @@ export async function saveVersion21Record(module, draft) {
   }
 
   if (module === 'remittance') {
-    if (!draft.sender || !draft.receiver || number(draft.amount) <= 0) throw new Error('فرستنده، گیرنده و مبلغ مثبت الزامی است.');
+    const transferAmount = number(draft.amount);
+    const transferFee = number(draft.fee);
+    const transferRate = number(draft.rate);
+    if (!draft.sender || !draft.receiver || !Number.isFinite(transferAmount) || transferAmount <= 0) throw new Error('فرستنده، گیرنده و مبلغ معتبر و مثبت الزامی است.');
+    if (!Number.isFinite(transferFee) || transferFee < 0) throw new Error('کمیشن حواله معتبر نیست.');
+    if (draft.rate && (!Number.isFinite(transferRate) || transferRate <= 0)) throw new Error('نرخ حواله باید عدد معتبر و مثبت باشد.');
     if (draft.id) throw new Error('برای اصلاح حواله ثبت‌شده، ابتدا باید گردش آن معکوس و حواله اصلاحی صادر شود؛ ویرایش مستقیم حواله مالی مجاز نیست.');
     const customer = await getCustomer(ctx, draft.direction === 'دریافتی' ? draft.receiver : draft.sender);
     if (!customer) throw new Error('برای ثبت حواله، طرف حساب باید ابتدا در فهرست مشتریان همین صراف ثبت شده باشد؛ از ایجاد سطر دفتر کل بدون شناسه مشتری جلوگیری شد.');
@@ -323,9 +328,9 @@ export async function saveVersion21Record(module, draft) {
       p_receiver_phone: draft.receiverPhone || null,
       p_destination: draft.note || draft.branch || '',
       p_origin: draft.branch || '',
-      p_amount: number(draft.amount),
+      p_amount: transferAmount,
       p_currency: draft.currency || 'AFN',
-      p_rate: number(draft.rate) || null,
+      p_rate: transferRate || null,
       p_fee: 0,
       p_fee_currency: draft.currency || 'AFN',
       p_description: draft.note || `حواله ${draft.direction}`,
@@ -405,7 +410,9 @@ export async function saveVersion21Record(module, draft) {
     if (draft.fromCurrency === draft.toCurrency) throw new Error('ارز مبدا و مقصد باید متفاوت باشند.');
     const fromAmount = number(draft.fromAmount);
     const toAmount = number(draft.toAmount);
-    if (fromAmount <= 0 || toAmount <= 0) throw new Error('مبالغ هر دو طرف معامله باید مثبت باشند.');
+    const exchangeRate = number(draft.rate);
+    if (!Number.isFinite(fromAmount) || !Number.isFinite(toAmount) || fromAmount <= 0 || toAmount <= 0) throw new Error('مبالغ هر دو طرف معامله باید معتبر و مثبت باشند.');
+    if (draft.rate && (!Number.isFinite(exchangeRate) || exchangeRate <= 0)) throw new Error('نرخ تبدیل باید عدد معتبر و مثبت باشد.');
     const fromSafe = await getSafe(ctx, draft.cashFrom || draft.cash, draft.fromCurrency);
     const toSafe = await getSafe(ctx, draft.cashTo || draft.cash, draft.toCurrency);
     const customer = await getCustomer(ctx, draft.party);
@@ -413,7 +420,7 @@ export async function saveVersion21Record(module, draft) {
       exchange_code: ctx.exchangeCode,
       customer_id: customer?.id || null, customer_name: draft.party || 'مشتری نقدی', customer_mobile: customer?.mobile || null,
       from_currency: draft.fromCurrency, from_amount: fromAmount,
-      rate: number(draft.rate) || toAmount / fromAmount,
+      rate: exchangeRate || toAmount / fromAmount,
       to_currency: draft.toCurrency, to_amount: toAmount,
       description: draft.note || 'معامله تبدیل ارز',
       registered_by: ctx.userName, registered_by_user_id: ctx.userId,
