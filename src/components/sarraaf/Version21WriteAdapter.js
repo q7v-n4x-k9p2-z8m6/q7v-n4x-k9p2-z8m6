@@ -94,6 +94,21 @@ function validateBalancedLines(lines, label = 'سند') {
   }
 }
 
+async function assertDemoWriteAccount(ctx, { allowCreate = false } = {}) {
+  if (ctx.userId !== 107 || ctx.exchangeCode !== 'EX-261019-9B2573C5') {
+    throw new Error('ثبت، ویرایش و حذف در این محیط فقط برای حساب نمایشی مجاز است.');
+  }
+  const { data, error } = await supabase.from('users')
+    .select('username,role,status').eq('id', 107).maybeSingle();
+  if (error) throw new Error('اعتبارسنجی حساب نمایشی ناموفق بود: ' + error.message);
+  if (!data || data.username !== '22222222' || data.status !== 'active' || !['exchange','sarraaf'].includes(String(data.role).toLowerCase())) {
+    throw new Error('حساب نمایشی فعال و معتبر نیست؛ عملیات متوقف شد.');
+  }
+  if (allowCreate) {
+    throw new Error('ثبت رکورد جدید باید از فضای موقت یک‌ساعته انجام شود.');
+  }
+}
+
 function sessionContext() {
   const exchangeCode = getExchangeCode();
   let user = {};
@@ -314,6 +329,7 @@ async function applyDocumentDate(ctx, documentId, date, linkedTable = null, link
 
 export async function saveVersion21Record(module, draft) {
   const ctx = sessionContext();
+  await assertDemoWriteAccount(ctx, { allowCreate: !draft?.id });
   await requireModulePermission(ctx, module, draft?.id ? 'edit' : 'create');
   if (TABLES[module]) {
     const table = TABLES[module];
@@ -580,6 +596,7 @@ export async function saveVersion21Record(module, draft) {
 
 export async function seedVersion21BaseAccounts() {
   const ctx = sessionContext();
+  await assertDemoWriteAccount(ctx);
   await requireModulePermission(ctx, 'accounts', 'create');
   const seeds = [
     { code: '1000', name: 'دارایی‌ها', type: 'asset', normal: 'debit' },
@@ -655,6 +672,7 @@ async function editDocument(ctx, documentId, description, amount, currency, line
 
 export async function editVersion21Record(module, draft) {
   const ctx = sessionContext();
+  await assertDemoWriteAccount(ctx);
   if (!draft?.id) throw new Error('شناسه رکورد برای ویرایش موجود نیست.');
   await requireModulePermission(ctx, module, 'edit');
 
@@ -863,6 +881,7 @@ async function assertDocumentBalancedForReversal(ctx, documentId) {
 
 export async function deleteVersion21Record(module, record) {
   const ctx = sessionContext();
+  await assertDemoWriteAccount(ctx);
   if (!record?.id) throw new Error('رکورد انتخاب‌شده معتبر نیست.');
   await requireModulePermission(ctx, module, 'delete');
 
