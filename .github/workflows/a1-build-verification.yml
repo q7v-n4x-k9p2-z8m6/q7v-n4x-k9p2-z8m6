@@ -36,13 +36,7 @@ jobs:
           const adapter = fs.readFileSync('src/components/sarraaf/Version21WriteAdapter.js', 'utf8');
           const data = fs.readFileSync('src/components/sarraaf/Version21DataAdapter.js', 'utf8');
           const checks = [
-            [!workspace.includes('\\\\        uses: actions/upload-artifact@v4
-        with:
-          name: a1-version21-${{ github.sha }}
-          path: dist/
-          if-no-files-found: error
-          retention-days: 7
- + '{'), 'Workspace contains a literal escaped JSX expression'],
+            [!workspace.includes('\\${'), 'Workspace contains a literal escaped JSX expression'],
             [adapter.includes('validateBalancedLines'), 'Financial posting/edit balance validation is missing'],
             [adapter.includes('requireModulePermission'), 'Server-verified employee permission checks are missing'],
             [!adapter.includes('.delete()'), 'Physical delete call found in financial write adapter'],
