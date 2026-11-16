@@ -292,3 +292,118 @@
     font-weight: 700 !important;
   }
 }
+
+
+/* Final skeleton preview: distinct laptop and phone compositions, same real modules. */
+@media (min-width: 901px) {
+  html body .v21-workspace-shell > div.flex.min-h-0 {
+    display: grid !important;
+    grid-template-columns: 224px minmax(0, 1fr) !important;
+    grid-template-rows: minmax(0, 1fr) !important;
+    flex-direction: initial !important;
+    min-height: 0 !important;
+  }
+  html body .v21-workspace-shell > div.flex.min-h-0 > aside.grid {
+    grid-column: 1 !important;
+    grid-row: 1 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    flex-wrap: nowrap !important;
+    align-items: stretch !important;
+    gap: 5px !important;
+    width: 224px !important;
+    max-height: 100% !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    padding: 12px 10px !important;
+    border-left: 1px solid #c5d2dc !important;
+    border-bottom: 0 !important;
+    background: #e8eef3 !important;
+  }
+  html body .v21-workspace-shell > div.flex.min-h-0 > aside.grid button {
+    display: flex !important;
+    flex: 0 0 auto !important;
+    flex-direction: row !important;
+    justify-content: flex-start !important;
+    min-height: 45px !important;
+    width: 100% !important;
+    gap: 11px !important;
+    padding: 8px 11px !important;
+    border: 1px solid transparent !important;
+    border-radius: 8px !important;
+    background: transparent !important;
+    text-align: right !important;
+    box-shadow: none !important;
+  }
+  html body .v21-workspace-shell > div.flex.min-h-0 > aside.grid button:hover,
+  html body .v21-workspace-shell > div.flex.min-h-0 > aside.grid button[class*="border-blue"] {
+    border-color: #c2d4e2 !important;
+    background: #fff !important;
+  }
+  html body .v21-workspace-shell > div.flex.min-h-0 > aside.grid button svg {
+    width: 19px !important;
+    height: 19px !important;
+    flex: 0 0 19px !important;
+  }
+  html body .v21-workspace-shell > div.flex.min-h-0 > aside.grid button span {
+    width: auto !important;
+    font-size: 11px !important;
+    white-space: normal !important;
+    text-align: right !important;
+  }
+  html body .v21-workspace-shell > div.flex.min-h-0 > main {
+    grid-column: 2 !important;
+    grid-row: 1 !important;
+    min-width: 0 !important;
+    overflow: auto !important;
+    padding: 18px !important;
+    background: #f4f7fa !important;
+  }
+  html body .v21-workspace-shell main > div.grid.gap-3 {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 14px !important;
+  }
+  html body .v21-workspace-shell main section {
+    border: 1px solid #d5e0e8 !important;
+    border-radius: 11px !important;
+    background: #fff !important;
+    box-shadow: 0 3px 12px rgb(27 58 81 / 6%) !important;
+  }
+}
+@media (min-width: 1280px) {
+  html body .v21-workspace-shell > div.flex.min-h-0 > aside.grid {
+    width: 244px !important;
+  }
+  html body .v21-workspace-shell > div.flex.min-h-0 {
+    grid-template-columns: 244px minmax(0, 1fr) !important;
+  }
+  html body .v21-workspace-shell main > div.grid.gap-3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  }
+}
+@media (max-width: 900px) and (min-width: 641px) {
+  html body .v21-workspace-shell > div.flex.min-h-0 > aside.grid {
+    display: grid !important;
+    grid-template-columns: repeat(6, minmax(0, 1fr)) !important;
+  }
+}
+@media (max-width: 640px) {
+  html body .v21-workspace-shell > div.flex.min-h-0 {
+    display: flex !important;
+    flex-direction: column !important;
+  }
+  html body .v21-workspace-shell > div.flex.min-h-0 > aside.grid {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 10px !important;
+    padding: 12px !important;
+    overflow: visible !important;
+  }
+  html body .v21-workspace-shell > div.flex.min-h-0 > aside.grid button {
+    min-height: 84px !important;
+    border-radius: 13px !important;
+  }
+  html body .v21-workspace-shell main > div.grid.gap-3 {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+}
