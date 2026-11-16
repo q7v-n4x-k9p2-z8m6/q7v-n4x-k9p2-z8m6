@@ -140,8 +140,8 @@ export default function Dashboard() {
         onClick={(e) => e.stopPropagation()}
         className={`${desktop ? 'flex items-center gap-2 p-2 min-h-10 text-right' : 'flex flex-col items-center gap-1 p-1.5'} rounded-lg bg-card border transition-colors relative group ${showTrialBadge ? 'border-purple-300 dark:border-purple-800 ring-1 ring-purple-200 dark:ring-purple-900/50' : 'border-border hover:border-primary/30 hover:shadow-card-hover'}`}
       >
-        <div className={`w-10 h-10 shrink-0 rounded-xl bg-blue-100 dark:bg-blue-950/40 flex items-center justify-center shadow-sm ${isUpdating ? 'opacity-50' : ''} group-hover:scale-105 transition-transform`}>
-          <Icon className="w-5 h-5 text-blue-700 dark:text-blue-300" strokeWidth={2.2} />
+        <div className={`w-10 h-10 shrink-0 rounded-xl bg-gradient-to-b from-[#fdfefe] to-[#dceaff] border border-[#bfd1eb] flex items-center justify-center shadow-sm ${isUpdating ? 'opacity-50' : ''} group-hover:scale-105 transition-transform`}>
+          <Icon className="w-5 h-5 text-[#0753ad] dark:text-[#75a9ed]" strokeWidth={2.2} />
         </div>
         <span className={desktop ? 'text-sm font-medium text-foreground' : 'text-[9px] font-medium text-center leading-tight text-foreground'}>{link.label}</span>
         {isUpdating && (
