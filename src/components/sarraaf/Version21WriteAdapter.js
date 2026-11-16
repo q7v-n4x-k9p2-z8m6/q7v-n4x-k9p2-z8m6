@@ -17,6 +17,36 @@ const makeOperationId = () => {
   return `v21-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 };
 
+function validateBalancedLines(lines, label = 'سند') {
+  if (!Array.isArray(lines) || lines.length < 2) {
+    throw new Error(`${label}: حداقل دو سطر حسابداری لازم است.`);
+  }
+  const totals = new Map();
+  for (const [index, line] of lines.entries()) {
+    const currency = String(line.currency || 'AFN').trim().toUpperCase();
+    const debit = number(line.debit);
+    const credit = number(line.credit);
+    if (!currency || debit < 0 || credit < 0 || (debit > 0 && credit > 0) || (debit === 0 && credit === 0)) {
+      throw new Error(`${label}: مبلغ یا ماهیت بدهکار/بستانکار در سطر ${index + 1} معتبر نیست.`);
+    }
+    if (!line.account_type || !line.account_name) {
+      throw new Error(`${label}: حساب سطر ${index + 1} مشخص نشده است.`);
+    }
+    if (['cash', 'customer'].includes(String(line.account_type)) && !(Number(line.account_id) > 0)) {
+      throw new Error(`${label}: شناسه حساب مرتبط در سطر ${index + 1} معتبر نیست.`);
+    }
+    const total = totals.get(currency) || { debit: 0, credit: 0 };
+    total.debit += debit;
+    total.credit += credit;
+    totals.set(currency, total);
+  }
+  for (const [currency, total] of totals) {
+    if (Math.abs(total.debit - total.credit) > 0.004) {
+      throw new Error(`${label}: سند در ارز ${currency} تراز نیست؛ جمع بدهکار و بستانکار باید برابر باشد.`);
+    }
+  }
+}
+
 function sessionContext() {
   const exchangeCode = getExchangeCode();
   let user = {};
@@ -156,7 +186,7 @@ async function postDocument(ctx, {
   docType, currency, amount, fee = 0, relatedType = 'none', relatedId = null,
   relatedName = '', description = '', lines, clientOperationId = makeOperationId(),
 }) {
-  if (!Array.isArray(lines) || lines.length < 2) throw new Error('سند حسابداری باید حداقل دو سطر داشته باشد.');
+  validateBalancedLines(lines, 'ثبت سند');
   const { data, error } = await supabase.rpc('post_document_transaction', {
     p_exchange_code: ctx.exchangeCode,
     p_doc_type: docType,
@@ -237,6 +267,7 @@ export async function saveVersion21Record(module, draft) {
     if (!draft.sender || !draft.receiver || number(draft.amount) <= 0) throw new Error('فرستنده، گیرنده و مبلغ مثبت الزامی است.');
     if (draft.id) throw new Error('برای اصلاح حواله ثبت‌شده، ابتدا باید گردش آن معکوس و حواله اصلاحی صادر شود؛ ویرایش مستقیم حواله مالی مجاز نیست.');
     const customer = await getCustomer(ctx, draft.direction === 'دریافتی' ? draft.receiver : draft.sender);
+    if (!customer) throw new Error('برای ثبت حواله، طرف حساب باید ابتدا در فهرست مشتریان همین صراف ثبت شده باشد؛ از ایجاد سطر دفتر کل بدون شناسه مشتری جلوگیری شد.');
     const branch = await getBranch(ctx, draft.branch);
     const operationId = draft.clientOperationId || makeOperationId();
     const { data, error } = await supabase.rpc('post_transfer_transaction_v2', {
@@ -395,6 +426,7 @@ export async function saveVersion21Record(module, draft) {
 }
 
 async function editDocument(ctx, documentId, description, amount, currency, lines) {
+  validateBalancedLines(lines, 'ویرایش سند');
   const { data, error } = await supabase.rpc('edit_document_transaction', {
     p_exchange_code: ctx.exchangeCode,
     p_document_id: Number(documentId),
@@ -552,6 +584,7 @@ export async function editVersion21Record(module, draft) {
     if (!doc) throw new Error('سند مالی حواله پیدا نشد؛ ویرایش امن ممکن نیست.');
     const direction = draft.direction === 'دریافتی' ? 'receive' : 'send';
     const customer = await getCustomer(ctx, direction === 'receive' ? draft.receiver : draft.sender);
+    if (!customer) throw new Error('برای اصلاح حواله، طرف حساب باید در فهرست مشتریان همین صراف موجود باشد؛ سند بدون شناسه مشتری اصلاح نمی‌شود.');
     const amount = number(draft.amount);
     if (amount <= 0 || !draft.sender || !draft.receiver) throw new Error('فرستنده، گیرنده و مبلغ مثبت الزامی است.');
     const lines = direction === 'send'
