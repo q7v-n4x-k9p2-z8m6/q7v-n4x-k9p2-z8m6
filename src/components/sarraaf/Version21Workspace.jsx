@@ -52,7 +52,7 @@ const SCHEMAS = {
  exchange:{title:'معامله اسعار',fields:[['date','تاریخ','date'],['fromCurrency','ارز مبدا','select',CURRENCIES],['fromAmount','مبلغ مبدا','number'],['toCurrency','ارز مقصد','select',CURRENCIES],['toAmount','مبلغ مقصد','number'],['rate','نرخ معامله','number'],['party','طرف حساب','text'],['cashFrom','صندوق پرداخت ارز مبدا','select',[]],['cashTo','صندوق دریافت ارز مقصد','select',[]],['note','یادداشت','text']]},
  journal:{title:'سند روزنامچه',fields:[['date','تاریخ','date'],['description','شرح سند','text'],['debitAccount','حساب بدهکار','text'],['creditAccount','حساب بستانکار','text'],['currency','ارز','select',CURRENCIES],['amount','مبلغ','number']]}
 };
-const emptyInitial = () => ({ customers: [], branches: [], cash: [], banks: [], currencies: [], accounts: [], expenses: [], remittance: [], exchange: [], journal: [], transactions: [], reports: [], activity: [], errors: [] });
+const emptyInitial = () => ({ customers: [], branches: [], cash: [], banks: [], currencies: [], accounts: [], expenses: [], remittance: [], exchange: [], journal: [], ledger: [], transactions: [], reports: [], activity: [], errors: [] });
 const today = () => new Date().toLocaleDateString('en-CA');
 const n = v => Number(String(v??0).replaceAll(',',''))||0;
 const fmt = v => new Intl.NumberFormat('fa-IR',{maximumFractionDigits:2}).format(n(v));
@@ -128,7 +128,7 @@ export default function Version21Workspace(){
   let source=data[active]||[];
   if(active==='customerLedger') source=customerDetail?data.transactions.filter(x=>x.partyType==='customer'&&x.party===customerDetail.name):data.customers;
   if(active==='branchLedger') source=branchDetail?data.transactions.filter(x=>x.partyType==='branch'&&x.party===branchDetail.name):data.branches;
-  if(active==='ledger') source=data.journal;
+  if(active==='ledger') source=data.ledger||[];
   if(active==='reports') source=data.reports||[];
   const q=query.trim().toLowerCase();
   return source.filter(r=>(!q||Object.values(r).join(' ').toLowerCase().includes(q))&&(filterCurrency==='همه'||!r.currency||r.currency===filterCurrency)&&(!dateFrom||!r.date||r.date>=dateFrom)&&(!dateTo||!r.date||r.date<=dateTo));
@@ -171,6 +171,7 @@ export default function Version21Workspace(){
  };
  const editSelected=()=>{
   if(!selected){notify('ابتدا یک ردیف را انتخاب کنید.');return;}
+  if(active==='ledger'){notify('دفتر کل گزارش سطرهای ثبت‌شده است؛ برای اصلاح، سند اصلی را در روزنامچه یا بخش عملیات مربوط باز کنید.');return;}
   if(['customerLedger','branchLedger'].includes(active)&&selected.documentId){
    setDraft({...selected});setModal('transactions');return;
   }
@@ -244,7 +245,7 @@ export default function Version21Workspace(){
  };
  const branchDetailTotals=()=>branchDetail?branchSummary(branchDetail):[];
  const accountBookTotals=()=>{
-  const allRows=active==='cash'?data.cash:active==='banks'?data.banks:(active==='journal'||active==='ledger')?data.journal:rows;
+  const allRows=active==='cash'?data.cash:active==='banks'?data.banks:active==='journal'?data.journal:active==='ledger'?(data.ledger||[]):rows;
   const selectedRows=selected?[selected]:allRows;
   if(active==='customerLedger')return customerDetail?customerDetailTotals():customerListTotals().map(x=>({...x,net:x.debit-x.credit}));
   if(active==='branchLedger')return branchDetail?branchDetailTotals():branchListTotals();
@@ -259,8 +260,10 @@ export default function Version21Workspace(){
    });
   } else if(active==='banks'){
    for(const account of selectedRows){const currency=account.currency||'AFN';totals[currency]??={debit:0,credit:0};totals[currency].debit+=Math.max(n(account.opening),0);const related=data.journal.filter(j=>(j.debitAccount||'').includes(account.name)||(j.creditAccount||'').includes(account.name));totals[currency].debit+=related.filter(j=>(j.debitAccount||'').includes(account.name)).reduce((s,j)=>s+n(j.amount),0);totals[currency].credit+=related.filter(j=>(j.creditAccount||'').includes(account.name)).reduce((s,j)=>s+n(j.amount),0);}
-  } else if(active==='journal'||active==='ledger'){
-   selectedRows.filter(x=>x.status==='قطعی'||!x.status).forEach(row=>{const currency=row.currency||'AFN';totals[currency]??={debit:0,credit:0};totals[currency].debit+=n(row.amount);totals[currency].credit+=n(row.amount);});
+  } else if(active==='journal'){
+   selectedRows.filter(x=>x.status==='قطعی'||!x.status).forEach(row=>{const currency=row.currency||'AFN';totals[currency]??={debit:0,credit:0};totals[currency].debit+=n(row.debitTotal);totals[currency].credit+=n(row.creditTotal);});
+  } else if(active==='ledger'){
+   selectedRows.forEach(row=>{const currency=row.currency||'AFN';totals[currency]??={debit:0,credit:0};totals[currency].debit+=n(row.debit);totals[currency].credit+=n(row.credit);});
   }
   return Object.entries(totals).map(([currency,x])=>({currency,...x,net:x.debit-x.credit}));
  };
@@ -290,6 +293,7 @@ export default function Version21Workspace(){
   const fields=SCHEMAS[mod]?.fields||[];
   if(mod==='cash')return [{key:'code',label:'کد صندوق'},{key:'name',label:'نام صندوق'},{key:'currency',label:'ارز'},{key:'opening',label:'مانده افتتاحیه',render:r=>fmt(r.opening)},{key:'balance',label:'موجودی فعلی',render:r=>fmt(balanceFor(r.currency,r.name))},{key:'status',label:'وضعیت'},{key:'description',label:'توضیحات'}];
   if(mod==='journal')return [{key:'date',label:'تاریخ'},{key:'number',label:'شماره سند'},{key:'description',label:'شرح'},{key:'debitAccount',label:'بدهکار'},{key:'creditAccount',label:'بستانکار'},{key:'currency',label:'ارز'},{key:'amount',label:'مبلغ',render:r=>fmt(r.amount)},{key:'status',label:'وضعیت'}];
+  if(mod==='ledger')return [{key:'date',label:'تاریخ'},{key:'number',label:'شماره سند'},{key:'account',label:'حساب'},{key:'description',label:'شرح'},{key:'debit',label:'بدهکار',render:r=>fmt(r.debit)},{key:'credit',label:'بستانکار',render:r=>fmt(r.credit)},{key:'currency',label:'ارز'},{key:'status',label:'وضعیت'}];
   if(mod==='transactions'||active==='customerLedger'||active==='branchLedger'||active==='reports')return [{key:'date',label:'تاریخ'},{key:'type',label:'نوع عملیات'},{key:'party',label:'طرف حساب'},{key:'description',label:'شرح'},{key:'currency',label:'ارز'},{key:'amount',label:'مبلغ',render:r=>fmt(r.amount)},{key:'cash',label:'صندوق'}];
   return fields.map(([key,label])=>({key,label,render:r=>key==='amount'||key==='opening'||key==='rate'||key==='profit'?fmt(r[key]):undefined}));
  };
@@ -368,7 +372,7 @@ export default function Version21Workspace(){
       {active==='remittance'&&<div className="mb-2 flex gap-2"><button onClick={()=>openNew('remittance',{direction:'ارسالی'})} className="border bg-white px-3 py-2 text-[10px]">حواله ارسالی</button><button onClick={()=>openNew('remittance',{direction:'دریافتی'})} className="border bg-white px-3 py-2 text-[10px]">حواله دریافتی</button><button onClick={()=>openNew('remittance',{direction:'نامعلوم'})} className="border bg-white px-3 py-2 text-[10px]">حواله نامعلوم</button></div>}
       <div className="mb-2 flex flex-wrap items-center justify-between gap-2"><div className="flex items-center gap-2 text-[10px]"><b>فهرست {page.label}</b><span className="text-slate-500">تعداد: {fmt(rows.length)}</span></div><div className="flex flex-wrap gap-1"><input id="lab-search" value={query} onChange={e=>setQuery(e.target.value)} placeholder="جستجو..." className="h-8 w-36 border bg-white px-2 text-[10px]"/><select value={filterCurrency} onChange={e=>setFilterCurrency(e.target.value)} className="h-8 border bg-white px-2 text-[10px]"><option>همه</option>{CURRENCIES.map(c=><option key={c}>{c}</option>)}</select><button onClick={()=>{setQuery('');setFilterCurrency('همه');}} className="border bg-white px-2 text-[10px]"><Filter className="inline h-3 w-3"/> پاک</button></div></div>
       <div className="mb-2 flex flex-wrap gap-1 border border-slate-300 bg-white p-1.5 text-[10px]">{[[RefreshCw,'تازه‌سازی',refreshDatabase],[Search,'تمرکز جستجو',()=>document.getElementById('lab-search')?.focus()],[Download,'خروجی CSV',exportCsv],[Archive,'پشتیبان',backup]].map(([I,label,fn])=><button key={label} onClick={fn} className="flex items-center gap-1 border border-slate-200 bg-[#f8fafc] px-2 py-1.5 hover:bg-blue-50"><I className="h-3.5 w-3.5"/>{label}</button>)}<button onClick={editSelected} disabled={!selected} className="flex items-center gap-1 border border-blue-200 bg-blue-50 px-2 py-1.5 text-blue-900 disabled:cursor-not-allowed disabled:opacity-40"><Pencil className="h-3.5 w-3.5"/>ویرایش انتخاب‌شده</button><button onClick={removeSelected} disabled={!selected} className="flex items-center gap-1 border border-rose-200 bg-rose-50 px-2 py-1.5 text-rose-800 disabled:cursor-not-allowed disabled:opacity-40"><Trash2 className="h-3.5 w-3.5"/>حذف / ابطال انتخاب‌شده</button></div>
-      <DataTable columns={active==='reports'?columnsFor('transactions'):active==='ledger'?columnsFor('journal'):columnsFor(active)} rows={rows} selected={selected} onSelect={r=>{if(active==='customerLedger'&&!customerDetail){setCustomerDetail(r);setSelected(null);}else if(active==='branchLedger'&&!branchDetail){setBranchDetail(r);setSelected(null);}else setSelected(r);}}/>
+      <DataTable columns={active==='reports'?columnsFor('transactions'):columnsFor(active)} rows={rows} selected={selected} onSelect={r=>{if(active==='customerLedger'&&!customerDetail){setCustomerDetail(r);setSelected(null);}else if(active==='branchLedger'&&!branchDetail){setBranchDetail(r);setSelected(null);}else setSelected(r);}}/>
       {!readOnly&&SCHEMAS[active]&&<button onClick={()=>openNew()} className="mt-2 border border-blue-300 bg-blue-50 px-3 py-2 text-xs font-bold text-blue-900"><Plus className="ml-1 inline h-4 w-4"/>ثبت {SCHEMAS[active].title} جدید</button>}
      </>}
     </main>
