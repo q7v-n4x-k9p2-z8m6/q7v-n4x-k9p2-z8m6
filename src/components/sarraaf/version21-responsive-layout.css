@@ -623,3 +623,22 @@
   html body .v21-laptop-menu-bar { order: 0 !important; }
   html body .v21-laptop-toolbar > aside.grid { order: 1 !important; }
 }
+
+
+/* Laptop: keep only the primary five operation groups on a single line. */
+@media (min-width: 901px) {
+  html body .v21-laptop-menu-bar {
+    flex-wrap: nowrap !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    min-width: 0 !important;
+  }
+  html body .v21-laptop-menu-bar > div {
+    flex: 0 1 auto !important;
+    min-width: 0 !important;
+  }
+  html body .v21-laptop-menu-trigger {
+    white-space: nowrap !important;
+    padding-inline: 10px !important;
+  }
+}
