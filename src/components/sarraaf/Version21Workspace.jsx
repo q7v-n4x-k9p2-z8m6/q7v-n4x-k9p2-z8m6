@@ -457,12 +457,12 @@ export default function Version21Workspace(){
  const ltUserName=authUser?.full_name||authUser?.username||exchangeProfile?.name||'کاربر';
  const goModule=id=>{if(id==='debtors'){navigate('/debtors');return;}if(!canViewModule(id)){notify('مجوز مشاهده این بخش برای حساب شما فعال نیست.');return;}setActive(id);setSelected(null);setCustomerDetail(null);setBranchDetail(null);setQuery('');};
  const ltGroups=[
-  {title:'تعاریف و دفاتر',items:[['تعریف مشتریان',User,()=>goModule('customers'),'customers'],['تعریف نمایندگی‌ها',Building2,()=>goModule('branches'),'branches'],['دفتر حساب مشتریان',Users,()=>goModule('customerLedger'),'customerLedger']]},
-  {title:'صندوق و بانک',items:[['صندوق‌ها و موجودی',Vault,()=>goModule('cash'),'cash'],['بانک و چک',Landmark,()=>goModule('banks'),'banks'],['دفتر حواله‌ها',ArrowLeftRight,()=>goModule('remittance'),'remittance']]},
-  {title:'عملیات صرافی',items:[['خرید و فروش اسعار',ArrowLeftRight,()=>openNew('exchange'),'exchange'],['مصارف و پرداخت‌ها',CreditCard,()=>goModule('expenses'),'expenses'],['معاملات',ArrowLeftRight,()=>goModule('exchange'),'exchange']]},
-  {title:'حسابداری و گزارشات',items:[['دفتر روزنامچه',ScrollText,()=>goModule('journal'),'journal'],['دفتر کل',ClipboardList,()=>goModule('ledger'),'ledger'],['گزارش عملیات',FileSpreadsheet,()=>goModule('reports'),'reports']]},
-  {title:'امکانات تکمیلی · اسکلت اولیه',items:[['محصولات آنلاین',ShoppingBag,()=>goModule('products'),'products'],['گروه و چت',MessagesSquare,()=>goModule('sarraafGroups'),'sarraafGroups'],['هوش مصنوعی',Bot,()=>goModule('assistant'),'assistant']]},
-  {title:'تنظیمات',items:[['تنظیمات',Settings,()=>setModal('settings'),null],['زبان برنامه',Languages,()=>goModule('language'),'language'],['درباره برنامه',Info,()=>setModal('help'),null]]}
+  {title:'تعاریف و دفاتر',items:[['تعریف مشتریان',Users,()=>goModule('customers'),'customers'],['دفتر حساب مشتریان',BookOpen,()=>goModule('customerLedger'),'customerLedger'],['تعریف نمایندگی‌ها',Building2,()=>goModule('branches'),'branches'],['دفتر حساب نمایندگی‌ها',BookText,()=>goModule('branchLedger'),'branchLedger']]},
+  {title:'صندوق و بانک',items:[['صندوق‌ها و موجودی',Vault,()=>goModule('cash'),'cash'],['بانک و چک',Landmark,()=>goModule('banks'),'banks']]},
+  {title:'عملیات صرافی',items:[['خرید و فروش اسعار',ArrowLeftRight,()=>openNew('exchange'),'exchange'],['دفتر حواله‌ها',Send,()=>goModule('remittance'),'remittance'],['مصارف و پرداخت‌ها',CreditCard,()=>goModule('expenses'),'expenses']]},
+  {title:'حسابداری و گزارشات',items:[['دفتر روزنامچه',ScrollText,()=>goModule('journal'),'journal'],['دفتر کل',ClipboardList,()=>goModule('ledger'),'ledger'],['کدینگ حساب‌ها',ListChecks,()=>goModule('accounts'),'accounts'],['تعریف اسعار',Coins,()=>goModule('currencies'),'currencies'],['گزارش عملیات',FileSpreadsheet,()=>goModule('reports'),'reports'],['مفاد و زیان',BarChart3,()=>goModule('profit'),'profit'],['بیلانس عمومی',Scale,()=>goModule('balance'),'balance']]},
+  {title:'امکانات تکمیلی',items:[['گروه و چت',MessagesSquares,()=>goModule('sarraafGroups'),'sarraafGroups'],['هوش مصنوعی',Bot,()=>goModule('assistant'),'assistant'],['محصولات آنلاین',ShoppingBag,()=>goModule('products'),'products']]},
+  {title:'تنظیمات',items:[['زبان برنامه',Languages,()=>goModule('language'),'language']]}
  ];
  const ltDeletable=['customers','branches','cash','banks','currencies','accounts','transactions','cashAction','expenses','journal','ledger','remittance','exchange'].includes(active);
  const mainTitle='حساب صراف'; return <div dir="rtl" className="v21-workspace-root space-y-2 text-[#253746]">
@@ -475,12 +475,7 @@ export default function Version21Workspace(){
    {/* ردیف اول: عملیات روی رکورد انتخاب‌شده */}
    <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
     <div className="v21-laptop-toolbar">
-    <nav className="v21-laptop-menu-bar" aria-label="منوی اصلی">{NAV_MENUS.map(m=><div key={m.label}><button type="button" aria-expanded={menu===m.label} onClick={()=>setMenu(menu===m.label?'':m.label)} className={'v21-laptop-menu-trigger '+(menu===m.label?'is-open':'')}>{m.label}<ChevronDown className="mr-1 inline h-3 w-3"/></button></div>)}</nav>
-     <div className="v21-laptop-menu-panel-slot" aria-hidden={!menu}>
-      {menu&&<section className="v21-laptop-menu-panel" aria-label={`گزینه‌های منوی ${menu}`}>
-       <div className="v21-laptop-menu-panel-items">{(NAV_MENUS.find(item=>item.label===menu)?.items||[]).map(([label,act])=><button type="button" key={act} onClick={()=>menuAction(act)}>{label}</button>)}</div>
-      </section>}
-     </div>
+    <nav className="v21-laptop-menu-bar" aria-label="منوی اصلی">{NAV_MENUS.map(m=><div key={m.label} className="relative"><button type="button" aria-expanded={menu===m.label} onClick={()=>setMenu(menu===m.label?'':m.label)} className={'v21-laptop-menu-trigger '+(menu===m.label?'is-open':'')}>{m.label}<ChevronDown className="mr-1 inline h-3 w-3"/></button>{menu===m.label&&<div className="v21-laptop-menu-popover absolute right-0 top-full z-40 min-w-48 border border-slate-300 bg-white py-1 shadow-xl" role="menu" aria-label={`گزینه‌های منوی ${menu}`}>{m.items.map(([label,act])=><button type="button" role="menuitem" key={act} onClick={()=>menuAction(act)} className="block w-full px-3 py-2 text-right text-[11px] text-slate-800 hover:bg-blue-50">{label}</button>)}</div>}</div>)}</nav>
      <aside aria-label="آیکون‌های اصلی و مرکز عملیات" className="v21-module-icon-row shrink-0 grid w-full grid-cols-3 gap-1 border-b border-slate-400 bg-[#e1e8ed] p-2 md:grid-cols-12">
       {['home','language','products','assistant','sarraafGroups','journal','expenses','exchange','cash','remittance','banks','branchLedger','customers','customerLedger'].filter(canViewModule).map(id=>{const m=MODULES.find(x=>x.id===id);if(!m)return null;const I=m.icon;return <button key={m.id} type="button" title={m.label} onClick={()=>{setActive(m.id);setSelected(null);setCustomerDetail(null);setBranchDetail(null);setQuery('');}} className={'v21-desktop-module-button flex min-h-[64px] min-w-0 flex-col items-center justify-center gap-1 rounded-lg border px-1 py-2 text-center '+(active===m.id?'is-active border-blue-300 bg-[#d2e3f1] font-bold text-blue-900':'border-transparent text-[#29465e] hover:border-slate-300 hover:bg-white')}><I className="h-5 w-5"/><span className="w-full whitespace-normal text-[10px] leading-tight">{m.label==='مرکز عملیات'?'میزکار':m.label}</span></button>;})}
      </aside>
