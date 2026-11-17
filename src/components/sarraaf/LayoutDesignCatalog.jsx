@@ -1,115 +1,152 @@
 import React, { useMemo, useState } from 'react';
 import {
-  LayoutDashboard, Search, Bell, UserRound, Wallet, Users, ArrowLeftRight,
-  FileText, Landmark, BarChart3, Menu, Plus, Clock3, TrendingUp,
-  ArrowUpRight, ArrowDownRight, CircleDollarSign, Send, Banknote,
-  MoreHorizontal, CalendarDays, Receipt, Building2, Home, Settings,
-  CreditCard, Activity, Filter, ShieldCheck, CheckCircle2, ChevronLeft,
-  PieChart, List, PanelLeft, BriefcaseBusiness, Headphones, Globe
+  LayoutDashboard, Search, Bell, Wallet, Users, ArrowLeftRight, FileText,
+  Landmark, BarChart3, Menu, Plus, Clock3, TrendingUp, ArrowUpRight,
+  ArrowDownRight, Send, CalendarDays, Receipt, Building2, Home, Settings,
+  CreditCard, Activity, Filter, ShieldCheck, ChevronLeft, PanelLeft,
+  Smartphone, BookOpen, BookText, Coins, Scale, Banknote, ClipboardList,
+  ListChecks, Globe, Printer, MoreHorizontal
 } from 'lucide-react';
 
 const LAPTOP_DESIGNS = [
-  {id:1,title:'میزکار کلاسیک صرافی',desc:'نوار ابزار، منوی کناری و جدول عملیات در یک صفحه',style:'سنتی و حرفه‌ای',tone:'#245b80'},
-  {id:2,title:'داشبورد مدیریتی تیره',desc:'تمرکز بر شاخص‌های مالی، روندها و گزارش سریع',style:'مدیریتی',tone:'#4e67a8'},
-  {id:3,title:'فضای کاری ماژولار',desc:'کارت‌های ماژول و دسترسی سریع با فضای باز',style:'مدرن و خلوت',tone:'#087f75'},
-  {id:4,title:'میز عملیات سه‌ستونه',desc:'ناوبری، ثبت عملیات و گردش‌های اخیر کنار هم',style:'عملیات سنگین',tone:'#9a642e'},
-  {id:5,title:'دفتر حسابداری حرفه‌ای',desc:'جدول عریض، فیلترهای دقیق و جمع بدهکار/بستانکار',style:'حسابداری‌محور',tone:'#50647c'},
-  {id:6,title:'شبکه نمایندگی‌ها',desc:'نمای کلی شعب، وضعیت تسویه و گردش هر نمایندگی',style:'چندشعبه‌ای',tone:'#36815b'},
-  {id:7,title:'مدیریت مشتریان و CRM',desc:'پروفایل مشتری، مانده حساب و تاریخچه تعاملات',style:'مشتری‌محور',tone:'#7654a3'},
-  {id:8,title:'خزانه‌داری و صندوق‌ها',desc:'موجودی چندارزی، صندوق‌ها و نقل‌وانتقال داخلی',style:'مالی و خزانه',tone:'#28718c'},
-  {id:9,title:'سامانه ابری مینیمال',desc:'ناوبری بالا، کارت‌های تمیز و تمرکز بر خوانایی',style:'SaaS مدرن',tone:'#3c6b9b'},
-  {id:10,title:'ترمینال صرافی پیشرفته',desc:'نمای فشرده برای کاربران حرفه‌ای و چند عملیات هم‌زمان',style:'کاربر حرفه‌ای',tone:'#9b4d55'}
+  {id:1,title:'ساختار اصلی کلاسیک',desc:'همان ساختار آشنای حساب صراف با فاصله‌گذاری مرتب‌تر',style:'وفادار به نسخه اصلی',tone:'#245b80'},
+  {id:2,title:'نوار ابزار فشرده',desc:'همان منوها و گروه‌ها در فضای کم‌ارتفاع‌تر',style:'فشرده و سریع',tone:'#245b80'},
+  {id:3,title:'میزکار با منوی کناری',desc:'همان بخش‌ها با منوی عمودی در کنار میزکار',style:'ناوبری کناری',tone:'#245b80'},
+  {id:4,title:'کارت‌های آماری برجسته',desc:'ساختار ثابت با تأکید بصری بیشتر بر چهار شاخص اصلی',style:'مدیریتی',tone:'#245b80'},
+  {id:5,title:'گروه‌بندی دو ستونه',desc:'شش گروه اصلی با چینش دو ستونه و خوانایی بیشتر',style:'دو ستونه',tone:'#245b80'},
+  {id:6,title:'گروه‌بندی سه ستونه',desc:'همان شش گروه در سه ستون برای نمایشگر عریض',style:'نمایشگر عریض',tone:'#245b80'},
+  {id:7,title:'میزکار حسابداری',desc:'همان بخش‌ها با برجسته‌سازی دفاتر و گزارشات',style:'حسابداری‌محور',tone:'#245b80'},
+  {id:8,title:'عملیات سریع در بالا',desc:'عملیات روزانه در دسترس‌تر، بدون حذف هیچ گروهی',style:'عملیات‌محور',tone:'#245b80'},
+  {id:9,title:'نمای رسمی روشن',desc:'پس‌زمینه روشن، خطوط ظریف و چیدمان رسمی',style:'رسمی و روشن',tone:'#245b80'},
+  {id:10,title:'نمای متراکم حرفه‌ای',desc:'همان اجزا با فاصله کمتر برای کاربران پرتراکنش',style:'حرفه‌ای متراکم',tone:'#245b80'}
 ];
-
 const MOBILE_DESIGNS = [
-  {id:1,title:'خانه با نوار پایین',desc:'داشبورد موبایل با دسترسی ثابت به بخش‌های اصلی',style:'داشبوردی',tone:'#245b80'},
-  {id:2,title:'صندوق در مرکز توجه',desc:'مانده صندوق و دخل‌وخرج در اولویت صفحه',style:'صندوق‌محور',tone:'#087f75'},
-  {id:3,title:'دفتر مشتریان',desc:'جست‌وجوی سریع، فهرست مشتری و مانده هر حساب',style:'مشتری‌محور',tone:'#7654a3'},
-  {id:4,title:'ثبت عملیات سریع',desc:'دکمه‌های بزرگ و مسیر کوتاه برای عملیات روزانه',style:'عملیات‌محور',tone:'#9a642e'},
-  {id:5,title:'شبکه آیکون‌ها',desc:'دسته‌بندی ماژول‌ها به شکل شبکه قابل لمس',style:'آیکونی',tone:'#36815b'},
-  {id:6,title:'بیلانس چندارزی',desc:'نمای جمع‌وجور ارزها، موجودی و تغییرات',style:'چندارزی',tone:'#28718c'},
-  {id:7,title:'پیگیری حواله‌ها',desc:'وضعیت حواله، فرستنده و گیرنده در کارت‌های مرحله‌ای',style:'حواله‌محور',tone:'#4e67a8'},
-  {id:8,title:'گزارش روزانه',desc:'خلاصه روز، آمار معاملات و نمودار ساده',style:'گزارش‌محور',tone:'#50647c'},
-  {id:9,title:'فهرست فشرده حرفه‌ای',desc:'چیدمان سبک با ردیف‌های کاربردی و کنترل سریع',style:'فشرده',tone:'#9b4d55'},
-  {id:10,title:'میزکار شخصی',desc:'نمای شخصی صراف با میانبرها، اعلان‌ها و وظایف',style:'شخصی‌سازی‌شده',tone:'#3c6b9b'}
+  {id:1,title:'موبایل کلاسیک',desc:'ساختار آشنای صفحه اصلی با نوار پایین',style:'وفادار به نسخه اصلی',tone:'#245b80'},
+  {id:2,title:'کارت‌های آماری بزرگ',desc:'چهار شاخص اصلی در کارت‌های خوانا و لمسی',style:'داشبوردی',tone:'#245b80'},
+  {id:3,title:'منوی ماژول‌ها',desc:'شش گروه اصلی به شکل فهرست‌های مرتب',style:'گروه‌بندی‌شده',tone:'#245b80'},
+  {id:4,title:'دسترسی سریع عملیاتی',desc:'عملیات روزانه بالاتر از سایر بخش‌ها',style:'عملیات‌محور',tone:'#245b80'},
+  {id:5,title:'نوار پایین کلاسیک',desc:'ناوبری پایین و صفحه اصلی با فضای بیشتر',style:'ناوبری پایین',tone:'#245b80'},
+  {id:6,title:'فهرست عمودی',desc:'بخش‌ها به صورت ردیف‌های بزرگ و قابل لمس',style:'فهرست‌محور',tone:'#245b80'},
+  {id:7,title:'مشتری و حسابداری',desc:'همان گروه‌ها با میانبر مشتریان و دفاتر در ابتدا',style:'مشتری‌محور',tone:'#245b80'},
+  {id:8,title:'صندوق و حواله',desc:'میانبرهای صندوق و حواله در اولویت صفحه',style:'صندوق‌محور',tone:'#245b80'},
+  {id:9,title:'نمای جمع‌وجور',desc:'چیدمان کم‌ارتفاع با حفظ عنوان‌ها و گروه‌ها',style:'فشرده',tone:'#245b80'},
+  {id:10,title:'نمای رسمی موبایل',desc:'کارت‌های ساده، خطوط ظریف و تایپوگرافی رسمی',style:'رسمی و روشن',tone:'#245b80'}
 ];
 
-const money = '۱۲۵٬۴۰۰';
-const cardClass = 'rounded-xl border border-slate-200 bg-white p-3 shadow-sm';
-const tinyLabel = 'text-[10px] text-slate-500';
-const miniButton = 'inline-flex items-center justify-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-2 text-[10px] font-semibold text-slate-700';
-
-function MiniMetric({label,value,change,icon:Icon,tone}) {
-  return <div className={cardClass}><div className="flex items-center justify-between gap-2"><span className={tinyLabel}>{label}</span><span className="rounded-lg p-2" style={{background:tone+'18',color:tone}}><Icon size={15}/></span></div><div className="mt-2 text-lg font-black text-slate-800">{value}</div><div className="mt-1 flex items-center gap-1 text-[9px] text-emerald-700"><ArrowUpRight size={11}/>{change || 'مقدار نمونه'}</div></div>;
-}
-
-function FakeTable({rows=4,compact=false}) {
-  const data = [
-    ['TR-۲۴۰۱','معامله اسعار','احمدی','۳۵٬۰۰۰','تکمیل'],
-    ['RM-۱۸۳۰','حواله دریافتی','رحیمی','۱۲٬۵۰۰','در انتظار'],
-    ['CS-۰۹۲۱','دخل صندوق','کریمی','۸٬۰۰۰','تکمیل'],
-    ['EX-۰۷۴۴','خرید دالر','محمدی','۲۱٬۰۰۰','تکمیل'],
-    ['RM-۱۸۲۹','حواله ارسالی','حسینی','۹٬۲۰۰','بررسی']
-  ];
-  return <div className="overflow-hidden rounded-xl border border-slate-200 bg-white"><div className="grid grid-cols-5 gap-2 border-b bg-slate-50 px-3 py-2 text-[9px] font-bold text-slate-500"><span>شماره</span><span>عملیات</span><span>طرف حساب</span><span>مبلغ</span><span>وضعیت</span></div>{data.slice(0,rows).map((r,i)=><div key={r[0]} className="grid grid-cols-5 gap-2 border-b last:border-0 px-3 py-2.5 text-[9px] text-slate-700"><span className="font-bold" dir="ltr">{r[0]}</span><span>{r[1]}</span><span>{r[2]}</span><span className="font-bold">{r[3]}</span><span><span className={'rounded-full px-1.5 py-1 '+(r[4]==='تکمیل'?'bg-emerald-50 text-emerald-700': 'bg-amber-50 text-amber-700')}>{r[4]}</span></span></div>)}</div>;
-}
-
-function SideMenu({tone='#245b80',dark=false}) {
-  const items = [['مرکز عملیات',LayoutDashboard],['مشتریان',Users],['صندوق‌ها',Wallet],['معاملات اسعار',ArrowLeftRight],['حواله‌ها',Send],['حسابداری',FileText],['گزارشات',BarChart3]];
-  return <aside className={'w-40 shrink-0 space-y-1 rounded-xl p-2 '+(dark?'bg-slate-900 text-slate-200':'border border-slate-200 bg-white text-slate-600')}>{items.map(([label,Icon],i)=><div key={label} className={'flex items-center gap-2 rounded-lg px-2 py-2 text-[10px] '+(i===0?(dark?'bg-white/10 text-white':'font-bold text-white'):'')} style={i===0?{background:dark?'rgba(255,255,255,.12)':tone}:undefined}><Icon size={14}/>{label}</div>)}<div className={'mt-3 border-t pt-3 text-[9px] '+(dark?'border-white/10 text-slate-400':'border-slate-100 text-slate-400')}>تنظیمات · راهنما</div></aside>;
-}
+const GROUPS = [
+  {title:'تعاریف و دفاتر',icon:BookOpen,items:['تعریف مشتریان','دفتر حساب مشتریان','تعریف نمایندگی‌ها','دفتر حساب نمایندگی‌ها']},
+  {title:'صندوق و بانک',icon:Wallet,items:['صندوق‌ها و موجودی','بانک و چک','انتقال بین صندوق‌ها']},
+  {title:'عملیات صرافی',icon:ArrowLeftRight,items:['خرید و فروش اسعار','دفتر حواله‌ها','مصارف و پرداخت‌ها']},
+  {title:'حسابداری و گزارشات',icon:FileText,items:['دفتر روزنامچه','دفتر کل','کدینگ حساب‌ها','بدهکاران و بستانکاران','گزارش عملیات','مفاد و زیان','بیلانس عمومی']},
+  {title:'امکانات تکمیلی',icon:Globe,items:['گروه و چت','محصولات آنلاین','راهنما و پشتیبانی']},
+  {title:'تنظیمات',icon:Settings,items:['تعریف اسعار','کاربران و دسترسی‌ها','تنظیمات سیستم']}
+];
+const QUICK = [
+  ['دخل صندوق',Plus],['خرج صندوق',ArrowDownRight],['حواله ارسالی',Send],
+  ['حواله دریافتی',ArrowUpRight],['معامله اسعار',ArrowLeftRight]
+];
+const STATS = [
+  ['مشتریان','۱٬۲۸۰',Users],['صندوق‌ها','۸',Wallet],
+  ['عملیات امروز','۴۸',Activity],['سود خالص','محاسبه نشده',TrendingUp]
+];
+const TONE = '#245b80';
 
 function DesktopMock({design}) {
-  const tone = design.tone;
-  const index = design.id - 1;
-  const header = <div className="flex items-center justify-between gap-3 rounded-xl bg-white px-4 py-3 shadow-sm ring-1 ring-slate-200"><div className="flex items-center gap-2"><div className="rounded-lg p-2 text-white" style={{background:tone}}><Landmark size={17}/></div><div><b className="block text-xs text-slate-800">حساب صراف</b><span className="text-[9px] text-slate-500">سامانه مدیریت صرافی · محیط نمونه</span></div></div><div className="hidden items-center gap-2 sm:flex"><span className="rounded-lg bg-slate-50 px-3 py-2 text-[10px] text-slate-500"><Search className="ml-1 inline" size={12}/>جست‌وجوی بخش و مشتری</span><Bell size={16} className="text-slate-500"/><span className="rounded-full px-3 py-2 text-[10px] font-bold text-white" style={{background:tone}}>صراف نمونه</span></div></div>;
-  if (index === 1) return <div className="rounded-2xl bg-slate-950 p-4 text-white"><div className="mb-4 flex items-center justify-between"><div><div className="text-[10px] text-slate-400">پنل مدیریتی / نمای کلان</div><h3 className="mt-1 text-lg font-black">گزارش وضعیت صرافی</h3></div><span className="rounded-lg bg-white/10 px-3 py-2 text-[10px]">امروز · ۱۴۰۵/۰۸/۲۶</span></div><div className="grid grid-cols-4 gap-2">{[['گردش امروز','۸۵۰٬۰۰۰'],['موجودی کل','۲٬۴۵۰٬۰۰۰'],['مشتریان فعال','۱٬۲۸۰'],['حواله باز','۲۴']].map(x=><div key={x[0]} className="rounded-xl border border-white/10 bg-white/5 p-3"><span className="text-[9px] text-slate-400">{x[0]}</span><b className="mt-2 block text-base">{x[1]}</b></div>)}</div><div className="mt-3 grid grid-cols-3 gap-3"><div className="col-span-2 rounded-xl bg-white p-3 text-slate-800"><b className="text-xs">روند گردش مالی</b><div className="mt-4 flex h-28 items-end gap-2">{[35,58,42,78,55,88,64,94,73,80,62,100].map((v,i)=><div key={i} className="flex-1 rounded-t-md" style={{height:v+'%',background:tone,opacity:.35+(i%3)*.2}}/>)}</div><div className="mt-2 flex justify-between text-[8px] text-slate-400"><span>شنبه</span><span>یکشنبه</span><span>دوشنبه</span><span>سه‌شنبه</span></div></div><div className="rounded-xl bg-slate-900 p-3"><b className="text-xs">وضعیت صندوق‌ها</b>{[['افغانی','۷۲٪'],['دالر','۵۸٪'],['یورو','۳۴٪']].map(x=><div key={x[0]} className="mt-4"><div className="flex justify-between text-[9px]"><span>{x[0]}</span><span>{x[1]}</span></div><div className="mt-1 h-1.5 rounded bg-white/10"><div className="h-1.5 rounded bg-cyan-400" style={{width:x[1]}}/></div></div>)}</div></div><div className="mt-3 rounded-xl bg-white p-3 text-slate-800"><b className="mb-3 block text-xs">آخرین رویدادها</b><FakeTable rows={3}/></div></div>;
-  if (index === 3) return <div className="space-y-3 rounded-2xl bg-slate-100 p-3">{header}<div className="grid grid-cols-[140px_minmax(0,1fr)_190px] gap-3"><SideMenu tone={tone}/><main className="space-y-3"><div className="rounded-xl bg-white p-3"><div className="flex items-center justify-between"><b className="text-sm text-slate-800">ثبت عملیات جدید</b><span className="text-[9px] text-slate-400">فرم آزمایشی</span></div><div className="mt-3 grid grid-cols-2 gap-2">{['نوع عملیات','طرف حساب','ارز','مبلغ','صندوق','شرح'].map(x=><div key={x} className="rounded-lg border bg-slate-50 p-2 text-[10px] text-slate-500">{x} <span className="float-left">⌄</span></div>)}</div><button className="mt-3 rounded-lg px-4 py-2 text-[10px] font-bold text-white" style={{background:tone}}>ثبت نمایشی</button></div><div className="rounded-xl bg-white p-3"><b className="mb-3 block text-xs text-slate-800">گردش امروز</b><FakeTable rows={3}/></div></main><aside className="space-y-3"><div className="rounded-xl bg-white p-3"><b className="text-xs text-slate-800">میانبرها</b>{[['دخل صندوق',Plus],['خرج صندوق',ArrowDownRight],['حواله',Send],['تبدیل اسعار',ArrowLeftRight]].map(([x,I])=><div key={x} className="mt-2 flex items-center gap-2 rounded-lg border p-2 text-[10px] text-slate-600"><I size={13} style={{color:tone}}/>{x}</div>)}</div><div className="rounded-xl bg-white p-3"><b className="text-xs text-slate-800">یادآوری‌ها</b><p className="mt-2 text-[9px] leading-5 text-slate-500">۲ حواله برای بررسی · ۱ صندوق نیازمند شمارش</p></div></aside></div></div>;
-  if (index === 4) return <div className="space-y-3 rounded-xl bg-slate-100 p-3">{header}<div className="grid grid-cols-4 gap-2">{[['بدهکار','۳۲۰٬۰۰۰'],['بستانکار','۳۲۰٬۰۰۰'],['اختلاف','۰'],['اسناد امروز','۴۸']].map(x=><div className={cardClass} key={x[0]}><span className={tinyLabel}>{x[0]}</span><b className="mt-1 block text-sm text-slate-800">{x[1]}</b></div>)}</div><div className="rounded-xl bg-white p-3"><div className="mb-3 flex items-center justify-between"><b className="text-sm text-slate-800">دفتر روزنامچه و کل</b><div className="flex gap-1"><span className={miniButton}><Filter size={11}/>فیلتر</span><span className={miniButton}>خروجی</span><span className={miniButton}>چاپ</span></div></div><FakeTable rows={5}/><div className="mt-3 grid grid-cols-3 gap-2">{['جمع بدهکار: ۳۲۰٬۰۰۰','جمع بستانکار: ۳۲۰٬۰۰۰','مانده: صفر'].map(x=><div className="rounded-lg bg-slate-50 p-2 text-center text-[10px] font-bold text-slate-600" key={x}>{x}</div>)}</div></div></div>;
-  if (index === 5) return <div className="space-y-3 rounded-2xl bg-slate-100 p-3">{header}<div className="flex items-center justify-between"><div><h3 className="text-base font-black text-slate-800">شبکه نمایندگی‌ها</h3><p className="text-[10px] text-slate-500">نمای کلی شعب و تسویه‌های نمونه</p></div><span className={miniButton}><Plus size={12}/>نمایندگی جدید</span></div><div className="grid grid-cols-3 gap-3">{[['کابل · مرکزی','فعال','۴۵۰٬۰۰۰'],['هرات · غرب','فعال','۲۲۰٬۰۰۰'],['مزار · شمال','نیازمند تسویه','۱۸۰٬۰۰۰']].map((x,i)=><div className={cardClass} key={x[0]}><div className="flex items-center justify-between"><Building2 size={18} style={{color:tone}}/><span className="text-[9px] text-emerald-700">{x[1]}</span></div><b className="mt-3 block text-xs text-slate-800">{x[0]}</b><div className="mt-1 text-lg font-black text-slate-800">{x[2]}</div><div className="mt-3 h-1.5 rounded bg-slate-100"><div className="h-1.5 w-3/4 rounded" style={{background:tone}}/></div><p className="mt-2 text-[9px] text-slate-500">وضعیت تسویه و گردش شعبه</p></div>)}</div><div className="rounded-xl bg-white p-3"><b className="text-xs text-slate-800">فعالیت نمایندگی‌ها</b><FakeTable rows={4}/></div></div>;
-  if (index === 6) return <div className="space-y-3 rounded-2xl bg-slate-100 p-3">{header}<div className="grid grid-cols-[220px_minmax(0,1fr)] gap-3"><aside className="rounded-xl bg-white p-3"><div className="mx-auto grid h-14 w-14 place-items-center rounded-full text-white" style={{background:tone}}><UserRound size={24}/></div><b className="mt-2 block text-center text-sm text-slate-800">احمدی · مشتری نمونه</b><p className="text-center text-[9px] text-slate-500">کد ۱۰۰۱ · حساب فعال</p><div className="mt-3 space-y-2 border-t pt-3 text-[10px] text-slate-600"><p>شماره تماس: ۰۷۰۰۱۲۳۴۵۶</p><p>شهر: کابل</p><p>ارز پایه: افغانی</p></div><div className="mt-3 rounded-lg p-3 text-white" style={{background:tone}}><span className="text-[9px]">مانده حساب</span><b className="mt-1 block text-lg">۴۵٬۸۰۰ AFN</b></div></aside><main className="space-y-3"><div className="grid grid-cols-3 gap-2">{[['گردش کل','۲۸۰٬۰۰۰'],['پرداخت‌ها','۹۲٬۰۰۰'],['حواله‌ها','۱۲']].map(x=><div className={cardClass} key={x[0]}><span className={tinyLabel}>{x[0]}</span><b className="mt-1 block text-sm">{x[1]}</b></div>)}</div><div className="rounded-xl bg-white p-3"><b className="mb-3 block text-xs text-slate-800">تاریخچه حساب مشتری</b><FakeTable rows={4}/></div></main></div></div>;
-  if (index === 7) return <div className="space-y-3 rounded-2xl bg-slate-100 p-3">{header}<div className="rounded-xl p-4 text-white" style={{background:'linear-gradient(120deg,'+tone+',#163d57)'}}><div className="flex items-center justify-between"><div><span className="text-[10px] text-white/70">ارزش کل صندوق‌ها · داده نمایشی</span><b className="mt-1 block text-2xl">۲٬۴۵۰٬۰۰۰</b></div><Wallet size={30}/></div><div className="mt-4 grid grid-cols-3 gap-2">{[['AFN','۱٬۲۵۰٬۰۰۰'],['USD','۱۵٬۰۰۰'],['EUR','۴٬۲۰۰']].map(x=><div className="rounded-lg bg-white/10 p-2" key={x[0]}><span className="text-[9px] text-white/70">{x[0]}</span><b className="block text-xs">{x[1]}</b></div>)}</div></div><div className="grid grid-cols-2 gap-3"><div className="rounded-xl bg-white p-3"><b className="text-xs text-slate-800">تقسیم موجودی</b><div className="mx-auto mt-4 grid h-28 w-28 place-items-center rounded-full border-[14px]" style={{borderColor:tone,borderRightColor:'#d8e2eb',borderBottomColor:'#b5c9d8'}}><div className="text-center"><b className="block text-sm text-slate-800">۳ ارز</b><span className="text-[8px] text-slate-400">صندوق فعال</span></div></div></div><div className="rounded-xl bg-white p-3"><b className="text-xs text-slate-800">کنترل خزانه</b>{[['صندوق اصلی','فعال'],['صندوق دالر','فعال'],['صندوق یورو','بازبینی']].map(x=><div className="mt-3 flex justify-between border-b pb-2 text-[9px] text-slate-600" key={x[0]}>{x[0]}<b>{x[1]}</b></div>)}</div></div><div className="rounded-xl bg-white p-3"><b className="mb-2 block text-xs text-slate-800">آخرین گردش صندوق</b><FakeTable rows={3}/></div></div>;
-  if (index === 8) return <div className="space-y-3 rounded-2xl bg-slate-100 p-3">{header}<div className="flex items-end justify-between"><div><span className="text-[10px] text-slate-500">سه‌شنبه، نمای نمونه</span><h3 className="text-xl font-black text-slate-800">خوش آمدید</h3></div><span className="rounded-full bg-white px-3 py-2 text-[9px] text-slate-500">نسخه ابری</span></div><div className="grid grid-cols-4 gap-2">{[['مشتریان','۱٬۲۸۰'],['صندوق‌ها','۸'],['معاملات','۴۸'],['حواله‌ها','۲۴']].map(x=><div className={cardClass} key={x[0]}><span className={tinyLabel}>{x[0]}</span><b className="mt-2 block text-base text-slate-800">{x[1]}</b></div>)}</div><div className="grid grid-cols-[1.3fr_1fr] gap-3"><div className="rounded-xl bg-white p-3"><b className="text-xs text-slate-800">دسترسی سریع</b><div className="mt-3 grid grid-cols-3 gap-2">{[['مشتری',Users],['معامله',ArrowLeftRight],['حواله',Send],['صندوق',Wallet],['گزارش',BarChart3],['حسابات',FileText]].map(([x,I])=><div key={x} className="grid place-items-center gap-1 rounded-lg bg-slate-50 py-3 text-[9px] text-slate-600"><I size={17} style={{color:tone}}/>{x}</div>)}</div></div><div className="rounded-xl bg-white p-3"><b className="text-xs text-slate-800">اطلاعیه‌ها</b><p className="mt-3 text-[10px] leading-6 text-slate-500">۲ حواله در انتظار بررسی</p><p className="text-[10px] leading-6 text-slate-500">گزارش روزانه آماده است</p></div></div><div className="rounded-xl bg-white p-3"><b className="mb-2 block text-xs text-slate-800">فعالیت اخیر</b><FakeTable rows={3}/></div></div>;
-  if (index === 9) return <div className="space-y-2 rounded-xl bg-slate-950 p-3 text-white"><div className="flex items-center justify-between border-b border-white/10 pb-3"><div><b className="text-sm">EXCHANGE TERMINAL</b><p className="text-[9px] text-slate-400">میز عملیات سریع · داده نمایشی</p></div><span className="rounded bg-emerald-500/15 px-2 py-1 text-[9px] text-emerald-300">CONNECTED · DEMO</span></div><div className="grid grid-cols-4 gap-2">{[['USD/AFN','۷۰٫۱۰'],['EUR/USD','۱٫۰۸'],['TRY/AFN','۲٫۰۵'],['AED/AFN','۱۹٫۰۵']].map(x=><div className="rounded-lg border border-white/10 bg-white/5 p-2" key={x[0]}><span className="text-[8px] text-slate-400">{x[0]}</span><b className="mt-1 block text-sm">{x[1]}</b></div>)}</div><div className="grid grid-cols-[1.35fr_1fr] gap-2"><div className="rounded-lg bg-white p-2 text-slate-800"><b className="text-[10px]">تیکت عملیات</b><div className="mt-2 grid grid-cols-2 gap-2">{['نوع معامله','ارز مبدا','ارز مقصد','مبلغ'].map(x=><div className="rounded bg-slate-100 p-2 text-[9px] text-slate-500" key={x}>{x}</div>)}</div><div className="mt-2 rounded bg-slate-900 p-2 text-center text-[10px] font-bold text-white">ثبت آزمایشی</div></div><div className="rounded-lg border border-white/10 p-2"><b className="text-[10px]">آخرین تیکت‌ها</b>{['خرید USD','فروش EUR','حواله AFN','دخل صندوق'].map(x=><div className="mt-2 border-b border-white/10 pb-2 text-[9px] text-slate-300" key={x}>{x}</div>)}</div></div><div className="rounded-lg bg-white p-2 text-slate-800"><b className="mb-2 block text-[10px]">تراکنش‌های اخیر</b><FakeTable rows={3}/></div></div>;
-  if (index === 0) return <div className="space-y-3 rounded-2xl bg-slate-100 p-3">{header}<div className="flex items-center justify-between"><div><h3 className="text-base font-black text-slate-800">مرکز عملیات</h3><p className="text-[10px] text-slate-500">نمای اصلی دفتر صرافی</p></div><span className={miniButton}><CalendarDays size={12}/>امروز</span></div><div className="grid grid-cols-4 gap-2"><MiniMetric label="موجودی صندوق" value="۲۴۵٬۰۰۰" icon={Wallet} tone={tone}/><MiniMetric label="عملیات امروز" value="۴۸" icon={Activity} tone={tone}/><MiniMetric label="مشتریان" value="۱٬۲۸۰" icon={Users} tone={tone}/><MiniMetric label="حواله باز" value="۲۴" icon={Send} tone={tone}/></div><div className="flex gap-3"><SideMenu tone={tone}/><main className="min-w-0 flex-1 space-y-3"><div className="rounded-xl bg-white p-3"><b className="text-xs text-slate-800">عملیات سریع</b><div className="mt-3 flex gap-2">{[['دخل صندوق',Plus],['خرج صندوق',ArrowDownRight],['حواله',Send],['معامله اسعار',ArrowLeftRight]].map(([x,I])=><div key={x} className="flex flex-1 flex-col items-center gap-1 rounded-lg bg-slate-50 p-3 text-[9px] text-slate-600"><I size={18} style={{color:tone}}/>{x}</div>)}</div></div><div className="rounded-xl bg-white p-3"><b className="mb-3 block text-xs text-slate-800">آخرین عملیات</b><FakeTable rows={4}/></div></main></div></div>;
-  return <div className="space-y-3 rounded-2xl bg-slate-100 p-3">{header}<div className="grid grid-cols-4 gap-2"><MiniMetric label="موجودی امروز" value={money} icon={Wallet} tone={tone}/><MiniMetric label="عملیات" value="۴۸" icon={Activity} tone={tone}/><MiniMetric label="مشتریان" value="۱٬۲۸۰" icon={Users} tone={tone}/><MiniMetric label="حواله‌ها" value="۲۴" icon={Send} tone={tone}/></div><div className="grid grid-cols-4 gap-2">{[['مشتریان',Users],['نمایندگی‌ها',Building2],['صندوق‌ها',Wallet],['معاملات',ArrowLeftRight],['حسابداری',FileText],['گزارشات',BarChart3],['اسعار',Globe],['تنظیمات',Settings]].map(([x,I])=><div key={x} className="flex items-center gap-2 rounded-xl border bg-white p-3 text-[10px] font-bold text-slate-700"><I size={16} style={{color:tone}}/>{x}</div>)}</div><div className="rounded-xl bg-white p-3"><b className="mb-3 block text-xs text-slate-800">گردش‌های اخیر</b><FakeTable rows={4}/></div></div>;
+  const n=design.id;
+  const dense=[2,10].includes(n);
+  const groupCols=n===5?2:n===6?3:n===10?3:1;
+  const statsCols=n===4?2:4;
+  const sidebar=n===3;
+  const quickTop=n===8;
+  const shell='rounded-2xl bg-[#edf2f7] text-slate-800 '+(dense?'p-2 space-y-2':'p-3 space-y-3');
+  const menuItems=['فایل','تعاریف','عملیات','حسابات','گزارشات','تنظیمات','امکانات تکمیلی'];
+  const groupGrid='grid gap-2 '+(groupCols===1?'grid-cols-1':groupCols===2?'grid-cols-2':'grid-cols-3');
+  return <div className={shell}>
+    <header className="rounded-xl bg-gradient-to-l from-[#245b80] to-[#397da5] px-4 py-3 text-white shadow-sm">
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2"><div className="rounded-lg bg-white/15 p-2"><Landmark size={20}/></div><div><b className="block text-sm">حساب صراف</b><span className="text-[9px] text-white/75">سامانه مدیریت صرافی</span></div></div>
+        <div className="hidden items-center gap-2 sm:flex"><span className="rounded-lg bg-white/15 px-3 py-2 text-[10px]"><Search className="ml-1 inline" size={12}/>جست‌وجو</span><Bell size={16}/><Settings size={16}/><span className="rounded-lg bg-white/15 px-3 py-2 text-[10px]">صراف نمونه</span></div>
+      </div>
+    </header>
+    <nav className="flex flex-wrap items-center gap-1 rounded-xl border border-slate-200 bg-white p-2 shadow-sm">
+      {menuItems.map((x,i)=><span key={x} className={'rounded-lg px-3 py-2 text-[10px] font-bold '+(i===2?'bg-[#245b80] text-white':'text-slate-600')}>{x}</span>)}
+    </nav>
+    <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-slate-200 bg-white p-2">
+      <div className="flex flex-wrap gap-2">{[['مشتریان',Users],['صندوق',Wallet],['معاملات',ArrowLeftRight],['حواله',Send],['دفاتر',BookText],['گزارش',BarChart3],['اسعار',Coins],['تنظیمات',Settings]].map(([x,I])=><span key={x} className="flex items-center gap-1 rounded-lg bg-slate-50 px-3 py-2 text-[9px] font-semibold text-slate-600"><I size={14} color={TONE}/>{x}</span>)}</div>
+      <span className="text-[9px] text-slate-500">دسترسی سریع به ماژول‌ها</span>
+    </div>
+    <div className={sidebar?'grid grid-cols-[145px_minmax(0,1fr)] gap-3':'space-y-3'}>
+      {sidebar&&<aside className="rounded-xl border bg-white p-2"><b className="mb-2 block text-[10px] text-slate-700">منوی بخش‌ها</b>{menuItems.map(x=><div key={x} className="border-b border-slate-100 px-2 py-3 text-[10px] text-slate-600">{x}</div>)}</aside>}
+      <main className="min-w-0 space-y-3">
+        <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-slate-200 bg-white p-3">
+          <div><b className="text-sm">مرکز عملیات صرافی</b><p className="mt-1 text-[9px] text-slate-500">تاریخ: ۱۴۰۵/۰۸/۲۶ · وضعیت اتصال: آنلاین</p></div>
+          <span className="rounded-lg bg-emerald-50 px-3 py-2 text-[9px] font-bold text-emerald-700">آماده به کار</span>
+        </div>
+        <div className={'grid gap-2 '+(statsCols===2?'grid-cols-2':'grid-cols-4')}>
+          {STATS.map(([label,value,I],i)=><div key={label} className={'rounded-xl border bg-white '+(dense?'p-2':'p-3')+(n===4&&i===3?' ring-1 ring-[#245b80]/20':'')}><div className="flex items-center justify-between gap-1"><span className="text-[9px] text-slate-500">{label}</span><I size={16} color={TONE}/></div><b className="mt-2 block text-sm font-black">{value}</b></div>)}
+        </div>
+        {quickTop&&<QuickPanel dense={dense}/>}
+        <div className={groupGrid}>
+          {GROUPS.map(({title,icon:Icon,items},i)=><section key={title} className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
+            <div className="mb-2 flex items-center gap-2 border-b border-slate-100 pb-2"><span className="rounded-lg bg-[#245b80]/10 p-2"><Icon size={15} color={TONE}/></span><b className="text-[10px]">{title}</b></div>
+            <div className={'grid gap-1 '+(groupCols===1?'grid-cols-4':groupCols===2?'grid-cols-2':'grid-cols-2')}>
+              {items.map((x,j)=><div key={x} className="flex min-h-9 items-center gap-1 rounded-lg bg-slate-50 px-2 py-2 text-[9px] text-slate-600"><span className="h-1.5 w-1.5 rounded-full bg-[#245b80]"/>{x}</div>)}
+            </div>
+          </section>)}
+        </div>
+        {!quickTop&&<QuickPanel dense={dense}/>}
+      </main>
+    </div>
+    <footer className="flex items-center justify-between rounded-lg border border-slate-200 bg-white px-3 py-2 text-[8px] text-slate-500"><span>حساب صراف · نسخه آزمایشی</span><span>اطلاعات این صفحه ساختگی است</span></footer>
+  </div>;
 }
 
-function MobileNav({tone,active='خانه'}) {
-  const items = [['خانه',Home],['حسابات',FileText],['عملیات',ArrowLeftRight],['مشتریان',Users],['بیشتر',Menu]];
-  return <div className="grid grid-cols-5 border-t bg-white px-1 py-2">{items.map(([x,I])=><div key={x} className="flex flex-col items-center gap-1 text-[8px]" style={{color:x===active?tone:'#94a3b8'}}><I size={17}/>{x}</div>)}</div>;
-}
-
-function PhoneMetric({label,value,icon:Icon,tone}) {
-  return <div className="rounded-xl border border-slate-200 bg-white p-3"><div className="flex items-center justify-between"><span className="text-[9px] text-slate-500">{label}</span><Icon size={15} style={{color:tone}}/></div><b className="mt-2 block text-sm text-slate-800">{value}</b></div>;
+function QuickPanel({dense=false}) {
+  return <section className="rounded-xl border border-slate-200 bg-white p-3">
+    <div className="mb-2 flex items-center justify-between"><b className="text-[11px]">عملیات سریع</b><span className="text-[8px] text-slate-400">میانبرهای روزانه</span></div>
+    <div className={'grid gap-2 '+(dense?'grid-cols-5':'grid-cols-5')}>
+      {QUICK.map(([x,I])=><div key={x} className="flex items-center justify-center gap-2 rounded-lg border border-slate-100 bg-slate-50 px-2 py-3 text-[9px] font-semibold text-slate-600"><I size={14} color={TONE}/>{x}</div>)}
+    </div>
+  </section>;
 }
 
 function MobileMock({design}) {
-  const tone=design.tone;
-  const index=design.id-1;
-  const top=<div className="flex items-center justify-between bg-white px-4 py-3"><div className="flex items-center gap-2"><div className="rounded-lg p-2 text-white" style={{background:tone}}><Landmark size={16}/></div><div><b className="block text-xs text-slate-800">حساب صراف</b><span className="text-[8px] text-slate-400">محیط نمونه</span></div></div><div className="flex gap-3 text-slate-500"><Search size={17}/><Bell size={17}/></div></div>;
-  const welcome=<div className="px-4 pt-4"><span className="text-[9px] text-slate-400">سلام، صراف نمونه</span><h3 className="mt-1 text-base font-black text-slate-800">مرکز عملیات</h3></div>;
-  if(index===1) return <div className="bg-slate-50">{top}<div className="p-3"><div className="rounded-2xl p-4 text-white" style={{background:'linear-gradient(140deg,'+tone+',#123e51)'}}><span className="text-[9px] text-white/70">موجودی صندوق اصلی</span><b className="mt-1 block text-2xl">۲۴۵٬۰۰۰</b><span className="text-[9px] text-white/70">AFN · مانده نمونه</span><div className="mt-4 grid grid-cols-2 gap-2"><div className="rounded-xl bg-white/15 p-2"><span className="text-[8px]">دخل امروز</span><b className="block text-sm">۴۸٬۰۰۰</b></div><div className="rounded-xl bg-white/15 p-2"><span className="text-[8px]">خرج امروز</span><b className="block text-sm">۲۱٬۰۰۰</b></div></div></div><div className="mt-3 grid grid-cols-2 gap-2"><div className="rounded-xl bg-emerald-600 p-3 text-white"><Plus size={18}/><b className="mt-2 block text-xs">دخل صندوق</b></div><div className="rounded-xl bg-rose-600 p-3 text-white"><ArrowDownRight size={18}/><b className="mt-2 block text-xs">خرج صندوق</b></div></div><div className="mt-3 rounded-xl bg-white p-3"><b className="text-xs text-slate-800">گردش صندوق</b><FakeTable rows={3}/></div></div><MobileNav tone={tone} active="عملیات"/></div>;
-  if(index===2) return <div className="bg-slate-50">{top}<div className="p-3"><div className="rounded-xl border bg-white p-3"><b className="text-sm text-slate-800">دفتر مشتریان</b><div className="mt-3 flex items-center gap-2 rounded-lg bg-slate-100 px-3 py-2 text-[10px] text-slate-500"><Search size={13}/>جست‌وجوی نام یا کد مشتری</div></div>{[['احمدی','۱۰۰۱','۴۵٬۸۰۰ AFN'],['رحیمی','۱۰۰۲','۲۵۰ USD'],['کریمی','۱۰۰۳','۱۲٬۰۰۰ AFN'],['محمدی','۱۰۰۴','۹۸۰ EUR']].map((x,i)=><div className="mt-2 flex items-center gap-3 rounded-xl border bg-white p-3" key={x[1]}><div className="grid h-9 w-9 place-items-center rounded-full text-white" style={{background:tone}}><UserRound size={17}/></div><div className="min-w-0 flex-1"><b className="block text-xs text-slate-800">مشتری {x[0]}</b><span className="text-[9px] text-slate-400">کد {x[1]}</span></div><b className="text-[10px] text-slate-700">{x[2]}</b><ChevronLeft size={14} className="text-slate-400"/></div>)}</div><MobileNav tone={tone} active="مشتریان"/></div>;
-  if(index===3) return <div className="bg-white">{top}<div className="p-3"><h3 className="text-base font-black text-slate-800">چه کاری انجام می‌دهید؟</h3><p className="mt-1 text-[9px] text-slate-400">عملیات مورد نظر را انتخاب کنید</p><div className="mt-4 grid grid-cols-2 gap-3">{[['دخل صندوق',Plus,'#16835b'],['خرج صندوق',ArrowDownRight,'#bd4d58'],['خرید اسعار',ArrowDownRight,tone],['فروش اسعار',ArrowUpRight,'#7753aa'],['حواله ارسالی',Send,'#9a642e'],['حواله دریافتی',ArrowDownRight,'#28718c']].map(([x,I,c])=><div className="rounded-2xl border p-4" key={x}><div className="grid h-10 w-10 place-items-center rounded-xl text-white" style={{background:c}}><I size={19}/></div><b className="mt-3 block text-xs text-slate-800">{x}</b><span className="mt-1 block text-[8px] text-slate-400">ثبت در محیط نمونه</span></div>)}</div></div><MobileNav tone={tone} active="عملیات"/></div>;
-  if(index===4) return <div className="bg-slate-50">{top}{welcome}<div className="grid grid-cols-3 gap-2 p-3">{[['مشتریان',Users],['صندوق',Wallet],['اسعار',Globe],['حواله',Send],['حسابات',FileText],['گزارش',BarChart3],['بانک',Landmark],['نمایندگی',Building2],['تنظیمات',Settings],['مصارف',Receipt],['کارت‌ها',CreditCard],['فعالیت',Activity]].map(([x,I])=><div className="flex flex-col items-center gap-2 rounded-xl border bg-white py-4 text-[9px] font-semibold text-slate-600" key={x}><I size={20} style={{color:tone}}/>{x}</div>)}</div><MobileNav tone={tone}/></div>;
-  if(index===5) return <div className="bg-slate-50">{top}<div className="p-3"><b className="text-sm text-slate-800">بیلانس اسعار</b><p className="mt-1 text-[9px] text-slate-400">موجودی صندوق‌ها به تفکیک ارز</p>{[['AFN','افغانی','۱٬۲۵۰٬۰۰۰'],['USD','دالر امریکا','۱۵٬۰۰۰'],['EUR','یورو','۴٬۲۰۰'],['TRY','لیره ترکیه','۲۸٬۰۰۰']].map((x,i)=><div className="mt-2 flex items-center justify-between rounded-xl border bg-white p-3" key={x[0]}><div className="flex items-center gap-2"><span className="grid h-9 w-9 place-items-center rounded-lg text-[9px] font-black text-white" style={{background:tone}}>{x[0]}</span><div><b className="block text-xs text-slate-800">{x[1]}</b><span className="text-[8px] text-slate-400">صندوق فعال</span></div></div><b className="text-xs text-slate-800">{x[2]}</b></div>)}</div><MobileNav tone={tone} active="حسابات"/></div>;
-  if(index===6) return <div className="bg-slate-50">{top}<div className="p-3"><b className="text-sm text-slate-800">پیگیری حواله</b><div className="mt-3 rounded-xl bg-white p-3"><span className="text-[9px] text-slate-400">شماره حواله</span><div className="mt-1 flex items-center justify-between"><b className="text-sm text-slate-800">RM-۱۸۳۰</b><span className="rounded-full bg-amber-50 px-2 py-1 text-[8px] text-amber-700">در انتظار</span></div><div className="mt-3 space-y-3 border-r-2 pr-3" style={{borderColor:tone}}>{[['ثبت حواله','انجام شد'],['ارسال به نمایندگی','انجام شد'],['تأیید گیرنده','در انتظار']].map((x,i)=><div key={x[0]}><b className="block text-[10px] text-slate-700">{x[0]}</b><span className="text-[8px] text-slate-400">{x[1]}</span></div>)}</div></div><div className="mt-3 rounded-xl bg-white p-3"><b className="text-xs text-slate-800">حواله‌های اخیر</b><FakeTable rows={2}/></div></div><MobileNav tone={tone} active="حسابات"/></div>;
-  if(index===7) return <div className="bg-slate-50">{top}<div className="p-3"><b className="text-sm text-slate-800">گزارش امروز</b><div className="mt-3 grid grid-cols-2 gap-2"><PhoneMetric label="تعداد معاملات" value="۴۸" icon={Activity} tone={tone}/><PhoneMetric label="گردش کل" value="۸۵۰٬۰۰۰" icon={TrendingUp} tone={tone}/><PhoneMetric label="دخل صندوق" value="۴۸٬۰۰۰" icon={ArrowUpRight} tone={tone}/><PhoneMetric label="خرج صندوق" value="۲۱٬۰۰۰" icon={ArrowDownRight} tone={tone}/></div><div className="mt-3 rounded-xl bg-white p-3"><b className="text-xs text-slate-800">نمودار گردش هفته</b><div className="mt-4 flex h-24 items-end gap-2">{[42,65,55,88,69,97,76].map((v,i)=><div key={i} className="flex-1 rounded-t-md" style={{height:v+'%',background:tone,opacity:.5+i*.06}}/>)}</div><div className="mt-1 flex justify-between text-[8px] text-slate-400"><span>ش</span><span>ی</span><span>د</span><span>س</span><span>چ</span><span>پ</span><span>ج</span></div></div></div><MobileNav tone={tone} active="حسابات"/></div>;
-  if(index===8) return <div className="bg-slate-50">{top}<div className="p-3"><div className="flex items-center justify-between"><b className="text-sm text-slate-800">گردش عملیات</b><span className="text-[9px] text-slate-400">امروز</span></div><div className="mt-3 flex items-center gap-2 rounded-lg border bg-white p-2 text-[9px] text-slate-400"><Search size={13}/>جست‌وجو در تراکنش‌ها <Filter size={13} className="mr-auto"/></div>{[['معامله خرید اسعار','احمدی','۳۵٬۰۰۰','خرید'],['حواله دریافتی','رحیمی','۱۲٬۵۰۰','حواله'],['دخل صندوق','کریمی','۸٬۰۰۰','دخل'],['خرج صندوق','محمدی','۳٬۲۰۰','خرج'],['حواله ارسالی','حسینی','۹٬۲۰۰','حواله']].map((x,i)=><div className="mt-2 flex items-center gap-2 rounded-xl border bg-white p-3" key={i}><span className="grid h-9 w-9 place-items-center rounded-lg bg-slate-100 text-slate-600"><Receipt size={16}/></span><div className="min-w-0 flex-1"><b className="block text-[10px] text-slate-700">{x[0]}</b><span className="text-[8px] text-slate-400">{x[1]} · {x[3]}</span></div><b className="text-[10px] text-slate-800">{x[2]}</b></div>)}</div><MobileNav tone={tone} active="حسابات"/></div>;
-  if(index===9) return <div className="bg-slate-50">{top}<div className="p-4"><div className="rounded-2xl p-4 text-white" style={{background:'linear-gradient(135deg,'+tone+',#192f46)'}}><div className="flex items-center gap-3"><div className="grid h-11 w-11 place-items-center rounded-full bg-white/20"><UserRound size={22}/></div><div><b className="block text-sm">صراف نمونه</b><span className="text-[9px] text-white/70">مدیر شعبه مرکزی</span></div></div><div className="mt-4 grid grid-cols-2 gap-2"><div className="rounded-lg bg-white/15 p-2"><span className="text-[8px]">کارهای امروز</span><b className="block text-sm">۶ مورد</b></div><div className="rounded-lg bg-white/15 p-2"><span className="text-[8px]">اعلان‌ها</span><b className="block text-sm">۳ پیام</b></div></div></div><b className="mt-4 block text-xs text-slate-800">میانبرهای من</b><div className="mt-2 grid grid-cols-2 gap-2">{[['ثبت مشتری',Users],['ثبت حواله',Send],['گزارش من',BarChart3],['تنظیمات',Settings]].map(([x,I])=><div className="flex items-center gap-2 rounded-xl border bg-white p-3 text-[10px] text-slate-600" key={x}><I size={17} style={{color:tone}}/>{x}</div>)}</div><div className="mt-3 rounded-xl bg-white p-3"><b className="text-xs text-slate-800">وظایف و یادآوری‌ها</b><p className="mt-2 text-[9px] text-slate-500">بررسی ۲ حواله و شمارش صندوق دالر</p></div></div><MobileNav tone={tone}/></div>;
-  return <div className="bg-slate-50">{top}{welcome}<div className="p-3"><div className="grid grid-cols-2 gap-2"><PhoneMetric label="موجودی نمونه" value="۲۴۵٬۰۰۰" icon={Wallet} tone={tone}/><PhoneMetric label="عملیات امروز" value="۴۸" icon={Activity} tone={tone}/><PhoneMetric label="مشتریان فعال" value="۱٬۲۸۰" icon={Users} tone={tone}/><PhoneMetric label="حواله باز" value="۲۴" icon={Send} tone={tone}/></div><div className="mt-3 rounded-xl bg-white p-3"><b className="text-xs text-slate-800">دسترسی سریع</b><div className="mt-3 grid grid-cols-2 gap-2">{[['دخل صندوق',Plus],['خرج صندوق',ArrowDownRight],['معامله اسعار',ArrowLeftRight],['حواله',Send]].map(([x,I])=><div key={x} className="flex items-center gap-2 rounded-lg border p-3 text-[10px] text-slate-600"><I size={16} style={{color:tone}}/>{x}</div>)}</div></div><div className="mt-3 rounded-xl bg-white p-3"><b className="mb-2 block text-xs text-slate-800">فعالیت اخیر</b><FakeTable rows={2}/></div></div><MobileNav tone={tone}/></div>;
+  const n=design.id;
+  const dense=n===9;
+  const statsFirst=[1,2,5,10].includes(n);
+  const quickFirst=n===4||n===8;
+  const groupStyle=n===6?'list':n===3?'grid':'cards';
+  const cols=n===3?3:n===6?1:2;
+  return <div className={'bg-[#f2f5f8] text-slate-800 '+(dense?'space-y-2':'space-y-3')}>
+    <header className="bg-gradient-to-l from-[#245b80] to-[#397da5] px-3 py-3 text-white">
+      <div className="flex items-center justify-between"><div className="flex items-center gap-2"><Landmark size={18}/><div><b className="block text-xs">حساب صراف</b><span className="text-[8px] text-white/75">مرکز عملیات</span></div></div><div className="flex gap-3"><Search size={16}/><Bell size={16}/><Menu size={17}/></div></div>
+    </header>
+    <div className="mx-3 flex items-center justify-between rounded-xl border border-slate-200 bg-white px-3 py-2"><div><b className="text-[11px]">مرکز عملیات صرافی</b><p className="text-[8px] text-slate-500">۱۴۰۵/۰۸/۲۶ · آنلاین</p></div><span className="rounded-md bg-emerald-50 px-2 py-1 text-[8px] text-emerald-700">آماده</span></div>
+    {quickFirst&&<div className="px-3"><QuickPanel dense/></div>}
+    {statsFirst&&<div className={'grid grid-cols-2 gap-2 px-3 '+(dense?'':'')}>{STATS.map(([label,value,I])=><div key={label} className="rounded-xl border border-slate-200 bg-white p-3"><div className="flex items-center justify-between"><span className="text-[9px] text-slate-500">{label}</span><I size={15} color={TONE}/></div><b className="mt-2 block text-sm">{value}</b></div>)}</div>}
+    <div className="space-y-2 px-3">
+      {GROUPS.map(({title,icon:Icon,items})=><section key={title} className="rounded-xl border border-slate-200 bg-white p-3">
+        <div className="mb-2 flex items-center gap-2"><span className="rounded-lg bg-[#245b80]/10 p-2"><Icon size={15} color={TONE}/></span><b className="text-[10px]">{title}</b><ChevronLeft className="mr-auto text-slate-400" size={14}/></div>
+        <div className={groupStyle==='list'?'space-y-1':'grid gap-1 '+(cols===3?'grid-cols-3':'grid-cols-2')}>
+          {items.map(x=><div key={x} className={'rounded-lg bg-slate-50 px-2 py-2 text-[9px] text-slate-600 '+(groupStyle==='list'?'border-b border-slate-100':'')}>{x}</div>)}
+        </div>
+      </section>)}
+    </div>
+    {!statsFirst&&<div className="grid grid-cols-2 gap-2 px-3">{STATS.map(([label,value,I])=><div key={label} className="rounded-xl border border-slate-200 bg-white p-3"><div className="flex items-center justify-between"><span className="text-[9px] text-slate-500">{label}</span><I size={15} color={TONE}/></div><b className="mt-2 block text-sm">{value}</b></div>)}</div>}
+    {!quickFirst&&<div className="px-3"><QuickPanel dense/></div>}
+    <nav className="sticky bottom-0 grid grid-cols-5 border-t border-slate-200 bg-white px-1 py-2">{[['خانه',Home],['حسابات',FileText],['عملیات',ArrowLeftRight],['مشتریان',Users],['بیشتر',Menu]].map(([x,I],i)=><div key={x} className={'flex flex-col items-center gap-1 text-[8px] '+(i===0?'font-bold text-[#245b80]':'text-slate-400')}><I size={17}/>{x}</div>)}</nav>
+  </div>;
 }
 
 function LayoutCard({item,selected,onClick,mobile=false}) {
-  return <button type="button" onClick={onClick} className={'rounded-xl border p-2 text-right transition '+(selected?'border-blue-600 bg-blue-50 ring-2 ring-blue-100':'border-slate-200 bg-white hover:border-slate-400')}>
-    <div className="mb-2 flex items-center justify-between"><span className="rounded-md px-2 py-1 text-[10px] font-black text-white" style={{background:item.tone}}>طرح {String(item.id).padStart(2,'0')}</span><span className="text-[8px] text-slate-400">{item.style}</span></div>
+  return <button type="button" onClick={onClick} className={'rounded-xl border p-2 text-right transition '+(selected?'border-[#245b80] bg-blue-50 ring-2 ring-blue-100':'border-slate-200 bg-white hover:border-slate-400')}>
+    <div className="mb-2 flex items-center justify-between"><span className="rounded-md bg-[#245b80] px-2 py-1 text-[10px] font-black text-white">طرح {String(item.id).padStart(2,'0')}</span><span className="text-[8px] text-slate-400">{item.style}</span></div>
     <div className={'overflow-hidden rounded-lg border border-slate-200 bg-slate-50 p-2 '+(mobile?'mx-auto h-24 w-16':'h-24 w-full')}>
-      {mobile?<div className="mx-auto h-full w-full rounded-md border border-slate-300 bg-white p-1"><div className="h-2 rounded" style={{background:item.tone}}/><div className="mt-1 grid grid-cols-2 gap-1">{[1,2,3,4].map(x=><div key={x} className="h-4 rounded-sm bg-slate-100"/>)}</div><div className="mt-1 space-y-1">{[1,2,3].map(x=><div key={x} className="h-1.5 rounded bg-slate-200"/>)}</div><div className="mt-1 h-2 rounded" style={{background:item.tone+'55'}}/></div>
-      :<div className="flex h-full gap-1"><div className="w-1/5 rounded-sm" style={{background:item.tone}}/><div className="flex-1"><div className="h-2 rounded-sm bg-slate-200"/><div className="mt-1 grid grid-cols-3 gap-1">{[1,2,3].map(x=><div key={x} className="h-5 rounded-sm bg-white ring-1 ring-slate-200"/>)}</div><div className="mt-1 h-8 rounded-sm bg-white ring-1 ring-slate-200"/><div className="mt-1 grid grid-cols-5 gap-1">{[1,2,3,4,5].map(x=><div key={x} className="h-1.5 rounded-sm bg-slate-200"/>)}</div></div></div>}
+      {mobile?<div className="mx-auto h-full w-full rounded-md border border-slate-300 bg-white p-1"><div className="h-2 rounded bg-[#245b80]"/><div className="mt-1 grid grid-cols-2 gap-1">{[1,2,3,4].map(x=><div key={x} className="h-4 rounded-sm bg-slate-100"/>)}</div><div className="mt-1 space-y-1">{[1,2,3].map(x=><div key={x} className="h-1.5 rounded bg-slate-200"/>)}</div><div className="mt-1 h-2 rounded bg-[#245b80]/30"/></div>
+      :<div className="flex h-full gap-1"><div className="w-1/5 rounded-sm bg-[#245b80]"/><div className="flex-1"><div className="h-2 rounded-sm bg-slate-200"/><div className="mt-1 grid grid-cols-3 gap-1">{[1,2,3].map(x=><div key={x} className="h-5 rounded-sm bg-white ring-1 ring-slate-200"/>)}</div><div className="mt-1 h-8 rounded-sm bg-white ring-1 ring-slate-200"/><div className="mt-1 grid grid-cols-5 gap-1">{[1,2,3,4,5].map(x=><div key={x} className="h-1.5 rounded-sm bg-slate-200"/>)}</div></div></div>}
     </div>
     <b className="mt-2 block text-[11px] text-slate-800">{item.title}</b><span className="mt-1 block text-[9px] leading-4 text-slate-500">{item.desc}</span>
-    <span className="mt-2 block text-[9px] font-bold" style={{color:selected?'#1d4ed8':'#64748b'}}>{selected?'در حال نمایش':'برای مشاهده انتخاب کنید'}</span>
+    <span className="mt-2 block text-[9px] font-bold text-slate-600">{selected?'در حال نمایش':'برای مشاهده انتخاب کنید'}</span>
   </button>;
 }
 
@@ -123,19 +160,19 @@ export default function LayoutDesignCatalog() {
   const choose=(id)=>device==='laptop'?setLaptopChoice(id):setMobileChoice(id);
   return <section dir="rtl" className="space-y-4">
     <div className="rounded-2xl border border-blue-100 bg-gradient-to-l from-blue-50 to-white p-4">
-      <div className="flex items-center gap-2"><LayoutDashboard className="h-5 w-5 text-blue-700"/><h3 className="text-sm font-black text-slate-800">کتابخانه طرح‌های حرفه‌ای حساب صراف</h3></div>
-      <p className="mt-2 text-[10px] leading-6 text-slate-600">۲۰ طرح مستقل برای بررسی: ۱۰ چیدمان لپ‌تاپ و ۱۰ چیدمان موبایل. تمام نام‌ها، ارقام و گردش‌ها ساختگی‌اند و فقط برای نمایش ساختار هستند.</p>
-      <div className="mt-3 flex flex-wrap items-center gap-2 text-[9px] font-semibold"><span className="rounded-full bg-white px-3 py-2 text-slate-700 ring-1 ring-slate-200">۱۰ طرح لپ‌تاپ</span><span className="rounded-full bg-white px-3 py-2 text-slate-700 ring-1 ring-slate-200">۱۰ طرح موبایل</span><span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-3 py-2 text-emerald-800"><ShieldCheck size={12}/>فقط پیش‌نمایش آزمایشی</span></div>
+      <div className="flex items-center gap-2"><LayoutDashboard className="h-5 w-5 text-[#245b80]"/><h3 className="text-sm font-black text-slate-800">طرح‌های برگرفته از ساختار اصلی حساب صراف</h3></div>
+      <p className="mt-2 text-[10px] leading-6 text-slate-600">همه طرح‌ها همان بخش‌های آشنای برنامه را حفظ می‌کنند: منوهای اصلی، نوار آیکون‌ها، مرکز عملیات، چهار کارت آماری، شش گروه ماژول و عملیات سریع. تفاوت فقط در چیدمان و تراکم نمایش است.</p>
+      <div className="mt-3 flex flex-wrap items-center gap-2 text-[9px] font-semibold"><span className="rounded-full bg-white px-3 py-2 text-slate-700 ring-1 ring-slate-200">۱۰ طرح لپ‌تاپ</span><span className="rounded-full bg-white px-3 py-2 text-slate-700 ring-1 ring-slate-200">۱۰ طرح موبایل</span><span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-3 py-2 text-emerald-800"><ShieldCheck size={12}/>فقط محیط آزمایشی</span></div>
     </div>
     <div className="flex gap-2 rounded-xl bg-slate-100 p-1">
       <button type="button" onClick={()=>setDevice('laptop')} className={'flex-1 rounded-lg px-3 py-3 text-xs font-bold '+(device==='laptop'?'bg-white text-slate-900 shadow-sm':'text-slate-500')}><PanelLeft className="ml-1 inline" size={15}/>طرح‌های لپ‌تاپ (۱۰)</button>
-      <button type="button" onClick={()=>setDevice('mobile')} className={'flex-1 rounded-lg px-3 py-3 text-xs font-bold '+(device==='mobile'?'bg-white text-slate-900 shadow-sm':'text-slate-500')}><CreditCard className="ml-1 inline" size={15}/>طرح‌های موبایل (۱۰)</button>
+      <button type="button" onClick={()=>setDevice('mobile')} className={'flex-1 rounded-lg px-3 py-3 text-xs font-bold '+(device==='mobile'?'bg-white text-slate-900 shadow-sm':'text-slate-500')}><Smartphone className="ml-1 inline" size={15}/>طرح‌های موبایل (۱۰)</button>
     </div>
     <div className="grid gap-4 xl:grid-cols-[minmax(0,1.45fr)_minmax(300px,1fr)]">
       <div className="min-w-0 rounded-2xl border bg-slate-100 p-3">
         <div className="mb-3 flex items-center justify-between"><div><b className="text-xs text-slate-800">پیش‌نمایش طرح {String(current.id).padStart(2,'0')}</b><p className="mt-1 text-[9px] text-slate-500">{current.title}</p></div><span className="rounded-full bg-white px-3 py-1.5 text-[9px] font-bold text-slate-600">نمونه نمایشی</span></div>
         {device==='laptop'?<div className="mx-auto max-w-5xl overflow-hidden rounded-xl border border-slate-300 bg-slate-200 p-2 shadow-inner"><div className="max-h-[650px] overflow-auto"><DesktopMock design={current}/></div><div className="mx-auto mt-2 h-1.5 w-1/3 rounded-full bg-slate-400"/></div>:<div className="mx-auto w-full max-w-[360px] overflow-hidden rounded-[30px] border-[7px] border-slate-800 bg-slate-50 shadow-2xl"><div className="flex items-center justify-between bg-white px-4 py-1 text-[8px] text-slate-500"><span>۹:۴۱</span><span>● ● ●</span></div><div className="max-h-[650px] overflow-y-auto"><MobileMock design={current}/></div><div className="flex justify-center bg-white py-2"><div className="h-1 w-16 rounded-full bg-slate-800"/></div></div>}
-        <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-xl bg-white p-3"><div><b className="text-[11px] text-slate-800">طرح {String(current.id).padStart(2,'0')} · {current.style}</b><p className="mt-1 text-[9px] text-slate-500">{current.desc}</p></div><span className="rounded-lg px-3 py-2 text-[9px] font-bold text-white" style={{background:current.tone}}>در حال بررسی</span></div>
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-xl bg-white p-3"><div><b className="text-[11px] text-slate-800">طرح {String(current.id).padStart(2,'0')} · {current.style}</b><p className="mt-1 text-[9px] text-slate-500">{current.desc}</p></div><span className="rounded-lg bg-[#245b80] px-3 py-2 text-[9px] font-bold text-white">فقط آزمایشی</span></div>
       </div>
       <div className="min-w-0">
         <div className="mb-2 flex items-center justify-between"><b className="text-xs text-slate-800">فهرست طرح‌ها</b><span className="text-[9px] text-slate-500">{selected} از ۱۰ انتخاب شده</span></div>
