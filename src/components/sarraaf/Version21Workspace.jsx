@@ -14,8 +14,9 @@ import {
   CircleDollarSign, Eye, FilePlus2, ArrowDownCircle, ArrowUpCircle, Scale, Settings2,
   Archive, RotateCcw, ListChecks, CreditCard, CircleHelp, PrinterCheck,
   Languages, ShoppingBag, Smartphone, Wifi, Gamepad2, MessagesSquare, Headphones,
-  Settings, Vault, ArrowDown, ArrowUp, Info, User
+  Settings, Vault, ArrowDown, ArrowUp, Info, User, Globe, ShoppingCart, Minus, Square, LifeBuoy
 } from 'lucide-react';
+import SarraafLogo from '@/components/SarraafLogo';
 import { useAuth } from '@/lib/AuthContext';
 
 const CURRENCIES = ['AFN','USD','EUR','IRR','TRY','PKR','AED','SAR','GBP','CNY'];
@@ -74,6 +75,22 @@ const NAV_MENUS = [
  {label:'امکانات تکمیلی',items:[['گروه و چت','sarraafGroups'],['هوش مصنوعی','assistant']] }
 ];
 const LAPTOP_NAV_MENUS = NAV_MENUS;
+const LAPTOP_TOOLBAR = [
+ {id:'home',label:'میزکار',icon:Home},
+ {id:'language',label:'زبان برنامه',icon:Globe},
+ {id:'products',label:'محصولات آنلاین',icon:ShoppingCart},
+ {id:'assistant',label:'هوش مصنوعی',icon:Bot},
+ {id:'sarraafGroups',label:'گروه و چت',icon:Users},
+ {id:'journal',label:'دفتر روزنامه',icon:BookText},
+ {id:'expenses',label:'مصارف و پرداخت‌ها',icon:CreditCard},
+ {id:'exchange',label:'خرید و فروش اسعار',icon:ArrowLeftRight},
+ {id:'cash',label:'صندوق‌ها و موجودی',icon:Vault},
+ {id:'remittance',label:'دفتر حواله‌ها',icon:ArrowLeftRight},
+ {id:'banks',label:'بانک و چک چک',icon:Landmark},
+ {id:'branchLedger',label:'دفتر حساب نمایندگی‌ها',icon:Users},
+ {id:'customers',label:'تعریف مشتریان',icon:User},
+ {id:'customerLedger',label:'دفتر حساب مشتریان',icon:User}
+];
 
 function Field({field,value,onChange,choices}) {
  const [key,label,type,opts]=field;
@@ -150,7 +167,7 @@ export default function Version21Workspace(){
  const [dateFrom,setDateFrom]=useState('');
  const [dateTo,setDateTo]=useState('');
  const [restoreText,setRestoreText]=useState('');
- useEffect(()=>{let alive=true;loadVersion21LocalState().then(saved=>{if(!alive)return;if(saved.active&&MODULES.some(x=>x.id===saved.active))setActive(saved.active);if(saved.filterCurrency)setFilterCurrency(saved.filterCurrency);if(saved.dateFrom)setDateFrom(saved.dateFrom);if(saved.dateTo)setDateTo(saved.dateTo);setLocalReady(true);});return()=>{alive=false;};},[]);
+ useEffect(()=>{let alive=true;loadVersion21LocalState().then(saved=>{if(!alive)return;const desktop=window.matchMedia?.('(min-width: 1024px)')?.matches===true;if(!desktop&&saved.active&&MODULES.some(x=>x.id===saved.active))setActive(saved.active);if(saved.filterCurrency)setFilterCurrency(saved.filterCurrency);if(saved.dateFrom)setDateFrom(saved.dateFrom);if(saved.dateTo)setDateTo(saved.dateTo);setLocalReady(true);});return()=>{alive=false;};},[]);
  useEffect(()=>{if(!localReady)return;saveVersion21LocalState({active,filterCurrency,dateFrom,dateTo});},[localReady,active,filterCurrency,dateFrom,dateTo]);
  const [showHelp,setShowHelp]=useState(false);
  const [showWorkspace,setShowWorkspace]=useState(false);
@@ -458,35 +475,35 @@ export default function Version21Workspace(){
  const ltUserName=authUser?.full_name||authUser?.username||exchangeProfile?.name||'کاربر';
  const goModule=id=>{if(id==='debtors'){navigate('/debtors');return;}if(!canViewModule(id)){notify('مجوز مشاهده این بخش برای حساب شما فعال نیست.');return;}setActive(id);setSelected(null);setCustomerDetail(null);setBranchDetail(null);setQuery('');};
  const ltGroups=[
-  {title:'تعاریف و دفاتر',items:[
-   ['تعریف مشتریان',Users,()=>goModule('customers'),'customers'],
-   ['تعریف نمایندگی‌ها',Building2,()=>goModule('branches'),'branches'],
-   ['دفتر حساب مشتریان',BookOpen,()=>goModule('customerLedger'),'customerLedger']
+  {key:'define-ledgers',title:'تعاریف و دفاتر',items:[
+   ['تعریف مشتریان',User,()=>goModule('customers')],
+   ['تعریف نمایندگی‌ها',User,()=>goModule('branches')],
+   ['دفتر حساب مشتریان',Users,()=>goModule('customerLedger')]
   ]},
-  {title:'صندوق و بانک',items:[
-   ['صندوق‌ها و موجودی',Vault,()=>goModule('cash'),'cash'],
-   ['بانک و چک',Landmark,()=>goModule('banks'),'banks'],
-   ['دفتر حواله‌ها',Send,()=>goModule('remittance'),'remittance']
+  {key:'cash-bank',title:'صندوق و بانک',items:[
+   ['صندوق‌ها و موجودی',Vault,()=>goModule('cash')],
+   ['بانک و چک',Landmark,()=>goModule('banks')],
+   ['دفتر حواله‌ها',ArrowLeftRight,()=>goModule('remittance')]
   ]},
-  {title:'عملیات صرافی',items:[
-   ['خرید و فروش اسعار',ArrowLeftRight,()=>openNew('exchange'),'exchange'],
-   ['مصارف و پرداخت‌ها',CreditCard,()=>goModule('expenses'),'expenses'],
-   ['معاملات',Receipt]
+  {key:'exchange-ops',title:'عملیات صرافی',items:[
+   ['خرید و فروش اسعار',ArrowLeftRight,()=>openNew('exchange')],
+   ['مصارف و پرداخت‌ها',CreditCard,()=>goModule('expenses')],
+   ['معاملات',ArrowLeftRight]
   ]},
-  {title:'حسابداری و گزارشات',items:[
-   ['دفتر روزنامه',ScrollText,()=>goModule('journal'),'journal'],
-   ['دفتر کل',ClipboardList,()=>goModule('ledger'),'ledger'],
-   ['متفرقه',Scale]
+  {key:'accounting-reports',title:'حسابداری و گزارشات',items:[
+   ['دفتر روزنامه ·',ShoppingCart,()=>goModule('journal')],
+   ['دفتر کل',ClipboardList,()=>goModule('ledger')],
+   ['دفتر ریگال',CalendarDays]
   ]},
-  {title:'امکانات تکمیلی',items:[
-   ['محصولات آنلاین',ShoppingBag,()=>goModule('products'),'products'],
-   ['گروه و چت',MessagesSquare,()=>goModule('sarraafGroups'),'sarraafGroups'],
-   ['هوش مصنوعی',Bot,()=>goModule('assistant'),'assistant']
+  {key:'extras',title:'امکانات تکمیلی · اسکلت اولیه',items:[
+   ['محصولات آنلاین',ShoppingCart,()=>goModule('products')],
+   ['گروه و چت',Users,()=>goModule('sarraafGroups')],
+   ['هوش مصنوعی',Bot,()=>goModule('assistant')]
   ]},
-  {title:'تنظیمات',items:[
+  {key:'settings',title:'تنظیمات',items:[
    ['تنظیمات',Settings,()=>menuAction('settings')],
-   ['زبان برنامه',Languages,()=>goModule('language'),'language'],
-   ['درباره برنامه',Info]
+   ['زبان برنامه',Globe,()=>goModule('language')],
+   ['درباره برنامه',LifeBuoy]
   ]}
  ];
  const ltDeletable=['customers','branches','cash','banks','currencies','accounts','transactions','cashAction','expenses','journal','ledger','remittance','exchange'].includes(active);
@@ -495,6 +512,10 @@ export default function Version21Workspace(){
   {dbStatus==='error'&&<div className="border border-rose-300 bg-rose-50 px-3 py-2 text-xs text-rose-800 lg:hidden">{dbError}</div>}
    {localPreview&&<div className="border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-900 lg:hidden">پیش‌نمایش محلی پشتیبان/نمای پاک‌شده فعال است؛ ثبت، ویرایش و ابطال تا تازه‌سازی اطلاعات واقعی غیرفعال می‌ماند.</div>}
   {dbStatus==='connected'&&<div className="flex flex-wrap items-center justify-between gap-2 border border-emerald-200 bg-emerald-50 px-3 py-2 text-[10px] text-emerald-900 lg:hidden"><span>صراف: <b>{exchangeProfile?.name||'—'}</b> · داده‌ها فقط از نشست همین صراف دریافت می‌شود.</span><span>آخرین بارگذاری: {lastLoaded?new Date(lastLoaded).toLocaleString('fa-IR'):'—'}</span></div>}
+  <header className="v21-lt-titlebar hidden lg:flex" dir="ltr" aria-label="نوار عنوان برنامه">
+   <div className="v21-lt-titlebar-brand"><SarraafLogo size={22}/><span>چیدمان لپ‌تاپ حساب صراف — نسخه ۲۱</span></div>
+   <div className="v21-lt-window-controls" aria-hidden="true"><Minus/><Square/><X/></div>
+  </header>
   <section className="v21-workspace-shell flex max-h-[78vh] min-h-[640px] lg:max-h-none flex-col overflow-hidden border border-[#65798b] bg-[#eef1f4] shadow-md">
    <header className="flex min-h-9 items-center justify-between bg-gradient-to-b from-[#315f80] to-[#173f5d] px-3 py-1.5 text-white lg:hidden"><div className="flex items-center gap-2"><Calculator className="h-4 w-4"/><b className="text-xs"><span className="lg:hidden">{mainTitle}</span><span className="hidden lg:inline">{mainTitle} — نسخه ۲۱</span></b></div><div className="flex gap-1"><button onClick={()=>setModal('settings')} className="border border-white/30 px-2 text-xs">⚙</button></div></header>
    {/* ردیف اول: عملیات روی رکورد انتخاب‌شده */}
@@ -502,8 +523,8 @@ export default function Version21Workspace(){
     <div className="v21-laptop-toolbar">
     <nav className="v21-laptop-menu-bar hidden lg:flex" aria-label="منوی اصلی دسکتاپ">{LAPTOP_NAV_MENUS.map(m=><div key={m.label} className="relative"><button type="button" aria-expanded={menu===m.label} onClick={()=>setMenu(menu===m.label?'':m.label)} className={'v21-laptop-menu-trigger '+(menu===m.label?'is-open':'')}>{m.label}<ChevronDown className="mr-1 inline h-3 w-3"/></button>{menu===m.label&&<div className="v21-laptop-menu-popover absolute right-0 top-full z-40 min-w-48 border border-slate-300 bg-white py-1 shadow-xl" role="menu" aria-label={`گزینه‌های منوی ${menu}`}>{m.items.map(([label,act])=><button type="button" role="menuitem" key={act} onClick={()=>menuAction(act)} className="block w-full px-3 py-2 text-right text-[11px] text-slate-800 hover:bg-blue-50">{label}</button>)}</div>}</div>)}</nav>
     <nav className="v21-laptop-menu-bar lg:hidden" aria-label="منوی اصلی موبایل">{NAV_MENUS.map(m=><div key={m.label} className="relative"><button type="button" aria-expanded={menu===m.label} onClick={()=>setMenu(menu===m.label?'':m.label)} className={'v21-laptop-menu-trigger '+(menu===m.label?'is-open':'')}>{m.label}<ChevronDown className="mr-1 inline h-3 w-3"/></button>{menu===m.label&&<div className="v21-laptop-menu-popover absolute right-0 top-full z-40 min-w-48 border border-slate-300 bg-white py-1 shadow-xl" role="menu" aria-label={`گزینه‌های منوی ${menu}`}>{m.items.map(([label,act])=><button type="button" role="menuitem" key={act} onClick={()=>menuAction(act)} className="block w-full px-3 py-2 text-right text-[11px] text-slate-800 hover:bg-blue-50">{label}</button>)}</div>}</div>)}</nav>
-     <aside aria-label="آیکون‌های اصلی و مرکز عملیات" className="v21-module-icon-row hidden shrink-0 w-full gap-1 border-b border-slate-400 bg-[#e1e8ed] p-2 lg:grid">
-      {['home','language','products','assistant','sarraafGroups','journal','expenses','exchange','cash','remittance','banks','branchLedger','customers','customerLedger'].filter(canViewModule).map(id=>{const m=MODULES.find(x=>x.id===id);if(!m)return null;const I=m.icon;return <button key={m.id} type="button" title={m.label} onClick={()=>{setActive(m.id);setSelected(null);setCustomerDetail(null);setBranchDetail(null);setQuery('');}} className={'v21-desktop-module-button flex min-h-[64px] min-w-0 flex-col items-center justify-center gap-1 rounded-lg border px-1 py-2 text-center '+(active===m.id?'is-active border-blue-300 bg-[#d2e3f1] font-bold text-blue-900':'border-transparent text-[#29465e] hover:border-slate-300 hover:bg-white')}><I className="h-5 w-5"/><span className="w-full whitespace-normal text-[10px] leading-tight">{id==='home'?'میزکار':id==='journal'?'دفتر روزنامه':m.label}</span></button>;})}
+     <aside aria-label="نوار ابزار آیکونی" className="v21-module-icon-row hidden shrink-0 w-full lg:flex">
+      {LAPTOP_TOOLBAR.map(item=>{const m=MODULES.find(x=>x.id===item.id);if(!m)return null;const I=item.icon;return <button key={item.id} type="button" aria-current={active===item.id?'page':undefined} onClick={()=>goModule(item.id)} className={'v21-desktop-module-button '+(active===item.id?'is-active':'')}><I/><span>{item.label}</span></button>;})}
      </aside>
      <aside aria-label="آیکون‌های اصلی موبایل" className="v21-module-icon-row-mobile grid w-full grid-cols-3 gap-1 border-b border-slate-400 bg-[#e1e8ed] p-2 lg:hidden">
       {['home','language','products','assistant','sarraafGroups','journal','expenses','exchange','cash','remittance','banks','branchLedger','customers','customerLedger'].filter(canViewModule).map(id=>{const m=MODULES.find(x=>x.id===id);if(!m)return null;const I=m.icon;return <button key={m.id} type="button" title={m.label} onClick={()=>{setActive(m.id);setSelected(null);setCustomerDetail(null);setBranchDetail(null);setQuery('');}} className={'v21-desktop-module-button flex min-h-[64px] min-w-0 flex-col items-center justify-center gap-1 rounded-lg border px-1 py-2 text-center '+(active===m.id?'is-active border-blue-300 bg-[#d2e3f1] font-bold text-blue-900':'border-transparent text-[#29465e] hover:border-slate-300 hover:bg-white')}><I className="h-5 w-5"/><span className="w-full whitespace-normal text-[10px] leading-tight">{m.label==='مرکز عملیات'?'میزکار':m.label}</span></button>;})}
@@ -514,14 +535,20 @@ export default function Version21Workspace(){
     <main className="min-h-0 min-w-0 flex-1 overflow-y-auto bg-[#f9fafb] p-3">
      {active==='home'?<>
 <div className="v21-lt-home hidden lg:block">
-      <div className="v21-lt-band"><div className="v21-lt-band-title"><Home className="h-8 w-8"/><h2>مرکز عملیات صرافی</h2></div><div className="v21-lt-band-date"><CalendarDays className="h-6 w-6"/><span>{ltDate}</span></div></div>
+      <div className="v21-lt-band"><div className="v21-lt-band-date"><CalendarDays/><span>{ltDate}</span></div><h2 className="v21-lt-band-title">مرکز عملیات صرافی</h2><Home className="v21-lt-band-home" aria-hidden="true"/></div>
       <div className="v21-lt-stats">
-       {[['تعداد مشتریان',Users,canViewModule('customers')&&dbStatus==='connected'?fmt(data.customers.length):'-',''],['صندوق‌های تعریف‌شده',Vault,canViewModule('cash')&&dbStatus==='connected'?fmt(data.cash.length):'-',''],['عملیات امروز',RefreshCw,(canViewModule('reports')||canViewModule('cash'))&&dbStatus==='connected'?fmt(dailyTransactions.length):'-',''],['مفاد معاملات',BarChart3,'-','سود معاملات اسعار تا اتصال به کدینگ حساب‌ها محاسبه نمی‌شود']].map(([label,I,value,hint])=><div key={label} className="v21-lt-stat" title={hint||undefined}><div className="v21-lt-stat-head"><I/><span>{label}</span></div><b>{value}</b></div>)}
+       {[['تعداد مشتریان',Users,canViewModule('customers')&&dbStatus==='connected'?fmt(data.customers.length):'-'],['صندوق‌های تعریف‌شده',Vault,canViewModule('cash')&&dbStatus==='connected'?fmt(data.cash.length):'-'],['عملیات امروز',RefreshCw,(canViewModule('reports')||canViewModule('cash'))&&dbStatus==='connected'?fmt(dailyTransactions.length):'-'],['مفاد معاملات',BarChart3,'-']].map(([label,I,value])=><div key={label} className="v21-lt-stat"><div className="v21-lt-stat-head"><I/><span>{label}</span></div><b>{value}</b></div>)}
       </div>
       <div className="v21-lt-groups">
-       {ltGroups.map(group=><div key={group.title} className="v21-lt-group"><div className="v21-lt-group-title">{group.title}</div><div className="v21-lt-group-tiles">{group.items.filter(([,,,mod])=>!mod||canViewModule(mod)).map(([label,I,run])=><button key={label} type="button" onClick={run} disabled={!run} aria-disabled={!run} className="v21-lt-tile disabled:cursor-not-allowed disabled:opacity-50"><I/><span>{label}</span></button>)}</div></div>)}
+       {ltGroups.map(group=><div key={group.key} data-lt-group={group.key} className="v21-lt-group">
+        <div className="v21-lt-group-title">{group.title}</div>
+        <div className="v21-lt-group-tiles">
+         {group.items.map(([label,I,run])=><button key={label} type="button" onClick={run} disabled={!run} aria-disabled={!run} className="v21-lt-tile"><I/><span>{label}</span></button>)}
+        </div>
+       </div>)}
       </div>
-      <div className="v21-lt-group v21-lt-quick"><div className="v21-lt-group-title">عملیات سریع</div>
+      <div className="v21-lt-group v21-lt-quick">
+       <div className="v21-lt-group-title">عملیات سریع</div>
        <div className="v21-lt-quick-actions">
         <button type="button" onClick={()=>cashAction('دخل')}><ArrowDown/><span>ثبت دخل صندوق</span></button>
         <button type="button" onClick={()=>cashAction('خرج')}><ArrowUp/><span>ثبت خرج صندوق</span></button>
@@ -604,7 +631,7 @@ export default function Version21Workspace(){
      <button type="button" onClick={removeSelected} disabled={!selected||!canModuleAction(active,'delete')||!ltDeletable}><X className="h-5 w-5 text-rose-600"/>حذف</button>
      <button type="button" onClick={printPage}><Printer className="h-5 w-5 text-slate-700"/>چاپ</button>
     </div>
-    <div className="v21-lt-status-info"><span>کاربر: {ltUserName}</span><i/><span>تاریخ: {ltDateParts.day} {ltDateParts.month} {ltDateParts.year}</span><i/></div>
+    <div className="v21-lt-status-info"><span>کاربر: {ltUserName}</span><i/><span>تاریخ: {ltDateParts.day} {ltDateParts.month} {ltDateParts.year}</span><i/><span>نسخه: ۲۱</span></div>
    </div>
    <footer className="shrink-0 border-t border-slate-400 bg-[#dfe5ea] px-3 py-2 text-center text-[9px] text-slate-600 lg:hidden">حساب صراف</footer>
   </section>
@@ -612,7 +639,7 @@ export default function Version21Workspace(){
       {NAV_MENUS.slice(5).map(group=><section key={group.label} className="border border-slate-300 bg-white p-2"><h3 className="mb-2 border-b border-slate-200 pb-1 text-xs font-bold text-[#24496d]">{group.label}</h3><div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">{group.items.map(([label,act])=><button key={act} onClick={()=>{menuAction(act);setShowWorkspace(false);}} className="min-h-10 border border-slate-300 bg-[#f5f8fa] px-2 py-2 text-[11px] text-[#29465e] hover:bg-blue-50">{label}</button>)}</div></section>)}
       <section><h3 className="mb-2 text-xs font-bold text-[#24496d]">سایر بخش‌ها</h3><div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">{MODULES.filter(m=>m.id!=='home'&&!['customerLedger','customers','branches','branchLedger','banks','remittance','cash','exchange','expenses','journal','ledger'].includes(m.id)).map(m=><Tile key={m.id} icon={m.icon} label={m.label} moduleId={m.id} onClick={()=>{if(m.id==='debtors'){setShowWorkspace(false);navigate('/debtors');return;}setActive(m.id);setSelected(null);setCustomerDetail(null);setQuery('');setShowWorkspace(false);}}/>)}</div></section>
      </div></div></div>}
-   {notice&&<div className="flex items-center gap-2 border border-blue-200 bg-blue-50 p-3 text-[11px] text-blue-900"><Check className="h-4 w-4"/>{notice}<button onClick={()=>setNotice('')} className="mr-auto"><X className="h-4 w-4"/></button></div>}
+   {notice&&<div className="v21-lt-toast flex items-center gap-2 border border-blue-200 bg-blue-50 p-3 text-[11px] text-blue-900"><Check className="h-4 w-4"/>{notice}<button onClick={()=>setNotice('')} className="mr-auto"><X className="h-4 w-4"/></button></div>}
   <p className="text-[10px] leading-5 text-slate-500 lg:hidden">اطلاعات مالی پس از ثبت در دیتابیس همان صراف ذخیره می‌شود. پیش‌نویس فرم‌ها و تنظیمات نمایش، جداگانه در حافظه محلی همین مرورگر و برای همین کاربر نگهداری می‌شود.</p>
   {modal&&<div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/45 p-3"><div className="max-h-[90vh] w-full max-w-2xl overflow-auto border-2 border-slate-600 bg-[#f7f9fb] shadow-2xl"><div className="sticky top-0 flex items-center justify-between bg-gradient-to-b from-[#386b91] to-[#17466c] px-3 py-2 text-white"><b className="text-xs">{SCHEMAS[modal]?((draft.id?'ویرایش ':'ثبت ')+SCHEMAS[modal].title):modal==='cashAction'?'ثبت گردش صندوق':modal==='restore'?'بازیابی پشتیبان':modal==='settings'?'تنظیمات محلی':'راهنمای حساب صراف'}</b><button onClick={()=>setModal('')}><X className="h-4 w-4"/></button></div>
    {SCHEMAS[modal]&&<><div className="grid gap-3 p-4 sm:grid-cols-2">{SCHEMAS[modal].fields.map(f=><Field key={f[0]} field={f} value={fieldValue(draft,f[0])} onChange={setField} choices={{
@@ -630,6 +657,6 @@ export default function Version21Workspace(){
    {modal==='support'&&<div className="space-y-3 p-4 text-xs leading-6"><b>پشتیبانی حساب صراف</b><p>برای مشاهده راه‌های پشتیبانی و ثبت درخواست، صفحه پشتیبانی برنامه را باز کنید.</p><button onClick={()=>{setModal('');navigate('/support');}} className="border border-blue-300 bg-blue-50 px-4 py-2 font-bold text-blue-900">ورود به مرکز پشتیبانی</button></div>}
    {modal==='help'&&<div className="space-y-2 p-4 text-xs leading-6"><p>۱. از فهرست سمت راست بخش مورد نظر را باز کنید.</p><p>۲. اطلاعات صراف از دیتابیس دریافت می‌شود و ثبت‌های جدید در همان حساب ذخیره می‌گردد.</p><p>۳. برای تازه‌سازی، از دکمه «تازه‌سازی» استفاده کنید.</p><p>۴. ثبت و ویرایش در جدول‌های موجود انجام می‌شود؛ عملیات مالی با سند حسابداری و سوابق قابل‌ردیابی ثبت می‌گردد.</p><p>دسترسی اطلاعات به نشست و کد صرافی واردشده محدود است.</p></div>}
   </div></div>}
-  <style>{'@media print{body *{visibility:hidden!important} .print-area,.print-area *{visibility:visible!important}} @media(max-width:640px){.v21-laptop-menu-bar.hidden{display:none!important}.v21-workspace-root{min-height:100dvh;padding-bottom:env(safe-area-inset-bottom)}.v21-workspace-shell{max-height:none!important;min-height:calc(100dvh - 16px)!important;height:auto;overflow:visible!important;border-radius:10px}.v21-workspace-shell>header{position:sticky;top:0;z-index:25;min-height:48px;padding:10px 12px}.v21-workspace-shell>nav{display:flex;flex-wrap:nowrap;overflow-x:auto;white-space:nowrap;scrollbar-width:thin;position:relative;z-index:20}.v21-workspace-shell>nav>div{flex:0 0 auto}.v21-workspace-shell>div.flex.min-h-0{overflow:visible}.v21-workspace-shell aside.grid{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:6px;padding:8px}.v21-workspace-shell aside.grid button{min-height:66px;padding:8px 4px}.v21-workspace-shell aside.grid button svg{width:20px;height:20px}.v21-workspace-shell aside.grid button span{white-space:normal;overflow:visible;text-overflow:clip;line-height:1.4;font-size:11px}.v21-workspace-shell main{overflow:visible!important;padding:10px}.v21-workspace-shell main>div.grid.grid-cols-2{grid-template-columns:repeat(2,minmax(0,1fr))}.v21-workspace-shell main section .min-w-\\[112px\\]{min-width:calc(50% - 8px)}.v21-workspace-shell main input,.v21-workspace-shell main select{max-width:100%;min-height:38px}.v21-workspace-shell table{min-width:640px}.v21-workspace-shell main>div:has(>table){overflow-x:auto}.v21-workspace-shell>div.shrink-0.flex.items-center.justify-between{position:sticky;bottom:56px;z-index:15}.v21-mobile-bottom{position:sticky;bottom:0;z-index:30;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px;padding:8px;background:#dfe8ef;border-top:1px solid #9aabb9;padding-bottom:calc(8px + env(safe-area-inset-bottom))}.v21-mobile-bottom button{min-height:42px;border:1px solid #a8bac8;border-radius:7px;background:#fff;color:#24496d;font-size:11px;font-weight:700}.v21-workspace-shell footer{font-size:9px;gap:6px}.v21-workspace-shell .fixed.inset-0{padding:8px}.v21-workspace-shell .fixed.inset-0>div{max-height:92dvh}} @media(min-width:641px){.v21-mobile-bottom{display:none}}@media(max-width:640px){.v21-workspace-root{padding-bottom:max(env(safe-area-inset-bottom),8px)}.v21-workspace-shell{width:100%;max-width:100%;border:1px solid #cbd9e8;box-shadow:0 8px 28px rgba(16,43,76,.10)}.v21-workspace-shell>header{padding-top:calc(10px + env(safe-area-inset-top))}.v21-laptop-toolbar{display:flex;flex-direction:column;gap:8px;background:#eaf1f7} .v21-laptop-menu-bar{display:flex;flex-wrap:nowrap;align-items:center;gap:6px;overflow-x:auto;padding:6px 8px;white-space:nowrap;scrollbar-width:thin} .v21-laptop-brand{display:inline-flex;flex:0 0 auto;padding:5px 14px;border-left:1px solid #9aabb9;font-size:12px;font-weight:800;color:#1e4260;}.v21-laptop-menu-bar>div{flex:0 0 auto} .v21-workspace-shell .v21-module-icon-row-mobile{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:6px!important;padding:8px!important;background:#e1eaf2!important}.v21-workspace-shell .v21-module-icon-row-mobile button{min-height:66px;padding:8px 4px}.v21-workspace-shell .v21-module-icon-row-mobile button svg{width:20px;height:20px}.v21-workspace-shell .v21-module-icon-row-mobile button span{white-space:normal;overflow:visible;text-overflow:clip;line-height:1.4;font-size:11px}.v21-workspace-shell .v21-reference-mobile-shortcuts{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;padding:8px;background:#f3f7fc;border-bottom:1px solid #cbd9e8}.v21-workspace-shell .v21-reference-mobile-shortcuts button{min-height:58px;border:1px solid #d5e2f0;background:#fff;color:#24496d;font-size:11px;font-weight:600}.v21-workspace-shell .v21-reference-mobile-shortcuts button:active{background:#e7f0fa}.v21-workspace-shell main{min-width:0;overflow-x:hidden!important;padding:10px!important}.v21-workspace-shell .v21-reference-group-tiles>div{min-width:calc(50% - 8px);flex:1 1 calc(50% - 8px)}.v21-workspace-shell .v21-module-tile{min-height:92px;padding:10px 6px}.v21-workspace-shell .v21-mobile-bottom{background:linear-gradient(180deg,#f8fbff,#e5edf5);border-top:1px solid #b8c9d8;padding-bottom:calc(8px + env(safe-area-inset-bottom))}.v21-workspace-shell .v21-mobile-bottom button.is-current{border-color:#164b87;background:linear-gradient(135deg,#164b87,#2767a5);color:#fff;box-shadow:0 2px 8px rgba(22,75,135,.2)}.v21-workspace-shell .fixed.inset-0{align-items:flex-end;padding:8px}.v21-workspace-shell .fixed.inset-0>div{width:100%;max-height:calc(100dvh - env(safe-area-inset-top) - 12px);border-radius:16px 16px 0 0}.v21-workspace-shell input,.v21-workspace-shell select,.v21-workspace-shell textarea,.v21-workspace-shell button{touch-action:manipulation}} @media(min-width:1024px){.v21-home-hide-laptop-nav,.v21-home-hide-module-rail{display:none!important;}} @media(min-width:1024px){.v21-workspace-shell .v21-module-icon-row{grid-template-columns:repeat(7,minmax(0,1fr))!important;gap:6px!important;padding:8px!important;border-bottom:1px solid #94a3b8!important;background:#e1e8ed!important;}.v21-workspace-shell .v21-module-icon-row>.v21-desktop-module-button{display:flex!important;min-width:0!important;min-height:64px!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;gap:4px!important;padding:7px 4px!important;border-radius:8px!important;text-align:center!important;box-shadow:none!important;}.v21-workspace-shell .v21-module-icon-row>.v21-desktop-module-button svg{width:20px!important;height:20px!important;flex:0 0 auto!important;}.v21-workspace-shell .v21-module-icon-row>.v21-desktop-module-button span{font-size:10px!important;line-height:1.3!important;white-space:normal!important;} .v21-workspace-shell .v21-lt-groups{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:10px!important;align-items:start!important;} .v21-workspace-shell .v21-lt-group{min-width:0!important;} .v21-workspace-shell .v21-lt-quick{grid-column:1/-1!important;}.v21-workspace-shell .v21-reference-group-tiles{display:flex!important;flex-wrap:wrap!important;align-items:stretch!important;gap:8px!important;}.v21-workspace-shell .v21-reference-group-tiles>div{min-width:112px!important;flex:1 1 112px!important;}} '}</style>
+  <style>{'@media print{body *{visibility:hidden!important} .print-area,.print-area *{visibility:visible!important}} @media(max-width:640px){.v21-laptop-menu-bar.hidden{display:none!important}.v21-workspace-root{min-height:100dvh;padding-bottom:env(safe-area-inset-bottom)}.v21-workspace-shell{max-height:none!important;min-height:calc(100dvh - 16px)!important;height:auto;overflow:visible!important;border-radius:10px}.v21-workspace-shell>header{position:sticky;top:0;z-index:25;min-height:48px;padding:10px 12px}.v21-workspace-shell>nav{display:flex;flex-wrap:nowrap;overflow-x:auto;white-space:nowrap;scrollbar-width:thin;position:relative;z-index:20}.v21-workspace-shell>nav>div{flex:0 0 auto}.v21-workspace-shell>div.flex.min-h-0{overflow:visible}.v21-workspace-shell aside.grid{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:6px;padding:8px}.v21-workspace-shell aside.grid button{min-height:66px;padding:8px 4px}.v21-workspace-shell aside.grid button svg{width:20px;height:20px}.v21-workspace-shell aside.grid button span{white-space:normal;overflow:visible;text-overflow:clip;line-height:1.4;font-size:11px}.v21-workspace-shell main{overflow:visible!important;padding:10px}.v21-workspace-shell main>div.grid.grid-cols-2{grid-template-columns:repeat(2,minmax(0,1fr))}.v21-workspace-shell main section .min-w-\\[112px\\]{min-width:calc(50% - 8px)}.v21-workspace-shell main input,.v21-workspace-shell main select{max-width:100%;min-height:38px}.v21-workspace-shell table{min-width:640px}.v21-workspace-shell main>div:has(>table){overflow-x:auto}.v21-workspace-shell>div.shrink-0.flex.items-center.justify-between{position:sticky;bottom:56px;z-index:15}.v21-mobile-bottom{position:sticky;bottom:0;z-index:30;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px;padding:8px;background:#dfe8ef;border-top:1px solid #9aabb9;padding-bottom:calc(8px + env(safe-area-inset-bottom))}.v21-mobile-bottom button{min-height:42px;border:1px solid #a8bac8;border-radius:7px;background:#fff;color:#24496d;font-size:11px;font-weight:700}.v21-workspace-shell footer{font-size:9px;gap:6px}.v21-workspace-shell .fixed.inset-0{padding:8px}.v21-workspace-shell .fixed.inset-0>div{max-height:92dvh}} @media(min-width:641px){.v21-mobile-bottom{display:none}}@media(max-width:640px){.v21-workspace-root{padding-bottom:max(env(safe-area-inset-bottom),8px)}.v21-workspace-shell{width:100%;max-width:100%;border:1px solid #cbd9e8;box-shadow:0 8px 28px rgba(16,43,76,.10)}.v21-workspace-shell>header{padding-top:calc(10px + env(safe-area-inset-top))}.v21-laptop-toolbar{display:flex;flex-direction:column;gap:8px;background:#eaf1f7} .v21-laptop-menu-bar{display:flex;flex-wrap:nowrap;align-items:center;gap:6px;overflow-x:auto;padding:6px 8px;white-space:nowrap;scrollbar-width:thin} .v21-laptop-brand{display:inline-flex;flex:0 0 auto;padding:5px 14px;border-left:1px solid #9aabb9;font-size:12px;font-weight:800;color:#1e4260;}.v21-laptop-menu-bar>div{flex:0 0 auto} .v21-workspace-shell .v21-module-icon-row-mobile{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:6px!important;padding:8px!important;background:#e1eaf2!important}.v21-workspace-shell .v21-module-icon-row-mobile button{min-height:66px;padding:8px 4px}.v21-workspace-shell .v21-module-icon-row-mobile button svg{width:20px;height:20px}.v21-workspace-shell .v21-module-icon-row-mobile button span{white-space:normal;overflow:visible;text-overflow:clip;line-height:1.4;font-size:11px}.v21-workspace-shell .v21-reference-mobile-shortcuts{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;padding:8px;background:#f3f7fc;border-bottom:1px solid #cbd9e8}.v21-workspace-shell .v21-reference-mobile-shortcuts button{min-height:58px;border:1px solid #d5e2f0;background:#fff;color:#24496d;font-size:11px;font-weight:600}.v21-workspace-shell .v21-reference-mobile-shortcuts button:active{background:#e7f0fa}.v21-workspace-shell main{min-width:0;overflow-x:hidden!important;padding:10px!important}.v21-workspace-shell .v21-reference-group-tiles>div{min-width:calc(50% - 8px);flex:1 1 calc(50% - 8px)}.v21-workspace-shell .v21-module-tile{min-height:92px;padding:10px 6px}.v21-workspace-shell .v21-mobile-bottom{background:linear-gradient(180deg,#f8fbff,#e5edf5);border-top:1px solid #b8c9d8;padding-bottom:calc(8px + env(safe-area-inset-bottom))}.v21-workspace-shell .v21-mobile-bottom button.is-current{border-color:#164b87;background:linear-gradient(135deg,#164b87,#2767a5);color:#fff;box-shadow:0 2px 8px rgba(22,75,135,.2)}.v21-workspace-shell .fixed.inset-0{align-items:flex-end;padding:8px}.v21-workspace-shell .fixed.inset-0>div{width:100%;max-height:calc(100dvh - env(safe-area-inset-top) - 12px);border-radius:16px 16px 0 0}.v21-workspace-shell input,.v21-workspace-shell select,.v21-workspace-shell textarea,.v21-workspace-shell button{touch-action:manipulation}}  '}</style>
  </div>;
 }
