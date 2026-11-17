@@ -9,7 +9,7 @@ import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
   Shield, Users, CreditCard, Lock, Bell, MessageSquare,
-  Server, Wallet, Crown, Upload, LogOut, Download, AlertTriangle, UserCog, Clock, Eye, Mail, Smartphone, Gamepad2, Zap, Globe, Store, FlaskConical, Database, Bot
+  Server, Wallet, Crown, Upload, LogOut, Download, AlertTriangle, UserCog, Clock, Eye, Mail, Smartphone, Gamepad2, Zap, Globe, Store, FlaskConical, Database, Bot, Images
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -47,6 +47,7 @@ import SellerManager from '@/components/sarraaf/SellerManager';
 import SandboxPanel from '@/components/sandbox/SandboxPanel';
 import SupabaseAuditManager from '@/components/sarraaf/SupabaseAuditManager';
 import LiveDatabaseExplorer from '@/components/sarraaf/LiveDatabaseExplorer';
+import HexLayoutReferenceLibrary from '@/components/sarraaf/HexLayoutReferenceLibrary';
 import { SandboxProvider } from '@/components/sandbox/SandboxProvider';
 import { checkBuilderAccess, startBuilderSession } from '@/lib/builderAccess';
 import { useToast } from '@/components/ui/use-toast';
@@ -220,6 +221,12 @@ const TAB_GROUPS = [
     icon: Database,
     value: 'db_explorer',
     description: 'مرور و مدیریت زنده ردیف‌های جدول‌ها',
+  },
+  {
+    label: 'آزمایشگاه چیدمان HEX',
+    icon: Images,
+    value: 'layout_hex',
+    description: 'کتابخانه تصاویر مرجع و نمونه‌های چیدمان',
   },
 ];
 
@@ -531,6 +538,13 @@ export default function BuilderPanel() {
         {isFullCreator && (
           <TabsContent value="db_explorer">
             <LiveDatabaseExplorer />
+          </TabsContent>
+        )}
+
+        {/* کتابخانه HEX — فقط سازندهٔ اصلی؛ مستقل از داده‌های مالی */}
+        {isFullCreator && (
+          <TabsContent value="layout_hex">
+            <HexLayoutReferenceLibrary />
           </TabsContent>
         )}
 
