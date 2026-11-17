@@ -1,2 +1,2 @@
-Harmless marker to trigger the existing public preview deployment workflow.
-Redeploy requested on 2026-10-26 after reported HTTP 404. No application source code or database was changed.
+Harmless deployment trigger marker.
+Production redeploy requested on 2026-11-17 after the professional layout catalog was merged into release/restore-build. No application source code, financial logic, user data, authentication, or database was changed by this marker update.
