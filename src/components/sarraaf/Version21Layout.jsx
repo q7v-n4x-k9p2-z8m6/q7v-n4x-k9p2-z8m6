@@ -138,8 +138,7 @@ function ModuleLink({ item, compact = false, features = [], profile, profileLoad
   const tierLocked = Boolean(featureKey && profile && !profileLoading && !paidSystemLoading && !isSystemAdmin && paidSystemEnabled !== false &&
     !isFeatureAccessible(features || [], featureKey, profile, paidSystemEnabled));
   if (featureDisabled || featureUpdating || tierLocked) {
-    return (
-      {tierLocked ? (
+    return tierLocked ? (
         <button type="button" title="برای دسترسی، سطح اشتراک را ارتقا دهید" aria-label={item.label + ' — ارتقای اشتراک'}
           onClick={() => { onNavigate?.(); openUpgrade?.(featureKey); }}
           className={compact
@@ -158,7 +157,6 @@ function ModuleLink({ item, compact = false, features = [], profile, profileLoad
           <span className={compact ? 'leading-tight' : 'flex-1'}>{item.label}</span>
           {!compact && <span className="text-[10px] whitespace-nowrap">{featureUpdating ? 'در حال تکمیل' : 'غیرفعال'}</span>}
         </div>
-      )}
     );
   }
   return (
