@@ -34,6 +34,8 @@ const MODULES = [
   {id:'products',label:'محصولات آنلاین',icon:ShoppingBag,group:'امکانات تکمیلی',skeleton:true,children:['شارژ موبایل','بسته‌های اینترنت','UC پابجی موبایل']},
   {id:'language',label:'زبان برنامه',icon:Languages,group:'تنظیمات',skeleton:true,children:['فارسی','دری','English','العربية']}
 ];
+export const CREATOR_PREVIEW_MODULES = MODULES;
+
 const SCHEMAS = {
  transactions:{title:'گردش حساب',fields:[['date','تاریخ','date'],['type','نوع عملیات','text'],['partyType','نوع طرف حساب','select',[{value:'customer',label:'مشتری'},{value:'branch',label:'نمایندگی'},{value:'other',label:'سایر'}]],['party','طرف حساب','text'],['currency','ارز','select',CURRENCIES],['amount','مبلغ (+ دریافت / - پرداخت)','number'],['description','شرح','text']]},
  customers:{title:'مشتری',fields:[['code','کد مشتری','text'],['name','نام مشتری','text'],['kind','نوع حساب','select',['دائمی','موقتی']],['phone','شماره تماس','text'],['address','آدرس','text'],['currency','ارز اصلی','select',CURRENCIES],['opening','مانده افتتاحیه','number'],['status','وضعیت','select',['فعال','غیرفعال','قفل']]]},
