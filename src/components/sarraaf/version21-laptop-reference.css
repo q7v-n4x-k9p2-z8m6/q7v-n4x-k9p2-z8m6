@@ -357,3 +357,17 @@
     overflow-x: hidden !important;
   }
 }
+
+/* Keep the desktop toolbar to its one 14-item rail.
+   The mobile rail shares the same toolbar container and must stay hidden
+   at laptop widths; mobile/tablet breakpoints remain unchanged. */
+@media (min-width: 1024px) {
+  html body .v21-workspace-shell .v21-laptop-toolbar > aside.v21-module-icon-row {
+    display: grid !important;
+    grid-template-columns: repeat(14, minmax(0, 1fr)) !important;
+  }
+
+  html body .v21-workspace-shell .v21-laptop-toolbar > aside.v21-module-icon-row-mobile {
+    display: none !important;
+  }
+}

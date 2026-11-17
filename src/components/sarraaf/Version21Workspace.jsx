@@ -73,7 +73,7 @@ const NAV_MENUS = [
  {label:'تنظیمات',items:[['تنظیمات محلی','settings'],['انتخاب زبان','language'],['پشتیبانی','support'],['راهنما','help']]},
  {label:'امکانات تکمیلی',items:[['گروه و چت','sarraafGroups'],['هوش مصنوعی','assistant']] }
 ];
-const LAPTOP_NAV_MENUS = NAV_MENUS.slice(0,6).map(m=>({...m,label:m.label==='تعریف'?'تعاریف':m.label==='حسابات'?'حساب‌ها':m.label}));
+const LAPTOP_NAV_MENUS = NAV_MENUS;
 
 function Field({field,value,onChange,choices}) {
  const [key,label,type,opts]=field;
@@ -458,12 +458,36 @@ export default function Version21Workspace(){
  const ltUserName=authUser?.full_name||authUser?.username||exchangeProfile?.name||'کاربر';
  const goModule=id=>{if(id==='debtors'){navigate('/debtors');return;}if(!canViewModule(id)){notify('مجوز مشاهده این بخش برای حساب شما فعال نیست.');return;}setActive(id);setSelected(null);setCustomerDetail(null);setBranchDetail(null);setQuery('');};
  const ltGroups=[
-  {title:'عملیات صرافی',items:[['خرید و فروش اسعار',ArrowLeftRight,()=>openNew('exchange'),'exchange'],['دفتر حواله‌ها',Send,()=>goModule('remittance'),'remittance'],['مصارف و پرداخت‌ها',CreditCard,()=>goModule('expenses'),'expenses']]},
-  {title:'صندوق و بانک',items:[['صندوق‌ها و موجودی',Vault,()=>goModule('cash'),'cash'],['بانک و چک',Landmark,()=>goModule('banks'),'banks']]},
-  {title:'تعاریف و دفاتر',items:[['تعریف مشتریان',Users,()=>goModule('customers'),'customers'],['دفتر حساب مشتریان',BookOpen,()=>goModule('customerLedger'),'customerLedger'],['تعریف نمایندگی‌ها',Building2,()=>goModule('branches'),'branches'],['دفتر حساب نمایندگی‌ها',BookText,()=>goModule('branchLedger'),'branchLedger']]},
-  {title:'حسابداری و گزارشات',items:[['دفتر روزنامچه',ScrollText,()=>goModule('journal'),'journal'],['دفتر کل',ClipboardList,()=>goModule('ledger'),'ledger'],['کدینگ حساب‌ها',ListChecks,()=>goModule('accounts'),'accounts'],['تعریف اسعار',Coins,()=>goModule('currencies'),'currencies'],['گزارش عملیات',FileSpreadsheet,()=>goModule('reports'),'reports'],['مفاد و زیان',BarChart3,()=>goModule('profit'),'profit'],['بیلانس عمومی',Scale,()=>goModule('balance'),'balance'],['بدهکاران و بستانکاران',CircleDollarSign,()=>menuAction('debtors')],['سوابق فعالیت',ClipboardList,()=>menuAction('activity')],['گزارش خطاها',CircleHelp,()=>menuAction('errors')]]},
-  {title:'تنظیمات',items:[['زبان برنامه',Languages,()=>goModule('language'),'language'],['تنظیمات محلی',Settings,()=>menuAction('settings')],['پشتیبان‌گیری',Archive,()=>menuAction('backup')],['بازیابی پشتیبان',RotateCcw,()=>menuAction('restore')],['چاپ صفحه',Printer,()=>menuAction('print')],['پاک‌سازی نمای محلی',RefreshCw,()=>menuAction('reset')]]},
-  {title:'امکانات تکمیلی',items:[['گروه و چت',MessagesSquare,()=>goModule('sarraafGroups'),'sarraafGroups'],['هوش مصنوعی',Bot,()=>goModule('assistant'),'assistant'],['محصولات آنلاین',ShoppingBag,()=>goModule('products'),'products'],['پشتیبانی',Headphones,()=>menuAction('support')],['راهنما',Info,()=>menuAction('help')]]}
+  {title:'تعاریف و دفاتر',items:[
+   ['تعریف مشتریان',Users,()=>goModule('customers'),'customers'],
+   ['تعریف نمایندگی‌ها',Building2,()=>goModule('branches'),'branches'],
+   ['دفتر حساب مشتریان',BookOpen,()=>goModule('customerLedger'),'customerLedger']
+  ]},
+  {title:'صندوق و بانک',items:[
+   ['صندوق‌ها و موجودی',Vault,()=>goModule('cash'),'cash'],
+   ['بانک و چک',Landmark,()=>goModule('banks'),'banks'],
+   ['دفتر حواله‌ها',Send,()=>goModule('remittance'),'remittance']
+  ]},
+  {title:'عملیات صرافی',items:[
+   ['خرید و فروش اسعار',ArrowLeftRight,()=>openNew('exchange'),'exchange'],
+   ['مصارف و پرداخت‌ها',CreditCard,()=>goModule('expenses'),'expenses'],
+   ['معاملات',Receipt]
+  ]},
+  {title:'حسابداری و گزارشات',items:[
+   ['دفتر روزنامه',ScrollText,()=>goModule('journal'),'journal'],
+   ['دفتر کل',ClipboardList,()=>goModule('ledger'),'ledger'],
+   ['متفرقه',Scale]
+  ]},
+  {title:'امکانات تکمیلی',items:[
+   ['محصولات آنلاین',ShoppingBag,()=>goModule('products'),'products'],
+   ['گروه و چت',MessagesSquare,()=>goModule('sarraafGroups'),'sarraafGroups'],
+   ['هوش مصنوعی',Bot,()=>goModule('assistant'),'assistant']
+  ]},
+  {title:'تنظیمات',items:[
+   ['تنظیمات',Settings,()=>menuAction('settings')],
+   ['زبان برنامه',Languages,()=>goModule('language'),'language'],
+   ['درباره برنامه',Info]
+  ]}
  ];
  const ltDeletable=['customers','branches','cash','banks','currencies','accounts','transactions','cashAction','expenses','journal','ledger','remittance','exchange'].includes(active);
  const mainTitle='حساب صراف'; return <div dir="rtl" className="v21-workspace-root space-y-2 text-[#253746]">
@@ -476,10 +500,10 @@ export default function Version21Workspace(){
    {/* ردیف اول: عملیات روی رکورد انتخاب‌شده */}
    <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
     <div className="v21-laptop-toolbar">
-    <nav className="v21-laptop-menu-bar hidden lg:flex" aria-label="منوی اصلی دسکتاپ"><span className="v21-laptop-brand">حساب صراف</span>{LAPTOP_NAV_MENUS.map(m=><div key={m.label} className="relative"><button type="button" aria-expanded={menu===m.label} onClick={()=>setMenu(menu===m.label?'':m.label)} className={'v21-laptop-menu-trigger '+(menu===m.label?'is-open':'')}>{m.label}<ChevronDown className="mr-1 inline h-3 w-3"/></button>{menu===m.label&&<div className="v21-laptop-menu-popover absolute right-0 top-full z-40 min-w-48 border border-slate-300 bg-white py-1 shadow-xl" role="menu" aria-label={`گزینه‌های منوی ${menu}`}>{m.items.map(([label,act])=><button type="button" role="menuitem" key={act} onClick={()=>menuAction(act)} className="block w-full px-3 py-2 text-right text-[11px] text-slate-800 hover:bg-blue-50">{label}</button>)}</div>}</div>)}</nav>
+    <nav className="v21-laptop-menu-bar hidden lg:flex" aria-label="منوی اصلی دسکتاپ">{LAPTOP_NAV_MENUS.map(m=><div key={m.label} className="relative"><button type="button" aria-expanded={menu===m.label} onClick={()=>setMenu(menu===m.label?'':m.label)} className={'v21-laptop-menu-trigger '+(menu===m.label?'is-open':'')}>{m.label}<ChevronDown className="mr-1 inline h-3 w-3"/></button>{menu===m.label&&<div className="v21-laptop-menu-popover absolute right-0 top-full z-40 min-w-48 border border-slate-300 bg-white py-1 shadow-xl" role="menu" aria-label={`گزینه‌های منوی ${menu}`}>{m.items.map(([label,act])=><button type="button" role="menuitem" key={act} onClick={()=>menuAction(act)} className="block w-full px-3 py-2 text-right text-[11px] text-slate-800 hover:bg-blue-50">{label}</button>)}</div>}</div>)}</nav>
     <nav className="v21-laptop-menu-bar lg:hidden" aria-label="منوی اصلی موبایل">{NAV_MENUS.map(m=><div key={m.label} className="relative"><button type="button" aria-expanded={menu===m.label} onClick={()=>setMenu(menu===m.label?'':m.label)} className={'v21-laptop-menu-trigger '+(menu===m.label?'is-open':'')}>{m.label}<ChevronDown className="mr-1 inline h-3 w-3"/></button>{menu===m.label&&<div className="v21-laptop-menu-popover absolute right-0 top-full z-40 min-w-48 border border-slate-300 bg-white py-1 shadow-xl" role="menu" aria-label={`گزینه‌های منوی ${menu}`}>{m.items.map(([label,act])=><button type="button" role="menuitem" key={act} onClick={()=>menuAction(act)} className="block w-full px-3 py-2 text-right text-[11px] text-slate-800 hover:bg-blue-50">{label}</button>)}</div>}</div>)}</nav>
      <aside aria-label="آیکون‌های اصلی و مرکز عملیات" className="v21-module-icon-row hidden shrink-0 w-full gap-1 border-b border-slate-400 bg-[#e1e8ed] p-2 lg:grid">
-      {['customers','banks','cash','exchange','expenses','sarraafGroups','products'].filter(canViewModule).map(id=>{const m=MODULES.find(x=>x.id===id);if(!m)return null;const I=m.icon;return <button key={m.id} type="button" title={m.label} onClick={()=>{setActive(m.id);setSelected(null);setCustomerDetail(null);setBranchDetail(null);setQuery('');}} className={'v21-desktop-module-button flex min-h-[64px] min-w-0 flex-col items-center justify-center gap-1 rounded-lg border px-1 py-2 text-center '+(active===m.id?'is-active border-blue-300 bg-[#d2e3f1] font-bold text-blue-900':'border-transparent text-[#29465e] hover:border-slate-300 hover:bg-white')}><I className="h-5 w-5"/><span className="w-full whitespace-normal text-[10px] leading-tight">{m.label==='مرکز عملیات'?'میزکار':m.label}</span></button>;})}
+      {['home','language','products','assistant','sarraafGroups','journal','expenses','exchange','cash','remittance','banks','branchLedger','customers','customerLedger'].filter(canViewModule).map(id=>{const m=MODULES.find(x=>x.id===id);if(!m)return null;const I=m.icon;return <button key={m.id} type="button" title={m.label} onClick={()=>{setActive(m.id);setSelected(null);setCustomerDetail(null);setBranchDetail(null);setQuery('');}} className={'v21-desktop-module-button flex min-h-[64px] min-w-0 flex-col items-center justify-center gap-1 rounded-lg border px-1 py-2 text-center '+(active===m.id?'is-active border-blue-300 bg-[#d2e3f1] font-bold text-blue-900':'border-transparent text-[#29465e] hover:border-slate-300 hover:bg-white')}><I className="h-5 w-5"/><span className="w-full whitespace-normal text-[10px] leading-tight">{id==='home'?'میزکار':id==='journal'?'دفتر روزنامه':m.label}</span></button>;})}
      </aside>
      <aside aria-label="آیکون‌های اصلی موبایل" className="v21-module-icon-row-mobile grid w-full grid-cols-3 gap-1 border-b border-slate-400 bg-[#e1e8ed] p-2 lg:hidden">
       {['home','language','products','assistant','sarraafGroups','journal','expenses','exchange','cash','remittance','banks','branchLedger','customers','customerLedger'].filter(canViewModule).map(id=>{const m=MODULES.find(x=>x.id===id);if(!m)return null;const I=m.icon;return <button key={m.id} type="button" title={m.label} onClick={()=>{setActive(m.id);setSelected(null);setCustomerDetail(null);setBranchDetail(null);setQuery('');}} className={'v21-desktop-module-button flex min-h-[64px] min-w-0 flex-col items-center justify-center gap-1 rounded-lg border px-1 py-2 text-center '+(active===m.id?'is-active border-blue-300 bg-[#d2e3f1] font-bold text-blue-900':'border-transparent text-[#29465e] hover:border-slate-300 hover:bg-white')}><I className="h-5 w-5"/><span className="w-full whitespace-normal text-[10px] leading-tight">{m.label==='مرکز عملیات'?'میزکار':m.label}</span></button>;})}
@@ -495,7 +519,7 @@ export default function Version21Workspace(){
        {[['تعداد مشتریان',Users,canViewModule('customers')&&dbStatus==='connected'?fmt(data.customers.length):'-',''],['صندوق‌های تعریف‌شده',Vault,canViewModule('cash')&&dbStatus==='connected'?fmt(data.cash.length):'-',''],['عملیات امروز',RefreshCw,(canViewModule('reports')||canViewModule('cash'))&&dbStatus==='connected'?fmt(dailyTransactions.length):'-',''],['مفاد معاملات',BarChart3,'-','سود معاملات اسعار تا اتصال به کدینگ حساب‌ها محاسبه نمی‌شود']].map(([label,I,value,hint])=><div key={label} className="v21-lt-stat" title={hint||undefined}><div className="v21-lt-stat-head"><I/><span>{label}</span></div><b>{value}</b></div>)}
       </div>
       <div className="v21-lt-groups">
-       {ltGroups.map(group=><div key={group.title} className="v21-lt-group"><div className="v21-lt-group-title">{group.title}</div><div className="v21-lt-group-tiles">{group.items.filter(([,,,mod])=>!mod||canViewModule(mod)).map(([label,I,run])=><button key={label} type="button" onClick={run} className="v21-lt-tile"><I/><span>{label}</span></button>)}</div></div>)}
+       {ltGroups.map(group=><div key={group.title} className="v21-lt-group"><div className="v21-lt-group-title">{group.title}</div><div className="v21-lt-group-tiles">{group.items.filter(([,,,mod])=>!mod||canViewModule(mod)).map(([label,I,run])=><button key={label} type="button" onClick={run} disabled={!run} aria-disabled={!run} className="v21-lt-tile disabled:cursor-not-allowed disabled:opacity-50"><I/><span>{label}</span></button>)}</div></div>)}
       </div>
       <div className="v21-lt-group v21-lt-quick"><div className="v21-lt-group-title">عملیات سریع</div>
        <div className="v21-lt-quick-actions">
@@ -580,7 +604,7 @@ export default function Version21Workspace(){
      <button type="button" onClick={removeSelected} disabled={!selected||!canModuleAction(active,'delete')||!ltDeletable}><X className="h-5 w-5 text-rose-600"/>حذف</button>
      <button type="button" onClick={printPage}><Printer className="h-5 w-5 text-slate-700"/>چاپ</button>
     </div>
-    <div className="v21-lt-status-info"><span>کاربر: {ltUserName}</span><i/><span>تاریخ: {ltDateParts.day} {ltDateParts.month} {ltDateParts.year}</span><i/><span>نسخه: ۲۱</span></div>
+    <div className="v21-lt-status-info"><span>کاربر: {ltUserName}</span><i/><span>تاریخ: {ltDateParts.day} {ltDateParts.month} {ltDateParts.year}</span><i/></div>
    </div>
    <footer className="shrink-0 border-t border-slate-400 bg-[#dfe5ea] px-3 py-2 text-center text-[9px] text-slate-600 lg:hidden">حساب صراف</footer>
   </section>
