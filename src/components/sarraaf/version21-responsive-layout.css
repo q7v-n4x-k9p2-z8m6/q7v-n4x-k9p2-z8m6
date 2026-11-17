@@ -2374,3 +2374,38 @@
     overflow-y: hidden !important;
   }
 }
+
+
+/* Root-cause correction: laptop module shortcuts are a single horizontal rail.
+   Older 901-1100px rules forced a 7-column grid, wrapping 14 modules into
+   two stacked rows. This final rule overrides that legacy breakpoint. */
+@media (min-width: 901px) {
+  html body .v21-workspace-shell .v21-laptop-toolbar > aside.v21-module-icon-row {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    align-items: stretch !important;
+    justify-content: flex-start !important;
+    gap: 7px !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    padding: 8px 10px !important;
+    scrollbar-width: thin !important;
+  }
+
+  html body .v21-workspace-shell .v21-laptop-toolbar > aside.v21-module-icon-row > button.v21-desktop-module-button {
+    display: flex !important;
+    flex: 0 0 88px !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 88px !important;
+    min-width: 88px !important;
+    max-width: 88px !important;
+    min-height: 66px !important;
+    white-space: normal !important;
+  }
+}
