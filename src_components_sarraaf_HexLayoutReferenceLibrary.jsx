@@ -57,11 +57,6 @@ export default function HexLayoutReferenceLibrary() {
     }
 
     setUploading(true);
-    const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '-').slice(-100) || 'reference-image';
-    const uniqueId = typeof crypto !== 'undefined' && crypto.randomUUID
-      ? crypto.randomUUID()
-      : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
-    const storagePath = `references/${uniqueId}-${safeName}`;
     try {
       // The Edge Function verifies the app's HMAC token server-side, then
       // performs the HEX-only Storage upload and metadata insert.
@@ -90,9 +85,6 @@ export default function HexLayoutReferenceLibrary() {
       await loadItems();
       toast({ title: 'تصویر به کتابخانه HEX اضافه شد' });
     } catch (error) {
-      if (uploaded) {
-        await supabase.storage.from(BUCKET).remove([storagePath]).catch(() => {});
-      }
       toast({
         title: 'ذخیره تصویر انجام نشد',
         description: error.message || 'اتصال امن یا مجوز سازنده را بررسی کنید.',
