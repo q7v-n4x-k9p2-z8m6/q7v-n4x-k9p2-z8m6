@@ -53,7 +53,7 @@ function detectPdfDeviceMode() {
   const uaMobile = /Android|iPhone|iPod|Mobile|Windows Phone/i.test(ua);
   const touch = (navigator.maxTouchPoints || 0) > 0 ||
     window.matchMedia?.('(pointer: coarse)').matches;
-  const screenWidth = Math.min(window.screen?.width || window.innerWidth, window.screen?.height || window.innerWidth);
+  const screenWidth = window.screen?.width || window.innerWidth;
   const viewportWidth = document.documentElement.clientWidth || window.innerWidth;
   const uaDataMobile = navigator.userAgentData?.mobile;
   if (uaDataMobile === true || uaMobile) {
@@ -118,7 +118,7 @@ export default function PdfLayoutSandboxPage() {
             {panels.slice(0, 3).map((panel) => <Panel key={panel.title} {...panel} />)}
             {panels.slice(3).map((panel) => <Panel key={panel.title} {...panel} compact />)}
           </div>
-          <section className="flex min-w-0 shrink-0 flex-col border border-[#c4d3ec] bg-[#e6ecf5] p-2">
+          <section className="flex min-h-[125px] min-w-0 shrink-0 flex-col border border-[#c4d3ec] bg-[#e6ecf5] p-2">
             <h3 className="mb-2 text-[14px] font-bold">عملیات سریع</h3>
             <div className="grid min-w-0 grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-5" style={desktopRequestedOnPhone ? { gridTemplateColumns: "repeat(5,minmax(0,1fr))" } : undefined}>
               {quick.map(([Icon, label]) => <div key={label} className="flex min-h-[68px] min-w-0 flex-1 flex-col items-center justify-center gap-1 border border-[#c3d2ea] bg-[#f7f9fd] text-[13px] font-bold"><Icon className="h-5 w-5 text-[#1f4e9f]" /><span>{label}</span></div>)}
