@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
-import { directGetMe, setAppTokenHeader } from '@/lib/supabaseDirectAuth';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
@@ -63,42 +62,25 @@ export default function HexLayoutReferenceLibrary() {
       ? crypto.randomUUID()
       : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
     const storagePath = `references/${uniqueId}-${safeName}`;
-    let uploaded = false;
-
     try {
-      // Validate the real HMAC creator session before touching HEX storage or metadata.
-      // The visual creator panel alone is not sufficient for Supabase RLS.
+      // The Edge Function verifies the app's HMAC token server-side, then
+      // performs the HEX-only Storage upload and metadata insert.
       const appToken = localStorage.getItem('auth_token');
       if (!appToken) {
-        throw new Error('نشست امن سازنده پیدا نشد. لطفاً از حساب سازنده خارج شوید و دوباره وارد شوید.');
+        throw new Error('نشست امن سازنده پیدا نشد. لطفاً دوباره وارد حساب سازنده شوید.');
       }
-      const verifiedUser = await directGetMe(appToken);
-      if (!verifiedUser || !['creator', 'admin'].includes(verifiedUser.role)) {
-        throw new Error('نشست سازنده معتبر نیست یا دسترسی سازنده تأیید نشد. لطفاً دوباره وارد شوید.');
+      const formData = new FormData();
+      formData.append('file', file, file.name);
+      formData.append('title', title.trim() || file.name);
+      formData.append('description', description.trim());
+      const { data, error } = await supabase.functions.invoke('hex-layout-upload', {
+        body: formData,
+        headers: { 'x-app-token': appToken },
+      });
+      if (error) throw error;
+      if (!data?.success) {
+        throw new Error(data?.error || 'بارگذاری امن تصویر انجام نشد.');
       }
-      setAppTokenHeader(appToken);
-
-      const { error: uploadError } = await supabase.storage
-        .from(BUCKET)
-        .upload(storagePath, file, {
-          cacheControl: '3600',
-          upsert: false,
-          contentType: file.type,
-        });
-      if (uploadError) throw uploadError;
-      uploaded = true;
-
-      const { error: insertError } = await supabase
-        .from('layout_hex_references')
-        .insert({
-          title: title.trim() || file.name,
-          description: description.trim() || null,
-          storage_path: storagePath,
-          original_filename: file.name,
-          mime_type: file.type,
-          file_size: file.size,
-        });
-      if (insertError) throw insertError;
 
       setTitle('');
       setDescription('');
