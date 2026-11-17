@@ -1,16 +1,4 @@
 import React, { useEffect, useMemo, useState } from 'react';
-function detectDesktopSiteMode() {
-  if (typeof window === 'undefined') return false;
-  const ua = navigator.userAgent || '';
-  const uaMobile = /Android|iPhone|iPod|Mobile|Windows Phone/i.test(ua);
-  const touch = (navigator.maxTouchPoints || 0) > 0 || window.matchMedia?.('(pointer: coarse)').matches;
-  const screenWidth = window.screen?.width || window.innerWidth;
-  const viewportWidth = document.documentElement.clientWidth || window.innerWidth;
-  const uaDataMobile = navigator.userAgentData?.mobile;
-  return ((uaDataMobile === true || uaMobile) && viewportWidth > 767 && touch && screenWidth <= 900) || (!uaMobile && touch && screenWidth <= 900 && viewportWidth > 767);
-}
-
-
 import { loadVersion21Database } from './Version21DataAdapter';
 import { saveVersion21Record, editVersion21Record, deleteVersion21Record, deactivateVersion21MasterRecord, captureVersion21Error, seedVersion21BaseAccounts } from './Version21WriteAdapter';
 import { loadVersion21LocalState, saveVersion21LocalState } from './Version21LocalStore';
@@ -30,6 +18,17 @@ import {
 } from 'lucide-react';
 import SarraafLogo from '@/components/SarraafLogo';
 import { useAuth } from '@/lib/AuthContext';
+
+function detectDesktopSiteMode() {
+  if (typeof window === 'undefined') return false;
+  const ua = navigator.userAgent || '';
+  const uaMobile = /Android|iPhone|iPod|Mobile|Windows Phone/i.test(ua);
+  const touch = (navigator.maxTouchPoints || 0) > 0 || window.matchMedia?.('(pointer: coarse)').matches;
+  const screenWidth = window.screen?.width || window.innerWidth;
+  const viewportWidth = document.documentElement.clientWidth || window.innerWidth;
+  const uaDataMobile = navigator.userAgentData?.mobile;
+  return ((uaDataMobile === true || uaMobile) && viewportWidth > 767 && touch && screenWidth <= 900) || (!uaMobile && touch && screenWidth <= 900 && viewportWidth > 767);
+}
 
 const CURRENCIES = ['AFN','USD','EUR','IRR','TRY','PKR','AED','SAR','GBP','CNY'];
 const MODULES = [
