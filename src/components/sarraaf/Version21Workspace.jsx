@@ -557,6 +557,7 @@ export default function Version21Workspace(){
         <button type="button" onClick={()=>openNew('exchange')}><ArrowLeftRight/><span>معامله اسعار</span></button>
        </div>
       </div>
+     </div>
      <div className="lg:hidden">
       <div className="v21-reference-dashboard-title mb-3 flex flex-wrap items-center justify-between gap-3 border-b-2 border-[#315e80] pb-2">
        <div><div className="text-[9px] text-slate-500">سیستم حسابداری صراف / مرکز عملیات</div><h2 className="text-sm font-bold text-[#24496d]">مرکز عملیات صرافی</h2><p className="mt-1 text-[10px] text-slate-500">دسترسی به اطلاعات واقعی دفاتر، صندوق‌ها، حواله‌ها و معاملات</p></div>
