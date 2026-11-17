@@ -476,7 +476,7 @@ export default function Version21Workspace(){
   {title:'حسابداری و گزارشات',items:[
    ['دفتر روزنامه',ScrollText,()=>goModule('journal'),'journal'],
    ['دفتر کل',ClipboardList,()=>goModule('ledger'),'ledger'],
-   ['دفتر ریگال',Scale]
+   ['متفرقه',Scale]
   ]},
   {title:'امکانات تکمیلی',items:[
    ['محصولات آنلاین',ShoppingBag,()=>goModule('products'),'products'],
@@ -604,7 +604,7 @@ export default function Version21Workspace(){
      <button type="button" onClick={removeSelected} disabled={!selected||!canModuleAction(active,'delete')||!ltDeletable}><X className="h-5 w-5 text-rose-600"/>حذف</button>
      <button type="button" onClick={printPage}><Printer className="h-5 w-5 text-slate-700"/>چاپ</button>
     </div>
-    <div className="v21-lt-status-info"><span>کاربر: {ltUserName}</span><i/><span>تاریخ: {ltDateParts.day} {ltDateParts.month} {ltDateParts.year}</span><i/><span>نسخه: ۲۱</span></div>
+    <div className="v21-lt-status-info"><span>کاربر: {ltUserName}</span><i/><span>تاریخ: {ltDateParts.day} {ltDateParts.month} {ltDateParts.year}</span><i/></div>
    </div>
    <footer className="shrink-0 border-t border-slate-400 bg-[#dfe5ea] px-3 py-2 text-center text-[9px] text-slate-600 lg:hidden">حساب صراف</footer>
   </section>
