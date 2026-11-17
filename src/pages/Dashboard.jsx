@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useTransactions, useCustomers, useCustomerBalances, useSarraafProfile, useFeatures, useTreasuryBalances, useBankBalances, useCurrencies, useTransfers } from '@/lib/useSarraaf';
 import { useAuth } from '@/lib/AuthContext';
@@ -56,8 +56,40 @@ const SECONDARY_LINKS = [
   { label: 'تنظیمات', path: '/settings', icon: Settings, gradient: 'from-slate-500 to-slate-600' },
 ];
 
+function detectDashboardDeviceMode() {
+  if (typeof window === 'undefined') return 'phone';
+  const ua = navigator.userAgent || '';
+  const uaMobile = /Android|iPhone|iPod|Mobile|Windows Phone/i.test(ua);
+  const touch = (navigator.maxTouchPoints || 0) > 0 ||
+    window.matchMedia?.('(pointer: coarse)').matches;
+  const screenWidth = window.screen?.width || window.innerWidth;
+  const viewportWidth = document.documentElement.clientWidth || window.innerWidth;
+  const uaDataMobile = navigator.userAgentData?.mobile;
+
+  if (uaDataMobile === true || uaMobile) {
+    return viewportWidth > 767 && touch && screenWidth <= 900
+      ? 'phone-desktop'
+      : 'phone';
+  }
+  if (touch && screenWidth <= 900 && viewportWidth > 767) return 'phone-desktop';
+  return 'laptop';
+}
+
 export default function Dashboard() {
   const navigate = useNavigate();
+  const [deviceMode, setDeviceMode] = useState(detectDashboardDeviceMode);
+  useEffect(() => {
+    const updateMode = () => setDeviceMode(detectDashboardDeviceMode());
+    updateMode();
+    window.addEventListener('resize', updateMode);
+    window.addEventListener('orientationchange', updateMode);
+    return () => {
+      window.removeEventListener('resize', updateMode);
+      window.removeEventListener('orientationchange', updateMode);
+    };
+  }, []);
+  const usePdfDesktop = deviceMode !== 'phone';
+  const desktopRequestedOnPhone = deviceMode === 'phone-desktop';
   const { user } = useAuth();
   const { data: profile } = useSarraafProfile(user?.id);
   const { data: txs, isLoading: txLoading } = useTransactions();
@@ -161,7 +193,7 @@ export default function Dashboard() {
   return (
     <FeatureGate featureKey="dashboard">
       {/* Desktop / tablet (md and up) */}
-      <div className="hidden md:block">
+      {usePdfDesktop && <div className="block">
         <DesktopDashboard
           profile={profile}
           features={features}
@@ -180,9 +212,11 @@ export default function Dashboard() {
           debtorCount={debtorStats.debtors}
           plan={plan}
           links={[...visiblePrimaryLinks, ...visibleSecondaryLinks]}
+          desktopRequestedOnPhone={desktopRequestedOnPhone}
         />
-      </div>
+      </div>}
 
+      {!usePdfDesktop && <>
       {/* Mobile: Professional dashboard summary */}
       <div className="md:hidden space-y-3 mb-3">
         {isV2 ? (
@@ -233,6 +267,7 @@ export default function Dashboard() {
           )}
         </CardContent>
       </Card>
+      </>}
 
     </FeatureGate>
     );
