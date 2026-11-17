@@ -4,6 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import MobileLayoutPreview from '@/components/sarraaf/MobileLayoutPreview';
 import CreatorPreviewLab from '@/components/sarraaf/CreatorPreviewLab';
 import LayoutDesignCatalog from '@/components/sarraaf/LayoutDesignCatalog';
+import PdfLayoutSandboxPage from '@/components/sarraaf/PdfLayoutSandboxPage';
 
 export default function LayoutPreviewStudio() {
   return (
@@ -22,8 +23,12 @@ export default function LayoutPreviewStudio() {
         </div>
       </div>
 
-      <Tabs defaultValue="catalog" dir="rtl" className="w-full">
-        <TabsList className="grid h-auto w-full grid-cols-2 gap-2 bg-muted p-1">
+      <Tabs defaultValue="pdf-layout" dir="rtl" className="w-full">
+        <TabsList className="grid h-auto w-full grid-cols-3 gap-2 bg-muted p-1">
+          <TabsTrigger value="pdf-layout" className="min-h-11 gap-2 text-xs">
+            <Monitor className="h-4 w-4" />
+            صفحه مطابق PDF
+          </TabsTrigger>
           <TabsTrigger value="catalog" className="min-h-11 gap-2 text-xs">
             <Layers3 className="h-4 w-4" />
             طرح‌های شماره‌دار
@@ -33,6 +38,9 @@ export default function LayoutPreviewStudio() {
             پیش‌نمایش‌های قبلی
           </TabsTrigger>
         </TabsList>
+        <TabsContent value="pdf-layout" className="mt-4 min-w-0">
+          <PdfLayoutSandboxPage />
+        </TabsContent>
         <TabsContent value="catalog" className="mt-4 min-w-0">
           <LayoutDesignCatalog />
         </TabsContent>
