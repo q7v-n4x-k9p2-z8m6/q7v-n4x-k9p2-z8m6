@@ -284,3 +284,52 @@
     z-index: 1 !important;
   }
 }
+
+
+/* Laptop menu panel: a wide, single horizontal strip with a reserved slot.
+   The slot keeps the main module icon row at the same vertical position
+   whether a menu is open or closed. Mobile/tablet layouts remain untouched. */
+@media (min-width: 1024px) {
+  html body .v21-workspace-shell .v21-laptop-menu-panel-slot {
+    display: block !important;
+    height: 54px !important;
+    min-height: 54px !important;
+    max-height: 54px !important;
+    overflow: hidden !important;
+    background: #f5f8fd !important;
+    border-bottom: 1px solid #cdd9ee !important;
+  }
+  html body .v21-workspace-shell .v21-laptop-menu-panel {
+    display: flex !important;
+    align-items: center !important;
+    width: 100% !important;
+    height: 54px !important;
+    min-height: 54px !important;
+    max-height: 54px !important;
+    padding: 6px 12px !important;
+    margin: 0 !important;
+    overflow: hidden !important;
+    border: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+  html body .v21-workspace-shell .v21-laptop-menu-panel-items {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    gap: 8px !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    white-space: nowrap !important;
+    scrollbar-width: thin !important;
+  }
+  html body .v21-workspace-shell .v21-laptop-menu-panel-items > button {
+    flex: 0 0 auto !important;
+    min-height: 36px !important;
+    white-space: nowrap !important;
+  }
+}
