@@ -93,6 +93,20 @@ function safeFileName(name: string): string {
   return cleaned || "reference-image";
 }
 
+function hasValidImageSignature(type: string, bytes: Uint8Array): boolean {
+  if (type === "image/jpeg") return bytes.length >= 3 && bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff;
+  if (type === "image/png") return bytes.length >= 8 &&
+    bytes[0] === 0x89 && bytes[1] === 0x50 && bytes[2] === 0x4e && bytes[3] === 0x47 &&
+    bytes[4] === 0x0d && bytes[5] === 0x0a && bytes[6] === 0x1a && bytes[7] === 0x0a;
+  if (type === "image/gif") return bytes.length >= 6 &&
+    String.fromCharCode(...bytes.slice(0, 6)) === "GIF87a" ||
+    String.fromCharCode(...bytes.slice(0, 6)) === "GIF89a";
+  if (type === "image/webp") return bytes.length >= 12 &&
+    String.fromCharCode(...bytes.slice(0, 4)) === "RIFF" &&
+    String.fromCharCode(...bytes.slice(8, 12)) === "WEBP";
+  return false;
+}
+
 Deno.serve(async (req: Request) => {
   const origin = req.headers.get("origin");
   if (req.method === "OPTIONS") {
@@ -152,10 +166,16 @@ Deno.serve(async (req: Request) => {
   const descriptionInput = form.get("description");
   const title = typeof titleInput === "string" ? titleInput.trim().slice(0, 120) : "";
   const description = typeof descriptionInput === "string" ? descriptionInput.trim().slice(0, 1000) : "";
+  const fileBytes = new Uint8Array(await file.arrayBuffer());
+  if (!hasValidImageSignature(file.type, fileBytes)) {
+    return jsonResponse(415, { success: false, error: "محتوای فایل با فرمت تصویر اعلام‌شده مطابقت ندارد." }, origin);
+  }
+
   const storagePath = "references/" + crypto.randomUUID() + "-" + safeFileName(file.name);
   const objectUrl = baseUrl + "/storage/v1/object/" + BUCKET + "/" +
     storagePath.split("/").map(encodeURIComponent).join("/");
   const authHeaders = serverKeyHeaders(secretKey);
+  let objectUploaded = false;
 
   try {
     const uploadHeaders = {
@@ -167,7 +187,7 @@ Deno.serve(async (req: Request) => {
     const uploadResponse = await fetch(objectUrl, {
       method: "POST",
       headers: uploadHeaders,
-      body: await file.arrayBuffer(),
+      body: fileBytes,
       signal: AbortSignal.timeout(30000),
     });
     if (!uploadResponse.ok) {
@@ -175,6 +195,8 @@ Deno.serve(async (req: Request) => {
       console.error("HEX storage upload failed:", uploadResponse.status, detail);
       return jsonResponse(502, { success: false, error: "ذخیره فایل در فضای تصاویر انجام نشد. دوباره تلاش کنید." }, origin);
     }
+
+    objectUploaded = true;
 
     const row = {
       title: title || file.name.slice(0, 120),
@@ -206,6 +228,8 @@ Deno.serve(async (req: Request) => {
       });
       if (!cleanupResponse.ok) {
         console.error("HEX orphan cleanup failed:", cleanupResponse.status);
+      } else {
+        objectUploaded = false;
       }
       return jsonResponse(502, { success: false, error: "فایل بارگذاری شد اما ثبت مشخصات آن کامل نشد؛ فایل موقت پاک‌سازی شد. دوباره تلاش کنید." }, origin);
     }
@@ -218,6 +242,16 @@ Deno.serve(async (req: Request) => {
     }, origin);
   } catch (error) {
     console.error("HEX upload request failed:", error instanceof Error ? error.message : "unknown error");
+    if (objectUploaded) {
+      const cleanupResponse = await fetch(objectUrl, {
+        method: "DELETE",
+        headers: authHeaders,
+        signal: AbortSignal.timeout(10000),
+      }).catch(() => null);
+      if (cleanupResponse && !cleanupResponse.ok) {
+        console.error("HEX failed-request cleanup failed:", cleanupResponse.status);
+      }
+    }
     return jsonResponse(502, { success: false, error: "ارتباط با سرویس بارگذاری برقرار نشد. دوباره تلاش کنید." }, origin);
   }
 });
