@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import {
   Home, Users, Wallet, Landmark, ArrowLeftRight, Send, ScrollText,
@@ -18,6 +18,18 @@ import { isFeatureAccessible } from '@/lib/permissions';
 
 // Version 21 production shell: one A1 data/authentication layer, responsive
 // navigation, and no demo records or local database.
+function detectDesktopSiteMode() {
+  if (typeof window === 'undefined') return false;
+  const ua = navigator.userAgent || '';
+  const uaMobile = /Android|iPhone|iPod|Mobile|Windows Phone/i.test(ua);
+  const touch = (navigator.maxTouchPoints || 0) > 0 || window.matchMedia?.('(pointer: coarse)').matches;
+  const screenWidth = window.screen?.width || window.innerWidth;
+  const viewportWidth = document.documentElement.clientWidth || window.innerWidth;
+  const uaDataMobile = navigator.userAgentData?.mobile;
+  return ((uaDataMobile === true || uaMobile) && viewportWidth > 767 && touch && screenWidth <= 900) || (!uaMobile && touch && screenWidth <= 900 && viewportWidth > 767);
+}
+
+
 const MODULES = [
   { id: 'home', label: 'میز کار', path: '/dashboard', icon: Home, group: 'عمومی', roles: ['creator','admin','sarraaf','employee'] },
 
@@ -187,6 +199,8 @@ export default function Version21Layout() {
   const location = useLocation();
   const navigate = useNavigate();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const [desktopSiteMode, setDesktopSiteMode] = useState(detectDesktopSiteMode);
+  useEffect(() => { const update = () => setDesktopSiteMode(detectDesktopSiteMode()); window.addEventListener('resize', update); window.addEventListener('orientationchange', update); return () => { window.removeEventListener('resize', update); window.removeEventListener('orientationchange', update); }; }, []);
   // A1 stores exchange owners with role='exchange'; the v21 navigation uses 'sarraaf'.
   // Normalize the persisted role so legitimate exchanger accounts retain their modules.
   const role = user?.role === 'exchange' ? 'sarraaf' : (user?.role || 'user');
@@ -198,7 +212,7 @@ export default function Version21Layout() {
 
   return (
     <div dir="rtl" className="v21-app-shell min-h-screen bg-[#f3f7fc] text-slate-900 flex">
-      {location.pathname !== '/dashboard' && <aside className="hidden lg:flex w-64 shrink-0 h-screen sticky top-0 flex-col bg-gradient-to-b from-[#102b4c] via-[#12385f] to-[#0e2745] text-white print:hidden">
+      {location.pathname !== '/dashboard' && <aside className={`${desktopSiteMode ? "flex" : "hidden lg:flex"} w-64 shrink-0 h-screen sticky top-0 flex-col bg-gradient-to-b from-[#102b4c] via-[#12385f] to-[#0e2745] text-white print:hidden`}>
         <div className="px-5 py-5 border-b border-white/10 bg-gradient-to-br from-[#12365f] to-[#174f86]">
           <div className="text-lg font-extrabold">حساب صراف</div>
           <div className="mt-1 text-xs text-slate-400">مدیریت حساب صراف</div>
@@ -266,7 +280,7 @@ export default function Version21Layout() {
         <footer className="border-t border-slate-200 bg-white px-4 py-2 text-center text-[11px] text-slate-500">
           حساب صراف
         </footer>
-        {location.pathname !== '/dashboard' && (
+        {location.pathname !== '/dashboard' && !desktopSiteMode && (
           <>
             <nav className="v21-route-mobile-dock fixed inset-x-0 bottom-0 z-40 grid grid-cols-4 gap-2 border-t border-[#d5e2f0] bg-white/95 px-3 pt-2 pb-[calc(env(safe-area-inset-bottom)+8px)] shadow-[0_-6px_24px_rgba(16,43,76,0.10)] backdrop-blur lg:hidden" aria-label="ناوبری سریع برنامه">
               {['home','customers','cash'].map(id => {
