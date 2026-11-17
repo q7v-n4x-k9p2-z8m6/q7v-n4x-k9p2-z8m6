@@ -2277,3 +2277,100 @@
     padding: 7px 13px !important;
   }
 }
+
+
+/* Definitive A1 laptop toolbar layout.
+   Desktop/tablet-width laptops keep the operation menu and module shortcuts
+   in two deliberate horizontal bands. Neither band may wrap into extra rows.
+   Phone layout (<=900px) remains controlled by the mobile composition. */
+@media (min-width: 901px) {
+  html body .v21-workspace-shell .v21-laptop-toolbar {
+    position: relative !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 0 !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    overflow: visible !important;
+  }
+
+  html body .v21-workspace-shell .v21-laptop-toolbar > nav.v21-laptop-menu-bar {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    gap: 6px !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    white-space: nowrap !important;
+    scrollbar-width: thin !important;
+  }
+
+  html body .v21-workspace-shell .v21-laptop-toolbar > nav.v21-laptop-menu-bar > div {
+    display: block !important;
+    flex: 0 0 auto !important;
+    width: auto !important;
+    min-width: max-content !important;
+    white-space: nowrap !important;
+  }
+
+  html body .v21-workspace-shell .v21-laptop-toolbar .v21-laptop-menu-trigger {
+    display: inline-flex !important;
+    flex: 0 0 auto !important;
+    width: auto !important;
+    min-width: max-content !important;
+    white-space: nowrap !important;
+  }
+
+  /* The menu panel overlays the toolbar instead of inserting a blank row. */
+  html body .v21-workspace-shell .v21-laptop-toolbar > .v21-laptop-menu-panel-slot {
+    position: absolute !important;
+    top: 48px !important;
+    right: 8px !important;
+    z-index: 9999 !important;
+    width: auto !important;
+    max-width: min(560px, calc(100% - 16px)) !important;
+  }
+  html body .v21-workspace-shell .v21-laptop-toolbar > .v21-laptop-menu-panel-slot[aria-hidden="true"] {
+    display: none !important;
+  }
+
+  html body .v21-workspace-shell .v21-laptop-toolbar > aside.v21-module-icon-row {
+    display: grid !important;
+    grid-template-columns: repeat(14, minmax(0, 1fr)) !important;
+    grid-auto-flow: row !important;
+    flex: 0 0 auto !important;
+    align-items: stretch !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    max-height: none !important;
+    overflow: visible !important;
+    gap: 6px !important;
+    padding: 8px 10px !important;
+  }
+
+  html body .v21-workspace-shell .v21-laptop-toolbar > aside.v21-module-icon-row > button.v21-desktop-module-button {
+    display: flex !important;
+    flex: 0 0 auto !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: auto !important;
+    min-width: 0 !important;
+    min-height: 66px !important;
+    white-space: normal !important;
+  }
+}
+
+@media (min-width: 901px) and (max-width: 1100px) {
+  html body .v21-workspace-shell .v21-laptop-toolbar > aside.v21-module-icon-row {
+    grid-template-columns: repeat(7, minmax(84px, 1fr)) !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+  }
+}
