@@ -55,6 +55,12 @@ const Register = lazyWithRetry(() => import('@/pages/Register'));
 const ForgotPassword = lazyWithRetry(() => import('@/pages/ForgotPassword'));
 const ResetPassword = lazyWithRetry(() => import('@/pages/ResetPassword'));
 const Dashboard = lazyWithRetry(() => import('@/pages/Dashboard'));
+const Version21Home = lazyWithRetry(() => import('@/components/sarraaf/Version21Home'));
+
+function DashboardRoute() {
+  const location = useLocation();
+  return new URLSearchParams(location.search).has('module') ? <Version21Home /> : <Dashboard />;
+}
 const Customers = lazyWithRetry(() => import('@/components/sarraaf/v21/Version21Customers'));
 const CustomerDetail = lazyWithRetry(() => import('@/pages/CustomerDetail'));
 const Dadogereft = lazyWithRetry(() => import('@/pages/Dadogereft'));
@@ -235,7 +241,7 @@ const AppRoutes = () => {
         <Route element={<ProtectedRoute unauthenticatedElement={<Navigate to="/login" replace />} allowedRoles={['creator', 'admin', 'sarraaf', 'employee']} />}>
           <Route element={<Layout />}>
             <Route path="/v21" element={<Navigate to="/dashboard" replace />} />
-            <Route path="/dashboard" element={<FeatureGate featureKey="dashboard"><Dashboard /></FeatureGate>} />
+            <Route path="/dashboard" element={<FeatureGate featureKey="dashboard"><DashboardRoute /></FeatureGate>} />
             <Route path="/customers" element={<FeatureGate featureKey="customers"><Customers /></FeatureGate>} />
             <Route path="/customers/:id" element={<FeatureGate featureKey="customers"><CustomerDetail /></FeatureGate>} />
             <Route path="/dadogereft" element={<FeatureGate featureKey="dadogereft"><Dadogereft /></FeatureGate>} />
