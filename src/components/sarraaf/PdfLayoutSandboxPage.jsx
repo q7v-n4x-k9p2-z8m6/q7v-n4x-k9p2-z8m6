@@ -3,8 +3,7 @@ import {
   Home, Globe, ShoppingCart, Bot, Users, BookText, CreditCard, ArrowLeftRight,
   Wallet, Send, Landmark, User, BookOpen, Building2, Receipt, ClipboardList,
   FileText, BarChart3, Settings, Languages, PlusCircle, MinusCircle, Printer,
-  Save, Pencil, Trash2, CalendarDays, Coins, BriefcaseBusiness, ScrollText,
-  Banknote, CircleDollarSign, ShieldCheck
+  Save, Pencil, Trash2, CalendarDays, Banknote, ShieldCheck
 } from 'lucide-react';
 
 const menus = ['فایل', 'تعریف', 'عملیات', 'حسابات', 'گزارشات', 'تنظیمات', 'امکانات تکمیلی'];
@@ -29,8 +28,6 @@ const stats = [
   [ArrowLeftRight, 'عملیات امروز'], [BarChart3, 'مفاد معاملات']
 ];
 const quick = [[PlusCircle, 'ثبت دخل صندوق'], [MinusCircle, 'ثبت خرج صندوق'], [Send, 'حواله ارسالی'], [Send, 'حواله دریافتی'], [ArrowLeftRight, 'معامله اسعار']];
-const fa = (v) => v.toLocaleString('fa-IR');
-
 function Tile({ icon: Icon, label, compact = false }) {
   return (
     <div className={`flex min-w-0 flex-1 flex-col items-center justify-center gap-1.5 border border-[#cad8ee] bg-[#f7f9fd] px-1 text-center font-bold text-[#14213d] ${compact ? 'h-[78px] text-[12px]' : 'h-[96px] text-[13px]'}`}>
@@ -84,7 +81,7 @@ export default function PdfLayoutSandboxPage() {
               </div>
             ))}
           </div>
-          <div className="grid shrink-0 grid-cols-3 grid-rows-[144px_124px] gap-x-[10px] gap-y-[13px]">
+          <div className="grid shrink-0 [grid-template-columns:.84fr_1fr_1fr] grid-rows-[144px_124px] gap-x-[10px] gap-y-[13px]">
             {panels.slice(0, 3).map((panel) => <Panel key={panel.title} {...panel} />)}
             {panels.slice(3).map((panel) => <Panel key={panel.title} {...panel} compact />)}
           </div>
