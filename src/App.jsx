@@ -54,7 +54,7 @@ const Login = lazyWithRetry(() => import('@/pages/Login'));
 const Register = lazyWithRetry(() => import('@/pages/Register'));
 const ForgotPassword = lazyWithRetry(() => import('@/pages/ForgotPassword'));
 const ResetPassword = lazyWithRetry(() => import('@/pages/ResetPassword'));
-const Dashboard = lazyWithRetry(() => import('@/components/sarraaf/Version21Home'));
+const Dashboard = lazyWithRetry(() => import('@/pages/Dashboard'));
 const Customers = lazyWithRetry(() => import('@/components/sarraaf/v21/Version21Customers'));
 const CustomerDetail = lazyWithRetry(() => import('@/pages/CustomerDetail'));
 const Dadogereft = lazyWithRetry(() => import('@/pages/Dadogereft'));
