@@ -2243,3 +2243,37 @@
     display: none !important;
   }
 }
+
+
+/* A1 laptop navigation: keep all seven top-level menu groups on one row.
+   Older responsive rules set a five-column grid and later allow wrapping;
+   this final desktop rule intentionally supersedes both. */
+@media (min-width: 1024px) {
+  html body .v21-workspace-shell .v21-laptop-toolbar > nav.v21-laptop-menu-bar {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    gap: 4px !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    white-space: nowrap !important;
+    padding: 4px 10px !important;
+  }
+  html body .v21-workspace-shell .v21-laptop-toolbar > nav.v21-laptop-menu-bar > div {
+    flex: 0 0 auto !important;
+    width: auto !important;
+    min-width: max-content !important;
+  }
+  html body .v21-workspace-shell .v21-laptop-toolbar > nav.v21-laptop-menu-bar .v21-laptop-menu-trigger {
+    display: inline-flex !important;
+    flex: 0 0 auto !important;
+    width: auto !important;
+    min-width: max-content !important;
+    white-space: nowrap !important;
+    padding: 7px 13px !important;
+  }
+}
