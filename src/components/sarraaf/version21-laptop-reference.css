@@ -483,6 +483,10 @@
     color: #1f4e9f !important;
     stroke: #1f4e9f !important;
   }
+  html body .v21-workspace-shell .v21-lt-tile:disabled {
+    opacity: 1 !important;
+    cursor: default !important;
+  }
   html body .v21-workspace-shell .v21-lt-tile span {
     display: block !important;
     width: 100% !important;
