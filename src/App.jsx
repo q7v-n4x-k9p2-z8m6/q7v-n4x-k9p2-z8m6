@@ -2,7 +2,7 @@ import React, { lazy, Suspense, useEffect, useState } from 'react';
 import { Toaster } from "@/components/ui/toaster"
 import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClientInstance } from '@/lib/query-client'
-import { BrowserRouter as Router, Route, Routes, Navigate, useLocation, useParams } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes, Navigate, useParams } from 'react-router-dom';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import { LayoutVersionProvider } from '@/lib/LayoutVersionContext';
 import { LanguageProvider } from '@/lib/i18n';
@@ -54,12 +54,13 @@ const Login = lazyWithRetry(() => import('@/pages/Login'));
 const Register = lazyWithRetry(() => import('@/pages/Register'));
 const ForgotPassword = lazyWithRetry(() => import('@/pages/ForgotPassword'));
 const ResetPassword = lazyWithRetry(() => import('@/pages/ResetPassword'));
-const Dashboard = lazyWithRetry(() => import('@/pages/Dashboard'));
 const Version21Home = lazyWithRetry(() => import('@/components/sarraaf/Version21Home'));
 
+// The PDF-based Version 21 workspace is the single dashboard surface.
+// Module selection is handled inside Version21Workspace from the URL query;
+// do not render the legacy Dashboard alongside it.
 function DashboardRoute() {
-  const location = useLocation();
-  return new URLSearchParams(location.search).has('module') ? <Version21Home /> : <Dashboard />;
+  return <Version21Home />;
 }
 const Customers = lazyWithRetry(() => import('@/components/sarraaf/v21/Version21Customers'));
 const CustomerDetail = lazyWithRetry(() => import('@/pages/CustomerDetail'));
