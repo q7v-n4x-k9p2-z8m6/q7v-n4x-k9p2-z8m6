@@ -23,7 +23,7 @@ export default function LayoutPreviewStudio() {
         </div>
       </div>
 
-      <Tabs defaultValue="catalog" dir="rtl" className="w-full">
+      <Tabs defaultValue="pdf-layout" dir="rtl" className="w-full">
         <TabsList className="grid h-auto w-full grid-cols-3 gap-2 bg-muted p-1">
           <TabsTrigger value="pdf-layout" className="min-h-11 gap-2 text-xs">
             <Monitor className="h-4 w-4" />
