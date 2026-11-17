@@ -13,8 +13,10 @@ import {
   Calculator, Download, Upload, Filter, Coins, Banknote, FileText, CalendarDays, MessageSquare, Bot,
   CircleDollarSign, Eye, FilePlus2, ArrowDownCircle, ArrowUpCircle, Scale, Settings2,
   Archive, RotateCcw, ListChecks, CreditCard, CircleHelp, PrinterCheck,
-  Languages, ShoppingBag, Smartphone, Wifi, Gamepad2, MessagesSquare, Headphones
+  Languages, ShoppingBag, Smartphone, Wifi, Gamepad2, MessagesSquare, Headphones,
+  Settings, Vault, ArrowDown, ArrowUp, Info, User
 } from 'lucide-react';
+import { useAuth } from '@/lib/AuthContext';
 
 const CURRENCIES = ['AFN','USD','EUR','IRR','TRY','PKR','AED','SAR','GBP','CNY'];
 const MODULES = [
@@ -64,7 +66,7 @@ const uid = () => Date.now().toString(36)+Math.random().toString(36).slice(2,7);
 const fieldValue = (obj,key) => obj?.[key] ?? '';
 const NAV_MENUS = [
  {label:'فایل',items:[['پشتیبان‌گیری','backup'],['بازیابی پشتیبان','restore'],['چاپ صفحه','print'],['پاک‌سازی نمای محلی','reset']]},
- {label:'تعاریف',items:[['مشتریان','customers'],['نمایندگی‌ها','branches'],['صندوق‌ها','cash'],['بانک و چک','banks'],['اسعار','currencies'],['کدینگ حساب‌ها','accounts']]},
+ {label:'تعریف',items:[['مشتریان','customers'],['نمایندگی‌ها','branches'],['صندوق‌ها','cash'],['بانک و چک','banks'],['اسعار','currencies'],['کدینگ حساب‌ها','accounts']]},
  {label:'عملیات',items:[['دخل صندوق','cashIn'],['خرج صندوق','cashOut'],['خرید و فروش اسعار','exchange'],['ثبت حواله','remittance'],['ثبت مصرف','expenses']]},
  {label:'حسابات',items:[['روزنامچه','journal'],['دفتر کل','ledger'],['حساب مشتریان','customerLedger'],['حساب نمایندگی‌ها','branchLedger'],['بدهکاران و بستانکاران','debtors']]},
  {label:'گزارشات',items:[['گزارش عملیات روز','reports'],['مفاد و زیان','profit'],['بیلانس عمومی','balance'],['سوابق فعالیت','activity'],['گزارش خطاها','errors']]},
@@ -449,26 +451,58 @@ export default function Version21Workspace(){
  const dailyTransactions=data.transactions.filter(t=>t.date===today());
  const profit=data.exchange.reduce((s,x)=>s+n(x.profit),0);
  const currencies=[...new Set([...data.cash.map(x=>x.currency),...data.transactions.map(x=>x.currency),'AFN'])];
+ const {user:authUser}=useAuth();
+ const ltDateParts=new Intl.DateTimeFormat('fa-IR-u-ca-persian',{weekday:'long',day:'numeric',month:'long',year:'numeric'}).formatToParts(new Date()).reduce((a,x)=>{a[x.type]=x.value;return a;},{});
+ const ltDate=(ltDateParts.weekday||'')+'، '+(ltDateParts.day||'')+' '+(ltDateParts.month||'')+' '+(ltDateParts.year||'');
+ const ltUserName=authUser?.full_name||authUser?.username||exchangeProfile?.name||'کاربر';
+ const goModule=id=>{if(id==='debtors'){navigate('/debtors');return;}if(!canViewModule(id)){notify('مجوز مشاهده این بخش برای حساب شما فعال نیست.');return;}setActive(id);setSelected(null);setCustomerDetail(null);setBranchDetail(null);setQuery('');};
+ const ltGroups=[
+  {title:'تعاریف و دفاتر',items:[['تعریف مشتریان',User,()=>goModule('customers'),'customers'],['تعریف نمایندگی‌ها',Building2,()=>goModule('branches'),'branches'],['دفتر حساب مشتریان',Users,()=>goModule('customerLedger'),'customerLedger']]},
+  {title:'صندوق و بانک',items:[['صندوق‌ها و موجودی',Vault,()=>goModule('cash'),'cash'],['بانک و چک',Landmark,()=>goModule('banks'),'banks'],['دفتر حواله‌ها',ArrowLeftRight,()=>goModule('remittance'),'remittance']]},
+  {title:'عملیات صرافی',items:[['خرید و فروش اسعار',ArrowLeftRight,()=>openNew('exchange'),'exchange'],['مصارف و پرداخت‌ها',CreditCard,()=>goModule('expenses'),'expenses'],['معاملات',ArrowLeftRight,()=>goModule('exchange'),'exchange']]},
+  {title:'حسابداری و گزارشات',items:[['دفتر روزنامچه',ScrollText,()=>goModule('journal'),'journal'],['دفتر کل',ClipboardList,()=>goModule('ledger'),'ledger'],['گزارش عملیات',FileSpreadsheet,()=>goModule('reports'),'reports']]},
+  {title:'امکانات تکمیلی · اسکلت اولیه',items:[['محصولات آنلاین',ShoppingBag,()=>goModule('products'),'products'],['گروه و چت',MessagesSquare,()=>goModule('sarraafGroups'),'sarraafGroups'],['هوش مصنوعی',Bot,()=>goModule('assistant'),'assistant']]},
+  {title:'تنظیمات',items:[['تنظیمات',Settings,()=>setModal('settings'),null],['زبان برنامه',Languages,()=>goModule('language'),'language'],['درباره برنامه',Info,()=>setModal('help'),null]]}
+ ];
+ const ltDeletable=['customers','branches','cash','banks','currencies','accounts','transactions','cashAction','expenses','journal','ledger','remittance','exchange'].includes(active);
  const mainTitle='حساب صراف'; return <div dir="rtl" className="v21-workspace-root space-y-2 text-[#253746]">
 
   {dbStatus==='error'&&<div className="border border-rose-300 bg-rose-50 px-3 py-2 text-xs text-rose-800">{dbError}</div>}
    {localPreview&&<div className="border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-900">پیش‌نمایش محلی پشتیبان/نمای پاک‌شده فعال است؛ ثبت، ویرایش و ابطال تا تازه‌سازی اطلاعات واقعی غیرفعال می‌ماند.</div>}
   {dbStatus==='connected'&&<div className="flex flex-wrap items-center justify-between gap-2 border border-emerald-200 bg-emerald-50 px-3 py-2 text-[10px] text-emerald-900"><span>صراف: <b>{exchangeProfile?.name||'—'}</b> · داده‌ها فقط از نشست همین صراف دریافت می‌شود.</span><span>آخرین بارگذاری: {lastLoaded?new Date(lastLoaded).toLocaleString('fa-IR'):'—'}</span></div>}
-  <section className="v21-workspace-shell flex max-h-[78vh] min-h-[640px] flex-col overflow-hidden border border-[#65798b] bg-[#eef1f4] shadow-md">
-   <header className="flex min-h-9 items-center justify-between bg-gradient-to-b from-[#315f80] to-[#173f5d] px-3 py-1.5 text-white"><div className="flex items-center gap-2"><Calculator className="h-4 w-4"/><b className="text-xs">{mainTitle}</b></div><div className="flex gap-1"><button onClick={()=>setModal('settings')} className="border border-white/30 px-2 text-xs">⚙</button></div></header>
+  <section className="v21-workspace-shell flex max-h-[78vh] min-h-[640px] lg:max-h-none flex-col overflow-hidden border border-[#65798b] bg-[#eef1f4] shadow-md">
+   <header className="flex min-h-9 items-center justify-between bg-gradient-to-b from-[#315f80] to-[#173f5d] px-3 py-1.5 text-white"><div className="flex items-center gap-2"><Calculator className="h-4 w-4"/><b className="text-xs"><span className="lg:hidden">{mainTitle}</span><span className="hidden lg:inline">{mainTitle} — نسخه ۲۱</span></b></div><div className="flex gap-1"><button onClick={()=>setModal('settings')} className="border border-white/30 px-2 text-xs">⚙</button></div></header>
    {/* ردیف اول: عملیات روی رکورد انتخاب‌شده */}
    <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
     <div className="v21-laptop-toolbar">
     <nav className="v21-laptop-menu-bar" aria-label="منوی اصلی">{NAV_MENUS.map(m=><div key={m.label} className="relative"><button onClick={()=>setMenu(menu===m.label?'':m.label)} className={'v21-laptop-menu-trigger '+(menu===m.label?'is-open':'')}>{m.label}<ChevronDown className="mr-1 inline h-3 w-3"/></button>{menu===m.label&&<div className="v21-laptop-menu-popover">{m.items.map(([label,act])=><button key={act} onClick={()=>menuAction(act)}>{label}</button>)}</div>}</div>)}</nav>
      <aside aria-label="آیکون‌های اصلی و مرکز عملیات" className="v21-module-icon-row shrink-0 grid w-full grid-cols-3 gap-1 border-b border-slate-400 bg-[#e1e8ed] p-2 md:grid-cols-12">
-      {['customerLedger','customers','branches','branchLedger','banks','remittance','cash','exchange','expenses','journal','ledger','sarraafGroups','assistant','products','language'].filter(canViewModule).map(id=>{const m=MODULES.find(x=>x.id===id);if(!m)return null;const I=m.icon;return <button key={m.id} type="button" title={m.label} onClick={()=>{setActive(m.id);setSelected(null);setCustomerDetail(null);setBranchDetail(null);setQuery('');}} className={'v21-desktop-module-button flex min-h-[64px] min-w-0 flex-col items-center justify-center gap-1 rounded-lg border px-1 py-2 text-center '+(active===m.id?'border-blue-300 bg-[#d2e3f1] font-bold text-blue-900':'border-transparent text-[#29465e] hover:border-slate-300 hover:bg-white')}><I className="h-5 w-5"/><span className="w-full whitespace-normal text-[10px] leading-tight">{m.label}</span></button>;})}
-      <button type="button" title="میزکار" onClick={()=>{setActive('home');setSelected(null);setCustomerDetail(null);setBranchDetail(null);setQuery('');}} className="v21-desktop-module-button flex min-w-0 flex-col items-center justify-center gap-1 rounded-sm border border-[#9aabb9] bg-white px-1 py-1.5 text-center text-[#24496d] hover:bg-blue-50"><Home className="h-4 w-4"/><span className="w-full truncate text-[9px] font-bold">میزکار</span></button>
+      {['home','language','products','assistant','sarraafGroups','journal','expenses','exchange','cash','remittance','banks','branchLedger','branches','customers','customerLedger'].filter(canViewModule).map(id=>{const m=MODULES.find(x=>x.id===id);if(!m)return null;const I=m.icon;return <button key={m.id} type="button" title={m.label} onClick={()=>{setActive(m.id);setSelected(null);setCustomerDetail(null);setBranchDetail(null);setQuery('');}} className={'v21-desktop-module-button flex min-h-[64px] min-w-0 flex-col items-center justify-center gap-1 rounded-lg border px-1 py-2 text-center '+(active===m.id?'is-active border-blue-300 bg-[#d2e3f1] font-bold text-blue-900':'border-transparent text-[#29465e] hover:border-slate-300 hover:bg-white')}><I className="h-5 w-5"/><span className="w-full whitespace-normal text-[10px] leading-tight">{m.label==='مرکز عملیات'?'میزکار':m.label}</span></button>;})}
      </aside>
       <nav className="v21-reference-mobile-shortcuts" aria-label="دسترسی سریع موبایل">
        {['assistant','language','products','home'].filter(canViewModule).map(id=>{const m=MODULES.find(x=>x.id===id);if(!m)return null;const I=m.icon;return <button key={id} type="button" onClick={()=>{setActive(id);setSelected(null);setCustomerDetail(null);setBranchDetail(null);setQuery('');}} className={'flex min-w-0 flex-col items-center justify-center gap-1 rounded-xl border px-1 py-2 text-center '+(active===id?'border-blue-300 bg-blue-50 font-bold text-blue-900 shadow-sm':'border-transparent text-[#29465e] hover:border-blue-200 hover:bg-white')}><I className="h-5 w-5"/><span>{m.label}</span></button>;})}
       </nav>    </div>
     <main className="min-h-0 min-w-0 flex-1 overflow-y-auto bg-[#f9fafb] p-3">
      {active==='home'?<>
+<div className="v21-lt-home hidden lg:block">
+      <div className="v21-lt-band"><div className="v21-lt-band-title"><Home className="h-8 w-8"/><h2>مرکز عملیات صرافی</h2></div><div className="v21-lt-band-date"><CalendarDays className="h-6 w-6"/><span>{ltDate}</span></div></div>
+      <div className="v21-lt-stats">
+       {[['تعداد مشتریان',Users,canViewModule('customers')&&dbStatus==='connected'?fmt(data.customers.length):'-',''],['صندوق‌های تعریف‌شده',Vault,canViewModule('cash')&&dbStatus==='connected'?fmt(data.cash.length):'-',''],['عملیات امروز',RefreshCw,(canViewModule('reports')||canViewModule('cash'))&&dbStatus==='connected'?fmt(dailyTransactions.length):'-',''],['مفاد معاملات',BarChart3,'-','سود معاملات اسعار تا اتصال به کدینگ حساب‌ها محاسبه نمی‌شود']].map(([label,I,value,hint])=><div key={label} className="v21-lt-stat" title={hint||undefined}><div className="v21-lt-stat-head"><I/><span>{label}</span></div><b>{value}</b></div>)}
+      </div>
+      <div className="v21-lt-groups">
+       {ltGroups.map(group=><div key={group.title} className="v21-lt-group"><div className="v21-lt-group-title">{group.title}</div><div className="v21-lt-group-tiles">{group.items.filter(([,,,mod])=>!mod||canViewModule(mod)).map(([label,I,run])=><button key={label} type="button" onClick={run} className="v21-lt-tile"><I/><span>{label}</span></button>)}</div></div>)}
+      </div>
+      <div className="v21-lt-group v21-lt-quick"><div className="v21-lt-group-title">عملیات سریع</div>
+       <div className="v21-lt-quick-actions">
+        <button type="button" onClick={()=>cashAction('دخل')}><ArrowDown/><span>ثبت دخل صندوق</span></button>
+        <button type="button" onClick={()=>cashAction('خرج')}><ArrowUp/><span>ثبت خرج صندوق</span></button>
+        <button type="button" onClick={()=>openNew('remittance',{direction:'ارسالی'})}><Send/><span>حواله ارسالی</span></button>
+        <button type="button" onClick={()=>openNew('remittance',{direction:'دریافتی'})}><Download/><span>حواله دریافتی</span></button>
+        <button type="button" onClick={()=>openNew('exchange')}><ArrowLeftRight/><span>معامله اسعار</span></button>
+       </div>
+      </div>
+     </div>
+     <div className="lg:hidden">
       <div className="v21-reference-dashboard-title mb-3 flex flex-wrap items-center justify-between gap-3 border-b-2 border-[#315e80] pb-2">
        <div><div className="text-[9px] text-slate-500">سیستم حسابداری صراف / مرکز عملیات</div><h2 className="text-sm font-bold text-[#24496d]">مرکز عملیات صرافی</h2><p className="mt-1 text-[10px] text-slate-500">دسترسی به اطلاعات واقعی دفاتر، صندوق‌ها، حواله‌ها و معاملات</p></div>
        <div className="text-left text-[10px]"><b className="block text-[#24496d]">{today()}</b><span className="text-emerald-700">{dbStatus==='connected'?'اتصال دیتابیس برقرار است':'در انتظار اتصال دیتابیس'}</span></div>
@@ -502,6 +536,7 @@ export default function Version21Workspace(){
         <button onClick={()=>openNew('exchange')} className="border border-[#a8b7c3] bg-[#edf3f7] px-3 py-2 text-[10px] hover:bg-blue-50"><ArrowLeftRight className="ml-1 inline h-4 w-4"/>معامله اسعار</button>
        </div>
       </div>
+     </div>
      </>:page.linkedModule?<section className="min-h-[360px] border border-[#9aabb9] bg-white p-4 sm:p-6"><div className="mb-4 flex items-center gap-3"><div className="flex h-12 w-12 items-center justify-center rounded-xl border border-[#b6c4cf] bg-[#edf3f7]"><page.icon className="h-6 w-6 text-[#315e80]"/></div><div><h2 className="text-base font-bold text-[#24496d]">{page.label}</h2><p className="mt-1 text-[10px] text-slate-500">ورود به ماژول عملیاتی موجود در حساب صراف</p></div></div>{page.id==='language'?<LanguageSettings/>:<><p className="mb-4 text-xs leading-6 text-slate-600">برای استفاده از این امکان، ماژول مرتبط برنامه را باز کنید. دسترسی و محدودیت اشتراک در همان ماژول اعمال می‌شود.</p><div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">{(page.id==='sarraafGroups'?[['گروه‌ها و گفت‌وگوی گروهی','/chat'],['گفت‌وگوی مستقیم صرافان','/sarraaf-chat'],['بازار نرخ صرافان','/sarraaf-market']]:page.id==='assistant'?[['دستیار هوش مصنوعی','/assistant']]:[['مدیریت محصولات آنلاین','/online-products'],['شارژ و بسته اینترنت','/online-products/recharge'],['بازی‌ها و خدمات دیجیتال','/online-products/games']]).map(([label,path])=><button key={path} onClick={()=>navigate(path)} className="min-h-12 border border-[#b6c4cf] bg-[#f2f6f9] px-3 py-3 text-right text-xs font-bold text-[#294d69] hover:border-[#47799d] hover:bg-blue-50">{label}</button>)}</div></>}</section>:<>
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2 border-b-2 border-[#315e80] pb-2"><div className="flex items-center gap-2"><page.icon className="h-5 w-5 text-[#315e80]"/><div><div className="text-[9px] text-slate-500">سیستم حسابداری / {page.label}</div><h2 className="text-sm font-bold text-[#24496d]">{page.label}</h2></div>{active==='customerLedger'&&customerDetail&&<button onClick={()=>{setCustomerDetail(null);setSelected(null);}} className="mr-2 border bg-white px-2 py-1 text-[10px]">بازگشت به فهرست مشتریان</button>}{active==='branchLedger'&&branchDetail&&<button onClick={()=>{setBranchDetail(null);setSelected(null);}} className="mr-2 border bg-white px-2 py-1 text-[10px]">بازگشت به فهرست نمایندگی‌ها</button>}</div><div className="flex flex-wrap gap-1 text-[10px]"><label>از <input type="date" value={dateFrom} onChange={e=>setDateFrom(e.target.value)} className="border bg-white px-1 py-1"/></label><label>تا <input type="date" value={dateTo} onChange={e=>setDateTo(e.target.value)} className="border bg-white px-1 py-1"/></label><button onClick={()=>{setDateFrom('');setDateTo('');}} className="border bg-white px-2">پاک‌سازی تاریخ</button></div></div>
       {active==='cash'&&<div className="mb-3 flex flex-wrap items-center justify-between gap-2 border border-[#b6c4cf] bg-[#edf3f7] px-3 py-2"><div><b className="text-[11px] text-[#24496d]">فهرست صندوق‌ها</b><div className="mt-1 text-[10px] text-slate-600">هر صندوق در یک ردیف؛ برای دیدن جزئیات، ردیف را انتخاب کنید.</div></div><div className="flex items-center gap-3 text-[10px]"><span>تعداد صندوق‌ها: <b>{fmt(data.cash.length)}</b></span><button onClick={()=>openNew('cash')} className="border border-blue-300 bg-white px-3 py-2 font-bold text-blue-900"><Plus className="ml-1 inline h-3 w-3"/>صندوق جدید</button></div></div>}
@@ -526,14 +561,23 @@ export default function Version21Workspace(){
    {showBookSummary&&<div className="shrink-0 border-t border-slate-400 bg-[#e9edf1] p-2">
     <div className="flex gap-2 overflow-x-auto pb-1">{accountBookTotals().map(x=><div key={x.currency} className="v21-ledger-summary-card min-w-[250px] flex-1 rounded-xl border border-[#d3deeb] bg-white p-3 text-right shadow-sm"><b className="mb-2 block text-xs font-extrabold text-[#1e4776]" dir="ltr">{x.currency}</b><div className="grid grid-cols-3 gap-2"><div className="rounded-lg bg-rose-50 p-2"><span className="block text-[10px] font-semibold text-rose-700">جمع بدهکار</span><b className="text-xs tabular-nums text-rose-800">{fmt(x.debit)}</b></div><div className="rounded-lg bg-emerald-50 p-2"><span className="block text-[10px] font-semibold text-emerald-700">جمع بستانکار</span><b className="text-xs tabular-nums text-emerald-800">{fmt(x.credit)}</b></div><div className="rounded-lg bg-blue-50 p-2"><span className="block text-[10px] font-semibold text-blue-700">{x.net>0?'مانده بدهکار':x.net<0?'مانده بستانکار':'تراز'}</span><b className="text-xs tabular-nums text-blue-800">{fmt(Math.abs(x.net))}</b></div></div></div>)}</div>
    </div>}
-   <div className="shrink-0 flex items-center justify-end gap-2 border-t border-slate-400 bg-[#dfe5ea] px-3 py-2"><button onClick={printPage} className="flex items-center gap-1 border border-slate-400 bg-white px-3 py-2 text-[10px]"><Printer className="h-4 w-4 text-[#315d7d]"/>چاپ</button></div>
+   <div className="shrink-0 flex items-center justify-end gap-2 border-t border-slate-400 bg-[#dfe5ea] px-3 py-2 lg:hidden"><button onClick={printPage} className="flex items-center gap-1 border border-slate-400 bg-white px-3 py-2 text-[10px]"><Printer className="h-4 w-4 text-[#315d7d]"/>چاپ</button></div>
    <nav className="v21-mobile-bottom" aria-label="دسترسی سریع موبایل">
     <button type="button" className={active==='home'?'is-current':''} onClick={()=>{setActive('home');setSelected(null);setCustomerDetail(null);setBranchDetail(null);setQuery('');}} aria-label="مرکز عملیات"><Home className="h-5 w-5"/><span>مرکز</span></button>
     <button type="button" className={active==='customers'?'is-current':''} onClick={()=>{setActive('customers');setSelected(null);setCustomerDetail(null);setBranchDetail(null);setQuery('');}} aria-label="مشتریان"><Users className="h-5 w-5"/><span>مشتریان</span></button>
     <button type="button" className={active==='cash'?'is-current':''} onClick={()=>{setActive('cash');setSelected(null);setCustomerDetail(null);setBranchDetail(null);setQuery('');}} aria-label="صندوق"><Wallet className="h-5 w-5"/><span>صندوق</span></button>
     <button type="button" onClick={()=>setShowWorkspace(true)} aria-label="همه امکانات"><MoreHorizontal className="h-5 w-5"/><span>همه امکانات</span></button>
    </nav>
-   <footer className="shrink-0 border-t border-slate-400 bg-[#dfe5ea] px-3 py-2 text-center text-[9px] text-slate-600">حساب صراف</footer>
+   <div className="v21-lt-status hidden lg:flex">
+    <div className="v21-lt-status-actions">
+     <button type="button" onClick={()=>openNew()} disabled={!SCHEMAS[active]||!canModuleAction(active,'create')}><Check className="h-5 w-5 text-emerald-600"/>ثبت</button>
+     <button type="button" onClick={editSelected} disabled={!selected||!canModuleAction(active,'edit')}><Pencil className="h-5 w-5 text-blue-600"/>ویرایش</button>
+     <button type="button" onClick={removeSelected} disabled={!selected||!canModuleAction(active,'delete')||!ltDeletable}><X className="h-5 w-5 text-rose-600"/>حذف</button>
+     <button type="button" onClick={printPage}><Printer className="h-5 w-5 text-slate-700"/>چاپ</button>
+    </div>
+    <div className="v21-lt-status-info"><span>کاربر: {ltUserName}</span><i/><span>تاریخ: {ltDateParts.day} {ltDateParts.month} {ltDateParts.year}</span><i/><span>نسخه: ۲۱</span></div>
+   </div>
+   <footer className="shrink-0 border-t border-slate-400 bg-[#dfe5ea] px-3 py-2 text-center text-[9px] text-slate-600 lg:hidden">حساب صراف</footer>
   </section>
   {showWorkspace&&<div className="fixed inset-0 z-[90] flex items-center justify-center bg-black/45 p-3"><div className="max-h-[85vh] w-full max-w-4xl overflow-auto border-2 border-slate-600 bg-[#f7f9fb] shadow-2xl"><div className="sticky top-0 flex items-center justify-between bg-gradient-to-b from-[#386b91] to-[#17466c] px-3 py-2 text-white"><b className="text-xs">سایر امکانات برنامه</b><button onClick={()=>setShowWorkspace(false)}><X className="h-4 w-4"/></button></div><div className="space-y-3 p-3">
       {NAV_MENUS.slice(5).map(group=><section key={group.label} className="border border-slate-300 bg-white p-2"><h3 className="mb-2 border-b border-slate-200 pb-1 text-xs font-bold text-[#24496d]">{group.label}</h3><div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">{group.items.map(([label,act])=><button key={act} onClick={()=>{menuAction(act);setShowWorkspace(false);}} className="min-h-10 border border-slate-300 bg-[#f5f8fa] px-2 py-2 text-[11px] text-[#29465e] hover:bg-blue-50">{label}</button>)}</div></section>)}
