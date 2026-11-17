@@ -111,6 +111,9 @@ const TAB_CATEGORIES = [
   { label: 'ابزار و نگهداری', value: 'tools', icon: Database, tabs: ['maintenance', 'version', 'layout_preview', 'creator_preview', 'layout_studio', 'backup', 'backup_v2', 'triple_backup', 'supabase_audit', 'db_explorer'] },
 ];
 
+// شماره‌های ثابتِ نمایشی برای ارجاع آسان؛ مستقل از داده‌ها و پایگاه داده.
+const getPanelNumber = (index) => String(index + 1).padStart(2, '0');
+
 export default function BuilderPanel() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
@@ -283,7 +286,7 @@ export default function BuilderPanel() {
               <SelectContent>
                 {visibleCategories.map((category) => (
                   <SelectItem key={category.value} value={category.value}>
-                    {category.label} ({category.tabs.length})
+                    {getPanelNumber(TAB_CATEGORIES.findIndex((item) => item.value === category.value))} · {category.label} ({category.tabs.length})
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -296,7 +299,7 @@ export default function BuilderPanel() {
               <SelectContent>
                 {activeCategoryTabs.map((group) => (
                   <SelectItem key={group.value} value={group.value}>
-                    {group.label}
+                    {getPanelNumber(TAB_GROUPS.findIndex((item) => item.value === group.value))} · {group.label}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -352,7 +355,7 @@ export default function BuilderPanel() {
                         const Icon = ({ Users, Send: Upload, ArrowRightLeft: Zap, FileText: Download, Banknote: Wallet, Store, MessageSquareMore: MessageSquare, ArrowLeftRight: Zap, Repeat: Zap, Landmark: CreditCard, Coins: Wallet, TrendingUp: Crown, BookOpen, BookCopy: Download, ScrollText: Download, Scale: Shield, FileSearch: Eye, ShoppingBag: Store, Smartphone, Gamepad2, CreditCard, MessageSquare, DatabaseBackup: Database, Headphones: Bell, Bot, LayoutDashboard: Server, Settings: Lock, Shield: Shield, Network: Users, Share2: Store, Bitcoin: Wallet, Globe: Store })[item.icon] || LayoutGrid;
                         return (
                           <div key={item.feature_key} className="flex items-center gap-2 rounded-lg border p-2.5 min-w-0">
-                            <div className="w-9 h-9 shrink-0 rounded-lg bg-muted flex items-center justify-center"><Icon className="w-4 h-4" /></div>
+                            <div className="w-9 h-9 shrink-0 rounded-lg bg-muted flex flex-col items-center justify-center gap-0.5"><span className="text-[9px] leading-none font-bold text-primary">{getPanelNumber(FEATURE_CATALOG.findIndex((entry) => entry.feature_key === item.feature_key))}</span><Icon className="w-4 h-4" /></div>
                             <div className="min-w-0 flex-1">
                               <p className="text-xs font-semibold truncate">{item.name}</p>
                               <p className="text-[10px] text-muted-foreground truncate">{item.icon} · {item.location === 'nav' ? 'آیکون منو' : 'عملیات سریع'}</p>
