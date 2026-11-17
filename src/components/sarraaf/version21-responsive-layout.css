@@ -2424,3 +2424,49 @@
     display: none !important;
   }
 }
+
+
+/* A1 laptop action row: keep Save/Edit/Delete in the exact same bottom row
+   as Print, visible at every laptop breakpoint (901px and wider). The content
+   area scrolls independently; this row never scrolls away or gets hidden. */
+@media (min-width: 901px) {
+  html body .v21-workspace-shell > .v21-lt-status {
+    display: flex !important;
+    position: relative !important;
+    inset: auto !important;
+    z-index: 50 !important;
+    flex: 0 0 auto !important;
+    flex-shrink: 0 !important;
+    width: 100% !important;
+    min-height: 48px !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 12px !important;
+    padding: 6px 12px !important;
+    border-top: 1px solid #b7c8e6 !important;
+    background: #e9f0fb !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+  }
+  html body .v21-workspace-shell > .v21-lt-status > .v21-lt-status-actions {
+    display: flex !important;
+    flex: 0 0 auto !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    align-items: center !important;
+    gap: 6px !important;
+  }
+  html body .v21-workspace-shell > .v21-lt-status > .v21-lt-status-actions > button {
+    display: inline-flex !important;
+    flex: 0 0 auto !important;
+    min-height: 34px !important;
+    align-items: center !important;
+    justify-content: center !important;
+    white-space: nowrap !important;
+  }
+  html body .v21-workspace-shell > .v21-lt-status > .v21-lt-status-info {
+    display: flex !important;
+    flex: 0 1 auto !important;
+    align-items: center !important;
+  }
+}

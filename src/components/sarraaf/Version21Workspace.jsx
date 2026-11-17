@@ -572,7 +572,7 @@ export default function Version21Workspace(){
     <button type="button" className={active==='cash'?'is-current':''} onClick={()=>{setActive('cash');setSelected(null);setCustomerDetail(null);setBranchDetail(null);setQuery('');}} aria-label="صندوق"><Wallet className="h-5 w-5"/><span>صندوق</span></button>
     <button type="button" onClick={()=>setShowWorkspace(true)} aria-label="همه امکانات"><MoreHorizontal className="h-5 w-5"/><span>همه امکانات</span></button>
    </nav>
-   <div className="v21-lt-status hidden min-[901px]:flex shrink-0">
+   <div className="v21-lt-status shrink-0">
     <div className="v21-lt-status-actions">
      <button type="button" onClick={()=>openNew()} disabled={!SCHEMAS[active]||!canModuleAction(active,'create')}><Check className="h-5 w-5 text-emerald-600"/>ثبت</button>
      <button type="button" onClick={editSelected} disabled={!selected||!canModuleAction(active,'edit')}><Pencil className="h-5 w-5 text-blue-600"/>ویرایش</button>
