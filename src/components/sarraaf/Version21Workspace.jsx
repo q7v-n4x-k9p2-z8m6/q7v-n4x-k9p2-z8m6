@@ -461,7 +461,7 @@ export default function Version21Workspace(){
   {title:'صندوق و بانک',items:[['صندوق‌ها و موجودی',Vault,()=>goModule('cash'),'cash'],['بانک و چک',Landmark,()=>goModule('banks'),'banks']]},
   {title:'عملیات صرافی',items:[['خرید و فروش اسعار',ArrowLeftRight,()=>openNew('exchange'),'exchange'],['دفتر حواله‌ها',Send,()=>goModule('remittance'),'remittance'],['مصارف و پرداخت‌ها',CreditCard,()=>goModule('expenses'),'expenses']]},
   {title:'حسابداری و گزارشات',items:[['دفتر روزنامچه',ScrollText,()=>goModule('journal'),'journal'],['دفتر کل',ClipboardList,()=>goModule('ledger'),'ledger'],['کدینگ حساب‌ها',ListChecks,()=>goModule('accounts'),'accounts'],['تعریف اسعار',Coins,()=>goModule('currencies'),'currencies'],['گزارش عملیات',FileSpreadsheet,()=>goModule('reports'),'reports'],['مفاد و زیان',BarChart3,()=>goModule('profit'),'profit'],['بیلانس عمومی',Scale,()=>goModule('balance'),'balance']]},
-  {title:'امکانات تکمیلی',items:[['گروه و چت',MessagesSquares,()=>goModule('sarraafGroups'),'sarraafGroups'],['هوش مصنوعی',Bot,()=>goModule('assistant'),'assistant'],['محصولات آنلاین',ShoppingBag,()=>goModule('products'),'products']]},
+  {title:'امکانات تکمیلی',items:[['گروه و چت',MessagesSquare,()=>goModule('sarraafGroups'),'sarraafGroups'],['هوش مصنوعی',Bot,()=>goModule('assistant'),'assistant'],['محصولات آنلاین',ShoppingBag,()=>goModule('products'),'products']]},
   {title:'تنظیمات',items:[['زبان برنامه',Languages,()=>goModule('language'),'language']]}
  ];
   const ltUtilityGroups=[
