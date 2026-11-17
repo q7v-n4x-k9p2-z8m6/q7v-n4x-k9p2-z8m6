@@ -40,6 +40,7 @@ import TrialManager from '@/components/sarraaf/TrialManager';
 import MobileLayoutPreview from '@/components/sarraaf/MobileLayoutPreview';
 import CreatorPreviewLab from '@/components/sarraaf/CreatorPreviewLab';
 import LayoutPreviewStudio from '@/components/sarraaf/LayoutPreviewStudio';
+import LayoutHexLibrary from '@/components/sarraaf/LayoutHexLibrary';
 import { lazy } from 'react';
 const BuilderLiveAssistant = lazy(() => import('@/pages/BuilderLiveAssistant'));
 import UCManager from '@/components/sarraaf/UCManager';
@@ -543,7 +544,10 @@ export default function BuilderPanel() {
         {/* آزمایشگاه یکپارچه موبایل و لپ‌تاپ؛ پیش‌نمایش‌های قبلی مستقل می‌مانند */}
         {isFullCreator && (
           <TabsContent value="layout_studio">
-            <LayoutPreviewStudio />
+            <div className="space-y-4">
+              <LayoutPreviewStudio />
+              <LayoutHexLibrary />
+            </div>
           </TabsContent>
         )}
 
