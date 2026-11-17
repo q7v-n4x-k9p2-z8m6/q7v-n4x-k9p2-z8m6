@@ -3,6 +3,7 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { McpServer } from "npm:@modelcontextprotocol/sdk@1.25.3/server/mcp.js";
 import { WebStandardStreamableHTTPServerTransport } from "npm:@modelcontextprotocol/sdk@1.25.3/server/webStandardStreamableHttp.js";
 import { Hono } from "npm:hono@^4.9.7";
+import { cors } from "npm:hono@^4.9.7/cors";
 import { z } from "npm:zod@^4.1.13";
 
 const BUCKET = "layout-hex-references";
@@ -149,7 +150,15 @@ function makeServer() {
   return server;
 }
 
-const app = new Hono().basePath("/hex-library-mcp");
+const app = new Hono();
+
+app.use("*", cors({
+  origin: "*",
+  allowMethods: ["GET", "POST", "DELETE", "OPTIONS"],
+  allowHeaders: ["Authorization", "Content-Type", "Accept", "MCP-Protocol-Version", "MCP-Session-Id", "Last-Event-ID"],
+  exposeHeaders: ["MCP-Session-Id", "MCP-Protocol-Version"],
+  maxAge: 86400,
+}));
 
 app.all("*", async (c) => {
   const configuredToken = Deno.env.get("HEX_MCP_ACCESS_TOKEN") || "";
@@ -164,7 +173,7 @@ app.all("*", async (c) => {
 
   try {
     const server = makeServer();
-    const transport = new WebStandardStreamableHTTPServerTransport();
+    const transport = new WebStandardStreamableHTTPServerTransport({ sessionIdGenerator: undefined });
     await server.connect(transport);
     return await transport.handleRequest(c.req.raw);
   } catch (error) {
