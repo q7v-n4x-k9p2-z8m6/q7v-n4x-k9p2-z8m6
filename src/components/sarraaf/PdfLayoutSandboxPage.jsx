@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Home, Globe, ShoppingCart, Bot, Users, BookText, CreditCard, ArrowLeftRight,
   Wallet, Send, Landmark, User, BookOpen, Building2, Receipt, ClipboardList,
@@ -48,18 +48,51 @@ function Panel({ title, items, compact = false }) {
   );
 }
 
+function detectPdfDeviceMode() {
+  const ua = navigator.userAgent || '';
+  const uaMobile = /Android|iPhone|iPod|Mobile|Windows Phone/i.test(ua);
+  const touch = (navigator.maxTouchPoints || 0) > 0 ||
+    window.matchMedia?.('(pointer: coarse)').matches;
+  const screenWidth = Math.min(window.screen?.width || window.innerWidth, window.screen?.height || window.innerWidth);
+  const viewportWidth = document.documentElement.clientWidth || window.innerWidth;
+  const uaDataMobile = navigator.userAgentData?.mobile;
+  if (uaDataMobile === true || uaMobile) {
+    // A mobile browser may request the desktop site; a wide layout viewport on
+    // a physically small touch screen is treated as desktop-requested on phone.
+    if (touch && screenWidth <= 900 && viewportWidth > 767 && !/Mobile|iPhone|iPod/i.test(ua)) {
+      return 'phone-desktop';
+    }
+    return viewportWidth > 767 && touch && screenWidth <= 900 ? 'phone-desktop' : 'phone';
+  }
+  if (touch && screenWidth <= 900 && viewportWidth > 767) return 'phone-desktop';
+  return 'laptop';
+}
+
 export default function PdfLayoutSandboxPage() {
+  const [deviceMode, setDeviceMode] = useState('detecting');
+  useEffect(() => {
+    const updateMode = () => setDeviceMode(detectPdfDeviceMode());
+    updateMode();
+    window.addEventListener('resize', updateMode);
+    window.addEventListener('orientationchange', updateMode);
+    return () => {
+      window.removeEventListener('resize', updateMode);
+      window.removeEventListener('orientationchange', updateMode);
+    };
+  }, []);
+
+  const desktopRequestedOnPhone = deviceMode === 'phone-desktop';
   return (
-    <div dir="rtl" className="w-full overflow-x-auto rounded-lg bg-[#e9eff8] p-2">
-      <div className="mx-auto flex min-h-[900px] min-w-[1180px] flex-col overflow-hidden border border-[#b8c9e2] bg-[#e9eff8] text-[#14213d] shadow-sm">
+    <div dir="rtl" data-device-mode={deviceMode} className="w-full max-w-full overflow-x-hidden rounded-lg bg-[#e9eff8] p-2">
+      <div className="mx-auto flex min-h-[900px] w-full max-w-full min-w-0 flex-col overflow-hidden border border-[#b8c9e2] bg-[#e9eff8] text-[#14213d] shadow-sm">
         <div className="flex h-10 shrink-0 items-center justify-between border-b border-[#c8d5e8] bg-[#f4f6fa] px-4 text-[12px]">
           <span className="font-bold">حساب صراف</span>
           <span>نسخه ۲۱</span>
         </div>
-        <nav className="flex h-11 shrink-0 items-center justify-start gap-9 border-b border-[#c8d5e8] bg-[#f7f9fc] px-5 text-[13px] font-bold">
+        <nav className="flex min-h-11 shrink-0 flex-wrap items-center justify-start gap-x-6 gap-y-2 border-b border-[#c8d5e8] bg-[#f7f9fc] px-3 py-2 text-[13px] font-bold">
           {menus.map((label) => <span key={label} className="whitespace-nowrap">{label}</span>)}
         </nav>
-        <div className="flex h-[90px] shrink-0 items-stretch justify-between gap-1 border-b border-[#c8d5e8] bg-[#f0f4fa] px-2 py-1">
+        <div className="grid shrink-0 items-stretch gap-1 border-b border-[#c8d5e8] bg-[#f0f4fa] px-2 py-1 [grid-template-columns:repeat(7,minmax(0,1fr))] xl:[grid-template-columns:repeat(14,minmax(0,1fr))]" style={desktopRequestedOnPhone ? { gridTemplateColumns: "repeat(14,minmax(0,1fr))" } : undefined}>
           {toolbar.map(([Icon, label]) => (
             <div key={label} className="flex min-w-0 flex-1 flex-col items-center justify-center gap-1 text-center text-[10px] font-bold leading-4 text-[#14213d]">
               <Icon className="h-6 w-6 shrink-0 text-[#1f4e9f]" />
@@ -73,7 +106,7 @@ export default function PdfLayoutSandboxPage() {
             <h1 className="text-center text-[23px] font-bold">مرکز عملیات صرافی</h1>
             <Home className="h-7 w-7 justify-self-end" />
           </header>
-          <div className="grid h-[78px] shrink-0 grid-cols-4 gap-[10px]">
+          <div className="grid shrink-0 grid-cols-2 gap-2 xl:grid-cols-4" style={desktopRequestedOnPhone ? { gridTemplateColumns: "repeat(4,minmax(0,1fr))" } : undefined}>
             {stats.map(([Icon, label]) => (
               <div key={label} className="flex flex-col justify-center gap-2 border border-[#c4d3ec] bg-[#f8fafe] px-3">
                 <div className="flex items-center gap-2 whitespace-nowrap text-[14px] font-bold"><Icon className="h-5 w-5 text-[#1f4e9f]" />{label}</div>
@@ -81,18 +114,18 @@ export default function PdfLayoutSandboxPage() {
               </div>
             ))}
           </div>
-          <div className="grid shrink-0 [grid-template-columns:.84fr_1fr_1fr] grid-rows-[144px_124px] gap-x-[10px] gap-y-[13px]">
+          <div className="grid min-w-0 shrink-0 grid-cols-1 gap-3 sm:grid-cols-2 xl:[grid-template-columns:.84fr_1fr_1fr] xl:grid-rows-[144px_124px]" style={desktopRequestedOnPhone ? { gridTemplateColumns: ".84fr 1fr 1fr", gridTemplateRows: "144px 124px" } : undefined}>
             {panels.slice(0, 3).map((panel) => <Panel key={panel.title} {...panel} />)}
             {panels.slice(3).map((panel) => <Panel key={panel.title} {...panel} compact />)}
           </div>
-          <section className="flex h-[125px] shrink-0 flex-col border border-[#c4d3ec] bg-[#e6ecf5] p-2">
+          <section className="flex min-w-0 shrink-0 flex-col border border-[#c4d3ec] bg-[#e6ecf5] p-2">
             <h3 className="mb-2 text-[14px] font-bold">عملیات سریع</h3>
-            <div className="flex h-[68px] items-stretch gap-[11px]">
+            <div className="grid min-w-0 grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-5">
               {quick.map(([Icon, label]) => <div key={label} className="flex min-w-0 flex-1 flex-col items-center justify-center gap-1 border border-[#c3d2ea] bg-[#f7f9fd] text-[13px] font-bold"><Icon className="h-5 w-5 text-[#1f4e9f]" /><span>{label}</span></div>)}
             </div>
           </section>
         </main>
-        <footer className="flex h-[43px] shrink-0 items-center justify-between border-t border-[#cad8ee] bg-[#eef2f8] px-3 text-[12px]">
+        <footer className="flex min-h-[43px] shrink-0 flex-wrap items-center justify-between gap-2 border-t border-[#cad8ee] bg-[#eef2f8] px-3 py-2 text-[12px]">
           <div className="flex items-center gap-4">
             <span className="flex items-center gap-1"><Save className="h-4 w-4 text-green-600" />ثبت</span>
             <span className="flex items-center gap-1"><Pencil className="h-4 w-4 text-blue-600" />ویرایش</span>
