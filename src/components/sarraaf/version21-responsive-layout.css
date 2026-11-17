@@ -2409,3 +2409,18 @@
     white-space: normal !important;
   }
 }
+
+
+/* Laptop home: show the Version 21 grouped workspace on the first page.
+   The top dropdown menu and shortcut rail duplicate those same actions and
+   push the actual home layout down, so hide both only on the desktop home.
+   Tablet and mobile navigation are intentionally unchanged. */
+@media (min-width: 1024px) {
+  html body .v21-workspace-shell .v21-laptop-menu-bar.v21-home-hide-laptop-nav {
+    display: none !important;
+  }
+
+  html body .v21-workspace-shell .v21-laptop-toolbar > aside.v21-module-icon-row.v21-home-hide-module-rail {
+    display: none !important;
+  }
+}
