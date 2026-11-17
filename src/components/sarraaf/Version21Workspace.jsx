@@ -455,43 +455,44 @@ export default function Version21Workspace(){
   {dbStatus==='connected'&&<div className="flex flex-wrap items-center justify-between gap-2 border border-emerald-200 bg-emerald-50 px-3 py-2 text-[10px] text-emerald-900"><span>صراف: <b>{exchangeProfile?.name||'—'}</b> · داده‌ها فقط از نشست همین صراف دریافت می‌شود.</span><span>آخرین بارگذاری: {lastLoaded?new Date(lastLoaded).toLocaleString('fa-IR'):'—'}</span></div>}
   <section className="v21-workspace-shell flex max-h-[78vh] min-h-[640px] flex-col overflow-hidden border border-[#65798b] bg-[#eef1f4] shadow-md">
    <header className="flex min-h-9 items-center justify-between bg-gradient-to-b from-[#315f80] to-[#173f5d] px-3 py-1.5 text-white"><div className="flex items-center gap-2"><Calculator className="h-4 w-4"/><b className="text-xs">{mainTitle}</b></div><div className="flex gap-1"><button onClick={()=>setModal('settings')} className="border border-white/30 px-2 text-xs">⚙</button></div></header>
-   
    {/* ردیف اول: عملیات روی رکورد انتخاب‌شده */}
    <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
     <div className="v21-laptop-toolbar">
-    <nav className="v21-laptop-menu-bar" aria-label="منوی اصلی">{NAV_MENUS.slice(0,5).map(m=><div key={m.label} className="relative"><button onClick={()=>setMenu(menu===m.label?'':m.label)} className={'v21-laptop-menu-trigger '+(menu===m.label?'is-open':'')}>{m.label}<ChevronDown className="mr-1 inline h-3 w-3"/></button>{menu===m.label&&<div className="v21-laptop-menu-popover">{m.items.map(([label,act])=><button key={act} onClick={()=>menuAction(act)}>{label}</button>)}</div>}</div>)}</nav>
+    <nav className="v21-laptop-menu-bar" aria-label="منوی اصلی">{NAV_MENUS.map(m=><div key={m.label} className="relative"><button onClick={()=>setMenu(menu===m.label?'':m.label)} className={'v21-laptop-menu-trigger '+(menu===m.label?'is-open':'')}>{m.label}<ChevronDown className="mr-1 inline h-3 w-3"/></button>{menu===m.label&&<div className="v21-laptop-menu-popover">{m.items.map(([label,act])=><button key={act} onClick={()=>menuAction(act)}>{label}</button>)}</div>}</div>)}</nav>
     <aside aria-label="آیکون‌های اصلی و مرکز عملیات" className="v21-module-icon-row shrink-0 grid w-full grid-cols-6 gap-1 border-b border-slate-400 bg-[#e1e8ed] p-2 md:grid-cols-12">
       {['home','customerLedger','customers','branches','branchLedger','banks','remittance','cash','exchange','expenses','journal','ledger','debtors','errors','sarraafGroups','assistant','products','language'].filter(canViewModule).map(id=>{const m=MODULES.find(x=>x.id===id);if(!m)return null;const I=m.icon;return <button key={m.id} title={m.label} onClick={()=>{m.id==='debtors'?navigate('/debtors'):(setActive(m.id),setSelected(null),setCustomerDetail(null),setBranchDetail(null),setQuery(''));}} className={'v21-toolbar-module flex min-w-0 flex-col items-center justify-center gap-1.5 rounded-xl border px-1 py-2 text-center transition-all '+(active===m.id?'is-active border-blue-300 bg-blue-50 font-bold text-blue-900 shadow-sm':'border-transparent text-[#29465e] hover:border-blue-200 hover:bg-white')}><span className={'grid h-9 w-9 place-items-center rounded-lg bg-gradient-to-br '+(MODULE_TONES[m.id]||'from-blue-600 to-indigo-700')+' text-white shadow-sm'}><I className="h-4 w-4"/></span><span className="w-full whitespace-normal text-[9px] font-semibold leading-tight">{m.label}</span></button>})}
      </aside>
-    </div>
+     <nav className="v21-reference-mobile-shortcuts" aria-label="دسترسی سریع موبایل">
+      {['assistant','language','products','home'].filter(canViewModule).map(id=>{const m=MODULES.find(x=>x.id===id);if(!m)return null;const I=m.icon;return <button key={id} type="button" onClick={()=>{setActive(id);setSelected(null);setCustomerDetail(null);setBranchDetail(null);setQuery('');}} className={'v21-toolbar-module flex min-w-0 flex-col items-center justify-center gap-1 rounded-xl border px-1 py-2 text-center '+(active===id?'is-active border-blue-300 bg-blue-50 font-bold text-blue-900 shadow-sm':'border-transparent text-[#29465e] hover:border-blue-200 hover:bg-white')}><I className="h-5 w-5"/><span>{m.label}</span></button>;})}
+     </nav>    </div>
     <main className="min-h-0 min-w-0 flex-1 overflow-y-auto bg-[#f9fafb] p-3">
      {active==='home'?<>
-      <div className="mb-3 flex flex-wrap items-center justify-between border-b-2 border-[#315e80] pb-2">
+      <div className="v21-reference-dashboard-title mb-3 flex flex-wrap items-center justify-between gap-3 border-b-2 border-[#315e80] pb-2">
        <div><div className="text-[9px] text-slate-500">سیستم حسابداری صراف / مرکز عملیات</div><h2 className="text-sm font-bold text-[#24496d]">مرکز عملیات صرافی</h2><p className="mt-1 text-[10px] text-slate-500">دسترسی به اطلاعات واقعی دفاتر، صندوق‌ها، حواله‌ها و معاملات</p></div>
        <div className="text-left text-[10px]"><b className="block text-[#24496d]">{today()}</b><span className="text-emerald-700">{dbStatus==='connected'?'اتصال دیتابیس برقرار است':'در انتظار اتصال دیتابیس'}</span></div>
       </div>
-      <div className="mb-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
-       <div className="border border-[#b6c4cf] bg-white px-3 py-2 shadow-sm"><span className="text-[10px] text-slate-500">تعداد مشتریان</span><b className="mt-1 block text-lg text-[#24496d]">{canViewModule('customers')?fmt(data.customers.length):'—'}</b></div>
-       <div className="border border-[#b6c4cf] bg-white px-3 py-2 shadow-sm"><span className="text-[10px] text-slate-500">صندوق‌های تعریف‌شده</span><b className="mt-1 block text-lg text-[#24496d]">{canViewModule('cash')?fmt(data.cash.length):'—'}</b></div>
-       <div className="border border-[#b6c4cf] bg-white px-3 py-2 shadow-sm"><span className="text-[10px] text-slate-500">عملیات امروز</span><b className="mt-1 block text-lg text-[#24496d]">{canViewModule('reports')||canViewModule('cash')?fmt(dailyTransactions.length):'—'}</b></div>
-       <div className="border border-[#b6c4cf] bg-white px-3 py-2 shadow-sm"><span className="text-[10px] text-slate-500">سود خالص</span><b className="mt-1 block text-lg text-amber-700">محاسبه نشده</b></div>
+      <div className="v21-reference-stat-grid mb-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
+       <div className="v21-reference-stat border border-[#b6c4cf] bg-white px-3 py-2 shadow-sm"><span className="text-[10px] text-slate-500">تعداد مشتریان</span><b className="mt-1 block text-lg text-[#24496d]">{canViewModule('customers')?fmt(data.customers.length):'—'}</b></div>
+       <div className="v21-reference-stat border border-[#b6c4cf] bg-white px-3 py-2 shadow-sm"><span className="text-[10px] text-slate-500">صندوق‌های تعریف‌شده</span><b className="mt-1 block text-lg text-[#24496d]">{canViewModule('cash')?fmt(data.cash.length):'—'}</b></div>
+       <div className="v21-reference-stat border border-[#b6c4cf] bg-white px-3 py-2 shadow-sm"><span className="text-[10px] text-slate-500">عملیات امروز</span><b className="mt-1 block text-lg text-[#24496d]">{canViewModule('reports')||canViewModule('cash')?fmt(dailyTransactions.length):'—'}</b></div>
+       <div className="v21-reference-stat border border-[#b6c4cf] bg-white px-3 py-2 shadow-sm"><span className="text-[10px] text-slate-500">سود خالص</span><b className="mt-1 block text-lg text-amber-700">محاسبه نشده</b></div>
       </div>
-      <div className="grid gap-3 xl:grid-cols-2">
+      <div className="v21-reference-groups grid gap-3 xl:grid-cols-3">
        {[
         {title:'تعاریف و دفاتر',ids:['customers','customerLedger','branches','branchLedger']},
         {title:'صندوق و بانک',ids:['cash','banks']},
         {title:'عملیات صرافی',ids:['exchange','remittance','expenses']},
         {title:'حسابداری و گزارشات',ids:['journal','ledger','accounts','currencies','reports','profit','balance','debtors','activity','errors']},
-         {title:'امکانات تکمیلی · ماژول‌های متصل',ids:['sarraafGroups','assistant','products']},
+        {title:'امکانات تکمیلی · ماژول‌های متصل',ids:['sarraafGroups','assistant','products']},
         {title:'تنظیمات',ids:['language']}
-       ].map(group=><section key={group.title} className="border border-[#9aabb9] bg-[#e8eef3] p-2 shadow-sm">
+       ].map(group=><section key={group.title} className="v21-reference-group border border-[#9aabb9] bg-[#e8eef3] p-2 shadow-sm">
         <div className="mb-2 flex items-center justify-between border-b border-[#b7c5d0] pb-1"><b className="text-[11px] text-[#294d69]">{group.title}</b><span className="text-[9px] text-slate-500">فهرست امکانات</span></div>
-        <div className="flex flex-wrap items-stretch gap-2">{group.ids.filter(canViewModule).map(id=>{const m=MODULES.find(x=>x.id===id);return m?<div key={m.id} className="min-w-[112px] flex-1 basis-[112px]"><Tile icon={m.icon} label={m.label} moduleId={m.id} onClick={()=>{if(m.id==='debtors'){navigate('/debtors');return;}setActive(m.id);setSelected(null);setCustomerDetail(null);setBranchDetail(null);setQuery('');}}/></div>:null;})}</div>
+        <div className="v21-reference-group-tiles flex flex-wrap items-stretch gap-2">{group.ids.filter(canViewModule).map(id=>{const m=MODULES.find(x=>x.id===id);return m?<div key={m.id} className="min-w-[112px] flex-1 basis-[112px]"><Tile icon={m.icon} label={m.label} moduleId={m.id} onClick={()=>{if(m.id==='debtors'){navigate('/debtors');return;}setActive(m.id);setSelected(null);setCustomerDetail(null);setBranchDetail(null);setQuery('');}}/></div>:null;})}</div>
        </section>)}
       </div>
-      <div className="mt-3 border border-[#9aabb9] bg-white p-2">
+      <div className="v21-reference-quick mt-3 border border-[#9aabb9] bg-white p-2">
        <div className="mb-2 border-b border-slate-200 pb-1 text-[11px] font-bold text-[#294d69]">عملیات سریع</div>
-       <div className="flex flex-wrap gap-2">
+       <div className="v21-reference-quick-actions flex flex-wrap gap-2">
         <button onClick={()=>cashAction('دخل')} className="border border-[#a8b7c3] bg-[#edf3f7] px-3 py-2 text-[10px] hover:bg-blue-50"><ArrowDownCircle className="ml-1 inline h-4 w-4"/>ثبت دخل صندوق</button>
         <button onClick={()=>cashAction('خرج')} className="border border-[#a8b7c3] bg-[#edf3f7] px-3 py-2 text-[10px] hover:bg-blue-50"><ArrowUpCircle className="ml-1 inline h-4 w-4"/>ثبت خرج صندوق</button>
         <button onClick={()=>openNew('remittance',{direction:'ارسالی'})} className="border border-[#a8b7c3] bg-[#edf3f7] px-3 py-2 text-[10px] hover:bg-blue-50"><Send className="ml-1 inline h-4 w-4"/>حواله ارسالی</button>
