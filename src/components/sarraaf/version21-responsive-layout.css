@@ -2201,7 +2201,8 @@
 @media (max-width: 1023px) {
   .v21-reference-header {min-height:66px!important;padding:10px 14px!important}
   .v21-reference-mobile-menu {display:grid!important;place-items:center}
-  .v21-laptop-toolbar {display:none!important}
+  .v21-laptop-toolbar {display:block!important}
+  .v21-laptop-menu-bar,.v21-module-icon-row {display:none!important}
   .v21-reference-mobile-shortcuts {
     display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;
     padding:7px 8px;border-bottom:1px solid #c3d5eb;
