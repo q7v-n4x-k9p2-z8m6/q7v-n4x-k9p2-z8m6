@@ -1,10 +1,9 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { buildSummaryCards } from '@/lib/dashboardStats';
 import {
   ArrowLeftRight, Repeat, Send, Download, Receipt, BookOpen, Landmark,
   FileText, ShoppingBag, Users, Wallet, RefreshCw, CalendarDays,
-  Home, Globe, Bot, MessageSquare, Settings, Banknote, ChevronDown,
+  Home, Bot, MessageSquare, Settings, Banknote, ChevronDown,
 } from 'lucide-react';
 
 const GROUPS = [
@@ -20,8 +19,8 @@ const QUICK_ACTIONS = [
   { label: 'معامله اسعار', path: '/trade', icon: Repeat },
   { label: 'حواله دریافتی', path: '/transfers/receive', icon: Download },
   { label: 'حواله ارسالی', path: '/transfers/send', icon: Send },
-  { label: 'ثبت خرج صندوق', path: '/dadogereft', icon: ArrowLeftRight },
-  { label: 'ثبت دخل صندوق', path: '/receipt', icon: Receipt },
+  { label: 'ثبت عملیات صرافی', path: '/dadogereft', icon: ArrowLeftRight },
+  { label: 'ثبت دریافت', path: '/receipt', icon: Receipt },
 ];
 
 const TOP_ICONS = [
@@ -47,10 +46,6 @@ export default function DesktopDashboard({
   txs, txLoading, customers, custLoading, treasuryBalances, treasuryLoading,
   bankBalances, bankLoading, debtorCount, plan, links = [],
 }) {
-  const cards = buildSummaryCards({
-    txs, customers, treasuryBalances, bankBalances, debtorCount, currencies,
-    loading: { bank: bankLoading, treasury: treasuryLoading, customers: custLoading, sent: txLoading, received: txLoading },
-  });
   const byPath = new Map(links.map(link => [link.path, link]));
   const groups = GROUPS.map(group => ({
     ...group,
@@ -94,7 +89,6 @@ export default function DesktopDashboard({
             </div>
           </details>
         ))}
-        <Link to="/settings" className="rounded-md px-3 py-1.5 hover:bg-blue-100">تنظیمات</Link>
       </nav>
 
       <div className="grid grid-cols-4 gap-1 rounded-lg border border-[#bdcde4] bg-[#f5f8fd] p-1.5 sm:grid-cols-6 xl:grid-cols-12">
