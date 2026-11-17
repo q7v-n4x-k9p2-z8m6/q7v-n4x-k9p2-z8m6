@@ -10,8 +10,11 @@ import {
   Database, BriefcaseBusiness, FileCheck, ChartNoAxesCombined, Landmark as TreasuryIcon
 } from 'lucide-react';
 import { useAuth } from '@/lib/AuthContext';
-import { useFeatures } from '@/lib/useSarraaf';
+import { useFeatures, useSarraafProfile } from '@/lib/useSarraaf';
+import { usePaidSystemEnabled } from '@/lib/usePaidSystem';
+import { useUpgrade } from '@/lib/UpgradeContext';
 import { getFeatureStatus, isFeatureEnabled } from '@/lib/features';
+import { isFeatureAccessible } from '@/lib/permissions';
 
 // Version 21 production shell: one A1 data/authentication layer, responsive
 // navigation, and no demo records or local database.
@@ -124,29 +127,50 @@ const WORKSPACE_TARGETS = {
   backup: 'home', notifications: 'home'
 };
 
-function ModuleLink({ item, compact = false, features = [], onNavigate }) {
+function ModuleLink({ item, compact = false, features = [], profile, profileLoading = false, paidSystemEnabled, paidSystemLoading = false, openUpgrade, onNavigate }) {
   const Icon = item.icon;
+  const location = useLocation();
   const featureKey = item.featureKey || MODULE_FEATURE_KEYS[item.id];
   const featureStatus = featureKey ? getFeatureStatus(features || [], featureKey) : 'active';
   const featureDisabled = featureKey ? !isFeatureEnabled(features || [], featureKey) || featureStatus === 'disabled' : false;
   const featureUpdating = featureStatus === 'updating';
-  if (featureDisabled || featureUpdating) {
-    return (
-      <div aria-disabled="true" title={featureUpdating ? 'این قابلیت در حال تکمیل است' : 'این قابلیت غیرفعال است'}
-        className={compact
-          ? 'flex min-h-[68px] flex-col items-center justify-center gap-1 rounded-lg border border-dashed border-slate-300 bg-slate-50 px-1 py-2 text-center text-[10px] text-slate-500'
-          : 'flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-slate-400 cursor-not-allowed'}>
-        <Icon className={compact ? 'h-5 w-5' : 'h-4 w-4 shrink-0'} />
-        <span className={compact ? 'leading-tight' : 'flex-1'}>{item.label}</span>
-        {!compact && <span className="text-[10px] whitespace-nowrap">{featureUpdating ? 'در حال تکمیل' : 'غیرفعال'}</span>}
-      </div>
+  const isSystemAdmin = ['creator', 'admin'].includes(String(profile?.role || '').toLowerCase());
+  const tierLocked = Boolean(featureKey && profile && !profileLoading && !paidSystemLoading && !isSystemAdmin && paidSystemEnabled !== false &&
+    !isFeatureAccessible(features || [], featureKey, profile, paidSystemEnabled));
+  if (featureDisabled || featureUpdating || tierLocked) {
+    return tierLocked ? (
+        <button type="button" title="برای دسترسی، سطح اشتراک را ارتقا دهید" aria-label={item.label + ' — ارتقای اشتراک'}
+          onClick={() => { onNavigate?.(); openUpgrade?.(featureKey); }}
+          className={compact
+            ? 'flex min-h-[76px] flex-col items-center justify-center gap-1 rounded-xl border border-blue-200 bg-blue-50 px-2 py-2 text-center text-[11px] font-semibold text-blue-900 shadow-sm'
+            : 'flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-blue-200 hover:bg-white/10'}>
+          <Icon className={compact ? 'h-5 w-5' : 'h-4 w-4 shrink-0'} />
+          <span className={compact ? 'leading-tight' : 'flex-1 text-right'}>{item.label}</span>
+          <span className="text-[10px] whitespace-nowrap">{compact ? 'قفل' : 'ارتقای اشتراک'}</span>
+        </button>
+      ) : (
+        <div aria-disabled="true" title={featureUpdating ? 'این قابلیت در حال تکمیل است' : 'این قابلیت غیرفعال است'}
+          className={compact
+            ? 'flex min-h-[76px] flex-col items-center justify-center gap-1 rounded-xl border border-slate-200 bg-slate-100 px-2 py-2 text-center text-[11px] text-slate-500'
+            : 'flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-slate-400 cursor-not-allowed'}>
+          <Icon className={compact ? 'h-5 w-5' : 'h-4 w-4 shrink-0'} />
+          <span className={compact ? 'leading-tight' : 'flex-1'}>{item.label}</span>
+          {!compact && <span className="text-[10px] whitespace-nowrap">{featureUpdating ? 'در حال تکمیل' : 'غیرفعال'}</span>}
+        </div>
     );
   }
   return (
     <NavLink to={item.id === 'debtors' ? '/debtors' : (item.id === 'home' ? '/dashboard' : '/dashboard?module=' + (WORKSPACE_TARGETS[item.id] || 'home'))} end={item.id === 'home'} onClick={onNavigate}
-      className={({ isActive }) => compact
-        ? `flex min-h-[68px] flex-col items-center justify-center gap-1 rounded-xl border px-1 py-2 text-center text-[10px] leading-tight transition-all ${isActive ? 'border-blue-300 bg-blue-50 text-blue-900 shadow-sm' : 'border-slate-200 bg-white text-slate-700 hover:border-blue-200 hover:bg-blue-50'}`
-        : `flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-all ${isActive ? 'bg-gradient-to-l from-blue-700 to-blue-600 text-white shadow-md' : 'text-slate-200 hover:bg-white/10'}`}>
+      className={() => {
+        const isCurrent = item.id === 'debtors'
+          ? location.pathname === '/debtors'
+          : item.id === 'home'
+            ? location.pathname === '/dashboard' && !location.search
+            : location.pathname === '/dashboard' && new URLSearchParams(location.search).get('module') === (WORKSPACE_TARGETS[item.id] || 'home');
+        return compact
+          ? `flex min-h-[76px] flex-col items-center justify-center gap-1 rounded-xl border px-2 py-2 text-center text-[11px] leading-tight transition-all ${isCurrent ? 'border-[#164b87] bg-gradient-to-br from-[#164b87] to-[#2767a5] text-white shadow-md' : 'border-[#d5e2f0] bg-white text-[#24496d] shadow-sm hover:border-blue-300 hover:bg-blue-50'}`
+          : `flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-all ${isCurrent ? 'bg-gradient-to-l from-blue-700 to-blue-600 text-white shadow-md' : 'text-slate-200 hover:bg-white/10'}`;
+      }}>
       <Icon className={compact ? 'h-5 w-5' : 'h-4 w-4 shrink-0'} />
       <span>{item.label}</span>
     </NavLink>
@@ -156,6 +180,10 @@ function ModuleLink({ item, compact = false, features = [], onNavigate }) {
 export default function Version21Layout() {
   const { user, logout } = useAuth();
   const { data: features = [] } = useFeatures();
+  const { data: profile, isLoading: profileLoading } = useSarraafProfile(user?.id);
+  const { data: paidSystemEnabled, isLoading: paidSystemLoading } = usePaidSystemEnabled();
+  const { openUpgrade } = useUpgrade();
+  const accessProfile = { ...(profile || user || {}), role: user?.role || profile?.role };
   const location = useLocation();
   const navigate = useNavigate();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
@@ -181,7 +209,7 @@ export default function Version21Layout() {
             if (!items.length) return null;
             return <section key={group}>
               <h2 className="px-3 mb-1 text-[11px] font-semibold text-slate-400">{group}</h2>
-              <div className="space-y-1">{items.map(item => <ModuleLink key={item.id} item={item} features={features} />)}</div>
+              <div className="space-y-1">{items.map(item => <ModuleLink key={item.id} item={item} features={features} profile={accessProfile} profileLoading={profileLoading} paidSystemEnabled={paidSystemEnabled} paidSystemLoading={paidSystemLoading} openUpgrade={openUpgrade} />)}</div>
             </section>;
           })}
         </nav>
@@ -194,7 +222,7 @@ export default function Version21Layout() {
       </aside>}
 
       <div className="min-w-0 flex-1 flex flex-col">
-        {location.pathname !== '/dashboard' && <header className="sticky top-0 z-30 bg-gradient-to-l from-white to-[#edf4fd] border-b border-[#d5e2f0] shadow-sm">
+        {location.pathname !== '/dashboard' && <header className="sticky top-0 z-30 border-b border-[#d5e2f0] bg-gradient-to-l from-white to-[#edf4fd] pt-[env(safe-area-inset-top)] shadow-sm">
           <div className="flex items-center justify-between gap-3 px-4 md:px-6 py-3">
             <div className="min-w-0">
               <div className="font-bold text-sm md:text-base">حساب صراف</div>
@@ -230,7 +258,7 @@ export default function Version21Layout() {
             </div>
           </section>
         )}
-        <main className="flex-1 min-w-0 p-3 md:p-5 xl:p-7">
+        <main className="flex-1 min-w-0 px-2 py-3 pb-24 sm:p-3 md:p-5 xl:p-7 lg:pb-5">
           <div className="mx-auto w-full max-w-[1600px]">
             <Outlet />
           </div>
@@ -240,29 +268,29 @@ export default function Version21Layout() {
         </footer>
         {location.pathname !== '/dashboard' && (
           <>
-            <nav className="v21-route-mobile-dock" aria-label="ناوبری سریع برنامه">
+            <nav className="v21-route-mobile-dock fixed inset-x-0 bottom-0 z-40 grid grid-cols-4 gap-2 border-t border-[#d5e2f0] bg-white/95 px-3 pt-2 pb-[calc(env(safe-area-inset-bottom)+8px)] shadow-[0_-6px_24px_rgba(16,43,76,0.10)] backdrop-blur lg:hidden" aria-label="ناوبری سریع برنامه">
               {['home','customers','cash'].map(id => {
                 const item = modules.find(entry => entry.id === id);
-                return item ? <ModuleLink key={id} item={item} compact features={features} /> : null;
+                return item ? <ModuleLink key={id} item={item} compact features={features} profile={accessProfile} profileLoading={profileLoading} paidSystemEnabled={paidSystemEnabled} paidSystemLoading={paidSystemLoading} openUpgrade={openUpgrade} /> : null;
               })}
-              <button type="button" onClick={() => setMobileNavOpen(true)} aria-label="همه بخش‌های برنامه" className="v21-route-more">
+              <button type="button" onClick={() => setMobileNavOpen(true)} aria-label="همه بخش‌های برنامه" className="v21-route-more flex min-h-[76px] flex-col items-center justify-center gap-1 rounded-xl border border-[#d5e2f0] bg-[#f3f7fc] px-2 py-2 text-[11px] font-semibold text-[#164b87] shadow-sm">
                 <MoreHorizontal className="h-5 w-5" /><span>همه بخش‌ها</span>
               </button>
             </nav>
             {mobileNavOpen && (
-              <div className="v21-route-mobile-overlay" role="presentation" onClick={() => setMobileNavOpen(false)}>
-                <section role="dialog" aria-modal="true" aria-label="همه بخش‌های حساب صراف" className="v21-route-mobile-sheet" onClick={event => event.stopPropagation()}>
+              <div className="v21-route-mobile-overlay fixed inset-0 z-50 flex items-end justify-center bg-slate-950/55 p-2 backdrop-blur-[2px] sm:items-center sm:p-4" role="presentation" onClick={() => setMobileNavOpen(false)}>
+                <section role="dialog" aria-modal="true" aria-label="همه بخش‌های حساب صراف" className="v21-route-mobile-sheet flex max-h-[92dvh] w-full max-w-4xl flex-col overflow-hidden rounded-2xl border border-[#d5e2f0] bg-[#f3f7fc] shadow-2xl" onClick={event => event.stopPropagation()}>
                   <header className="flex items-center justify-between gap-3 border-b border-slate-200 px-4 py-3">
                     <div><b className="text-sm text-slate-900">همه بخش‌های حساب صراف</b><p className="mt-1 text-[11px] text-slate-500">دسترسی بر اساس نقش و مجوز حساب شما</p></div>
                     <button type="button" onClick={() => setMobileNavOpen(false)} aria-label="بستن فهرست" className="rounded-lg border border-slate-200 p-2 text-slate-600"><X className="h-5 w-5"/></button>
                   </header>
-                  <nav className="v21-route-mobile-groups" aria-label="فهرست کامل ماژول‌ها">
+                  <nav className="v21-route-mobile-groups min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain p-3" aria-label="فهرست کامل ماژول‌ها">
                     {GROUPS.map(group => {
                       const items = modules.filter(item => item.group === group);
                       if (!items.length) return null;
-                      return <section key={group} className="v21-route-mobile-group">
+                      return <section key={group} className="v21-route-mobile-group rounded-xl border border-[#d5e2f0] bg-white p-3 shadow-sm">
                         <h2>{group}</h2>
-                        <div>{items.map(item => <ModuleLink key={item.id} item={item} compact features={features} onNavigate={() => setMobileNavOpen(false)} />)}</div>
+                        <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-5">{items.map(item => <ModuleLink key={item.id} item={item} compact features={features} profile={accessProfile} profileLoading={profileLoading} paidSystemEnabled={paidSystemEnabled} paidSystemLoading={paidSystemLoading} openUpgrade={openUpgrade} onNavigate={() => setMobileNavOpen(false)} />)}</div>
                       </section>;
                     })}
                   </nav>
