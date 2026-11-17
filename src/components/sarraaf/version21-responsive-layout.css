@@ -2185,3 +2185,61 @@
  .v21-reference-quick-actions {gap:3px}
  .v21-reference-quick-actions > button {font-size:8px}
 }
+
+
+/* A1 desktop main icon toolbar: keep the primary modules in one horizontal row.
+   This intentionally overrides legacy desktop rules that changed the toolbar
+   into a vertical list. Mobile/tablet breakpoints remain unchanged. */
+@media (min-width: 1024px) {
+  html body .v21-workspace-shell .v21-laptop-toolbar > aside.v21-module-icon-row {
+    display: grid !important;
+    grid-template-columns: repeat(14, minmax(0, 1fr)) !important;
+    grid-auto-flow: row !important;
+    align-items: stretch !important;
+    justify-content: stretch !important;
+    flex-direction: initial !important;
+    flex-wrap: initial !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    max-height: none !important;
+    overflow: visible !important;
+    gap: 6px !important;
+    padding: 8px 10px !important;
+    border: 0 !important;
+    border-bottom: 1px solid #c5d2dc !important;
+    background: #e1e8ed !important;
+  }
+
+  html body .v21-workspace-shell .v21-laptop-toolbar > aside.v21-module-icon-row > button.v21-desktop-module-button {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    min-width: 0 !important;
+    min-height: 66px !important;
+    width: auto !important;
+    gap: 5px !important;
+    padding: 6px 3px !important;
+    text-align: center !important;
+  }
+
+  html body .v21-workspace-shell .v21-laptop-toolbar > aside.v21-module-icon-row > button.v21-desktop-module-button > svg {
+    display: block !important;
+    width: 22px !important;
+    height: 22px !important;
+    flex: 0 0 auto !important;
+  }
+
+  html body .v21-workspace-shell .v21-laptop-toolbar > aside.v21-module-icon-row > button.v21-desktop-module-button > span {
+    display: block !important;
+    width: 100% !important;
+    white-space: normal !important;
+    text-align: center !important;
+    font-size: 10px !important;
+    line-height: 1.25 !important;
+  }
+
+  html body .v21-workspace-shell .v21-laptop-toolbar > .v21-reference-mobile-shortcuts {
+    display: none !important;
+  }
+}
