@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
+import { directGetMe, setAppTokenHeader } from '@/lib/supabaseDirectAuth';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
@@ -65,6 +66,18 @@ export default function HexLayoutReferenceLibrary() {
     let uploaded = false;
 
     try {
+      // Validate the real HMAC creator session before touching HEX storage or metadata.
+      // The visual creator panel alone is not sufficient for Supabase RLS.
+      const appToken = localStorage.getItem('auth_token');
+      if (!appToken) {
+        throw new Error('نشست امن سازنده پیدا نشد. لطفاً از حساب سازنده خارج شوید و دوباره وارد شوید.');
+      }
+      const verifiedUser = await directGetMe(appToken);
+      if (!verifiedUser || !['creator', 'admin'].includes(verifiedUser.role)) {
+        throw new Error('نشست سازنده معتبر نیست یا دسترسی سازنده تأیید نشد. لطفاً دوباره وارد شوید.');
+      }
+      setAppTokenHeader(appToken);
+
       const { error: uploadError } = await supabase.storage
         .from(BUCKET)
         .upload(storagePath, file, {
