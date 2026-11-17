@@ -68,13 +68,21 @@ export default function HexLayoutReferenceLibrary() {
       formData.append('file', file, file.name);
       formData.append('title', title.trim() || file.name);
       formData.append('description', description.trim());
-      const { data, error } = await supabase.functions.invoke('hex-layout-upload', {
+      // Use the explicit Edge Function URL so this upload cannot fall back
+      // to the old direct Storage/table insert path that is blocked by RLS.
+      const endpoint = `${supabase.supabaseUrl.replace(/\\/+$/, '')}/functions/v1/hex-layout-upload`;
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          apikey: supabase.supabaseKey,
+          'x-app-token': appToken,
+        },
         body: formData,
-        headers: { 'x-app-token': appToken },
+        cache: 'no-store',
       });
-      if (error) throw error;
-      if (!data?.success) {
-        throw new Error(data?.error || 'بارگذاری امن تصویر انجام نشد.');
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok || data?.success !== true) {
+        throw new Error(data?.error || `بارگذاری امن انجام نشد (HTTP ${response.status}).`);
       }
 
       setTitle('');
