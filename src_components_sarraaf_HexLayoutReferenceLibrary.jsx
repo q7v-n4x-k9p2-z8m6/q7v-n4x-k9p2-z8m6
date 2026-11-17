@@ -70,7 +70,8 @@ export default function HexLayoutReferenceLibrary() {
       formData.append('description', description.trim());
       // Use the explicit Edge Function URL so this upload cannot fall back
       // to the old direct Storage/table insert path that is blocked by RLS.
-      const endpoint = `${supabase.supabaseUrl.replace(/\\/+$/, '')}/functions/v1/hex-layout-upload`;
+      const baseUrl = supabase.supabaseUrl.endsWith('/') ? supabase.supabaseUrl.slice(0, -1) : supabase.supabaseUrl;
+      const endpoint = `${baseUrl}/functions/v1/hex-layout-upload`;
       const response = await fetch(endpoint, {
         method: 'POST',
         headers: {
