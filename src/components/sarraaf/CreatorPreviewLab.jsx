@@ -6,7 +6,7 @@ import {
   Calculator, Download, Upload, Filter, Coins, Banknote, FileText, CalendarDays, MessageSquare, Bot,
   Eye, FilePlus2, ArrowDownCircle, ArrowUpCircle, Scale, Settings2,
   Archive, RotateCcw, ListChecks, CreditCard, PrinterCheck,
-  Languages, ShoppingBag, Smartphone, Wifi, Gamepad2, MessagesSquare, Headphones
+  Languages, ShoppingBag, Smartphone, Wifi, Gamepad2, MessagesSquare, Headphones, CircleDollarSign, CircleHelp
 } from 'lucide-react';
 
 const STORE_KEY = 'hisab-sarraf-lab-v2';
@@ -15,6 +15,7 @@ const MODULES = [
   {id:'home',label:'مرکز عملیات',icon:Home,group:'عمومی'},
   {id:'customers',label:'تعریف مشتریان',icon:Users,group:'تعاریف و دفاتر'},
   {id:'customerLedger',label:'دفتر حساب مشتریان',icon:BookOpen,group:'تعاریف و دفاتر'},
+  {id:'debtors',label:'بدهکاران و بستانکاران',icon:CircleDollarSign,group:'حسابداری'},
   {id:'branches',label:'تعریف نمایندگی‌ها',icon:Building2,group:'تعاریف و دفاتر'},
   {id:'branchLedger',label:'دفتر حساب نمایندگی‌ها',icon:BookText,group:'تعاریف و دفاتر'},
   {id:'cash',label:'صندوق‌ها و موجودی',icon:Wallet,group:'صندوق و بانک'},
@@ -28,6 +29,8 @@ const MODULES = [
   {id:'currencies',label:'تعریف اسعار',icon:Coins,group:'تنظیمات'},
   {id:'reports',label:'گزارش عملیات',icon:FileSpreadsheet,group:'گزارشات'},
   {id:'profit',label:'مفاد و زیان',icon:BarChart3,group:'گزارشات'},
+  {id:'activity',label:'سوابق فعالیت',icon:ClipboardList,group:'گزارشات'},
+  {id:'errors',label:'گزارش خطاها و فیلدها',icon:CircleHelp,group:'گزارشات'},
   {id:'balance',label:'بیلانس عمومی',icon:Scale,group:'گزارشات'},
   {id:'sarraafGroups',label:'گروه و چت',icon:MessagesSquare,group:'امکانات تکمیلی',skeleton:true,children:['گروه صرافان','ایجاد گروه','گفت‌وگوی گروهی','گفت‌وگوی خصوصی']},
   {id:'assistant',label:'هوش مصنوعی',icon:Bot,group:'امکانات تکمیلی',skeleton:true},
@@ -185,6 +188,9 @@ export default function CreatorPreviewLab({ mobileMode = false }){
  const rows=useMemo(()=>{
   let source=data[active]||[];
   if(active==='customerLedger') source=customerDetail?data.transactions.filter(x=>x.partyType==='customer'&&x.party===customerDetail.name):data.customers;
+  if(active==='debtors') source=data.customers;
+  if(active==='activity') source=data.activity||[];
+  if(active==='errors') source=data.errors||[];
   if(active==='branchLedger') source=branchDetail?data.transactions.filter(x=>x.partyType==='branch'&&x.party===branchDetail.name):data.branches;
   if(active==='ledger') source=data.journal;
   if(active==='reports') source=data.transactions;
@@ -315,6 +321,12 @@ export default function CreatorPreviewLab({ mobileMode = false }){
  };
  const showBookSummary=['customerLedger','branchLedger','cash','banks','journal','ledger'].includes(active);
  const columnsFor=(mod,arr)=>{
+  if(mod==='debtors')return [
+   {key:'code',label:'کد مشتری'},{key:'name',label:'نام مشتری'},{key:'currency',label:'ارز اصلی'},
+   {key:'opening',label:'مانده افتتاحیه',render:r=>fmt(r.opening)},{key:'status',label:'وضعیت حساب'}
+  ];
+  if(mod==='activity')return [{key:'date',label:'تاریخ'},{key:'user',label:'کاربر نمونه'},{key:'action',label:'عملیات'},{key:'module',label:'بخش'},{key:'status',label:'نتیجه'}];
+  if(mod==='errors')return [{key:'date',label:'تاریخ'},{key:'area',label:'بخش'},{key:'message',label:'شرح خطای نمونه'},{key:'status',label:'وضعیت'}];
   if(mod==='customerLedger'&&!customerDetail)return [
    {key:'code',label:'کد مشتری'},{key:'name',label:'نام مشتری'},{key:'currency',label:'ارز اصلی'},
    {key:'balance',label:'وضعیت و مانده حساب',render:r=><div className="flex flex-wrap gap-1">{customerSummary(r).map(x=><span key={x.currency} className={'rounded px-2 py-1 text-[10px] font-bold '+(x.status==='بدهکار'?'bg-rose-100 text-rose-800':x.status==='بستانکار'?'bg-emerald-100 text-emerald-800':'bg-slate-100 text-slate-700')}>{fmt(Math.abs(x.net))} {x.currency} · {x.status}</span>)}</div>},
