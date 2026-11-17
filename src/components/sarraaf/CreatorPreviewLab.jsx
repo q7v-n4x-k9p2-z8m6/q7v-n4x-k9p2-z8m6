@@ -105,6 +105,14 @@ const initial = () => {
   {id:'demo-j2',date:sampleDate,number:'JV-00002',description:'ثبت مصرف دفتر نمونه',debitAccount:'400 — مصارف',creditAccount:'صندوق: صندوق مرکزی افغانی',currency:'AFN',amount:4500,status:'قطعی'},
   {id:'demo-j3',date:sampleDate,number:'JV-00003',description:'واریز به حساب بانکی نمونه',debitAccount:'110 — بانک‌ها',creditAccount:'100 — صندوق',currency:'AFN',amount:20000,status:'قطعی'}
  ],
+ activity:[
+  {id:'demo-audit1',date:sampleDate,user:'صراف نمونه',action:'ثبت مشتری نمونه احمدی',module:'مشتریان',status:'موفق'},
+  {id:'demo-audit2',date:sampleDate,user:'صراف نمونه',action:'ثبت دخل صندوق آزمایشی',module:'صندوق',status:'موفق'}
+ ],
+ errors:[
+  {id:'demo-error1',date:sampleDate,area:'گزارش آزمایشی',message:'خطای نمونه برای نمایش ساختار گزارش',status:'نمونه'},
+  {id:'demo-error2',date:sampleDate,area:'اعتبارسنجی فرم',message:'فیلد مبلغ در نمونه خالی گذاشته شد',status:'نمونه'}
+ ],
  transactions:[
   {id:'demo-t1',date:sampleDate,type:'دخل',party:'مشتری نمونه احمدی',partyType:'customer',currency:'AFN',amount:12000,cash:'صندوق مرکزی افغانی',description:'دریافت وجه از مشتری نمونه'},
   {id:'demo-t2',date:sampleDate,type:'خرج',party:'مشتری نمونه رحیمی',partyType:'customer',currency:'USD',amount:-80,cash:'صندوق دالر',description:'پرداخت به مشتری نمونه'},
