@@ -2134,123 +2134,53 @@
   }
 }
 
-/* Reference-matched dashboard: separate laptop composition and purpose-built phone composition. */
-.v21-reference-header {
-  background: linear-gradient(105deg,#063a82 0%,#0d4c9e 58%,#073779 100%);
-  border-bottom: 1px solid #6c9dd3;
-  box-shadow: inset 0 -1px 0 rgb(255 255 255 / 14%);
-}
-.v21-reference-brand-mark {
-  display:grid;place-items:center;width:34px;height:34px;border:1px solid rgb(255 255 255 / 55%);
-  border-radius:50%;background:linear-gradient(145deg,#fff,#c9def8);color:#0a4c99;
-}
-.v21-reference-mobile-menu,.v21-reference-mobile-shortcuts {display:none!important}
-.v21-reference-dashboard-title {
-  min-height:54px;background:linear-gradient(100deg,#0b438d 0%,#2868b5 50%,#0b438d 100%);
-  border:1px solid #6e9fd5;box-shadow:0 2px 7px rgb(13 55 105 / 13%);
-}
-.v21-reference-stat {
-  position:relative;display:grid;grid-template-columns:1fr auto;align-items:center;gap:3px 10px;
-  min-height:78px;padding:10px 13px;border:1px solid #b8cce5;border-radius:9px;
-  background:linear-gradient(145deg,#fff 0%,#edf4fd 100%);box-shadow:0 2px 7px rgb(22 64 115 / 7%);
-}
-.v21-reference-stat svg {grid-column:2;grid-row:1/3;width:27px;height:27px;color:#1558a2;stroke-width:2.7}
-.v21-reference-stat span {grid-column:1;grid-row:1;font-size:11px;font-weight:800;color:#243f62}
-.v21-reference-stat b {grid-column:1;grid-row:2;font-size:16px;color:#102f58;font-variant-numeric:tabular-nums}
+
+/* Reference composition: layout-only overrides. All colors remain inherited from the existing Version 21 palette. */
+.v21-reference-mobile-shortcuts {display:none}
+.v21-reference-dashboard-title {display:flex;align-items:center;gap:12px}
+.v21-reference-stat {display:flex;align-items:center;justify-content:space-between;gap:10px;min-width:0}
+.v21-reference-stat span {min-width:0}
+.v21-reference-stat b {white-space:nowrap}
 .v21-reference-group {min-width:0}
-.v21-reference-group .v21-module-tile {
-  min-width:0;min-height:92px;padding:9px 5px;border-radius:9px;border-color:#c6d7ec;
-  background:linear-gradient(180deg,#fff 0%,#eaf2fd 100%);box-shadow:0 2px 6px rgb(24 67 121 / 7%);
-}
-.v21-reference-group .v21-module-icon {
-  width:38px;height:38px;border-radius:9px;box-shadow:none;
-}
-.v21-reference-group .v21-module-icon svg {width:22px;height:22px}
-.v21-reference-group .v21-module-tile b {font-size:11px;color:#183c6b}
-.v21-reference-quick > div > button {
-  display:flex;min-width:0;min-height:64px;align-items:center;justify-content:center;gap:8px;
-  padding:8px;border:1px solid #b9cde5;border-radius:9px;
-  background:linear-gradient(180deg,#fff,#eaf2fc);color:#173c6c;font-size:11px;font-weight:800;
-  box-shadow:0 2px 6px rgb(24 67 121 / 7%);
-}
-.v21-reference-quick > div > button svg {width:23px;height:23px;flex:0 0 auto;color:#1558a2;stroke-width:2.6}
-.v21-reference-record-actions {min-height:48px}
-.v21-reference-record-actions button {
-  display:flex;align-items:center;gap:6px;padding:7px 12px;border:1px solid #b8cce3;border-radius:7px;
-  background:linear-gradient(180deg,#fff,#edf4fd);color:#173c6c;font-size:11px;font-weight:800;
-}
-.v21-reference-record-actions button svg {width:17px;height:17px}
-.v21-reference-record-actions button:disabled {opacity:.38;cursor:not-allowed}
-.v21-laptop-menu-bar {
-  display:flex;align-items:center;justify-content:flex-start;gap:4px;min-height:36px;
-  padding:3px 12px;background:linear-gradient(180deg,#fff,#edf3fb);border-bottom:1px solid #c6d7ea;
-}
-.v21-laptop-menu-trigger {padding:7px 12px;color:#172d4b;font-size:12px;font-weight:800;border-radius:6px}
-.v21-laptop-menu-trigger:hover,.v21-laptop-menu-trigger.is-open {background:#dceafd;color:#0d4b91}
-.v21-module-icon-row {display:grid!important;grid-template-columns:repeat(14,minmax(0,1fr));}
-.v21-module-icon-row .v21-toolbar-module {min-height:82px;border-radius:8px}
-.v21-module-icon-row .v21-toolbar-module span:last-child {font-size:10px;min-height:25px}
-.v21-workspace-shell {border-color:#8ba8ca!important;background:#e7eef8!important;box-shadow:0 8px 28px rgb(10 48 93 / 13%)!important}
-.v21-workspace-shell > div.flex.min-h-0 {min-height:0}
-.v21-workspace-shell main {background:linear-gradient(180deg,#f8fbff,#edf3fc)!important}
+.v21-reference-group-tiles > div {min-width:0}
+.v21-reference-quick-actions > button {display:inline-flex;align-items:center;justify-content:center;gap:5px;min-height:42px}
+.v21-reference-record-actions {display:flex;flex-wrap:wrap;align-items:center}
 @media (min-width: 1024px) {
-  .v21-workspace-shell {max-height:calc(100dvh - 135px)!important;min-height:680px!important}
-  .v21-reference-groups {grid-template-columns:repeat(3,minmax(0,1fr))!important}
-  .v21-reference-group > div {grid-template-columns:repeat(3,minmax(0,1fr))!important}
+ .v21-reference-groups {grid-template-columns:repeat(3,minmax(0,1fr))}
+ .v21-reference-group-tiles {display:grid;grid-template-columns:repeat(3,minmax(0,1fr))}
+ .v21-module-icon-row {grid-template-columns:repeat(14,minmax(0,1fr))}
+ .v21-module-icon-row .v21-toolbar-module {min-height:78px}
 }
 @media (max-width: 1023px) {
-  .v21-reference-header {min-height:66px!important;padding:10px 14px!important}
-  .v21-reference-mobile-menu {display:grid!important;place-items:center}
-  .v21-laptop-toolbar {display:block!important}
-  .v21-laptop-menu-bar,.v21-module-icon-row {display:none!important}
-  .v21-reference-mobile-shortcuts {
-    display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;
-    padding:7px 8px;border-bottom:1px solid #c3d5eb;
-    background:linear-gradient(180deg,#f6faff,#e3edf9);
-  }
-  .v21-reference-mobile-shortcuts button {
-    display:flex;min-width:0;min-height:70px;flex-direction:column;align-items:center;justify-content:center;gap:5px;
-    border:1px solid #c6d8ed;border-radius:8px;background:linear-gradient(180deg,#fff,#eaf2fd);
-    color:#124f97;font-size:10px;font-weight:800;text-align:center;
-  }
-  .v21-reference-mobile-shortcuts button svg {width:23px;height:23px;stroke-width:2.5}
-  .v21-reference-mobile-shortcuts button.is-current {background:#d9eaff;border-color:#78a8dc}
-  .v21-workspace-shell {max-height:none!important;min-height:0!important;height:auto!important;border-radius:12px!important;overflow:visible!important}
-  .v21-workspace-shell > div.flex.min-h-0 {overflow:visible!important}
-  .v21-workspace-shell main {padding:10px!important;overflow:visible!important}
-  .v21-reference-dashboard-title {min-height:48px;padding:8px 10px!important}
-  .v21-reference-dashboard-title h2 {font-size:15px!important}
-  .v21-reference-dashboard-title p {display:none}
-  .v21-reference-dashboard-title svg {width:21px;height:21px}
-  .v21-reference-stat {min-height:82px;padding:8px 9px;border-radius:9px}
-  .v21-reference-stat svg {width:23px;height:23px}
-  .v21-reference-stat span {font-size:10px}
-  .v21-reference-stat b {font-size:15px}
-  .v21-reference-groups {grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:9px!important}
-  .v21-reference-group .v21-module-tile {min-height:88px;padding:7px 4px;gap:6px}
-  .v21-reference-group .v21-module-icon {width:34px;height:34px}
-  .v21-reference-group .v21-module-icon svg {width:19px;height:19px}
-  .v21-reference-group .v21-module-tile b {font-size:10px;line-height:1.35}
-  .v21-reference-quick > div {grid-template-columns:repeat(5,minmax(0,1fr))!important;gap:5px!important;padding:7px!important}
-  .v21-reference-quick > div > button {min-height:66px;flex-direction:column;gap:4px;padding:5px 2px;font-size:9px;line-height:1.25}
-  .v21-reference-quick > div > button svg {width:20px;height:20px}
-  .v21-reference-record-actions {display:none!important}
-  .v21-mobile-bottom {position:fixed!important;right:0!important;bottom:0!important;left:0!important;z-index:130!important;
-    display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:4px!important;
-    padding:7px 8px calc(7px + env(safe-area-inset-bottom))!important;border-top:1px solid #c0d2e8!important;
-    background:rgb(247 250 255 / 97%)!important;box-shadow:0 -5px 18px rgb(20 56 96 / 10%)!important;backdrop-filter:blur(12px)}
-  .v21-mobile-bottom button {display:flex;min-width:0;min-height:52px;flex-direction:column;align-items:center;justify-content:center;gap:3px;
-    border:1px solid #d0deef;border-radius:8px;background:linear-gradient(180deg,#fff,#edf4fd);color:#315b8b;font-size:10px;font-weight:800}
-  .v21-mobile-bottom button svg {width:20px;height:20px}
-  .v21-mobile-bottom button.is-current {color:#0751a2;background:#e0edff;border-color:#7da9d8}
-  .v21-workspace-shell footer {display:none!important}
-  .v21-workspace-root {padding-bottom:calc(68px + env(safe-area-inset-bottom))!important}
+ .v21-laptop-toolbar {display:none!important}
+ .v21-reference-mobile-shortcuts {
+  display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;
+  padding:8px; 
+ }
+ .v21-reference-mobile-shortcuts button {
+  display:flex;min-width:0;min-height:66px;flex-direction:column;align-items:center;justify-content:center;gap:5px;
+  padding:6px 3px;text-align:center;
+ }
+ .v21-reference-mobile-shortcuts button svg {width:22px;height:22px;flex:0 0 auto}
+ .v21-reference-mobile-shortcuts button span {font-size:10px;line-height:1.3}
+ .v21-workspace-shell {height:auto!important;max-height:none!important;min-height:0!important;overflow:visible!important}
+ .v21-workspace-shell > div.flex.min-h-0 {overflow:visible!important}
+ .v21-workspace-shell main {overflow:visible!important;padding:10px!important}
+ .v21-reference-dashboard-title {align-items:center;min-height:48px}
+ .v21-reference-dashboard-title p {display:none}
+ .v21-reference-groups {grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+ .v21-reference-group-tiles {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+ .v21-reference-group-tiles > div {min-width:0;flex:initial}
+ .v21-reference-quick-actions {display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:5px}
+ .v21-reference-quick-actions > button {min-width:0;min-height:64px;flex-direction:column;gap:4px;padding:5px 2px;font-size:9px;line-height:1.25}
+ .v21-reference-quick-actions > button svg {width:20px;height:20px}
+ .v21-mobile-bottom {position:fixed!important;right:0!important;bottom:0!important;left:0!important;z-index:130!important}
+ .v21-workspace-root {padding-bottom:calc(68px + env(safe-area-inset-bottom))!important}
+ .v21-workspace-shell footer {display:none!important}
 }
 @media (max-width: 390px) {
-  .v21-reference-groups {gap:7px!important}
-  .v21-reference-group .v21-module-tile {min-height:82px}
-  .v21-reference-group .v21-module-tile b {font-size:9px}
-  .v21-reference-quick > div {gap:3px!important;padding:5px!important}
-  .v21-reference-quick > div > button {font-size:8px}
-  .v21-reference-stat {padding:7px}
+ .v21-reference-groups {gap:7px}
+ .v21-reference-group-tiles {gap:5px}
+ .v21-reference-quick-actions {gap:3px}
+ .v21-reference-quick-actions > button {font-size:8px}
 }
