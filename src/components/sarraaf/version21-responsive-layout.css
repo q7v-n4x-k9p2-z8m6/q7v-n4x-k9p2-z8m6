@@ -2470,3 +2470,72 @@
     align-items: center !important;
   }
 }
+
+
+/* Final laptop action controls: four clearly separated rectangular cells.
+   Keep the actions in one row; avoid pill-shaped/merged button styling.
+   This override is desktop-only and leaves all phone rules untouched. */
+@media (min-width: 901px) {
+  html body .v21-workspace-shell > .v21-lt-status {
+    min-height: 62px !important;
+    padding: 7px 14px !important;
+    gap: 18px !important;
+    background: #edf2f7 !important;
+    border-top: 1px solid #b9c8d6 !important;
+  }
+
+  html body .v21-workspace-shell > .v21-lt-status > .v21-lt-status-actions {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    align-items: stretch !important;
+    gap: 9px !important;
+  }
+
+  html body .v21-workspace-shell > .v21-lt-status > .v21-lt-status-actions > button {
+    display: flex !important;
+    flex: 0 0 76px !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 3px !important;
+    width: 76px !important;
+    min-width: 76px !important;
+    max-width: 76px !important;
+    min-height: 48px !important;
+    padding: 4px 6px !important;
+    border: 1px solid #b8c8d8 !important;
+    border-radius: 4px !important;
+    background: linear-gradient(180deg, #ffffff 0%, #f5f8fb 100%) !important;
+    color: #29465f !important;
+    font-size: 11px !important;
+    font-weight: 700 !important;
+    line-height: 1.2 !important;
+    box-shadow: 0 1px 2px rgb(24 55 78 / 8%) !important;
+    white-space: nowrap !important;
+  }
+
+  html body .v21-workspace-shell > .v21-lt-status > .v21-lt-status-actions > button:hover:not(:disabled) {
+    border-color: #789bb8 !important;
+    background: #eaf2f9 !important;
+  }
+
+  html body .v21-workspace-shell > .v21-lt-status > .v21-lt-status-actions > button:disabled {
+    opacity: .48 !important;
+    cursor: not-allowed !important;
+    box-shadow: none !important;
+  }
+
+  html body .v21-workspace-shell > .v21-lt-status > .v21-lt-status-actions > button > svg {
+    width: 17px !important;
+    height: 17px !important;
+    flex: 0 0 17px !important;
+  }
+
+  html body .v21-workspace-shell > .v21-lt-status > .v21-lt-status-info {
+    gap: 10px !important;
+    color: #52677a !important;
+    font-size: 10px !important;
+    white-space: nowrap !important;
+  }
+}
