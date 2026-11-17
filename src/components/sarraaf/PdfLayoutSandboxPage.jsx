@@ -92,7 +92,7 @@ export default function PdfLayoutSandboxPage() {
         <nav className="flex min-h-11 shrink-0 flex-wrap items-center justify-start gap-x-6 gap-y-2 border-b border-[#c8d5e8] bg-[#f7f9fc] px-3 py-2 text-[13px] font-bold">
           {menus.map((label) => <span key={label} className="whitespace-nowrap">{label}</span>)}
         </nav>
-        <div className="grid shrink-0 items-stretch gap-1 border-b border-[#c8d5e8] bg-[#f0f4fa] px-2 py-1 [grid-template-columns:repeat(7,minmax(0,1fr))] xl:[grid-template-columns:repeat(14,minmax(0,1fr))]" style={desktopRequestedOnPhone ? { gridTemplateColumns: "repeat(14,minmax(0,1fr))" } : undefined}>
+        <div className="grid min-h-[90px] shrink-0 items-stretch gap-1 border-b border-[#c8d5e8] bg-[#f0f4fa] px-2 py-1 [grid-template-columns:repeat(7,minmax(0,1fr))] xl:[grid-template-columns:repeat(14,minmax(0,1fr))]" style={desktopRequestedOnPhone ? { gridTemplateColumns: "repeat(14,minmax(0,1fr))" } : undefined}>
           {toolbar.map(([Icon, label]) => (
             <div key={label} className="flex min-w-0 flex-1 flex-col items-center justify-center gap-1 text-center text-[10px] font-bold leading-4 text-[#14213d]">
               <Icon className="h-6 w-6 shrink-0 text-[#1f4e9f]" />
@@ -101,12 +101,12 @@ export default function PdfLayoutSandboxPage() {
           ))}
         </div>
         <main className="flex flex-1 flex-col gap-3 p-[10px]">
-          <header className="grid h-[55px] shrink-0 grid-cols-3 items-center rounded-md bg-[#285aa7] px-4 text-white">
+          <header className="grid min-h-[55px] shrink-0 grid-cols-[1fr_auto_1fr] items-center gap-2 rounded-md bg-[#285aa7] px-4 text-white">
             <div className="flex items-center gap-2 text-[14px]"><CalendarDays className="h-6 w-6" /><span>سه‌شنبه، ۱۶ آبان ۱۴۰۴</span></div>
             <h1 className="text-center text-[23px] font-bold">مرکز عملیات صرافی</h1>
             <Home className="h-7 w-7 justify-self-end" />
           </header>
-          <div className="grid shrink-0 grid-cols-2 gap-2 xl:grid-cols-4" style={desktopRequestedOnPhone ? { gridTemplateColumns: "repeat(4,minmax(0,1fr))" } : undefined}>
+          <div className="grid min-h-[78px] shrink-0 grid-cols-2 gap-2 xl:grid-cols-4" style={desktopRequestedOnPhone ? { gridTemplateColumns: "repeat(4,minmax(0,1fr))" } : undefined}>
             {stats.map(([Icon, label]) => (
               <div key={label} className="flex flex-col justify-center gap-2 border border-[#c4d3ec] bg-[#f8fafe] px-3">
                 <div className="flex items-center gap-2 whitespace-nowrap text-[14px] font-bold"><Icon className="h-5 w-5 text-[#1f4e9f]" />{label}</div>
