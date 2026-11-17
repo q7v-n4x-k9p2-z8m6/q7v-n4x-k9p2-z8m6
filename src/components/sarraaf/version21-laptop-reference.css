@@ -5,6 +5,17 @@
 @media (min-width: 1024px) {
   /* The outer app shell has unrelated dashboard chrome outside the reference window.
      Conceal it only while the PDF window is active; leave the underlying JSX intact. */
+  /* Hide the shared application chrome only on the PDF desktop dashboard.
+     The same Layout component is used by every route; the :has guard keeps all other
+     pages and the mobile experience unchanged. */
+  html body:has(.v21-lt-titlebar) .v21-app-shell > aside,
+  html body:has(.v21-lt-titlebar) .v21-app-shell > div > header {
+    display: none !important;
+  }
+  html body:has(.v21-lt-titlebar) .v21-app-shell > div {
+    min-height: 0 !important;
+    overflow: hidden !important;
+  }
   html body:has(.v21-lt-titlebar) .v21-app-shell > div > main {
     padding: 28px !important;
     min-height: 0 !important;
@@ -12,8 +23,10 @@
   }
   html body:has(.v21-lt-titlebar) .v21-app-shell > div > main > div {
     width: 100% !important;
+    height: 100% !important;
     max-width: 1600px !important;
     margin: 0 auto !important;
+    padding: 0 !important;
   }
   html body:has(.v21-lt-titlebar) .v21-app-shell > div > footer,
   html body:has(.v21-lt-titlebar) .v21-app-shell > div > section[role="status"] {
