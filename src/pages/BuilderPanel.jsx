@@ -153,6 +153,7 @@ export default function BuilderPanel() {
 
   const activeCategoryTabs = visibleCategories.find((category) => category.value === activeCategory)?.tabs || [];
   const activeTabInfo = activeCategoryTabs.find((group) => group.value === activeTab);
+  const ActiveCategoryIcon = visibleCategories.find((category) => category.tabs.some((group) => group.value === activeTab))?.icon || LayoutGrid;
 
   useEffect(() => {
     const selectedCategory = visibleCategories.find((category) => category.value === activeCategory) || visibleCategories[0];
@@ -310,6 +311,23 @@ export default function BuilderPanel() {
             {activeTabInfo?.description || 'یک بخش را برای مدیریت انتخاب کنید'}
           </p>
         </div>
+
+        {/* شماره و عنوان بخش انتخاب‌شده؛ فقط نمایش در پنل سازنده */}
+        {activeTabInfo && (
+          <div className="mb-4 rounded-xl border border-primary/20 bg-primary/5 px-4 py-3" dir="rtl">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                <ActiveCategoryIcon className="h-5 w-5" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-[10px] text-muted-foreground">بخش انتخاب‌شده در پنل سازنده</p>
+                <h2 className="text-sm font-bold">
+                  {getPanelNumber(TAB_GROUPS.findIndex((group) => group.value === activeTab))} · {activeTabInfo.label}
+                </h2>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* نقشه ساختار و آیکون‌ها — فقط مشاهده؛ بدون نوشتن در پایگاه داده */}
         <TabsContent value="structure">
