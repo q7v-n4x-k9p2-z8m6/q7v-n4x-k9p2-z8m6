@@ -1,7 +1,7 @@
 import React from 'react';
 import Version21Workspace from './Version21Workspace';
 import './version21-responsive-layout.css';
-import './version21-laptop-reference.css';
+import './version21-laptop-reference.pre-pdf-layout.css';
 
 // Version 21 shares one module set across laptop and mobile;
 // the responsive stylesheet changes presentation only.
