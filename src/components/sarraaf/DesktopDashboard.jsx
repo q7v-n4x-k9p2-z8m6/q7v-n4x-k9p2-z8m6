@@ -1,112 +1,159 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { buildSummaryCards } from '@/lib/dashboardStats';
-import { ArrowLeftRight, Repeat, Send, Download, Receipt, BookOpen, Landmark, FileText, ShoppingBag } from 'lucide-react';
-import DashboardIdentityBar from '@/components/sarraaf/DashboardIdentityBar';
-import DesktopSummaryCards from '@/components/sarraaf/DesktopSummaryCards';
-import CurrencyRatesTable from '@/components/sarraaf/CurrencyRatesTable';
-import DashboardCharts from '@/components/sarraaf/DashboardCharts';
-import RecentTransactionsCard from '@/components/sarraaf/RecentTransactionsCard';
-import DesktopSidePanel from '@/components/sarraaf/DesktopSidePanel';
-import DesktopPlanPanel from '@/components/sarraaf/DesktopPlanPanel';
+import {
+  ArrowLeftRight, Repeat, Send, Download, Receipt, BookOpen, Landmark,
+  FileText, ShoppingBag, Users, Wallet, RefreshCw, CalendarDays,
+  Home, Bot, MessageSquare, Settings, Banknote, ChevronDown,
+} from 'lucide-react';
 
 const GROUPS = [
   { title: 'تعاریف و دفاتر', icon: BookOpen, paths: ['/customers', '/agents', '/debtors', '/transfer-book', '/journal', '/general-ledger'] },
   { title: 'صندوق و بانک', icon: Landmark, paths: ['/cash', '/bank', '/currencies', '/convert'] },
   { title: 'عملیات صرافی', icon: ArrowLeftRight, paths: ['/dadogereft', '/trade', '/transfers/send', '/transfers/receive'] },
   { title: 'حسابداری و گزارشات', icon: FileText, paths: ['/reports', '/profit-loss', '/balance-sheet', '/reconciliation', '/receipt'] },
-  { title: 'امکانات تکمیلی', icon: ShoppingBag, paths: ['/online-products', '/sarraaf-market', '/sarraaf-chat', '/chat', '/settings', '/assistant'] },
+  { title: 'امکانات تکمیلی', icon: ShoppingBag, paths: ['/online-products', '/sarraaf-market', '/sarraaf-chat', '/chat', '/assistant'] },
+  { title: 'تنظیمات', icon: Settings, paths: ['/settings'] },
 ];
 
 const QUICK_ACTIONS = [
-  { label: 'معامله اسعار', path: '/trade', icon: Repeat, tone: 'from-violet-600 to-indigo-600' },
-  { label: 'حواله دریافتی', path: '/transfers/receive', icon: Download, tone: 'from-emerald-600 to-teal-600' },
-  { label: 'حواله ارسالی', path: '/transfers/send', icon: Send, tone: 'from-orange-500 to-amber-600' },
-  { label: 'ثبت عملیات صرافی', path: '/dadogereft', icon: ArrowLeftRight, tone: 'from-blue-600 to-sky-600' },
-  { label: 'ثبت دریافت', path: '/receipt', icon: Receipt, tone: 'from-rose-600 to-pink-600' },
+  { label: 'معامله اسعار', path: '/trade', icon: Repeat },
+  { label: 'حواله دریافتی', path: '/transfers/receive', icon: Download },
+  { label: 'حواله ارسالی', path: '/transfers/send', icon: Send },
+  { label: 'ثبت عملیات صرافی', path: '/dadogereft', icon: ArrowLeftRight },
+  { label: 'ثبت دریافت', path: '/receipt', icon: Receipt },
 ];
 
-export default function DesktopDashboard({ profile, features, userRole, paidSystemEnabled, currencies, curLoading, txs, txLoading, customers, custLoading, treasuryBalances, treasuryLoading, bankBalances, bankLoading, debtorCount, plan, links = [] }) {
-  const cards = buildSummaryCards({
-    txs, customers, treasuryBalances, bankBalances, debtorCount, currencies,
-    loading: { bank: bankLoading, treasury: treasuryLoading, customers: custLoading, sent: txLoading, received: txLoading },
-  });
+const TOP_ICONS = [
+  { path: '/customers', icon: Users, label: 'دفتر حساب مشتریان' },
+  { path: '/agents', icon: Users, label: 'تعریف نمایندگی‌ها' },
+  { path: '/debtors', icon: Wallet, label: 'دفتر حساب بدهکاران' },
+  { path: '/bank', icon: Landmark, label: 'بانک و چک' },
+  { path: '/transfer-book', icon: ArrowLeftRight, label: 'دفتر حواله‌ها' },
+  { path: '/cash', icon: Banknote, label: 'صندوق‌ها و موجودی' },
+  { path: '/trade', icon: Repeat, label: 'خرید و فروش اسعار' },
+  { path: '/receipt', icon: Receipt, label: 'مصارف و پرداخت‌ها' },
+  { path: '/journal', icon: FileText, label: 'دفتر روزنامچه' },
+  { path: '/sarraaf-chat', icon: MessageSquare, label: 'گروه و چت' },
+  { path: '/assistant', icon: Bot, label: 'هوش مصنوعی' },
+  { path: '/online-products', icon: ShoppingBag, label: 'محصولات آنلاین' },
+  { path: '/settings', icon: Settings, label: 'تنظیمات' },
+];
 
+const number = value => new Intl.NumberFormat('fa-IR').format(Number(value) || 0);
+
+export default function DesktopDashboard({
+  profile, features, userRole, paidSystemEnabled, currencies, curLoading,
+  txs, txLoading, customers, custLoading, treasuryBalances, treasuryLoading,
+  bankBalances, bankLoading, debtorCount, plan, links = [],
+}) {
+  const byPath = new Map(links.map(link => [link.path, link]));
+  const groups = GROUPS.map(group => ({
+    ...group,
+    entries: group.paths.map(path => byPath.get(path)).filter(Boolean),
+  })).filter(group => group.entries.length);
   const usedPaths = new Set(GROUPS.flatMap(group => group.paths));
-  const allowedQuickActions = QUICK_ACTIONS.filter(action => links.some(link => link.path === action.path));
-  const grouped = [
-    ...GROUPS.map(group => ({
-      title: group.title,
-      entries: group.paths.map(path => links.find(link => link.path === path)).filter(Boolean),
-    })),
-    { title: 'سایر امکانات', entries: links.filter(link => !usedPaths.has(link.path)) },
-  ].filter(group => group.entries.length);
+  const extras = links.filter(link => !usedPaths.has(link.path));
+  const today = new Date().toISOString().slice(0, 10);
+  const todayCount = (txs || []).filter(tx => tx.date === today).length;
+  const cashCount = treasuryLoading ? '…' : number((treasuryBalances || []).length);
+  const bankCount = bankLoading ? '…' : number(new Set((bankBalances || []).map(row => row.bank_id ?? row.bank_name)).size);
+  const customerCount = custLoading ? '…' : number((customers || []).length);
+  const operationCount = txLoading ? '…' : number(todayCount);
+  const date = new Intl.DateTimeFormat('fa-IR', { dateStyle: 'full' }).format(new Date());
+  const topLinks = TOP_ICONS.map(item => ({ ...item, link: byPath.get(item.path) })).filter(item => item.link);
+  const quickLinks = QUICK_ACTIONS.map(item => ({ ...item, link: byPath.get(item.path) })).filter(item => item.link);
 
   return (
-    <div className="space-y-4">
-      <div className="rounded-xl border border-[#164f9d] bg-gradient-to-l from-[#073b83] via-[#1557a8] to-[#0b438f] px-4 py-3 text-white shadow-sm">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <div className="flex items-center gap-2">
-            <div className="rounded-lg bg-white/15 p-2"><Receipt className="h-5 w-5" /></div>
-            <div>
-              <h1 className="text-lg font-extrabold">مرکز عملیات صرافی</h1>
-              <p className="text-xs text-blue-100">داشبورد مدیریت حساب صراف</p>
-            </div>
-          </div>
-          <span className="text-xs text-blue-100">{new Intl.DateTimeFormat('fa-IR', { dateStyle: 'full' }).format(new Date())}</span>
+    <div dir="rtl" className="space-y-3 rounded-xl bg-[#e8eef8] p-2 text-slate-900">
+      <div className="flex flex-wrap items-center justify-between gap-2 rounded-t-xl bg-gradient-to-l from-[#06377c] to-[#1557a5] px-4 py-2 text-white shadow-sm">
+        <div className="flex items-center gap-2">
+          <span className="grid h-8 w-8 place-items-center rounded-full border border-white/50 bg-white/10"><Home className="h-5 w-5" /></span>
+          <strong className="text-sm">حساب صراف — مرکز عملیات</strong>
         </div>
+        <span className="text-xs text-blue-100">نسخه دسکتاپ</span>
       </div>
 
-      <DashboardIdentityBar profile={profile} />
-      <DesktopSummaryCards cards={cards} />
-
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-3">
-        {grouped.map(group => (
-          <section key={group.title} className="overflow-hidden rounded-xl border border-[#b7cbe8] bg-gradient-to-b from-[#fdfefe] to-[#edf4ff] shadow-card">
-            <div className="flex items-center justify-between border-b border-[#c4d5ee] bg-gradient-to-l from-[#d8e7fb] to-[#eef4fd] px-3 py-2"><div className="flex items-center gap-2"><span className="grid h-7 w-7 place-items-center rounded-lg bg-white text-[#164f9d] shadow-sm"><group.icon className="h-4 w-4" /></span><h2 className="text-sm font-extrabold text-slate-800">{group.title}</h2></div><span className="rounded-full border border-blue-200 bg-white/80 px-2 py-0.5 text-[10px] font-bold text-blue-800">{group.entries.length}</span></div>
-            <div className="grid grid-cols-2 gap-1.5 p-2">
-              {group.entries.map(link => {
+      <nav aria-label="منوهای اصلی" className="flex flex-wrap items-center justify-start gap-1 rounded-lg border border-[#c2d1e6] bg-[#f4f7fc] px-3 py-2 text-xs font-bold text-[#173e70] shadow-sm">
+        {GROUPS.map(group => (
+          <details key={group.title} className="group relative">
+            <summary className="flex cursor-pointer list-none items-center gap-1 rounded-md px-3 py-1.5 hover:bg-blue-100">
+              {group.title}<ChevronDown className="h-3 w-3" />
+            </summary>
+            <div className="absolute right-0 top-full z-30 mt-1 min-w-48 rounded-md border border-blue-200 bg-white p-1 shadow-xl">
+              {group.paths.map(path => {
+                const link = byPath.get(path);
+                if (!link) return null;
                 const Icon = link.icon;
-                return (
-                  <Link key={link.path} to={link.path} className="group flex min-h-[88px] flex-col items-center justify-center gap-2 rounded-xl border border-[#c6d5e9] bg-gradient-to-b from-white to-[#edf4ff] px-2 py-3 text-center text-slate-800 shadow-[0_2px_7px_rgba(28,74,130,0.06)] transition duration-200 hover:-translate-y-0.5 hover:border-blue-300 hover:shadow-md">
-                    <span className={`grid h-11 w-11 place-items-center rounded-xl bg-gradient-to-br ${link.gradient || 'from-blue-600 to-blue-700'} text-white shadow-md ring-1 ring-white/70 transition group-hover:scale-105`}><Icon className="h-5 w-5" strokeWidth={2.2} /></span>
-                    <span className="text-xs font-bold leading-tight">{link.label}</span>
-                  </Link>
-                );
+                return <Link key={path} to={path} className="flex items-center gap-2 rounded px-3 py-2 text-right text-xs text-slate-700 hover:bg-blue-50"><Icon className="h-4 w-4 text-blue-700" />{link.label}</Link>;
               })}
             </div>
-          </section>
+          </details>
+        ))}
+      </nav>
+
+      <div className="grid grid-cols-4 gap-1 rounded-lg border border-[#bdcde4] bg-[#f5f8fd] p-1.5 sm:grid-cols-6 xl:grid-cols-12">
+        {topLinks.map(({ path, icon: Icon, label, link }) => (
+          <Link key={path} to={path} title={label} className="flex min-h-[76px] min-w-0 flex-col items-center justify-center gap-1 rounded-md border border-[#d1dced] bg-gradient-to-b from-white to-[#e9f0fb] px-1 py-2 text-center text-[10px] font-bold text-[#173e70] shadow-sm transition hover:border-blue-400 hover:bg-blue-50">
+            <Icon className="h-5 w-5 text-[#1557a5]" />
+            <span className="leading-tight">{link.label}</span>
+          </Link>
         ))}
       </div>
 
-      <section className="rounded-xl border border-blue-200 bg-white p-3 shadow-card">
-        <h2 className="mb-2 text-sm font-extrabold text-slate-800">عملیات سریع</h2>
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
-          {allowedQuickActions.map(action => {
+      <div className="flex items-center justify-between rounded-lg bg-gradient-to-l from-[#174b91] to-[#2865ad] px-4 py-3 text-white shadow-sm">
+        <Home className="h-7 w-7" />
+        <h1 className="text-lg font-extrabold">مرکز عملیات صرافی</h1>
+        <div className="flex items-center gap-2 text-xs text-blue-50"><CalendarDays className="h-5 w-5" />{date}</div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-2 xl:grid-cols-4">
+        {[
+          { label: 'تعداد مشتریان', value: customerCount, icon: Users },
+          { label: 'صندوق‌های تعریف‌شده', value: cashCount, icon: Wallet },
+          { label: 'عملیات امروز', value: operationCount, icon: RefreshCw },
+          { label: 'حساب‌های بانکی', value: bankCount, icon: Landmark },
+        ].map(card => {
+          const Icon = card.icon;
+          return <section key={card.label} className="flex min-h-[78px] items-center justify-between rounded-lg border border-[#b9cbe5] bg-gradient-to-b from-[#f9fbff] to-[#e7effb] px-4 py-3 shadow-sm">
+            <div><h2 className="text-xs font-extrabold text-[#173e70]">{card.label}</h2><b className="mt-2 block text-base tabular-nums text-slate-800">{card.value}</b></div>
+            <Icon className="h-7 w-7 text-[#1557a5]" />
+          </section>;
+        })}
+      </div>
+
+      <div className="grid grid-cols-1 gap-2 xl:grid-cols-3">
+        {groups.map(group => {
+          const Icon = group.icon;
+          return <section key={group.title} className="overflow-hidden rounded-lg border border-[#b9cbe5] bg-gradient-to-b from-[#f8fbff] to-[#e8f0fc] shadow-sm">
+            <div className="border-b border-[#c2d3eb] bg-gradient-to-l from-[#d6e5fa] to-[#eef4fd] px-3 py-2 text-sm font-extrabold text-[#173e70]">{group.title}</div>
+            <div className="grid grid-cols-2 gap-1 p-1.5">
+              {group.entries.map(link => {
+                const TileIcon = link.icon;
+                return <Link key={link.path} to={link.path} className="flex min-h-[82px] flex-col items-center justify-center gap-2 rounded-md border border-[#cfdaea] bg-gradient-to-b from-white to-[#edf3fc] px-2 py-2 text-center text-xs font-bold text-slate-800 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-400 hover:shadow-md">
+                  <TileIcon className="h-6 w-6 text-[#1557a5]" strokeWidth={2.2} />
+                  <span className="leading-tight">{link.label}</span>
+                </Link>;
+              })}
+            </div>
+          </section>;
+        })}
+        {extras.length > 0 && <section className="overflow-hidden rounded-lg border border-[#b9cbe5] bg-white shadow-sm">
+          <div className="border-b border-[#c2d3eb] bg-[#e4eefb] px-3 py-2 text-sm font-extrabold text-[#173e70]">سایر امکانات</div>
+          <div className="grid grid-cols-2 gap-1 p-1.5">{extras.map(link => {const Icon=link.icon;return <Link key={link.path} to={link.path} className="flex min-h-[76px] flex-col items-center justify-center gap-2 rounded-md border border-[#cfdaea] bg-[#f8fbff] p-2 text-center text-xs font-bold"><Icon className="h-5 w-5 text-blue-700"/>{link.label}</Link>;})}</div>
+        </section>}
+      </div>
+
+      <section className="overflow-hidden rounded-lg border border-[#b9cbe5] bg-[#f0f5fd] shadow-sm">
+        <h2 className="border-b border-[#c2d3eb] bg-gradient-to-l from-[#d6e5fa] to-[#eef4fd] px-3 py-2 text-sm font-extrabold text-[#173e70]">عملیات سریع</h2>
+        <div className="grid grid-cols-2 gap-2 p-2 sm:grid-cols-3 xl:grid-cols-5">
+          {quickLinks.map(action => {
             const Icon = action.icon;
-            return (
-              <Link key={action.path + action.label} to={action.path} className="group flex min-h-[68px] items-center justify-center gap-2 rounded-xl border border-[#d0dced] bg-gradient-to-b from-white to-[#edf4ff] px-2 py-2 text-center text-xs font-bold text-slate-800 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-300 hover:shadow-md">
-                <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-gradient-to-br ${action.tone} text-white shadow-sm`}><Icon className="h-4 w-4" /></span>
-                <span>{action.label}</span>
-              </Link>
-            );
+            return <Link key={action.path + action.label} to={action.path} className="flex min-h-[62px] items-center justify-center gap-2 rounded-md border border-[#c6d5e9] bg-gradient-to-b from-white to-[#eaf1fc] px-2 py-2 text-center text-xs font-extrabold text-[#173e70] shadow-sm transition hover:border-blue-400 hover:shadow-md">
+              <Icon className="h-5 w-5 text-[#1557a5]" /><span>{action.label}</span>
+            </Link>;
           })}
         </div>
       </section>
-
-      <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_300px] gap-5">
-        <div className="space-y-5 min-w-0">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <CurrencyRatesTable currencies={currencies} isLoading={curLoading} />
-            <DashboardCharts type="line" transactions={txs} isLoading={txLoading} />
-          </div>
-          <RecentTransactionsCard transactions={txs || []} isLoading={txLoading} />
-        </div>
-        <div className="space-y-4 min-w-0">
-          <DesktopSidePanel currencies={currencies} features={features} profile={profile} userRole={userRole} paidSystemEnabled={paidSystemEnabled} />
-          <DesktopPlanPanel {...plan} />
-        </div>
-      </div>
     </div>
   );
 }
