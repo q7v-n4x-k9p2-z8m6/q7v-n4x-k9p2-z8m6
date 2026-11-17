@@ -1,241 +1,142 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { getLayoutHexSupabase } from '@/lib/layoutHexSupabase';
-import { useAuth } from '@/lib/AuthContext';
+import { supabase } from '@/lib/supabaseClient';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ImagePlus, Trash2, Copy, ExternalLink, RefreshCw, Images, Loader2 } from 'lucide-react';
 
-const TABLE = 'layout_hex_references';
-const BUCKET = 'layout-hex-references';
 const MAX_BYTES = 8 * 1024 * 1024;
 const ACCEPTED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
 
+function functionUrl() {
+  const base = String(supabase.supabaseUrl || '').replace(/\/+$/, '');
+  if (!base) throw new Error('آدرس پروژه A1 تنظیم نشده است.');
+  return base + '/functions/v1/hex-layout-upload';
+}
+async function libraryRequest(method, body) {
+  let token = '';
+  try { token = localStorage.getItem('auth_token') || ''; } catch {}
+  if (!token) throw new Error('نشست سازنده پیدا نشد؛ دوباره وارد حساب سازنده شوید.');
+  const headers = { apikey: supabase.supabaseKey, 'x-app-token': token };
+  if (body && !(body instanceof FormData)) headers['Content-Type'] = 'application/json';
+  const response = await fetch(functionUrl(), { method, headers, body, cache: 'no-store' });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok || data.success !== true) throw new Error(data.error || 'ارتباط امن با کتابخانه HEX ناموفق بود.');
+  return data;
+}
+
 export default function LayoutHexLibrary() {
-  const { user } = useAuth();
-  const [client, setClient] = useState(null);
   const [items, setItems] = useState([]);
   const [title, setTitle] = useState('');
   const [file, setFile] = useState(null);
-  const [localPreview, setLocalPreview] = useState('');
+  const [preview, setPreview] = useState('');
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [deletingId, setDeletingId] = useState(null);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
 
-  useEffect(() => {
-    let active = true;
-    getLayoutHexSupabase()
-      .then((instance) => { if (active) setClient(instance); })
-      .catch((err) => {
-        if (active) {
-          setError(err?.message || 'اتصال به فضای ذخیره‌سازی B2 برقرار نشد.');
-          setLoading(false);
-        }
-      });
-    return () => { active = false; };
-  }, []);
-
   const loadItems = useCallback(async () => {
-    if (!client) return;
-    setLoading(true);
-    setError('');
+    setLoading(true); setError('');
     try {
-      const { data, error: queryError } = await client
-        .from(TABLE)
-        .select('id, hex_code, title, storage_path, image_url, created_at')
-        .order('id', { ascending: true });
-      if (queryError) throw queryError;
-      setItems(data || []);
-    } catch (err) {
-      setError(err?.message || 'بارگذاری کتابخانه HEX ناموفق بود.');
-    } finally {
-      setLoading(false);
-    }
-  }, [client]);
-
-  useEffect(() => { if (client) loadItems(); }, [client, loadItems]);
-
+      const result = await libraryRequest('GET');
+      setItems(Array.isArray(result.items) ? result.items : []);
+    } catch (e) { setError(e.message || 'بارگذاری کتابخانه HEX ناموفق بود.'); }
+    finally { setLoading(false); }
+  }, []);
+  useEffect(() => { loadItems(); }, [loadItems]);
   useEffect(() => {
-    if (!file) { setLocalPreview(''); return undefined; }
-    const url = URL.createObjectURL(file);
-    setLocalPreview(url);
+    if (!file) { setPreview(''); return undefined; }
+    const url = URL.createObjectURL(file); setPreview(url);
     return () => URL.revokeObjectURL(url);
   }, [file]);
 
-  const chooseFile = (nextFile) => {
-    setMessage('');
-    setError('');
-    if (!nextFile) { setFile(null); return; }
-    if (!ACCEPTED_TYPES.includes(nextFile.type)) {
-      setError('فقط عکس‌های JPG، PNG، WEBP یا GIF پذیرفته می‌شوند.');
-      return;
-    }
-    if (nextFile.size > MAX_BYTES) {
-      setError('حجم عکس نباید بیشتر از ۸ مگابایت باشد.');
-      return;
-    }
-    setFile(nextFile);
+  const chooseFile = (next) => {
+    setMessage(''); setError('');
+    if (!next) { setFile(null); return; }
+    if (!ACCEPTED_TYPES.includes(next.type)) { setError('فقط JPG، PNG، WEBP یا GIF مجاز است.'); return; }
+    if (next.size <= 0 || next.size > MAX_BYTES) { setError('حجم عکس نباید بیشتر از ۸ مگابایت باشد.'); return; }
+    setFile(next);
   };
-
   const uploadImage = async (event) => {
     event.preventDefault();
-    if (!client || !file || uploading) return;
-    setUploading(true);
-    setError('');
-    setMessage('');
-    const extension = file.name.split('.').pop()?.toLowerCase() || 'jpg';
-    const path = `references/${Date.now()}-${Math.random().toString(36).slice(2, 10)}.${extension}`;
+    if (!file || uploading) return;
+    setUploading(true); setError(''); setMessage('');
     try {
-      const { error: uploadError } = await client.storage.from(BUCKET).upload(path, file, {
-        cacheControl: '3600', upsert: false, contentType: file.type,
-      });
-      if (uploadError) throw uploadError;
-
-      const { data: publicData } = client.storage.from(BUCKET).getPublicUrl(path);
-      const creatorId = Number(user?.id);
-      const { error: insertError } = await client.from(TABLE).insert({
-        title: title.trim() || null,
-        storage_path: path,
-        image_url: publicData.publicUrl,
-        created_by: Number.isFinite(creatorId) ? creatorId : null,
-      });
-      if (insertError) {
-        await client.storage.from(BUCKET).remove([path]);
-        throw insertError;
-      }
-
-      setFile(null);
-      setTitle('');
-      setMessage('عکس با شماره HEX جدید ذخیره شد.');
+      const form = new FormData();
+      form.append('file', file, file.name);
+      form.append('title', title.trim());
+      const result = await libraryRequest('POST', form);
+      setFile(null); setTitle('');
+      setMessage(result.hex_code ? 'تصویر ' + result.hex_code + ' در A1 ذخیره شد.' : 'تصویر در A1 ذخیره شد.');
       await loadItems();
-    } catch (err) {
-      setError(err?.message || 'ذخیره عکس انجام نشد. نشست سازنده و دسترسی B2 را بررسی کنید.');
-    } finally {
-      setUploading(false);
-    }
+    } catch (e) { setError(e.message || 'ذخیره عکس انجام نشد.'); }
+    finally { setUploading(false); }
   };
-
   const deleteItem = async (item) => {
-    if (!window.confirm(`عکس ${item.hex_code} حذف شود؟`)) return;
-    setDeletingId(item.id);
-    setError('');
-    setMessage('');
+    if (!window.confirm('عکس ' + item.hex_code + ' از کتابخانه HEX حذف شود؟')) return;
+    setDeletingId(item.id); setError(''); setMessage('');
     try {
-      const { error: rowError } = await client.from(TABLE).delete().eq('id', item.id);
-      if (rowError) throw rowError;
-      const { error: storageError } = await client.storage.from(BUCKET).remove([item.storage_path]);
-      setItems(current => current.filter(entry => entry.id !== item.id));
-      setMessage(storageError
-        ? `${item.hex_code} از فهرست حذف شد؛ پاک‌سازی فایل ذخیره‌شده نیازمند بررسی است.`
-        : `${item.hex_code} حذف شد.`);
-    } catch (err) {
-      setError(err?.message || 'حذف عکس ناموفق بود.');
-    } finally {
-      setDeletingId(null);
-    }
+      const result = await libraryRequest('DELETE', JSON.stringify({ id: item.id }));
+      setItems(current => current.filter(x => x.id !== item.id));
+      setMessage(result.cleanup_pending ? 'رکورد ' + item.hex_code + ' حذف شد؛ پاک‌سازی فایل نیازمند بررسی است.' : item.hex_code + ' از A1 حذف شد.');
+    } catch (e) { setError(e.message || 'حذف عکس ناموفق بود.'); }
+    finally { setDeletingId(null); }
   };
-
   const copyUrl = async (url) => {
-    try {
-      await navigator.clipboard.writeText(url);
-      setMessage('آدرس اینترنتی عکس کپی شد؛ آن را می‌توانی برای هوش مصنوعی بفرستی.');
-    } catch {
-      setError('کپی خودکار ممکن نشد؛ پیوند عکس را باز کن و آدرس آن را کپی کن.');
-    }
+    try { await navigator.clipboard.writeText(url); setMessage('آدرس تصویر کپی شد.'); }
+    catch { setError('کپی خودکار ممکن نشد؛ تصویر را باز و آدرس آن را کپی کن.'); }
   };
 
   return (
     <div className="space-y-4" dir="rtl">
-      <Card>
-        <CardContent className="p-4 space-y-3">
-          <div className="flex items-center gap-2">
-            <Images className="h-5 w-5 text-primary" />
-            <div>
-              <h3 className="font-bold text-sm">کتابخانه تصاویر مرجع HEX</h3>
-              <p className="text-xs text-muted-foreground mt-1">تصاویر را ذخیره کن تا بعداً با شماره HEX یا آدرس اینترنتی به هوش مصنوعی بدهی.</p>
-            </div>
-          </div>
-          <div className="rounded-lg border border-border bg-muted/30 p-3 text-xs leading-6">
-            هر عکس شماره یکتایی مانند <strong>HEX-001</strong> می‌گیرد. تصاویر در فضای ابری مستقل B2 ذخیره می‌شوند و از دستگاه‌های دیگر هم قابل مشاهده‌اند. این کار به‌تنهایی هیچ تغییری در چیدمان اصلی A1 ایجاد نمی‌کند.
-          </div>
-          <form onSubmit={uploadImage} className="space-y-3">
-            <div>
-              <label className="text-xs font-medium block mb-1.5">نام یا توضیح کوتاه (اختیاری)</label>
-              <Input value={title} onChange={(event) => setTitle(event.target.value)} placeholder="مثلاً چیدمان حرفه‌ای داشبورد موبایل" maxLength={120} />
-            </div>
-            <label className="flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-border p-5 cursor-pointer hover:border-primary/60 transition-colors">
-              <ImagePlus className="h-7 w-7 text-primary" />
-              <span className="text-sm font-semibold">{file ? file.name : 'انتخاب عکس از گوشی یا لپ‌تاپ'}</span>
-              <span className="text-[11px] text-muted-foreground">JPG · PNG · WEBP · GIF — حداکثر ۸ مگابایت</span>
-              <input className="sr-only" type="file" accept="image/jpeg,image/png,image/webp,image/gif" onChange={(event) => chooseFile(event.target.files?.[0] || null)} />
-            </label>
-            {localPreview && (
-              <div className="rounded-xl overflow-hidden border border-border bg-muted/20">
-                <img src={localPreview} alt="پیش‌نمایش عکس انتخاب‌شده" className="w-full max-h-72 object-contain" />
-                <div className="p-2 flex justify-between items-center">
-                  <span className="text-xs text-muted-foreground">پیش‌نمایش قبل از ذخیره</span>
-                  <Button type="button" size="sm" variant="ghost" onClick={() => setFile(null)}>لغو انتخاب</Button>
-                </div>
-              </div>
-            )}
-            <Button type="submit" className="w-full gap-2" disabled={!client || !file || uploading}>
-              {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImagePlus className="h-4 w-4" />}
-              {uploading ? 'در حال ذخیره عکس...' : 'ذخیره عکس و دریافت شماره HEX'}
-            </Button>
-          </form>
-          {message && <p className="text-xs text-emerald-600" role="status">{message}</p>}
-          {error && <p className="text-xs text-destructive break-words" role="alert">{error}</p>}
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardContent className="p-4">
-          <div className="flex items-center justify-between gap-2 mb-3">
-            <div>
-              <h4 className="font-bold text-sm">تصاویر ذخیره‌شده</h4>
-              <p className="text-xs text-muted-foreground">{items.length} تصویر در کتابخانه</p>
-            </div>
-            <Button variant="outline" size="sm" className="gap-1.5" onClick={loadItems} disabled={!client || loading}>
-              <RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} /> تازه‌سازی
-            </Button>
-          </div>
-          {loading ? (
-            <div className="py-8 flex justify-center"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>
-          ) : items.length === 0 ? (
-            <div className="py-8 text-center text-xs text-muted-foreground">هنوز عکسی ذخیره نشده است. اولین عکس مرجع خودت را اضافه کن.</div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
-              {items.map(item => (
-                <div key={item.id} className="overflow-hidden rounded-xl border border-border bg-card">
-                  <a href={item.image_url} target="_blank" rel="noreferrer" className="block bg-muted/30">
-                    <img src={item.image_url} alt={item.title || item.hex_code} loading="lazy" className="w-full h-44 object-contain" />
-                  </a>
-                  <div className="p-3 space-y-2">
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="font-bold text-sm tracking-wide">{item.hex_code}</span>
-                      <span className="text-[10px] text-muted-foreground">{item.created_at ? new Date(item.created_at).toLocaleDateString('fa-IR') : ''}</span>
-                    </div>
-                    {item.title && <p className="text-xs text-muted-foreground line-clamp-2">{item.title}</p>}
-                    <div className="flex gap-2">
-                      <Button type="button" size="sm" variant="outline" className="flex-1 gap-1" onClick={() => copyUrl(item.image_url)}>
-                        <Copy className="h-3.5 w-3.5" /> کپی آدرس
-                      </Button>
-                      <Button type="button" size="sm" variant="outline" className="gap-1" onClick={() => window.open(item.image_url, '_blank', 'noopener,noreferrer')}>
-                        <ExternalLink className="h-3.5 w-3.5" />
-                      </Button>
-                      <Button type="button" size="sm" variant="destructive" className="gap-1" onClick={() => deleteItem(item)} disabled={deletingId === item.id}>
-                        {deletingId === item.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      <Card><CardContent className="p-4 space-y-3">
+        <div className="flex items-center gap-2"><Images className="h-5 w-5 text-primary" /><div>
+          <h3 className="font-bold text-sm">کتابخانه تصاویر مرجع HEX</h3>
+          <p className="text-xs text-muted-foreground mt-1">تصاویر فقط در دیتابیس و فضای ذخیره‌سازی پروژه اصلی A1 ثبت می‌شوند.</p>
+        </div></div>
+        <div className="rounded-lg border border-border bg-muted/30 p-3 text-xs leading-6">این کتابخانه برای ذخیره تصاویر مرجع است و به‌تنهایی چیدمان اصلی برنامه را تغییر نمی‌دهد.</div>
+        <form onSubmit={uploadImage} className="space-y-3">
+          <div><label className="text-xs font-medium block mb-1.5">نام یا توضیح کوتاه (اختیاری)</label>
+            <Input value={title} onChange={e => setTitle(e.target.value)} placeholder="مثلاً چیدمان حرفه‌ای داشبورد موبایل" maxLength={120} /></div>
+          <label className="flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-border p-5 cursor-pointer">
+            <ImagePlus className="h-7 w-7 text-primary" />
+            <span className="text-sm font-semibold">{file ? file.name : 'انتخاب عکس از گوشی یا لپ‌تاپ'}</span>
+            <span className="text-[11px] text-muted-foreground">JPG · PNG · WEBP · GIF — حداکثر ۸ مگابایت</span>
+            <input className="sr-only" type="file" accept="image/jpeg,image/png,image/webp,image/gif" onChange={e => chooseFile(e.target.files?.[0] || null)} />
+          </label>
+          {preview && <div className="rounded-xl overflow-hidden border border-border"><img src={preview} alt="پیش‌نمایش عکس" className="w-full max-h-72 object-contain" /><div className="p-2"><Button type="button" size="sm" variant="ghost" onClick={() => setFile(null)}>لغو انتخاب</Button></div></div>}
+          <Button type="submit" className="w-full gap-2" disabled={!file || uploading}>
+            {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImagePlus className="h-4 w-4" />}
+            {uploading ? 'در حال ذخیره عکس...' : 'ذخیره عکس در A1'}
+          </Button>
+        </form>
+        {message && <p className="text-xs text-emerald-600" role="status">{message}</p>}
+        {error && <p className="text-xs text-destructive break-words" role="alert">{error}</p>}
+      </CardContent></Card>
+      <Card><CardContent className="p-4">
+        <div className="flex items-center justify-between gap-2 mb-3"><div>
+          <h4 className="font-bold text-sm">تصاویر ذخیره‌شده</h4><p className="text-xs text-muted-foreground">{items.length} تصویر در A1</p>
+        </div><Button variant="outline" size="sm" onClick={loadItems} disabled={loading}>
+          <RefreshCw className={loading ? 'h-3.5 w-3.5 animate-spin' : 'h-3.5 w-3.5'} /> تازه‌سازی
+        </Button></div>
+        {loading ? <div className="py-8 flex justify-center"><Loader2 className="h-5 w-5 animate-spin" /></div>
+        : items.length === 0 ? <div className="py-8 text-center text-xs text-muted-foreground">هنوز عکسی در کتابخانه A1 ذخیره نشده است.</div>
+        : <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">{items.map(item =>
+          <div key={item.id} className="overflow-hidden rounded-xl border border-border bg-card">
+            <a href={item.image_url} target="_blank" rel="noreferrer"><img src={item.image_url} alt={item.title || item.hex_code} loading="lazy" className="w-full h-44 object-contain" /></a>
+            <div className="p-3 space-y-2"><div className="flex justify-between gap-2">
+              <span className="font-bold text-sm">{item.hex_code}</span><span className="text-[10px] text-muted-foreground">{item.created_at ? new Date(item.created_at).toLocaleDateString('fa-IR') : ''}</span>
+            </div>{item.title && <p className="text-xs text-muted-foreground">{item.title}</p>}
+            <div className="flex gap-2">
+              <Button type="button" size="sm" variant="outline" className="flex-1 gap-1" onClick={() => copyUrl(item.image_url)}><Copy className="h-3.5 w-3.5" /> کپی آدرس</Button>
+              <Button type="button" size="sm" variant="outline" onClick={() => window.open(item.image_url, '_blank', 'noopener,noreferrer')}><ExternalLink className="h-3.5 w-3.5" /></Button>
+              <Button type="button" size="sm" variant="destructive" onClick={() => deleteItem(item)} disabled={deletingId === item.id}>
+                {deletingId === item.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
+              </Button>
+            </div></div>
+          </div>)}</div>}
+      </CardContent></Card>
     </div>
   );
 }
