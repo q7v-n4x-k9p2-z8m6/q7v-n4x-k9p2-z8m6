@@ -1,63 +1,190 @@
-/* Version 21 — laptop reference layout (menu bar, icon toolbar, operations centre,
-   status bar). Applies only at laptop widths (>=1024px); the mobile and tablet
-   presentation defined in version21-responsive-layout.css is not changed. */
+/* A1 desktop/laptop home — faithful measurements from hisab-sarraf-home-spec.pdf.
+   This file is imported after the responsive stylesheet and only changes >=1024px.
+   Phone and tablet rules remain in version21-responsive-layout.css. */
+
 @media (min-width: 1024px) {
-  html body .v21-workspace-shell {
-    height: calc(100dvh - 11rem);
-    min-height: 640px;
-    max-height: none !important;
-    border: 1px solid #8ea3c8 !important;
-    background: #eef2f9 !important;
+  /* The outer app shell has unrelated dashboard chrome outside the reference window.
+     Conceal it only while the PDF window is active; leave the underlying JSX intact. */
+  html body:has(.v21-lt-titlebar) .v21-app-shell > div > main {
+    padding: 28px !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+  }
+  html body:has(.v21-lt-titlebar) .v21-app-shell > div > main > div {
+    width: 100% !important;
+    max-width: 1600px !important;
+    margin: 0 auto !important;
+  }
+  html body:has(.v21-lt-titlebar) .v21-app-shell > div > footer,
+  html body:has(.v21-lt-titlebar) .v21-app-shell > div > section[role="status"] {
+    display: none !important;
   }
 
-  /* Title bar */
-  html body .v21-workspace-shell > header {
-    min-height: 44px;
-    background: linear-gradient(180deg, #14418f 0%, #0d3478 100%) !important;
-  }
-  html body .v21-workspace-shell > header b { font-size: 14px; }
-
-  /* Menu bar (full width, plain labels) above the icon toolbar */
-  html body .v21-workspace-shell .v21-laptop-toolbar {
-    display: block !important;
-    padding: 0 !important;
-    border: 0 !important;
-    background: #fff !important;
-  }
-  html body .v21-workspace-shell .v21-laptop-menu-bar {
+  /* One window frame: titlebar 40px + the app workspace + 12px lower frame. */
+  html body .v21-workspace-root:has(> .v21-lt-titlebar) {
     display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 0 !important;
+    width: 100% !important;
+    height: 82vh !important;
+    min-height: 0 !important;
+    max-height: calc(100dvh - 5rem) !important;
+    margin: 5vh 0 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    border: 1px solid #8ea3c8 !important;
+    background: #e9eff8 !important;
+    box-shadow: 0 1px 4px rgba(20, 40, 90, .12) !important;
+  }
+
+  html body .v21-workspace-root > .v21-lt-titlebar {
+    display: flex !important;
+    flex: 0 0 40px !important;
+    width: 100% !important;
+    height: 40px !important;
+    min-height: 40px !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    padding: 0 12px !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: linear-gradient(180deg, #0b3f8d 0%, #0b3c84 100%) !important;
+    color: #fff !important;
+    direction: ltr !important;
+    overflow: hidden !important;
+  }
+
+  html body .v21-lt-titlebar-brand {
+    display: flex !important;
+    flex: 0 1 auto !important;
+    min-width: 0 !important;
+    align-items: center !important;
+    gap: 10px !important;
+    color: #fff !important;
+    font-size: 14px !important;
+    font-weight: 600 !important;
+    line-height: 1 !important;
+    white-space: nowrap !important;
+  }
+  html body .v21-lt-titlebar-brand > div,
+  html body .v21-lt-titlebar-brand svg {
+    display: block !important;
+    flex: 0 0 22px !important;
+    width: 22px !important;
+    height: 22px !important;
+  }
+  html body .v21-lt-window-controls {
+    display: flex !important;
+    flex: 0 0 auto !important;
+    align-items: center !important;
+    gap: 28px !important;
+    margin-inline-start: 16px !important;
+    color: #fff !important;
+  }
+  html body .v21-lt-window-controls svg {
+    display: block !important;
+    width: 16px !important;
+    height: 16px !important;
+    stroke: currentColor !important;
+    stroke-width: 1.8 !important;
+  }
+
+  /* The previous workspace and all legacy module handlers stay in place.
+     The desktop shell below is the only visible composition. */
+  html body .v21-workspace-shell {
+    display: flex !important;
+    flex: 1 1 auto !important;
+    flex-direction: column !important;
+    width: 100% !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: #e9eff8 !important;
+    box-shadow: none !important;
+  }
+  html body .v21-workspace-shell > header {
+    display: none !important;
+  }
+  html body .v21-workspace-shell > div.flex.min-h-0 {
+    display: flex !important;
+    flex: 1 1 auto !important;
+    flex-direction: column !important;
+    width: 100% !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+  }
+
+  /* Menubar: seven plain labels, no decorative chevrons. */
+  html body .v21-workspace-shell .v21-laptop-toolbar {
+    display: flex !important;
+    flex: 0 0 auto !important;
+    flex-direction: column !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    gap: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+    background: transparent !important;
+  }
+  html body .v21-workspace-shell .v21-laptop-toolbar > nav.v21-laptop-menu-bar:not([class~="lg:hidden"]) {
+    display: flex !important;
+    flex: 0 0 37px !important;
+    flex-direction: row !important;
     flex-wrap: nowrap !important;
     align-items: center !important;
-    gap: 2px !important;
-    padding: 2px 10px !important;
+    justify-content: flex-start !important;
+    width: 100% !important;
+    height: 37px !important;
+    min-height: 37px !important;
+    max-height: 37px !important;
+    gap: 38px !important;
+    padding: 0 20px !important;
+    overflow: visible !important;
     border: 0 !important;
-    border-bottom: 1px solid #d6dff0 !important;
+    border-bottom: 1px solid #cad8ee !important;
     border-radius: 0 !important;
-    background: #fff !important;
+    background: #f3f6fb !important;
+    direction: rtl !important;
+    white-space: nowrap !important;
+  }
+  html body .v21-workspace-shell .v21-laptop-toolbar > nav.v21-laptop-menu-bar[class~="lg:hidden"] {
+    display: none !important;
   }
   html body .v21-workspace-shell .v21-laptop-menu-bar > div {
-    width: auto !important;
-    max-width: none !important;
-    min-width: 0 !important;
+    display: block !important;
     flex: 0 0 auto !important;
+    width: auto !important;
+    min-width: 0 !important;
   }
   html body .v21-workspace-shell .v21-laptop-menu-trigger {
     display: inline-flex !important;
+    align-items: center !important;
     width: auto !important;
-    min-height: 30px !important;
-    padding: 4px 14px !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    padding: 0 !important;
     border: 0 !important;
-    border-radius: 4px !important;
+    border-radius: 0 !important;
     background: transparent !important;
-    color: #10203d !important;
-    font-size: 13px !important;
+    color: #14213d !important;
+    font-size: 14.5px !important;
     font-weight: 700 !important;
+    line-height: 1.3 !important;
+    white-space: nowrap !important;
   }
-  html body .v21-workspace-shell .v21-laptop-menu-trigger svg { display: none !important; }
+  html body .v21-workspace-shell .v21-laptop-menu-trigger svg {
+    display: none !important;
+  }
   html body .v21-workspace-shell .v21-laptop-menu-trigger:hover,
   html body .v21-workspace-shell .v21-laptop-menu-trigger.is-open {
-    background: #e4edfb !important;
-    color: #0d3478 !important;
+    background: transparent !important;
+    color: #14213d !important;
   }
   html body .v21-workspace-shell .v21-laptop-menu-popover {
     top: calc(100% + 2px) !important;
@@ -65,309 +192,578 @@
     left: auto !important;
   }
 
-  /* Icon toolbar: 14 module buttons in one row, home first (rightmost) */
-  html body .v21-workspace-shell .v21-laptop-toolbar > aside.grid {
-    display: grid !important;
-    grid-template-columns: repeat(14, minmax(0, 1fr)) !important;
-    gap: 6px !important;
+  /* 14 icon tiles in one row; each tile is ~76x86 at the reference width. */
+  html body .v21-workspace-shell .v21-laptop-toolbar > aside.v21-module-icon-row {
+    display: flex !important;
+    flex: 0 0 92px !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    align-items: stretch !important;
+    justify-content: flex-start !important;
     width: 100% !important;
-    padding: 8px 10px !important;
+    height: 92px !important;
+    min-height: 92px !important;
+    max-height: 92px !important;
+    gap: 3px !important;
+    padding: 3px 4px !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
     border: 0 !important;
-    border-bottom: 1px solid #cdd9ee !important;
-    background: #eaf0fa !important;
+    border-bottom: 1px solid #cad8ee !important;
+    background: linear-gradient(180deg, #eaf1fb 0%, #dfe9f8 100%) !important;
+    direction: rtl !important;
+    scrollbar-width: thin !important;
   }
-  html body .v21-workspace-shell .v21-laptop-toolbar > aside.grid button {
+  html body .v21-workspace-shell .v21-laptop-toolbar > aside.v21-module-icon-row > button.v21-desktop-module-button {
+    display: flex !important;
+    flex: 1 1 0 !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    width: auto !important;
+    min-width: 64px !important;
+    max-width: 78px !important;
+    height: 86px !important;
+    min-height: 86px !important;
+    max-height: 86px !important;
+    gap: 3px !important;
+    padding: 8px 2px 6px !important;
+    border: 1px solid #cad8ee !important;
+    border-radius: 5px !important;
+    background: #f7f9fd !important;
+    color: #14213d !important;
+    text-align: center !important;
+    white-space: normal !important;
+    box-shadow: 0 1px 2px rgba(20, 40, 90, .08) !important;
+  }
+  html body .v21-workspace-shell .v21-laptop-toolbar > aside.v21-module-icon-row > button.v21-desktop-module-button.is-active {
+    border: 2px solid #4a7bc8 !important;
+    background: #dce8fa !important;
+    color: #14213d !important;
+  }
+  html body .v21-workspace-shell .v21-laptop-toolbar > aside.v21-module-icon-row > button.v21-desktop-module-button > svg {
+    display: block !important;
+    flex: 0 0 27px !important;
+    width: 27px !important;
+    height: 27px !important;
+    color: #1f4e9f !important;
+    stroke: #1f4e9f !important;
+  }
+  html body .v21-workspace-shell .v21-laptop-toolbar > aside.v21-module-icon-row > button.v21-desktop-module-button > span {
+    display: block !important;
+    flex: 0 0 auto !important;
+    width: 100% !important;
+    margin: 0 !important;
+    color: #14213d !important;
+    font-size: 12.5px !important;
+    font-weight: 700 !important;
+    line-height: 1.3 !important;
+    text-align: center !important;
+    white-space: normal !important;
+  }
+  html body .v21-workspace-shell .v21-laptop-toolbar > aside.v21-module-icon-row-mobile,
+  html body .v21-workspace-shell .v21-laptop-toolbar > nav.v21-reference-mobile-shortcuts {
+    display: none !important;
+  }
+
+  /* Main pane — the measured vertical positions from the PDF are preserved. */
+  html body .v21-workspace-shell main {
+    display: block !important;
+    flex: 1 1 auto !important;
+    width: 100% !important;
     min-width: 0 !important;
-    min-height: 66px !important;
-    padding: 6px 2px !important;
-    border: 1px solid #d3deef !important;
+    min-height: 0 !important;
+    padding: 9px 10px 10px !important;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    background: #e9eff8 !important;
+  }
+  html body .v21-workspace-shell main .v21-lt-home {
+    display: block !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    color: #14213d !important;
+  }
+
+  /* Blue hero: date on the right, centered heading, white home glyph on the left. */
+  html body .v21-workspace-shell .v21-lt-band {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) !important;
+    align-items: center !important;
+    width: 100% !important;
+    height: 55px !important;
+    min-height: 55px !important;
+    max-height: 55px !important;
+    margin: 0 0 15px !important;
+    padding: 0 16px !important;
+    border: 0 !important;
     border-radius: 6px !important;
-    background: linear-gradient(180deg, #fff 0%, #f1f5fc 100%) !important;
-    box-shadow: 0 1px 2px rgb(20 50 100 / 10%) !important;
-    color: #1c3f7a !important;
+    background: linear-gradient(90deg, #2559a8 0%, #2a5ca8 100%) !important;
+    color: #fff !important;
+    direction: rtl !important;
   }
-  html body .v21-workspace-shell .v21-laptop-toolbar > aside.grid button.is-active {
-    border-color: #8fb0e6 !important;
-    background: #dbe8fb !important;
+  html body .v21-workspace-shell .v21-lt-band-date {
+    display: flex !important;
+    grid-column: 1 !important;
+    align-items: center !important;
+    justify-self: start !important;
+    gap: 10px !important;
+    color: #fff !important;
+    font-size: 17px !important;
+    font-weight: 500 !important;
+    line-height: 1.3 !important;
+    white-space: nowrap !important;
   }
-  html body .v21-workspace-shell .v21-laptop-toolbar > aside.grid button svg {
+  html body .v21-workspace-shell .v21-lt-band-date svg {
+    display: block !important;
+    width: 28px !important;
+    height: 28px !important;
+    color: #fff !important;
+    stroke: #fff !important;
+  }
+  html body .v21-workspace-shell .v21-lt-band-title {
+    display: block !important;
+    grid-column: 2 !important;
+    justify-self: center !important;
+    margin: 0 !important;
+    color: #fff !important;
+    font-size: 26px !important;
+    font-weight: 700 !important;
+    line-height: 1.25 !important;
+    text-align: center !important;
+    white-space: nowrap !important;
+  }
+  html body .v21-workspace-shell .v21-lt-band-home {
+    display: block !important;
+    grid-column: 3 !important;
+    justify-self: end !important;
+    width: 34px !important;
+    height: 34px !important;
+    color: #fff !important;
+    stroke: #fff !important;
+  }
+
+  /* Four equal statistics cards. */
+  html body .v21-workspace-shell .v21-lt-stats {
+    display: grid !important;
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    gap: 10px !important;
+    width: 100% !important;
+    height: 78px !important;
+    margin: 0 0 18px !important;
+  }
+  html body .v21-workspace-shell .v21-lt-stat {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    justify-content: center !important;
+    min-width: 0 !important;
+    height: 78px !important;
+    padding: 6px 14px !important;
+    border: 1px solid #c4d3ec !important;
+    border-radius: 8px !important;
+    background: #f8fafe !important;
+    box-shadow: 0 1px 3px rgba(20, 40, 90, .08) !important;
+    gap: 6px !important;
+  }
+  html body .v21-workspace-shell .v21-lt-stat-head {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    color: #14213d !important;
+    font-size: 17px !important;
+    font-weight: 700 !important;
+    line-height: 1.25 !important;
+    white-space: nowrap !important;
+  }
+  html body .v21-workspace-shell .v21-lt-stat-head svg {
+    display: block !important;
+    flex: 0 0 26px !important;
     width: 26px !important;
     height: 26px !important;
-    color: #2a5ca8;
+    color: #1f4e9f !important;
+    stroke: #1f4e9f !important;
   }
-  html body .v21-workspace-shell .v21-laptop-toolbar > aside.grid button span {
-    font-size: 10.5px !important;
-    font-weight: 700;
-    line-height: 1.25 !important;
-  }
-
-  html body .v21-workspace-shell main {
-    background: #eef2f9 !important;
-  }
-
-  /* Operations centre */
-  .v21-lt-home { color: #12264a; }
-  .v21-lt-band {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 10px;
-    padding: 8px 18px;
-    border-radius: 6px;
-    background: linear-gradient(90deg, #2a5ca8 0%, #244f95 100%);
-    color: #fff;
-  }
-  .v21-lt-band-title { display: flex; align-items: center; gap: 12px; }
-  .v21-lt-band h2 { font-size: 20px; font-weight: 800; }
-  .v21-lt-band-date { display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 600; }
-
-  .v21-lt-stats {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 10px;
-    margin-bottom: 10px;
-  }
-  .v21-lt-stat {
-    padding: 6px 14px;
-    border: 1px solid #c5d4ee;
-    border-radius: 8px;
-    background: #f4f8ff;
-    box-shadow: 0 1px 3px rgb(30 60 120 / 10%);
-  }
-  .v21-lt-stat-head { display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 800; }
-  .v21-lt-stat-head svg { width: 24px; height: 24px; color: #2a5ca8; flex: 0 0 auto; }
-  .v21-lt-stat > b { display: block; margin-top: 2px; text-align: center; font-size: 18px; line-height: 1.3; }
-
-  .v21-lt-groups {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 10px;
-  }
-  .v21-lt-group {
-    overflow: hidden;
-    border: 1px solid #c5d4ee;
-    border-radius: 8px;
-    background: #f1f6fe;
-    box-shadow: 0 1px 3px rgb(30 60 120 / 8%);
-  }
-  .v21-lt-group-title {
-    padding: 5px 14px;
-    background: linear-gradient(180deg, #dce8fc 0%, #cfdff7 100%);
-    font-size: 15px;
-    font-weight: 800;
-  }
-  .v21-lt-group-tiles {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 8px;
-    padding: 8px;
-  }
-  .v21-lt-tile {
-    display: flex;
-    min-height: 68px;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-    padding: 6px 4px;
-    border: 1px solid #c7d6ee;
-    border-radius: 6px;
-    background: #fff;
-    color: #12264a;
-    font-size: 12px;
-    font-weight: 700;
-    line-height: 1.3;
-    text-align: center;
-    transition: background-color .15s ease, border-color .15s ease;
-  }
-  .v21-lt-tile svg { width: 24px; height: 24px; color: #2a5ca8; flex: 0 0 auto; }
-  .v21-lt-tile:hover { border-color: #6f96d6; background: #eaf2ff; }
-
-  .v21-lt-quick { margin-top: 10px; }
-  .v21-lt-quick-actions {
-    display: grid;
-    grid-template-columns: repeat(5, minmax(0, 1fr));
-    gap: 10px;
-    padding: 8px;
-  }
-  .v21-lt-quick-actions button {
-    display: flex;
-    min-height: 50px;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 4px;
-    border: 1px solid #c7d6ee;
-    border-radius: 6px;
-    background: #fff;
-    color: #12264a;
-    font-size: 13px;
-    font-weight: 700;
-  }
-  .v21-lt-quick-actions button svg { width: 22px; height: 22px; color: #2a5ca8; }
-  .v21-lt-quick-actions button:hover { border-color: #6f96d6; background: #eaf2ff; }
-
-  /* Status bar */
-  .v21-lt-status {
-    display: flex;
-    flex: 0 0 auto;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    padding: 6px 12px;
-    border-top: 1px solid #b7c8e6;
-    background: #e9f0fb;
-    color: #12264a;
-    font-size: 13px;
-  }
-  .v21-lt-status-actions { display: flex; align-items: center; gap: 6px; }
-  .v21-lt-status-actions button {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    padding: 6px 12px;
-    border: 1px solid #c7d6ee;
-    border-radius: 6px;
-    background: #f7faff;
-    font-weight: 700;
-  }
-  .v21-lt-status-actions button:hover:not(:disabled) { background: #e4edfb; }
-  .v21-lt-status-actions button:disabled { cursor: not-allowed; opacity: .45; }
-  .v21-lt-status-info { display: flex; align-items: center; gap: 10px; font-weight: 600; }
-  .v21-lt-status-info i { width: 1px; height: 14px; background: #9db2d8; }
-}
-
-/* Laptop menu: the selected menu expands downward in normal document flow.
-   Its actions are laid out horizontally, so it never covers the module icon row. */
-@media (min-width: 1024px) {
-  html body .v21-workspace-shell .v21-laptop-menu-bar {
-    position: relative !important;
-    z-index: 2 !important;
-  }
-  html body .v21-workspace-shell .v21-laptop-menu-panel {
-    position: relative !important;
+  html body .v21-workspace-shell .v21-lt-stat > b {
     display: block !important;
     width: 100% !important;
-    padding: 8px 12px !important;
-    border-bottom: 1px solid #cdd9ee !important;
-    background: #f5f8fd !important;
-    box-shadow: inset 0 1px 0 #fff !important;
+    margin: 0 !important;
+    color: #14213d !important;
+    font-size: 20px !important;
+    font-weight: 500 !important;
+    line-height: 1.2 !important;
+    text-align: center !important;
   }
-  html body .v21-workspace-shell .v21-laptop-menu-panel-items {
+
+  /* Six panels: two rows, three columns, with the rightmost column at 0.84fr. */
+  html body .v21-workspace-shell .v21-lt-groups {
+    display: grid !important;
+    grid-template-columns: .84fr 1fr 1fr !important;
+    grid-template-rows: 144px 124px !important;
+    grid-auto-flow: row !important;
+    column-gap: 10px !important;
+    row-gap: 13px !important;
+    align-items: stretch !important;
+    width: 100% !important;
+    margin: 0 0 9px !important;
+    padding: 0 !important;
+  }
+  html body .v21-workspace-shell .v21-lt-group {
     display: flex !important;
-    flex-direction: row !important;
-    flex-wrap: wrap !important;
-    align-items: center !important;
-    gap: 7px !important;
+    flex-direction: column !important;
+    min-width: 0 !important;
+    height: 100% !important;
+    overflow: hidden !important;
+    border: 1px solid #c4d3ec !important;
+    border-radius: 6px !important;
+    background: #eef3fb !important;
+    box-shadow: 0 1px 3px rgba(20, 40, 90, .08) !important;
   }
-  html body .v21-workspace-shell .v21-laptop-menu-panel-items > button {
-    display: inline-flex !important;
+  html body .v21-workspace-shell .v21-lt-group-title {
+    display: flex !important;
+    flex: 0 0 40px !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    width: 100% !important;
+    height: 40px !important;
+    min-height: 40px !important;
+    padding: 0 14px !important;
+    background: linear-gradient(180deg, #c5d8f6 0%, #d6e3f8 100%) !important;
+    color: #14213d !important;
+    font-size: 19px !important;
+    font-weight: 700 !important;
+    line-height: 1.25 !important;
+    text-align: right !important;
+    white-space: nowrap !important;
+  }
+  html body .v21-workspace-shell .v21-lt-group-tiles {
+    display: flex !important;
+    flex: 1 1 auto !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    align-items: stretch !important;
+    justify-content: space-between !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    height: calc(100% - 40px) !important;
+    gap: 0 !important;
+    padding: 3px 4px 4px !important;
+    overflow: hidden !important;
+    background: #eef3fb !important;
+  }
+  html body .v21-workspace-shell .v21-lt-tile {
+    display: flex !important;
+    flex: 0 0 auto !important;
+    flex-direction: column !important;
     align-items: center !important;
     justify-content: center !important;
-    min-height: 36px !important;
-    padding: 7px 14px !important;
-    border: 1px solid #c7d6ee !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    height: 97px !important;
+    padding: 6px 4px !important;
+    border: 1px solid #cad8ee !important;
     border-radius: 6px !important;
-    background: #fff !important;
-    color: #173f70 !important;
-    font-size: 12px !important;
+    background: #f7f9fd !important;
+    color: #14213d !important;
+    font-size: 14.5px !important;
     font-weight: 700 !important;
-    white-space: nowrap !important;
-    box-shadow: 0 1px 2px rgb(20 50 100 / 8%) !important;
+    line-height: 1.3 !important;
+    text-align: center !important;
+    white-space: normal !important;
+    box-shadow: 0 1px 2px rgba(20, 40, 90, .08) !important;
   }
-  html body .v21-workspace-shell .v21-laptop-menu-panel-items > button:hover {
-    border-color: #8fb0e6 !important;
-    background: #eaf1fc !important;
-  }
-  html body .v21-workspace-shell .v21-laptop-toolbar > aside.grid {
-    position: relative !important;
-    z-index: 1 !important;
-  }
-}
-
-
-/* Laptop menu panel: a wide, single horizontal strip with a reserved slot.
-   The slot keeps the main module icon row at the same vertical position
-   whether a menu is open or closed. Mobile/tablet layouts remain untouched. */
-@media (min-width: 1024px) {
-  html body .v21-workspace-shell .v21-laptop-menu-panel-slot {
+  html body .v21-workspace-shell .v21-lt-tile svg {
     display: block !important;
-    height: 54px !important;
-    min-height: 54px !important;
-    max-height: 54px !important;
-    overflow: hidden !important;
-    background: #f5f8fd !important;
-    border-bottom: 1px solid #cdd9ee !important;
+    flex: 0 0 28px !important;
+    width: 28px !important;
+    height: 28px !important;
+    margin-bottom: 6px !important;
+    color: #1f4e9f !important;
+    stroke: #1f4e9f !important;
   }
-  html body .v21-workspace-shell .v21-laptop-menu-panel {
-    display: flex !important;
-    align-items: center !important;
+  html body .v21-workspace-shell .v21-lt-tile span {
+    display: block !important;
     width: 100% !important;
-    height: 54px !important;
-    min-height: 54px !important;
-    max-height: 54px !important;
-    padding: 6px 12px !important;
+    color: #14213d !important;
+    font-size: 14.5px !important;
+    font-weight: 700 !important;
+    line-height: 1.3 !important;
+    white-space: normal !important;
+  }
+
+  /* Exact per-panel tile widths from the PDF. */
+  html body .v21-workspace-shell [data-lt-group="define-ledgers"] .v21-lt-group-title,
+  html body .v21-workspace-shell [data-lt-group="cash-bank"] .v21-lt-group-title,
+  html body .v21-workspace-shell [data-lt-group="exchange-ops"] .v21-lt-group-title {
+    flex-basis: 40px !important;
+    height: 40px !important;
+  }
+  html body .v21-workspace-shell [data-lt-group="define-ledgers"] .v21-lt-tile {
+    flex-basis: 97px !important;
+    width: 97px !important;
+  }
+  html body .v21-workspace-shell [data-lt-group="cash-bank"] .v21-lt-tile:nth-child(1) {
+    flex-basis: 120px !important;
+    width: 120px !important;
+  }
+  html body .v21-workspace-shell [data-lt-group="cash-bank"] .v21-lt-tile:nth-child(2),
+  html body .v21-workspace-shell [data-lt-group="cash-bank"] .v21-lt-tile:nth-child(3) {
+    flex-basis: 114px !important;
+    width: 114px !important;
+  }
+  html body .v21-workspace-shell [data-lt-group="exchange-ops"] .v21-lt-tile:nth-child(1) {
+    flex-basis: 124px !important;
+    width: 124px !important;
+  }
+  html body .v21-workspace-shell [data-lt-group="exchange-ops"] .v21-lt-tile:nth-child(2) {
+    flex-basis: 122px !important;
+    width: 122px !important;
+  }
+  html body .v21-workspace-shell [data-lt-group="exchange-ops"] .v21-lt-tile:nth-child(3) {
+    flex-basis: 112px !important;
+    width: 112px !important;
+  }
+
+  /* Second row: 35px headings and 78px tiles. */
+  html body .v21-workspace-shell [data-lt-group="accounting-reports"] .v21-lt-group-title,
+  html body .v21-workspace-shell [data-lt-group="extras"] .v21-lt-group-title,
+  html body .v21-workspace-shell [data-lt-group="settings"] .v21-lt-group-title {
+    flex: 0 0 35px !important;
+    height: 35px !important;
+    min-height: 35px !important;
+    font-size: 19px !important;
+  }
+  html body .v21-workspace-shell [data-lt-group="accounting-reports"] .v21-lt-group-tiles,
+  html body .v21-workspace-shell [data-lt-group="extras"] .v21-lt-group-tiles,
+  html body .v21-workspace-shell [data-lt-group="settings"] .v21-lt-group-tiles {
+    height: calc(100% - 35px) !important;
+    padding: 5px 4px !important;
+  }
+  html body .v21-workspace-shell [data-lt-group="accounting-reports"] .v21-lt-tile {
+    flex-basis: 97px !important;
+    width: 97px !important;
+    height: 78px !important;
+  }
+  html body .v21-workspace-shell [data-lt-group="extras"] .v21-lt-tile:nth-child(1) {
+    flex-basis: 120px !important;
+    width: 120px !important;
+    height: 78px !important;
+  }
+  html body .v21-workspace-shell [data-lt-group="extras"] .v21-lt-tile:nth-child(2),
+  html body .v21-workspace-shell [data-lt-group="extras"] .v21-lt-tile:nth-child(3) {
+    flex-basis: 114px !important;
+    width: 114px !important;
+    height: 78px !important;
+  }
+  html body .v21-workspace-shell [data-lt-group="settings"] .v21-lt-tile:nth-child(1) {
+    flex-basis: 124px !important;
+    width: 124px !important;
+    height: 78px !important;
+  }
+  html body .v21-workspace-shell [data-lt-group="settings"] .v21-lt-tile:nth-child(2) {
+    flex-basis: 122px !important;
+    width: 122px !important;
+    height: 78px !important;
+  }
+  html body .v21-workspace-shell [data-lt-group="settings"] .v21-lt-tile:nth-child(3) {
+    flex-basis: 112px !important;
+    width: 112px !important;
+    height: 78px !important;
+  }
+  html body .v21-workspace-shell [data-lt-group="accounting-reports"] .v21-lt-tile svg,
+  html body .v21-workspace-shell [data-lt-group="extras"] .v21-lt-tile svg,
+  html body .v21-workspace-shell [data-lt-group="settings"] .v21-lt-tile svg {
+    flex-basis: 24px !important;
+    width: 24px !important;
+    height: 24px !important;
+  }
+
+  /* Independent quick-actions bar; 5 different widths, not equal columns. */
+  html body .v21-workspace-shell .v21-lt-quick {
+    display: flex !important;
+    flex-direction: column !important;
+    width: 100% !important;
+    height: 125px !important;
+    min-height: 125px !important;
+    max-height: 125px !important;
     margin: 0 !important;
-    overflow: hidden !important;
-    border: 0 !important;
-    background: transparent !important;
+    padding: 8px 10px !important;
+    border: 1px solid #c4d3ec !important;
+    border-radius: 6px !important;
+    background: #e6ecf5 !important;
     box-shadow: none !important;
   }
-  html body .v21-workspace-shell .v21-laptop-menu-panel-items {
+  html body .v21-workspace-shell .v21-lt-quick .v21-lt-group-title {
+    display: block !important;
+    flex: 0 0 auto !important;
+    width: 100% !important;
+    height: auto !important;
+    min-height: 0 !important;
+    margin: 0 0 8px !important;
+    padding: 0 !important;
+    border: 0 !important;
+    background: transparent !important;
+    color: #14213d !important;
+    font-size: 17px !important;
+    font-weight: 700 !important;
+    line-height: 1.3 !important;
+    text-align: right !important;
+  }
+  html body .v21-workspace-shell .v21-lt-quick-actions {
     display: flex !important;
+    flex: 0 0 68px !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    align-items: stretch !important;
+    width: 100% !important;
+    height: 68px !important;
+    gap: 11px !important;
+    padding: 0 !important;
+    direction: rtl !important;
+  }
+  html body .v21-workspace-shell .v21-lt-quick-actions > button {
+    display: flex !important;
+    flex: 1 1 0 !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    min-width: 0 !important;
+    min-height: 68px !important;
+    height: 68px !important;
+    gap: 6px !important;
+    padding: 4px 6px !important;
+    border: 1px solid #c3d2ea !important;
+    border-radius: 6px !important;
+    background: #f7f9fd !important;
+    color: #14213d !important;
+    font-size: 15.5px !important;
+    font-weight: 700 !important;
+    line-height: 1.3 !important;
+    text-align: center !important;
+    white-space: nowrap !important;
+  }
+  html body .v21-workspace-shell .v21-lt-quick-actions > button:nth-child(1) { flex: .164 1 0 !important; }
+  html body .v21-workspace-shell .v21-lt-quick-actions > button:nth-child(2) { flex: .176 1 0 !important; }
+  html body .v21-workspace-shell .v21-lt-quick-actions > button:nth-child(3) { flex: .203 1 0 !important; }
+  html body .v21-workspace-shell .v21-lt-quick-actions > button:nth-child(4) { flex: .205 1 0 !important; }
+  html body .v21-workspace-shell .v21-lt-quick-actions > button:nth-child(5) { flex: .212 1 0 !important; }
+  html body .v21-workspace-shell .v21-lt-quick-actions > button svg {
+    display: block !important;
+    flex: 0 0 22px !important;
+    width: 22px !important;
+    height: 22px !important;
+    color: #1f4e9f !important;
+    stroke: #1f4e9f !important;
+  }
+
+  /* Bottom status bar: four horizontal actions on the right; user/date/version on left. */
+  html body .v21-workspace-shell .v21-lt-status {
+    display: flex !important;
+    flex: 0 0 43px !important;
+    flex-shrink: 0 !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    width: 100% !important;
+    height: 43px !important;
+    min-height: 43px !important;
+    max-height: 43px !important;
+    gap: 12px !important;
+    margin: 0 !important;
+    padding: 0 6px !important;
+    border: 0 !important;
+    border-top: 1px solid #cad8ee !important;
+    border-radius: 0 !important;
+    background: #eef2f8 !important;
+    color: #14213d !important;
+    direction: rtl !important;
+    overflow: hidden !important;
+  }
+  html body .v21-workspace-shell .v21-lt-status-actions {
+    display: flex !important;
+    flex: 0 0 auto !important;
     flex-direction: row !important;
     flex-wrap: nowrap !important;
     align-items: center !important;
-    justify-content: flex-start !important;
-    gap: 8px !important;
-    width: 100% !important;
-    min-width: 0 !important;
-    overflow-x: auto !important;
-    overflow-y: hidden !important;
-    white-space: nowrap !important;
-    scrollbar-width: thin !important;
+    gap: 14px !important;
+    direction: rtl !important;
   }
-  html body .v21-workspace-shell .v21-laptop-menu-panel-items > button {
+  html body .v21-workspace-shell .v21-lt-status-actions > button {
+    display: inline-flex !important;
     flex: 0 0 auto !important;
-    min-height: 36px !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: center !important;
+    height: 34px !important;
+    min-height: 34px !important;
+    max-height: 34px !important;
+    gap: 6px !important;
+    padding: 0 6px !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    color: #14213d !important;
+    font-size: 14px !important;
+    font-weight: 700 !important;
+    line-height: 1 !important;
     white-space: nowrap !important;
+    box-shadow: none !important;
   }
-}
-
-/* Keep the laptop workspace within the actual visible viewport.
-   The previous 640px minimum could force the shell below the laptop screen
-   on shorter displays, despite the viewport-relative height above. */
-@media (min-width: 1024px) {
-  html body .v21-workspace-shell {
-    height: calc(100dvh - 11rem) !important;
-    min-height: 0 !important;
-    max-height: calc(100dvh - 11rem) !important;
-    overflow: hidden !important;
+  html body .v21-workspace-shell .v21-lt-status-actions > button:nth-child(1) { width: 70px !important; }
+  html body .v21-workspace-shell .v21-lt-status-actions > button:nth-child(2) { width: 85px !important; }
+  html body .v21-workspace-shell .v21-lt-status-actions > button:nth-child(3) { width: 70px !important; }
+  html body .v21-workspace-shell .v21-lt-status-actions > button:nth-child(4) {
+    width: 95px !important;
+    border-radius: 18px !important;
+    background: #e4eaf3 !important;
+  }
+  html body .v21-workspace-shell .v21-lt-status-actions > button:nth-child(1) svg { color: #2ea043 !important; stroke: #2ea043 !important; }
+  html body .v21-workspace-shell .v21-lt-status-actions > button:nth-child(2) svg { color: #2f6fdb !important; stroke: #2f6fdb !important; }
+  html body .v21-workspace-shell .v21-lt-status-actions > button:nth-child(3) svg { color: #d83a3a !important; stroke: #d83a3a !important; }
+  html body .v21-workspace-shell .v21-lt-status-actions > button:nth-child(4) svg { color: #14213d !important; stroke: #14213d !important; }
+  html body .v21-workspace-shell .v21-lt-status-actions > button > svg {
+    display: block !important;
+    flex: 0 0 18px !important;
+    width: 18px !important;
+    height: 18px !important;
+  }
+  html body .v21-workspace-shell .v21-lt-status-actions > button:disabled {
+    opacity: .65 !important;
+    cursor: not-allowed !important;
+  }
+  html body .v21-workspace-shell .v21-lt-status-info {
+    display: flex !important;
+    flex: 0 1 auto !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    gap: 10px !important;
+    min-width: 0 !important;
+    color: #14213d !important;
+    font-size: 13.5px !important;
+    font-weight: 500 !important;
+    line-height: 1.2 !important;
+    white-space: nowrap !important;
+    direction: rtl !important;
+  }
+  html body .v21-workspace-shell .v21-lt-status-info i {
+    display: block !important;
+    flex: 0 0 1px !important;
+    width: 1px !important;
+    height: 14px !important;
+    background: #9aa8c0 !important;
   }
 
-  html body .v21-workspace-shell > div.flex.min-h-0 {
-    min-height: 0 !important;
-    flex: 1 1 auto !important;
-    overflow: hidden !important;
+  /* The reference has a 12px lower inner frame; no extra DOM/icon is introduced. */
+  html body .v21-workspace-root:has(> .v21-lt-titlebar)::after {
+    content: "" !important;
+    display: block !important;
+    flex: 0 0 12px !important;
+    height: 12px !important;
+    background: #e9eff8 !important;
   }
 
-  html body .v21-workspace-shell main {
-    min-height: 0 !important;
-    overflow-y: auto !important;
-    overflow-x: hidden !important;
-  }
-}
-
-/* Keep the desktop toolbar to its one 14-item rail.
-   The mobile rail shares the same toolbar container and must stay hidden
-   at laptop widths; mobile/tablet breakpoints remain unchanged. */
-@media (min-width: 1024px) {
-  html body .v21-workspace-shell .v21-laptop-toolbar > aside.v21-module-icon-row {
-    display: grid !important;
-    grid-template-columns: repeat(14, minmax(0, 1fr)) !important;
-  }
-
-  html body .v21-workspace-shell .v21-laptop-toolbar > aside.v21-module-icon-row-mobile {
+  /* Temporary banners/notifications stay in the code but are concealed on the PDF desktop. */
+  html body .v21-workspace-root .v21-lt-toast {
     display: none !important;
   }
 }
