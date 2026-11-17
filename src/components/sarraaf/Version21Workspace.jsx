@@ -524,17 +524,12 @@ export default function Version21Workspace(){
    {showBookSummary&&<div className="shrink-0 border-t border-slate-400 bg-[#e9edf1] p-2">
     <div className="flex gap-2 overflow-x-auto pb-1">{accountBookTotals().map(x=><div key={x.currency} className="v21-ledger-summary-card min-w-[250px] flex-1 rounded-xl border border-[#d3deeb] bg-white p-3 text-right shadow-sm"><b className="mb-2 block text-xs font-extrabold text-[#1e4776]" dir="ltr">{x.currency}</b><div className="grid grid-cols-3 gap-2"><div className="rounded-lg bg-rose-50 p-2"><span className="block text-[10px] font-semibold text-rose-700">جمع بدهکار</span><b className="text-xs tabular-nums text-rose-800">{fmt(x.debit)}</b></div><div className="rounded-lg bg-emerald-50 p-2"><span className="block text-[10px] font-semibold text-emerald-700">جمع بستانکار</span><b className="text-xs tabular-nums text-emerald-800">{fmt(x.credit)}</b></div><div className="rounded-lg bg-blue-50 p-2"><span className="block text-[10px] font-semibold text-blue-700">{x.net>0?'مانده بدهکار':x.net<0?'مانده بستانکار':'تراز'}</span><b className="text-xs tabular-nums text-blue-800">{fmt(Math.abs(x.net))}</b></div></div></div>)}</div>
    </div>}
-   <div className="v21-reference-record-actions shrink-0 flex items-center justify-end gap-2 border-t border-[#c4d5e9] bg-gradient-to-b from-[#edf4fd] to-[#dce8f6] px-3 py-2">
-    <button type="button" onClick={()=>SCHEMAS[active]&&canModuleAction(active,'create')?openNew():notify('برای ثبت، ابتدا بخش مورد نظر را باز کنید.')} disabled={!SCHEMAS[active]||!canModuleAction(active,'create')}><Check/>ثبت</button>
-    <button type="button" onClick={editSelected} disabled={!selected||!canModuleAction(active,'edit')}><Pencil/>ویرایش</button>
-    <button type="button" onClick={removeSelected} disabled={!selected||!canModuleAction(active,'delete')}><X/>حذف / ابطال</button>
-    <button type="button" onClick={printPage}><Printer/>چاپ</button>
-   </div>
-   <nav className="v21-mobile-bottom" aria-label="ناوبری اصلی موبایل">
-    <button type="button" className={active==='home'?'is-current':''} onClick={()=>{setActive('home');setSelected(null);setCustomerDetail(null);setBranchDetail(null);setQuery('');}}><Home className="h-5 w-5"/><span>خانه</span></button>
-    <button type="button" className={active==='reports'?'is-current':''} onClick={()=>{setActive('reports');setSelected(null);setQuery('');}}><BarChart3 className="h-5 w-5"/><span>گزارشات</span></button>
-    <button type="button" className={active==='exchange'?'is-current':''} onClick={()=>{setActive('exchange');setSelected(null);setQuery('');}}><ArrowLeftRight className="h-5 w-5"/><span>عملیات</span></button>
-    <button type="button" onClick={()=>setShowWorkspace(true)}><MoreHorizontal className="h-5 w-5"/><span>منو</span></button>
+   <div className="shrink-0 flex items-center justify-end gap-2 border-t border-slate-400 bg-[#dfe5ea] px-3 py-2"><button onClick={printPage} className="flex items-center gap-1 border border-slate-400 bg-white px-3 py-2 text-[10px]"><Printer className="h-4 w-4 text-[#315d7d]"/>چاپ</button></div>
+   <nav className="v21-mobile-bottom" aria-label="دسترسی سریع موبایل">
+    <button type="button" className={active==='home'?'is-current':''} onClick={()=>{setActive('home');setSelected(null);setCustomerDetail(null);setBranchDetail(null);setQuery('');}} aria-label="مرکز عملیات"><Home className="h-5 w-5"/><span>مرکز</span></button>
+    <button type="button" className={active==='customers'?'is-current':''} onClick={()=>{setActive('customers');setSelected(null);setCustomerDetail(null);setBranchDetail(null);setQuery('');}} aria-label="مشتریان"><Users className="h-5 w-5"/><span>مشتریان</span></button>
+    <button type="button" className={active==='cash'?'is-current':''} onClick={()=>{setActive('cash');setSelected(null);setCustomerDetail(null);setBranchDetail(null);setQuery('');}} aria-label="صندوق"><Wallet className="h-5 w-5"/><span>صندوق</span></button>
+    <button type="button" onClick={()=>setShowWorkspace(true)} aria-label="همه امکانات"><MoreHorizontal className="h-5 w-5"/><span>همه امکانات</span></button>
    </nav>
    <footer className="shrink-0 border-t border-slate-400 bg-[#dfe5ea] px-3 py-2 text-center text-[9px] text-slate-600">حساب صراف</footer>
   </section>
