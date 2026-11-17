@@ -169,7 +169,7 @@ export default function Layout() {
   return (
     <TermsGate role={userRole}>
     <ForceUpdateGate>
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="v21-app-shell min-h-screen bg-background flex flex-col">
       {/* Structured workspace navigation; mobile navigation below is unchanged. */}
       <aside className="hidden md:flex w-full shrink-0 flex-col bg-gradient-to-l from-[#0b3f88] via-[#1455a5] to-[#0b3f88] text-white print:hidden">
         {/* Brand header */}
