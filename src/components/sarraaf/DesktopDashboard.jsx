@@ -70,7 +70,7 @@ function MenuEntry({ path, byPath }) {
 
 export default function DesktopDashboard({
   txs, txLoading, customers, custLoading, treasuryBalances, treasuryLoading,
-  bankBalances, bankLoading, links = [],
+  bankBalances, bankLoading, links = [], desktopRequestedOnPhone = false,
 }) {
   const byPath = new Map(links.map(link => [link.path, link]));
   const today = new Date().toISOString().slice(0, 10);
@@ -97,7 +97,7 @@ export default function DesktopDashboard({
         ))}
       </nav>
 
-      <div className="grid min-w-0 grid-cols-4 gap-1 border-b border-[#c8d5e8] bg-[#f0f4fa] px-2 py-1 sm:grid-cols-7 xl:grid-cols-14">
+      <div className="grid min-w-0 grid-cols-4 gap-1 border-b border-[#c8d5e8] bg-[#f0f4fa] px-2 py-1 sm:grid-cols-7 xl:grid-cols-14" style={desktopRequestedOnPhone ? { gridTemplateColumns: "repeat(14,minmax(0,1fr))" } : undefined}>
         {TOOLBAR.map(([Icon, label, path], index) => (
           <DashboardTile key={label + index} icon={Icon} label={label} path={path} byPath={byPath} compact />
         ))}
@@ -110,7 +110,7 @@ export default function DesktopDashboard({
           <Home className="h-6 w-6 justify-self-end sm:h-7 sm:w-7" />
         </header>
 
-        <div className="grid min-w-0 grid-cols-2 gap-2 xl:grid-cols-4">
+        <div className="grid min-w-0 grid-cols-2 gap-2 xl:grid-cols-4" style={desktopRequestedOnPhone ? { gridTemplateColumns: "repeat(4,minmax(0,1fr))" } : undefined}>
           {[
             { label: 'تعداد مشتریان', value: customerCount, icon: Users },
             { label: 'صندوق‌های تعریف‌شده', value: cashCount, icon: Wallet },
@@ -125,7 +125,7 @@ export default function DesktopDashboard({
           })}
         </div>
 
-        <div className="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-[.84fr_1fr_1fr]">
+        <div className="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-[.84fr_1fr_1fr]" style={desktopRequestedOnPhone ? { gridTemplateColumns: ".84fr 1fr 1fr", gridTemplateRows: "144px 124px" } : undefined}>
           {PANELS.map((panel, index) => (
             <section key={panel.title} className="flex min-w-0 flex-col overflow-hidden border border-[#c4d3ec] bg-[#eef3fb]">
               <h3 className={`flex shrink-0 items-center bg-[#cbdcf5] px-3 font-bold text-[#14213d] ${index < 3 ? 'h-[40px] text-[16px]' : 'h-[35px] text-[14px]'}`}>{panel.title}</h3>
@@ -138,7 +138,7 @@ export default function DesktopDashboard({
 
         <section className="flex min-h-[125px] min-w-0 flex-col border border-[#c4d3ec] bg-[#e6ecf5] p-2">
           <h3 className="mb-2 text-[14px] font-bold">عملیات سریع</h3>
-          <div className="grid min-w-0 grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-5">
+          <div className="grid min-w-0 grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-5" style={desktopRequestedOnPhone ? { gridTemplateColumns: "repeat(5,minmax(0,1fr))" } : undefined}>
             {QUICK.map(([Icon, label, path]) => <DashboardTile key={label} icon={Icon} label={label} path={path} byPath={byPath} compact />)}
           </div>
         </section>
