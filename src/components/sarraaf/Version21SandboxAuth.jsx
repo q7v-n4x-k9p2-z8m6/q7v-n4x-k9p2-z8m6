@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { supabase } from '@/lib/supabaseClient';
+import { sandboxSupabase as supabase } from './Version21SandboxSupabase';
 
 const SESSION_KEY = 'hisab_sarraf_sandbox_auth_v1';
 const ALLOWED = { '33333333': 'sarraaf', '11111111': 'customer' };
