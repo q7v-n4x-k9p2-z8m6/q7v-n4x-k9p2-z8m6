@@ -22,7 +22,7 @@ export async function verifySandboxSession(session) {
   if (!session?.token || !session?.user) return null;
   const { data, error } = await supabase.rpc('legacy_verify', { p_token: session.token });
   if (error || !data?.success || !data?.user) return null;
-  const username = String(data.user.username || data.user.mobile || '');
+  const username = String(data.user.username || session.username || '');
   const allowedRole = ALLOWED[username];
   const actualRole = data.user.role === 'exchange' ? 'sarraaf' : data.user.role;
   if (!allowedRole || allowedRole !== actualRole) return null;
