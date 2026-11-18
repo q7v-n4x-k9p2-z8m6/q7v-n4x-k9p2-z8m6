@@ -534,6 +534,7 @@ export async function loadVersion21Database() {
       journal: mappedJournal,
       ledger: mappedLedger,
       transactions: mappedTransactions,
+      documents: mappedReports,
       reports: mappedReports,
       activity: mappedActivity,
       errors: mappedErrors,
