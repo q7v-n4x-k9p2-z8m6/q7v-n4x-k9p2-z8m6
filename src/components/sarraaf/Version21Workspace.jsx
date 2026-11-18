@@ -19,21 +19,6 @@ import {
 import SarraafLogo from '@/components/SarraafLogo';
 import { useAuth } from '@/lib/AuthContext';
 
-function detectDesktopSiteMode() {
-  if (typeof window === 'undefined') return false;
-  const ua = navigator.userAgent || '';
-  const uaMobile = navigator.userAgentData?.mobile === true || /Android|iPhone|iPod|Mobile|Windows Phone/i.test(ua);
-  const touch = (navigator.maxTouchPoints || 0) > 0 || window.matchMedia?.('(pointer: coarse)').matches === true;
-  const screenWidth = window.screen?.width || window.innerWidth;
-  const viewportWidth = document.documentElement.clientWidth || window.innerWidth;
-  // Mobile browsers in "Desktop site" mode expose a desktop-sized layout
-  // viewport while the physical CSS screen remains phone/tablet-sized.
-  const expandedDesktopViewport = viewportWidth >= 768 && screenWidth > 0 && viewportWidth >= screenWidth * 1.15;
-  return touch && viewportWidth >= 768 && (
-    (uaMobile && screenWidth <= 900) || expandedDesktopViewport
-  );
-}
-
 const CURRENCIES = ['AFN','USD','EUR','IRR','TRY','PKR','AED','SAR','GBP','CNY'];
 const MODULES = [
   {id:'home',label:'مرکز عملیات',icon:Home,group:'عمومی'},
@@ -156,9 +141,7 @@ export default function Version21Workspace(){
  const [dbStatus,setDbStatus]=useState('loading');
  const [dbError,setDbError]=useState('');
  const [localPreview,setLocalPreview]=useState(false);
- const [desktopSiteMode,setDesktopSiteMode]=useState(detectDesktopSiteMode);
  const [exchangeProfile,setExchangeProfile]=useState(null);
- useEffect(()=>{const update=()=>setDesktopSiteMode(detectDesktopSiteMode());window.addEventListener('resize',update);window.addEventListener('orientationchange',update);return()=>{window.removeEventListener('resize',update);window.removeEventListener('orientationchange',update);};},[]);
  const [lastLoaded,setLastLoaded]=useState(null);
  // Both real exchange tenants and the shared demo workspace may use CRUD UI.
  // Demo writes are isolated by Version21DemoAdapter; real writes retain server-side
@@ -524,17 +507,16 @@ export default function Version21Workspace(){
   ]}
  ];
  const ltDeletable=['customers','branches','cash','banks','currencies','accounts','transactions','cashAction','expenses','journal','ledger','remittance','exchange'].includes(active);
- const mainTitle='حساب صراف'; return <div dir="rtl" className={"v21-workspace-root space-y-2 text-[#253746]"+(desktopSiteMode?" v21-force-desktop":"")}>
+ const mainTitle='حساب صراف'; return <div dir="rtl" className="v21-workspace-root space-y-2 text-[#253746]">
 
-  {dbStatus==='error'&&<div className="border border-rose-300 bg-rose-50 px-3 py-2 text-xs text-rose-800 lg:hidden">{dbError}</div>}
-   {localPreview&&<div className="border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-900 lg:hidden">پیش‌نمایش محلی پشتیبان/نمای پاک‌شده فعال است؛ ثبت، ویرایش و ابطال تا تازه‌سازی اطلاعات واقعی غیرفعال می‌ماند.</div>}
-  {dbStatus==='connected'&&<div className="flex flex-wrap items-center justify-between gap-2 border border-emerald-200 bg-emerald-50 px-3 py-2 text-[10px] text-emerald-900 lg:hidden"><span>صراف: <b>{exchangeProfile?.name||'—'}</b> · داده‌ها فقط از نشست همین صراف دریافت می‌شود.</span><span>آخرین بارگذاری: {lastLoaded?new Date(lastLoaded).toLocaleString('fa-IR'):'—'}</span></div>}
   <header className="v21-lt-titlebar hidden lg:flex" dir="ltr" aria-label="نوار عنوان برنامه">
    <div className="v21-lt-titlebar-brand"><SarraafLogo size={22}/><span>چیدمان لپ‌تاپ حساب صراف — نسخه ۲۱</span></div>
    <div className="v21-lt-window-controls" aria-hidden="true"><Minus/><Square/><X/></div>
   </header>
   <section className="v21-workspace-shell flex max-h-[78vh] min-h-[640px] lg:max-h-none flex-col overflow-hidden border border-[#65798b] bg-[#eef1f4] shadow-md">
    <header className="v21-mobile-appbar flex min-h-9 items-center justify-between px-4 py-3 text-white lg:hidden"><div className="flex min-w-0 flex-col gap-1"><b className="text-sm tracking-tight">حساب صراف</b><span className="max-w-[58vw] truncate text-[10px] text-white/75">{exchangeProfile?.name||'مدیریت مالی و حسابداری صرافی'}</span></div><div className="flex shrink-0 items-center gap-2"><span className={'v21-mobile-connection '+(dbStatus==='connected'?'is-connected':'')}>{dbStatus==='connected'?'متصل':dbStatus==='error'?'خطا':'در حال اتصال'}</span><button type="button" aria-label="تنظیمات برنامه" onClick={()=>setModal('settings')} className="grid h-10 w-10 place-items-center rounded-xl border border-white/20 bg-white/10"><Settings className="h-5 w-5"/></button></div></header>
+   {dbStatus==='error'&&<div className="mx-3 mt-2 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-800 lg:hidden">{dbError}</div>}
+   {localPreview&&<div className="mx-3 mt-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900 lg:hidden">پیش‌نمایش محلی پشتیبان/نمای پاک‌شده فعال است؛ ثبت، ویرایش و ابطال تا تازه‌سازی اطلاعات واقعی غیرفعال می‌ماند.</div>}
    {/* ردیف اول: عملیات روی رکورد انتخاب‌شده */}
    <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
     <div className="v21-laptop-toolbar">
@@ -672,7 +654,7 @@ export default function Version21Workspace(){
    {modal==='support'&&<div className="space-y-3 p-4 text-xs leading-6"><b>پشتیبانی حساب صراف</b><p>برای مشاهده راه‌های پشتیبانی و ثبت درخواست، صفحه پشتیبانی برنامه را باز کنید.</p><button onClick={()=>{setModal('');navigate('/support');}} className="border border-blue-300 bg-blue-50 px-4 py-2 font-bold text-blue-900">ورود به مرکز پشتیبانی</button></div>}
    {modal==='help'&&<div className="space-y-2 p-4 text-xs leading-6"><p>۱. از فهرست سمت راست بخش مورد نظر را باز کنید.</p><p>۲. اطلاعات صراف از دیتابیس دریافت می‌شود و ثبت‌های جدید در همان حساب ذخیره می‌گردد.</p><p>۳. برای تازه‌سازی، از دکمه «تازه‌سازی» استفاده کنید.</p><p>۴. ثبت و ویرایش در جدول‌های موجود انجام می‌شود؛ عملیات مالی با سند حسابداری و سوابق قابل‌ردیابی ثبت می‌گردد.</p><p>دسترسی اطلاعات به نشست و کد صرافی واردشده محدود است.</p></div>}
   </div></div>}
-  <style>{`.v21-force-desktop .v21-lt-titlebar{display:flex!important}.v21-force-desktop .v21-workspace-shell>header{display:none!important}.v21-force-desktop .v21-laptop-menu-bar[aria-label="منوی اصلی دسکتاپ"]{display:flex!important}.v21-force-desktop .v21-laptop-menu-bar[aria-label="منوی اصلی موبایل"]{display:none!important}.v21-force-desktop .v21-module-icon-row{display:flex!important}.v21-force-desktop .v21-module-icon-row-mobile,.v21-force-desktop .v21-reference-mobile-shortcuts,.v21-force-desktop .v21-mobile-bottom{display:none!important}`}</style>
-  <style>{'@media print{body *{visibility:hidden!important} .print-area,.print-area *{visibility:visible!important}} @media(max-width:640px){.v21-laptop-menu-bar.hidden{display:none!important}.v21-workspace-root{min-height:100dvh;padding-bottom:env(safe-area-inset-bottom)}.v21-workspace-shell{max-height:none!important;min-height:calc(100dvh - 16px)!important;height:auto;overflow:visible!important;border-radius:10px}.v21-workspace-shell>header{position:sticky;top:0;z-index:25;min-height:48px;padding:10px 12px}.v21-workspace-shell>nav{display:flex;flex-wrap:nowrap;overflow-x:auto;white-space:nowrap;scrollbar-width:thin;position:relative;z-index:20}.v21-workspace-shell>nav>div{flex:0 0 auto}.v21-workspace-shell>div.flex.min-h-0{overflow:visible}.v21-workspace-shell aside.grid{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:6px;padding:8px}.v21-workspace-shell aside.grid button{min-height:66px;padding:8px 4px}.v21-workspace-shell aside.grid button svg{width:20px;height:20px}.v21-workspace-shell aside.grid button span{white-space:normal;overflow:visible;text-overflow:clip;line-height:1.4;font-size:11px}.v21-workspace-shell main{overflow:visible!important;padding:10px}.v21-workspace-shell main>div.grid.grid-cols-2{grid-template-columns:repeat(2,minmax(0,1fr))}.v21-workspace-shell main section .min-w-\\[112px\\]{min-width:calc(50% - 8px)}.v21-workspace-shell main input,.v21-workspace-shell main select{max-width:100%;min-height:38px}.v21-workspace-shell table{min-width:640px}.v21-workspace-shell main>div:has(>table){overflow-x:auto}.v21-workspace-shell>div.shrink-0.flex.items-center.justify-between{position:sticky;bottom:56px;z-index:15}.v21-mobile-bottom{position:sticky;bottom:0;z-index:30;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px;padding:8px;background:#dfe8ef;border-top:1px solid #9aabb9;padding-bottom:calc(8px + env(safe-area-inset-bottom))}.v21-mobile-bottom button{min-height:42px;border:1px solid #a8bac8;border-radius:7px;background:#fff;color:#24496d;font-size:11px;font-weight:700}.v21-workspace-shell footer{font-size:9px;gap:6px}.v21-workspace-shell .fixed.inset-0{padding:8px}.v21-workspace-shell .fixed.inset-0>div{max-height:92dvh}} @media(min-width:641px){.v21-mobile-bottom{display:none}}@media(max-width:640px){.v21-workspace-root{padding-bottom:max(env(safe-area-inset-bottom),8px)}.v21-workspace-shell{width:100%;max-width:100%;border:1px solid #cbd9e8;box-shadow:0 8px 28px rgba(16,43,76,.10)}.v21-workspace-shell>header{padding-top:calc(10px + env(safe-area-inset-top))}.v21-laptop-toolbar{display:flex;flex-direction:column;gap:8px;background:#eaf1f7} .v21-laptop-menu-bar{display:flex;flex-wrap:nowrap;align-items:center;gap:6px;overflow-x:auto;padding:6px 8px;white-space:nowrap;scrollbar-width:thin} .v21-laptop-brand{display:inline-flex;flex:0 0 auto;padding:5px 14px;border-left:1px solid #9aabb9;font-size:12px;font-weight:800;color:#1e4260;}.v21-laptop-menu-bar>div{flex:0 0 auto} .v21-workspace-shell .v21-module-icon-row-mobile{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:6px!important;padding:8px!important;background:#e1eaf2!important}.v21-workspace-shell .v21-module-icon-row-mobile button{min-height:66px;padding:8px 4px}.v21-workspace-shell .v21-module-icon-row-mobile button svg{width:20px;height:20px}.v21-workspace-shell .v21-module-icon-row-mobile button span{white-space:normal;overflow:visible;text-overflow:clip;line-height:1.4;font-size:11px}.v21-workspace-shell .v21-reference-mobile-shortcuts{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;padding:8px;background:#f3f7fc;border-bottom:1px solid #cbd9e8}.v21-workspace-shell .v21-reference-mobile-shortcuts button{min-height:58px;border:1px solid #d5e2f0;background:#fff;color:#24496d;font-size:11px;font-weight:600}.v21-workspace-shell .v21-reference-mobile-shortcuts button:active{background:#e7f0fa}.v21-workspace-shell main{min-width:0;overflow-x:hidden!important;padding:10px!important}.v21-workspace-shell .v21-reference-group-tiles>div{min-width:calc(50% - 8px);flex:1 1 calc(50% - 8px)}.v21-workspace-shell .v21-module-tile{min-height:92px;padding:10px 6px}.v21-workspace-shell .v21-mobile-bottom{background:linear-gradient(180deg,#f8fbff,#e5edf5);border-top:1px solid #b8c9d8;padding-bottom:calc(8px + env(safe-area-inset-bottom))}.v21-workspace-shell .v21-mobile-bottom button.is-current{border-color:#164b87;background:linear-gradient(135deg,#164b87,#2767a5);color:#fff;box-shadow:0 2px 8px rgba(22,75,135,.2)}.v21-workspace-shell .fixed.inset-0{align-items:flex-end;padding:8px}.v21-workspace-shell .fixed.inset-0>div{width:100%;max-height:calc(100dvh - env(safe-area-inset-top) - 12px);border-radius:16px 16px 0 0}.v21-workspace-shell input,.v21-workspace-shell select,.v21-workspace-shell textarea,.v21-workspace-shell button{touch-action:manipulation}}  '}</style>
+
+  <style>{'@media print{body *{visibility:hidden!important} .print-area,.print-area *{visibility:visible!important}}'}</style>
  </div>;
 }
