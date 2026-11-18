@@ -59,7 +59,7 @@ export default function Version21SandboxAuth({ onAuthenticated }) {
         };
         throw new Error(messages[data?.error] || 'ورود انجام نشد؛ اطلاعات حساب را بررسی کنید.');
       }
-      const actualUsername = String(data.user.username || data.user.mobile || normalized);
+      const actualUsername = String(data.user.username || normalized);
       const actualRole = data.user.role === 'exchange' ? 'sarraaf' : data.user.role;
       if (actualUsername !== normalized || actualRole !== expectedRole) {
         throw new Error('نقش یا شناسه این حساب با دسترسی آزمایشی تعریف‌شده مطابقت ندارد.');
