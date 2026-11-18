@@ -1,0 +1,29 @@
+name: Build Sarraaf read-only release candidate (no deployment)
+on:
+  push:
+    branches:
+      - release-candidate/sarraf-readonly-preview-20261118
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: sarraaf-readonly-release-candidate
+  cancel-in-progress: true
+jobs:
+  build-only:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: release-candidate/sarraf-readonly-preview-20261118
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm install
+      - run: npm run build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sarraaf-readonly-release-candidate
+          path: dist/
+          if-no-files-found: error
+          retention-days: 7
