@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import './mobile-inner-pages-responsive.css';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import {
   Home, Users, Wallet, Landmark, ArrowLeftRight, Send, ScrollText,
