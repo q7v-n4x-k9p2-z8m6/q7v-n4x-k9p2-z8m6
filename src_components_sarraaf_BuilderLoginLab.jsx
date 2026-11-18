@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabaseClient';
 import { setAppTokenHeader } from '@/lib/supabaseDirectAuth';
 import { normalizeRole, HOME_BY_ROLE } from '@/lib/rbac';
+import { applyCreatorRole } from '@/lib/creatorAuth';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
@@ -12,7 +12,6 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { FlaskConical, Store, UserCircle, ShieldCheck, AlertTriangle, Loader2 } from 'lucide-react';
 
 export default function BuilderLoginLab() {
-  const navigate = useNavigate();
   const [tab, setTab] = useState('sarraaf');
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
@@ -62,10 +61,21 @@ export default function BuilderLoginLab() {
 
       setAppTokenHeader(data.token);
       localStorage.setItem('auth_token', data.token);
+      const normalizedUser = applyCreatorRole({
+        ...user,
+        role,
+        ...(data.exchange ? {
+          exchange_code: user.exchange_code || data.exchange.exchange_code || '',
+          exchange_name: user.exchange_name || data.exchange.exchange_name || '',
+        } : {}),
+        ...(user.created_at ? { created_date: user.created_at } : {}),
+        ...(user.updated_at ? { updated_date: user.updated_at } : {}),
+      });
+      delete normalizedUser.password;
       if (role === 'creator') {
         localStorage.removeItem('auth_user');
       } else {
-        localStorage.setItem('auth_user', JSON.stringify({ ...user, role }));
+        localStorage.setItem('auth_user', JSON.stringify(normalizedUser));
       }
       localStorage.removeItem('default_password_alert');
       window.location.assign(HOME_BY_ROLE[role] || (role === 'customer' ? '/customer' : '/dashboard'));
