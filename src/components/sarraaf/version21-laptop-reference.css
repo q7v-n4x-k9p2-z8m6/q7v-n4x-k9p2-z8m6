@@ -787,45 +787,11 @@
 }
 
 
-/* Adaptive desktop sizing for compact laptops and mobile browsers requesting
-   Desktop site. Keep the same desktop composition and handlers; scale the complete
-   reference window in stable viewport bands without relying on experimental CSS math. */
-@media (min-width: 768px) and (max-width: 899px) {
-  html body .v21-workspace-root:has(> .v21-lt-titlebar) {
-    zoom: .68;
-    width: 147.0588% !important;
-    height: 120.5882vh !important;
-    max-height: calc(147.0588dvh - 7.3529rem) !important;
-    margin-top: 7.3529vh !important;
-  }
-}
-@media (min-width: 900px) and (max-width: 1023px) {
-  html body .v21-workspace-root:has(> .v21-lt-titlebar) {
-    zoom: .74;
-    width: 135.1351% !important;
-    height: 110.8108vh !important;
-    max-height: calc(135.1351dvh - 6.7568rem) !important;
-    margin-top: 6.7568vh !important;
-  }
-}
-@media (min-width: 1024px) and (max-width: 1151px) {
-  html body .v21-workspace-root:has(> .v21-lt-titlebar) {
-    zoom: .82;
-    width: 121.9512% !important;
-    height: 100vh !important;
-    max-height: calc(121.9512dvh - 6.0976rem) !important;
-    margin-top: 6.0976vh !important;
-  }
-}
-@media (min-width: 1152px) and (max-width: 1279px) {
-  html body .v21-workspace-root:has(> .v21-lt-titlebar) {
-    zoom: .92;
-    width: 108.6957% !important;
-    height: 89.1304vh !important;
-    max-height: calc(108.6957dvh - 5.4348rem) !important;
-    margin-top: 5.4348vh !important;
-  }
-}
+/* Laptop viewport sizing.
+   The reference canvas uses the available desktop viewport directly. Avoid
+   multiplying width/height by inverse zoom percentages: that left unused
+   horizontal space because later width:100% rules overrode those percentages.
+   The existing proportional rows/cards/panels below adapt within this canvas. */
 
 /* Prevent the mobile dashboard from appearing beside the PDF desktop layout.
    The PDF layout starts at 768px, while Tailwind's lg:hidden starts at 1024px.
@@ -886,7 +852,8 @@
     flex-direction: column !important;
     flex: 1 1 auto !important;
     min-height: 0 !important;
-    overflow: hidden !important;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
   }
   html body .v21-workspace-shell main .v21-lt-home {
     display: flex !important;
