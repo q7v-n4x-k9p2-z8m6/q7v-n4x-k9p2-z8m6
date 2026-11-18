@@ -1,8 +1,25 @@
-import React, { useEffect, useState } from 'react';
-import { sandboxSupabase as supabase } from './Version21SandboxSupabase';
+import React, { useState } from 'react';
+import { getSupabaseConfig } from '@/lib/supabaseConfig';
 
 const SESSION_KEY = 'hisab_sarraf_sandbox_auth_v1';
 const ALLOWED = { '33333333': 'sarraaf', '11111111': 'customer' };
+
+async function callSandboxAuth(payload) {
+  const config = getSupabaseConfig();
+  const response = await fetch(`${config.url}/functions/v1/sarraf-sandbox-auth`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      apikey: config.key,
+      Authorization: `Bearer ${config.key}`
+    },
+    body: JSON.stringify(payload)
+  });
+  let data = null;
+  try { data = await response.json(); } catch {}
+  if (!response.ok && !data) throw new Error('ارتباط با سرویس احراز هویت برقرار نشد.');
+  return data || { success: false, error: 'auth_failed' };
+}
 
 export function readSandboxSession() {
   try { return JSON.parse(localStorage.getItem(SESSION_KEY) || 'null'); } catch { return null; }
@@ -20,13 +37,16 @@ export function sandboxTenantId() {
 
 export async function verifySandboxSession(session) {
   if (!session?.token || !session?.user) return null;
-  const { data, error } = await supabase.rpc('legacy_verify', { p_token: session.token });
-  if (error || !data?.success || !data?.user) return null;
-  const username = String(data.user.username || session.username || '');
-  const allowedRole = ALLOWED[username];
-  const actualRole = data.user.role === 'exchange' ? 'sarraaf' : data.user.role;
-  if (!allowedRole || allowedRole !== actualRole) return null;
-  return { ...session, username, user: { ...data.user, role: actualRole } };
+  try {
+    const data = await callSandboxAuth({ action: 'verify', token: session.token });
+    if (!data?.success || !data?.user) return null;
+    const username = String(data.user.username || '');
+    const expectedRole = ALLOWED[username];
+    if (!expectedRole || data.user.role !== expectedRole || username !== String(session.username || '')) return null;
+    return { ...session, username, user: data.user };
+  } catch {
+    return null;
+  }
 }
 
 export default function Version21SandboxAuth({ onAuthenticated }) {
@@ -44,30 +64,26 @@ export default function Version21SandboxAuth({ onAuthenticated }) {
     if (!password) { setError('رمز عبور را وارد کنید.'); return; }
     setBusy(true);
     try {
-      // Call the existing authentication RPC directly. Deliberately do not run
-      // password migration, set the production app token, or write financial data.
-      const { data, error: rpcError } = await supabase.rpc('legacy_login', {
-        p_identifier: normalized, p_password: password
-      });
-      if (rpcError) throw new Error('ارتباط با سرویس احراز هویت برقرار نشد.');
+      const data = await callSandboxAuth({ action: 'login', username: normalized, password });
       if (!data?.success || !data?.user || !data?.token) {
         const messages = {
+          invalid_credentials: 'نام کاربری یا رمز عبور اشتباه است.',
           wrong_password: 'رمز عبور اشتباه است.',
           user_not_found: 'حساب کاربری پیدا نشد.',
           user_inactive: 'این حساب غیرفعال است.',
-          too_many_attempts: 'تلاش‌های ناموفق زیاد است؛ بعداً دوباره امتحان کنید.'
+          too_many_attempts: 'تلاش‌های ناموفق زیاد است؛ بعداً دوباره امتحان کنید.',
+          sandbox_access_denied: 'این حساب اجازه ورود به محیط آزمایشی را ندارد.'
         };
         throw new Error(messages[data?.error] || 'ورود انجام نشد؛ اطلاعات حساب را بررسی کنید.');
       }
-      const actualUsername = String(data.user.username || normalized);
-      const actualRole = data.user.role === 'exchange' ? 'sarraaf' : data.user.role;
-      if (actualUsername !== normalized || actualRole !== expectedRole) {
+      const actualUsername = String(data.user.username || '');
+      if (actualUsername !== normalized || data.user.role !== expectedRole) {
         throw new Error('نقش یا شناسه این حساب با دسترسی آزمایشی تعریف‌شده مطابقت ندارد.');
       }
       const session = {
         username: normalized,
         token: data.token,
-        user: { ...data.user, role: actualRole },
+        user: data.user,
         authenticatedAt: new Date().toISOString()
       };
       saveSandboxSession(session);
