@@ -49,6 +49,41 @@ export async function verifySandboxSession(session) {
   }
 }
 
+
+export async function authenticateSandboxCredentials(username, password) {
+  const normalized = String(username || '').trim();
+  const expectedRole = ALLOWED[normalized];
+  if (!expectedRole) throw new Error('این حساب در فهرست کاربران مجاز محیط آزمایشی نیست.');
+  if (!password) throw new Error('رمز عبور را وارد کنید.');
+
+  const data = await callSandboxAuth({ action: 'login', username: normalized, password });
+  if (!data?.success || !data?.user || !data?.token) {
+    const messages = {
+      invalid_credentials: 'نام کاربری یا رمز عبور اشتباه است.',
+      wrong_password: 'رمز عبور اشتباه است.',
+      user_not_found: 'حساب کاربری پیدا نشد.',
+      user_inactive: 'این حساب غیرفعال است.',
+      too_many_attempts: 'تلاش‌های ناموفق زیاد است؛ بعداً دوباره امتحان کنید.',
+      sandbox_access_denied: 'این حساب اجازه ورود به محیط آزمایشی را ندارد.'
+    };
+    throw new Error(messages[data?.error] || 'ورود انجام نشد؛ اطلاعات حساب را بررسی کنید.');
+  }
+
+  const actualUsername = String(data.user.username || '');
+  if (actualUsername !== normalized || data.user.role !== expectedRole) {
+    throw new Error('نقش یا شناسه این حساب با دسترسی آزمایشی تعریف‌شده مطابقت ندارد.');
+  }
+
+  const session = {
+    username: normalized,
+    token: data.token,
+    user: data.user,
+    authenticatedAt: new Date().toISOString()
+  };
+  saveSandboxSession(session);
+  return session;
+}
+
 export default function Version21SandboxAuth({ onAuthenticated }) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
