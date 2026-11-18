@@ -836,3 +836,88 @@
     display: none !important;
   }
 }
+
+
+/* A1 home layout balance: distribute the available workspace instead of
+   forcing fixed-width tiles that collide and leave unused screen space.
+   This is presentation-only; menu items and their handlers are untouched. */
+@media (min-width: 768px) {
+  html body .v21-workspace-shell main:has(.v21-lt-home) {
+    display: flex !important;
+    flex-direction: column !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+  }
+  html body .v21-workspace-shell main .v21-lt-home {
+    display: flex !important;
+    flex: 1 1 auto !important;
+    flex-direction: column !important;
+    min-height: 0 !important;
+    height: 100% !important;
+  }
+  html body .v21-workspace-shell .v21-lt-groups {
+    display: grid !important;
+    flex: 1 1 0 !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    grid-template-rows: repeat(2, minmax(100px, 1fr)) !important;
+    grid-auto-flow: row !important;
+    gap: 10px !important;
+    min-height: 0 !important;
+    width: 100% !important;
+    margin: 0 0 9px !important;
+  }
+  html body .v21-workspace-shell .v21-lt-group {
+    min-width: 0 !important;
+    min-height: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+  }
+  html body .v21-workspace-shell .v21-lt-group-tiles {
+    display: grid !important;
+    flex: 1 1 auto !important;
+    grid-template-columns: repeat(auto-fit, minmax(0, 1fr)) !important;
+    grid-auto-flow: column !important;
+    align-items: stretch !important;
+    justify-content: stretch !important;
+    gap: 6px !important;
+    height: auto !important;
+    min-height: 0 !important;
+    padding: 6px !important;
+    overflow: hidden !important;
+  }
+  html body .v21-workspace-shell .v21-lt-tile,
+  html body .v21-workspace-shell [data-lt-group] .v21-lt-tile,
+  html body .v21-workspace-shell [data-lt-group] .v21-lt-tile:nth-child(n) {
+    display: flex !important;
+    flex: 1 1 0 !important;
+    width: auto !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    height: 100% !important;
+    min-height: 0 !important;
+    padding: 8px 5px !important;
+    overflow: hidden !important;
+  }
+  html body .v21-workspace-shell .v21-lt-tile svg {
+    flex: 0 0 28px !important;
+    width: 28px !important;
+    height: 28px !important;
+    max-width: 100% !important;
+  }
+  html body .v21-workspace-shell .v21-lt-tile span {
+    overflow-wrap: anywhere !important;
+    word-break: normal !important;
+    text-align: center !important;
+  }
+  html body .v21-workspace-shell .v21-lt-quick {
+    flex: 0 0 108px !important;
+    height: 108px !important;
+    min-height: 108px !important;
+    max-height: 108px !important;
+  }
+  html body .v21-workspace-shell .v21-lt-quick-actions,
+  html body .v21-workspace-shell .v21-lt-quick-actions > button {
+    min-height: 62px !important;
+    height: 62px !important;
+  }
+}
