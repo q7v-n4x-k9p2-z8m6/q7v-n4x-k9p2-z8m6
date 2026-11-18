@@ -826,3 +826,13 @@
     margin-top: 5.4348vh !important;
   }
 }
+
+/* Prevent the mobile dashboard from appearing beside the PDF desktop layout.
+   The PDF layout starts at 768px, while Tailwind's lg:hidden starts at 1024px.
+   This only hides the duplicate home composition at desktop/tablet widths; all
+   mobile content and every existing module handler remain unchanged. */
+@media (min-width: 768px) {
+  html body .v21-workspace-shell main .v21-lt-home + div {
+    display: none !important;
+  }
+}
