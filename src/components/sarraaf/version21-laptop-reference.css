@@ -1015,14 +1015,21 @@
   }
 }
 
-/* Narrow desktop-site viewports retain the same row structure and scroll safely. */
+/* Narrow desktop-site viewports: preserve all 14 toolbar items in one
+   proportional row. The previous fixed 64px basis overrode the full-row
+   distribution above and caused overflow/misalignment on compact viewports. */
 @media (min-width: 768px) and (max-width: 1023px) {
   html body .v21-workspace-shell .v21-laptop-toolbar > aside.v21-module-icon-row {
-    overflow-x: auto !important;
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    justify-content: stretch !important;
+    overflow: hidden !important;
   }
   html body .v21-workspace-shell .v21-laptop-toolbar > aside.v21-module-icon-row > button.v21-desktop-module-button {
-    flex: 0 0 64px !important;
-    width: 64px !important;
+    flex: 1 1 0 !important;
+    width: 0 !important;
+    min-width: 0 !important;
+    max-width: none !important;
   }
   html body .v21-workspace-shell main:has(.v21-lt-home) {
     overflow-y: auto !important;
