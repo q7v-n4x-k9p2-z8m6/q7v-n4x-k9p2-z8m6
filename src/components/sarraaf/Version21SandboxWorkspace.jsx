@@ -586,7 +586,7 @@ export default function Version21SandboxWorkspace(){
         {title:'صندوق و بانک',ids:['cash','banks']},
         {title:'عملیات صرافی',ids:['exchange','remittance','expenses']},
         {title:'اسناد',ids:['documents']},
-        {title:'حسابداری و گزارشات',ids:['journal','ledger','accounts','currencies','reports','profit','balance']},
+        {title:'حسابداری و گزارشات',ids:['debtors','journal','ledger','accounts','currencies','reports','profit','balance','activity','errors']},
         {title:'امکانات تکمیلی · ماژول‌های متصل',ids:['sarraafGroups','assistant','products']},
         {title:'تنظیمات',ids:['settings','language']}
        ].map(group=><section key={group.title} className="v21-reference-group border border-[#9aabb9] bg-[#e8eef3] p-2 shadow-sm">
