@@ -351,6 +351,7 @@ export default function BuilderPanel() {
       <Tabs defaultValue="system">
         <TabsList className="flex overflow-x-auto scrollbar-thin w-full gap-0.5 justify-start sm:justify-around">
           {TAB_GROUPS.filter(group => {
+            if (group.value === 'login_lab') return user?.role === 'creator';
             if (isFullCreator) return true;
             if (group.value === 'co_creators') return false; // co-creators can't manage other co-creators
             if (!allowedTabs) return true;
@@ -553,7 +554,7 @@ export default function BuilderPanel() {
         )}
 
         {/* آزمایشگاه ورود — فقط سازنده اصلی؛ بدون دستکاری سایر بخش‌های پنل */}
-        {isFullCreator && (
+        {user?.role === 'creator' && (
           <TabsContent value="login_lab">
             <BuilderLoginLab />
           </TabsContent>
