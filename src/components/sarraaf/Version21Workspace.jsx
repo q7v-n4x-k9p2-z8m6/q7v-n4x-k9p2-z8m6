@@ -530,7 +530,7 @@ export default function Version21Workspace(){
    {localPreview&&<div className="border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-900 lg:hidden">پیش‌نمایش محلی پشتیبان/نمای پاک‌شده فعال است؛ ثبت، ویرایش و ابطال تا تازه‌سازی اطلاعات واقعی غیرفعال می‌ماند.</div>}
   {dbStatus==='connected'&&<div className="flex flex-wrap items-center justify-between gap-2 border border-emerald-200 bg-emerald-50 px-3 py-2 text-[10px] text-emerald-900 lg:hidden"><span>صراف: <b>{exchangeProfile?.name||'—'}</b> · داده‌ها فقط از نشست همین صراف دریافت می‌شود.</span><span>آخرین بارگذاری: {lastLoaded?new Date(lastLoaded).toLocaleString('fa-IR'):'—'}</span></div>}
   <header className="v21-lt-titlebar hidden lg:flex" dir="ltr" aria-label="نوار عنوان برنامه">
-   <div className="v21-lt-titlebar-brand"><SarraafLogo size={22}/><span>چیدمان لپ‌تاپ حساب صراف — نسخه ۲۱</span></div>
+   <div className="v21-lt-titlebar-brand"><SarraafLogo size={22}/><span>حساب صراف</span></div>
    <div className="v21-lt-window-controls" aria-hidden="true"><Minus/><Square/><X/></div>
   </header>
   <section className="v21-workspace-shell flex max-h-[78vh] min-h-[640px] lg:max-h-none flex-col overflow-hidden border border-[#65798b] bg-[#eef1f4] shadow-md">
