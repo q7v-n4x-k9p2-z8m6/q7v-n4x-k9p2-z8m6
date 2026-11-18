@@ -1,5 +1,5 @@
-import { supabase } from '@/lib/supabaseClient';
-import { getExchangeCode } from '@/lib/supabaseApi';
+import { getSupabaseConfig } from '@/lib/supabaseConfig';
+import { readSandboxSession } from './Version21SandboxAuth';
 import { loadDemoPreviewRecords } from './Version21DemoAdapter';
 
 const num = value => Number(value ?? 0) || 0;
@@ -51,74 +51,57 @@ async function readTenantTable(table, exchangeCode) {
 }
 
 export async function loadVersion21Database() {
-  const exchangeCode = getExchangeCode();
-  const userId = getSessionUserId();
-  if (!exchangeCode || !userId) {
-    throw new Error('برای مشاهده اطلاعات، با حساب همان صراف وارد نسخه ۲۱ شوید.');
+  const sandboxSession = readSandboxSession();
+  if (!sandboxSession?.token || String(sandboxSession?.username || '') !== '33333333') {
+    throw new Error('برای مشاهده اطلاعات واقعی آزمایشی، ابتدا با حساب 33333333 وارد شوید.');
   }
 
-  // Resolve the tenant from the exchange code carried by the signed session.
-  // Do not require owner_user_id here: authorized employees also use the same
-  // exchange tenant. Every tenant table read below is still constrained by
-  // exchange_code and Supabase RLS validates that it matches the signed app_ec().
-  const { data: exchange, error: exchangeError } = await supabase
-    .from('exchanges')
-    .select('id, owner_user_id, exchange_code, exchange_name')
-    .eq('exchange_code', exchangeCode)
-    .maybeSingle();
-  if (exchangeError) throw new Error(`تأیید حساب صراف ناموفق بود: ${exchangeError.message}`);
-  if (!exchange) throw new Error('حساب صراف در نشست فعلی پیدا نشد؛ برای امنیت، داده‌ای بارگذاری نشد.');
+  const config = getSupabaseConfig();
+  const response = await fetch(`${config.url}/functions/v1/sarraf-preview-readonly`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      apikey: config.key,
+      Authorization: `Bearer ${config.key}`,
+    },
+    body: JSON.stringify({ action: 'read', token: sandboxSession.token }),
+    cache: 'no-store',
+  });
+  let payload = null;
+  try { payload = await response.json(); } catch {}
+  if (!response.ok || !payload?.success || payload?.access !== 'read_only' || !payload?.tables) {
+    const messages = {
+      invalid_or_expired_token: 'نشست آزمایشی منقضی شده است؛ دوباره وارد شوید.',
+      preview_access_denied: 'این حساب اجازه مشاهده این محیط را ندارد.',
+    };
+    throw new Error(messages[payload?.error] || 'خواندن اطلاعات صرافی آزمایشی ناموفق بود.');
+  }
 
-  const [
-    customers, safes, origins, bankAccounts, rates, chartAccounts,
-    documents, ledgerEntries, transfers, conversions, treasuryTransactions,
-    bankTransactions, journalEntries, sessionUser, userPermissions, auditLogs, errorReports,
-  ] = await Promise.all([
-    readTenantTable('customers', exchangeCode),
-    readTenantTable('safes', exchangeCode),
-    readTenantTable('origins', exchangeCode),
-    readTenantTable('bank_accounts', exchangeCode),
-    readTenantTable('rates', exchangeCode),
-    readTenantTable('chart_of_accounts', exchangeCode),
-    readTenantTable('documents', exchangeCode),
-    readTenantTable('ledger_entries', exchangeCode),
-    readTenantTable('transfers', exchangeCode),
-    readTenantTable('conversions', exchangeCode),
-    readTenantTable('treasury_transactions', exchangeCode),
-    readTenantTable('bank_transactions', exchangeCode),
-    readTenantTable('journal_entries', exchangeCode),
-    (async () => {
-      const { data, error } = await supabase.from('users').select('role')
-        .eq('id', Number(userId)).maybeSingle();
-      if (error) throw new Error(`تأیید نقش کاربر ناموفق بود: ${error.message}`);
-      if (!data?.role) throw new Error('نقش کاربر از سرور دریافت نشد.');
-      return data;
-    })(),
-    (async () => {
-      const { data, error } = await supabase.from('user_permissions')
-        .select('section,can_view,can_create,can_edit,can_delete,can_print,can_report,can_settings')
-        .eq('user_id', String(userId));
-      if (error) throw new Error(`خواندن مجوزهای کاربر ناموفق بود: ${error.message}`);
-      return data || [];
-    })(),
-    // This table has an owner-only SELECT policy for rows whose user_id matches the signed session.
-    (async () => {
-      const { data, error } = await supabase
-        .from('audit_logs')
-        .select('id,user_id,action,entity_type,entity_id,description,status,created_at,target_name,reason')
-        .eq('user_id', userId)
-        .eq('exchange_code', exchangeCode)
-        .order('created_at', { ascending: false });
-      if (error) throw new Error(`خواندن سوابق فعالیت ناموفق بود: ${error.message}`);
-      return data || [];
-    })(),
-    (async () => {
-      const { data, error } = await supabase.from('error_reports').select('id,user_id,exchange_code,error_type,error_message,device,app_version,status,created_at')
-        .eq('user_id', userId).eq('exchange_code', exchangeCode).order('created_at', { ascending: false });
-      if (error) throw new Error(`خواندن گزارش خطاها ناموفق بود: ${error.message}`);
-      return data || [];
-    })(),
-  ]);
+  const exchange = payload.exchange;
+  const exchangeCode = String(exchange?.exchange_code || '');
+  const userId = String(payload.user?.id || '');
+  if (exchangeCode !== 'EX-261028-27497E95' || userId !== '114') {
+    throw new Error('هویت صرافی آزمایشی تأیید نشد؛ برای امنیت داده‌ای نمایش داده نشد.');
+  }
+
+  const tables = payload.tables;
+  const customers = tables.customers || [];
+  const safes = tables.safes || [];
+  const origins = tables.origins || [];
+  const bankAccounts = tables.bank_accounts || [];
+  const rates = tables.rates || [];
+  const chartAccounts = tables.chart_of_accounts || [];
+  const documents = tables.documents || [];
+  const ledgerEntries = tables.ledger_entries || [];
+  const transfers = tables.transfers || [];
+  const conversions = tables.conversions || [];
+  const treasuryTransactions = tables.treasury_transactions || [];
+  const bankTransactions = tables.bank_transactions || [];
+  const journalEntries = tables.journal_entries || [];
+  const sessionUser = payload.user || {};
+  const userPermissions = tables.user_permissions || [];
+  const auditLogs = tables.audit_logs || [];
+  const errorReports = tables.error_reports || [];
 
   const documentsById = new Map(documents.map(row => [String(row.id), row]));
   const safeById = new Map(safes.map(row => [String(row.id), row]));
