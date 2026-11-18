@@ -45,6 +45,7 @@ import RechargeManager from '@/components/sarraaf/RechargeManager';
 import Afghan5Manager from '@/components/sarraaf/Afghan5Manager';
 import SellerManager from '@/components/sarraaf/SellerManager';
 import SandboxPanel from '@/components/sandbox/SandboxPanel';
+import BuilderLoginLab from '@/components/sarraaf/BuilderLoginLab';
 import SupabaseAuditManager from '@/components/sarraaf/SupabaseAuditManager';
 import LiveDatabaseExplorer from '@/components/sarraaf/LiveDatabaseExplorer';
 import HexLayoutReferenceLibrary from '@/components/sarraaf/HexLayoutReferenceLibrary';
@@ -221,6 +222,12 @@ const TAB_GROUPS = [
     icon: Database,
     value: 'db_explorer',
     description: 'مرور و مدیریت زنده ردیف‌های جدول‌ها',
+  },
+  {
+    label: 'آزمایشگاه ورود',
+    icon: FlaskConical,
+    value: 'login_lab',
+    description: 'ورود آزمایشی سازنده به پنل صراف و مشتری',
   },
   {
     label: 'آزمایشگاه چیدمان HEX',
@@ -545,6 +552,13 @@ export default function BuilderPanel() {
         {isFullCreator && (
           <TabsContent value="layout_hex">
             <HexLayoutReferenceLibrary />
+          </TabsContent>
+        )}
+
+        {/* آزمایشگاه ورود — فقط سازنده اصلی؛ بدون دستکاری سایر بخش‌های پنل */}
+        {user?.role === 'creator' && (
+          <TabsContent value="login_lab">
+            <BuilderLoginLab />
           </TabsContent>
         )}
 
