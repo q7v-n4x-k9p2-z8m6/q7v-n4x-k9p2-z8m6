@@ -2,11 +2,11 @@ import React, { useState } from 'react';
 import { getSupabaseConfig } from '@/lib/supabaseConfig';
 
 const SESSION_KEY = 'hisab_sarraf_sandbox_auth_v1';
-const ALLOWED = { '33333333': 'sarraaf', '11111111': 'customer' };
+const ALLOWED = { '33333333': 'sarraaf' };
 
 async function callSandboxAuth(payload) {
   const config = getSupabaseConfig();
-  const response = await fetch(`${config.url}/functions/v1/sarraf-sandbox-auth`, {
+  const response = await fetch(`${config.url}/functions/v1/sarraf-preview-readonly`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -101,7 +101,7 @@ export default function Version21SandboxAuth({ onAuthenticated }) {
       <div className="text-center">
         <div className="text-xs font-bold text-amber-700">محیط مستقل آزمایشی</div>
         <h1 className="mt-2 text-2xl font-black text-slate-800">ورود به حساب صراف</h1>
-        <p className="mt-2 text-sm leading-7 text-slate-500">با نام کاربری و رمز حساب موجود وارد شوید. این محیط از داده‌های مالی اصلی استفاده نمی‌کند.</p>
+        <p className="mt-2 text-sm leading-7 text-slate-500">با نام کاربری و رمز حساب موجود وارد شوید. این محیط اطلاعات صرافی آزمایشی شما را فقط برای مشاهده می‌خواند؛ هیچ عملیات مالی در سرور ثبت نمی‌شود.</p>
       </div>
       <label className="block text-sm font-semibold text-slate-700">نام کاربری
         <input autoComplete="username" value={username} onChange={e=>setUsername(e.target.value)} className="mt-2 h-12 w-full rounded-xl border px-3 text-left" dir="ltr" required />
@@ -111,7 +111,7 @@ export default function Version21SandboxAuth({ onAuthenticated }) {
       </label>
       {error && <p role="alert" className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</p>}
       <button disabled={busy} className="h-12 w-full rounded-xl bg-slate-900 font-bold text-white disabled:opacity-50">{busy ? 'در حال بررسی…' : 'ورود به محیط آزمایشی'}</button>
-      <p className="text-center text-xs text-slate-400">ورود فقط برای دو حساب آزمایشی تعیین‌شده فعال است.</p>
+      <p className="text-center text-xs text-slate-400">ورود فقط برای حساب آزمایشی 33333333 فعال است.</p>
     </form>
   </main>;
 }
