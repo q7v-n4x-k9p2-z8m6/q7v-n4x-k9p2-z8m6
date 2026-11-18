@@ -513,7 +513,7 @@ export default function Version21SandboxWorkspace(){
    ['هوش مصنوعی',Bot,()=>goModule('assistant')]
   ]},
   {key:'settings',title:'تنظیمات',items:[
-   ['تنظیمات',Settings,()=>menuAction('settings')],
+   ['تنظیمات',Settings],
    ['زبان برنامه',Globe,()=>goModule('language')],
    ['درباره برنامه',LifeBuoy]
   ]}
