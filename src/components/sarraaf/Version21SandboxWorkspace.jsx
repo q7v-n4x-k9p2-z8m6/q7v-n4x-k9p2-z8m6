@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { loadVersion21Database, saveVersion21Record, editVersion21Record, deleteVersion21Record, deactivateVersion21MasterRecord, captureVersion21Error, seedVersion21BaseAccounts, saveDemoPreviewRecord, deleteDemoPreviewRecord } from './Version21SandboxAdapter';
 
 import { loadVersion21LocalState, saveVersion21LocalState } from './Version21SandboxLocalStore';
+import { readSandboxSession } from './Version21SandboxAuth';
 
 import { useSearchParams } from 'react-router-dom';
 import { hasPermission } from '@/lib/permissions';
@@ -16,7 +17,7 @@ import {
   Settings, Vault, ArrowDown, ArrowUp, Info, User, Globe, ShoppingCart, Minus, Square, LifeBuoy
 } from 'lucide-react';
 import SarraafLogo from '@/components/SarraafLogo';
-function useSandboxAuth(){ return { user: { id:'sandbox-sarraaf', username:'sandbox-sarraf', full_name:'صراف آزمایشی', role:'sarraaf' } }; }
+function useSandboxAuth(){ const session=readSandboxSession(); return { user: session?.user || null }; }
 
 function detectDesktopSiteMode() {
   if (typeof window === 'undefined') return false;
