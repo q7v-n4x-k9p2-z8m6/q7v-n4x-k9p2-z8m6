@@ -35,7 +35,7 @@ const CURRENCIES = ['AFN','USD','EUR','IRR','TRY','PKR','AED','SAR','GBP','CNY']
 const MODULES = [
   {id:'home',label:'مرکز عملیات',icon:Home,group:'عمومی'},
   {id:'documents',label:'فهرست اسناد',icon:FileText,group:'اسناد'},
-  {id:'settings',label:'تنظیمات برنامه',icon:Settings,group:'تنظیمات',linkedModule:true},
+  {id:'settings',label:'تنظیمات برنامه',icon:Settings2,group:'تنظیمات',linkedModule:true},
   {id:'customers',label:'تعریف مشتریان',icon:Users,group:'تعاریف و دفاتر'},
   {id:'customerLedger',label:'دفتر حساب مشتریان',icon:BookOpen,group:'تعاریف و دفاتر'},
   {id:'debtors',label:'بدهکاران و بستانکاران',icon:CircleDollarSign,group:'حسابداری'},
