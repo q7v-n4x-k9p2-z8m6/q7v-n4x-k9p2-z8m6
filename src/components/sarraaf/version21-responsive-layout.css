@@ -3062,3 +3062,256 @@
     text-overflow: ellipsis !important;
   }
 }
+
+
+/* A1 professional phone workspace
+   Phone/tablet presentation only. Desktop and financial behavior are untouched. */
+@media (max-width: 1023px) {
+  /* Keep the phone interface focused: the four-item dock is the primary navigation.
+     All other modules are opened from its "همه امکانات" action. */
+  html body .v21-workspace-shell .v21-module-icon-row-mobile,
+  html body .v21-workspace-shell .v21-reference-mobile-shortcuts {
+    display: none !important;
+  }
+
+  html body .v21-workspace-root {
+    min-width: 0 !important;
+    width: 100% !important;
+    overflow-x: clip !important;
+    background: #f3f6fa !important;
+  }
+  html body .v21-workspace-shell {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: #f5f8fc !important;
+    box-shadow: none !important;
+  }
+  html body .v21-workspace-shell > header {
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 40 !important;
+    display: flex !important;
+    min-height: 48px !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 8px !important;
+    padding: 7px 12px !important;
+    background: linear-gradient(110deg,#173f67,#285f91) !important;
+    box-shadow: 0 2px 9px rgb(18 48 78 / 15%) !important;
+  }
+  html body .v21-workspace-shell > header button {
+    min-width: 36px !important;
+    min-height: 34px !important;
+    border-radius: 9px !important;
+  }
+  html body .v21-workspace-shell > div.flex.min-h-0 {
+    min-width: 0 !important;
+    overflow: visible !important;
+  }
+  html body .v21-workspace-shell > div.flex.min-h-0 > main {
+    width: 100% !important;
+    min-width: 0 !important;
+    padding: 12px 11px 28px !important;
+    overflow-x: clip !important;
+    background: #f4f7fb !important;
+  }
+
+  /* Dashboard hierarchy and compact summary cards. */
+  html body .v21-workspace-shell .v21-reference-dashboard-title {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 8px !important;
+    border: 0 !important;
+    border-radius: 13px !important;
+    margin: 0 0 11px !important;
+    padding: 12px !important;
+    background: linear-gradient(120deg,#ffffff,#edf4fb) !important;
+    box-shadow: 0 2px 9px rgb(31 59 87 / 6%) !important;
+  }
+  html body .v21-workspace-shell .v21-reference-dashboard-title > div:first-child > div {
+    display: none !important;
+  }
+  html body .v21-workspace-shell .v21-reference-dashboard-title h2 {
+    font-size: 14px !important;
+    line-height: 1.5 !important;
+  }
+  html body .v21-workspace-shell .v21-reference-dashboard-title > div:last-child {
+    flex: 0 0 auto !important;
+    font-size: 10px !important;
+  }
+  html body .v21-workspace-shell .v21-reference-stat-grid {
+    grid-template-columns: repeat(2,minmax(0,1fr)) !important;
+    gap: 8px !important;
+    margin-bottom: 12px !important;
+  }
+  html body .v21-workspace-shell .v21-reference-stat {
+    min-width: 0 !important;
+    min-height: 66px !important;
+    padding: 9px 10px !important;
+    border: 1px solid #e0e8f1 !important;
+    border-radius: 12px !important;
+    background: #fff !important;
+    box-shadow: 0 2px 7px rgb(30 58 86 / 5%) !important;
+  }
+  html body .v21-workspace-shell .v21-reference-stat > span {
+    font-size: 10px !important;
+    line-height: 1.4 !important;
+    color: #68798c !important;
+  }
+  html body .v21-workspace-shell .v21-reference-stat b {
+    display: block !important;
+    margin-top: 4px !important;
+    font-size: 17px !important;
+    line-height: 1.3 !important;
+    overflow-wrap: anywhere !important;
+  }
+
+  /* Module groups and touch targets. */
+  html body .v21-workspace-shell .v21-reference-groups {
+    display: grid !important;
+    grid-template-columns: minmax(0,1fr) !important;
+    gap: 10px !important;
+  }
+  html body .v21-workspace-shell .v21-reference-group {
+    min-width: 0 !important;
+    padding: 10px !important;
+    border: 1px solid #e0e7ef !important;
+    border-radius: 13px !important;
+    background: #fff !important;
+    box-shadow: 0 2px 8px rgb(29 55 82 / 5%) !important;
+  }
+  html body .v21-workspace-shell .v21-reference-group > div:first-child {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 6px !important;
+    margin-bottom: 8px !important;
+    padding-bottom: 7px !important;
+    border-color: #edf1f5 !important;
+  }
+  html body .v21-workspace-shell .v21-reference-group > div:first-child b {
+    font-size: 11px !important;
+    font-weight: 800 !important;
+    color: #234c73 !important;
+  }
+  html body .v21-workspace-shell .v21-reference-group-tiles {
+    grid-template-columns: repeat(4,minmax(0,1fr)) !important;
+    gap: 7px !important;
+  }
+  html body .v21-workspace-shell .v21-reference-group-tiles > div > button.v21-module-tile {
+    min-height: 76px !important;
+    padding: 7px 3px !important;
+    border: 1px solid #e7edf4 !important;
+    border-radius: 11px !important;
+    background: #f9fbfe !important;
+    box-shadow: none !important;
+  }
+  html body .v21-workspace-shell .v21-reference-group-tiles > div > button.v21-module-tile:active {
+    background: #eaf3fc !important;
+    border-color: #b8d0e8 !important;
+  }
+  html body .v21-workspace-shell .v21-reference-group-tiles > div > button.v21-module-tile b {
+    font-size: 9px !important;
+    line-height: 1.25 !important;
+  }
+
+  /* Lists, search controls, filters and action toolbars. */
+  html body .v21-workspace-shell main section,
+  html body .v21-workspace-shell main > div {
+    min-width: 0 !important;
+  }
+  html body .v21-workspace-shell main input,
+  html body .v21-workspace-shell main select,
+  html body .v21-workspace-shell main textarea {
+    box-sizing: border-box !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    min-height: 42px !important;
+    border-radius: 9px !important;
+    font-size: 13px !important;
+  }
+  html body .v21-workspace-shell main button {
+    max-width: 100% !important;
+    border-radius: 9px;
+    touch-action: manipulation;
+  }
+  html body .v21-workspace-shell main .flex.items-center.gap-2.text-\[10px\] {
+    flex-wrap: wrap !important;
+  }
+  html body .v21-workspace-shell main #lab-search {
+    width: min(100%, 220px) !important;
+    flex: 1 1 140px !important;
+  }
+  html body .v21-workspace-shell .v21-data-table {
+    max-width: 100% !important;
+    border-radius: 12px !important;
+    overflow: hidden !important;
+  }
+  html body .v21-workspace-shell .v21-data-table-desktop {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+  html body .v21-workspace-shell .v21-data-table-mobile {
+    display: block !important;
+  }
+  html body .v21-workspace-shell .v21-record-card-title {
+    font-size: 13px !important;
+    line-height: 1.6 !important;
+  }
+  html body .v21-workspace-shell .v21-record-card-value {
+    overflow-wrap: anywhere !important;
+    font-size: 12px !important;
+  }
+
+  /* Modals and forms fit the available screen without horizontal overflow. */
+  html body .v21-workspace-shell .fixed.inset-0 {
+    position: fixed !important;
+    z-index: 10000 !important;
+    align-items: flex-end !important;
+    padding: 0 !important;
+    background: rgb(8 24 42 / 48%) !important;
+  }
+  html body .v21-workspace-shell .fixed.inset-0 > div {
+    width: 100% !important;
+    max-width: 100% !important;
+    max-height: min(92dvh, 900px) !important;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    border-radius: 18px 18px 0 0 !important;
+    padding-bottom: max(12px, env(safe-area-inset-bottom)) !important;
+  }
+  html body .v21-workspace-shell .fixed.inset-0 > div input,
+  html body .v21-workspace-shell .fixed.inset-0 > div select,
+  html body .v21-workspace-shell .fixed.inset-0 > div textarea {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+  }
+  html body .v21-workspace-shell .v21-mobile-bottom {
+    padding-left: max(8px, env(safe-area-inset-left)) !important;
+    padding-right: max(8px, env(safe-area-inset-right)) !important;
+  }
+}
+
+/* Narrow phones: preserve readable labels and avoid cramped four-column tiles. */
+@media (max-width: 380px) {
+  html body .v21-workspace-shell > div.flex.min-h-0 > main {
+    padding-right: 8px !important;
+    padding-left: 8px !important;
+  }
+  html body .v21-workspace-shell .v21-reference-group-tiles {
+    gap: 5px !important;
+  }
+  html body .v21-workspace-shell .v21-reference-group-tiles > div > button.v21-module-tile {
+    min-height: 72px !important;
+    padding-right: 2px !important;
+    padding-left: 2px !important;
+  }
+  html body .v21-workspace-shell .v21-reference-group-tiles > div > button.v21-module-tile b {
+    font-size: 8px !important;
+  }
+}
