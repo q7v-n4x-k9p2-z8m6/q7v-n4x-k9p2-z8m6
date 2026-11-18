@@ -2761,3 +2761,118 @@
 @media (min-width: 1024px) {
   .v21-mobile-appbar, .v21-mobile-record-actions, .v21-mobile-feature-overlay { display:none!important; }
 }
+
+
+/* A1 mobile dashboard correction: show the real module tiles on the home screen.
+   Scoped to phone/tablet widths; desktop/laptop presentation is unchanged. */
+@media (max-width: 1023px) {
+  html body .v21-workspace-root {
+    width: 100%;
+    min-height: 100dvh;
+    margin: 0;
+    padding: 0 0 calc(78px + env(safe-area-inset-bottom)) !important;
+    overflow-x: clip;
+  }
+  html body .v21-workspace-shell {
+    display: flex !important;
+    width: 100% !important;
+    max-width: none !important;
+    min-height: 100dvh !important;
+    height: auto !important;
+    max-height: none !important;
+    margin: 0 !important;
+    overflow: visible !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+  }
+  html body .v21-workspace-shell > header.v21-mobile-appbar {
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 100 !important;
+    display: flex !important;
+    flex: 0 0 auto !important;
+  }
+  html body .v21-workspace-shell > div.flex.min-h-0 {
+    display: flex !important;
+    flex: 1 0 auto !important;
+    flex-direction: column !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+  }
+  html body .v21-workspace-shell > div.flex.min-h-0 > main {
+    display: block !important;
+    flex: 1 0 auto !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    padding: 14px 12px 28px !important;
+    overflow: visible !important;
+  }
+  /* Keep the category cards visible: these are the primary Android app icons. */
+  html body .v21-workspace-shell .v21-reference-groups {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 10px !important;
+  }
+  html body .v21-workspace-shell .v21-reference-group-tiles {
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+    width: 100% !important;
+  }
+  html body .v21-workspace-shell .v21-reference-group-tiles > div {
+    width: 100% !important;
+    min-width: 0 !important;
+    flex: initial !important;
+  }
+  html body .v21-workspace-shell .v21-reference-group-tiles > div > button {
+    width: 100% !important;
+    min-width: 0 !important;
+    min-height: 94px !important;
+    padding: 9px 5px !important;
+    border-radius: 14px !important;
+  }
+  html body .v21-workspace-shell .v21-reference-group-tiles > div > button .v21-module-icon {
+    width: 42px !important;
+    height: 42px !important;
+  }
+  html body .v21-workspace-shell .v21-reference-group-tiles > div > button b {
+    max-width: 100% !important;
+    white-space: normal !important;
+    overflow-wrap: anywhere !important;
+    font-size: 10px !important;
+    line-height: 1.35 !important;
+  }
+  html body .v21-workspace-shell .v21-mobile-bottom {
+    position: fixed !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    z-index: 150 !important;
+    display: grid !important;
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    padding-bottom: calc(7px + env(safe-area-inset-bottom)) !important;
+  }
+  html body .v21-workspace-shell .v21-laptop-toolbar,
+  html body .v21-workspace-shell .v21-module-icon-row-mobile,
+  html body .v21-workspace-shell .v21-reference-mobile-shortcuts {
+    display: none !important;
+  }
+  html body .v21-mobile-feature-overlay {
+    position: fixed !important;
+    inset: 0 !important;
+    z-index: 220 !important;
+  }
+  html body .v21-mobile-feature-sheet {
+    max-height: 92dvh !important;
+    overflow: hidden !important;
+  }
+  html body .v21-workspace-shell main input,
+  html body .v21-workspace-shell main select,
+  html body .v21-workspace-shell main textarea {
+    width: 100%;
+    max-width: 100% !important;
+    min-height: 42px;
+    box-sizing: border-box;
+  }
+}
