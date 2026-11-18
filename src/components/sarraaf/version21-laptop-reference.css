@@ -1,8 +1,8 @@
 /* A1 desktop/laptop home — faithful measurements from hisab-sarraf-home-spec.pdf.
-   This file is imported after the responsive stylesheet and only changes >=1024px.
-   Phone and tablet rules remain in version21-responsive-layout.css. */
+   This file is imported after the responsive stylesheet and activates the reference layout at >=768px.
+   Phone widths below 768px keep the existing responsive layout. */
 
-@media (min-width: 1024px) {
+@media (min-width: 768px) {
   /* The outer app shell has unrelated dashboard chrome outside the reference window.
      Conceal it only while the PDF window is active; leave the underlying JSX intact. */
   /* Hide the shared application chrome only on the PDF desktop dashboard.
