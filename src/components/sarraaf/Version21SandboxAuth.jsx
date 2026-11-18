@@ -2,11 +2,11 @@ import React, { useState } from 'react';
 import { getSupabaseConfig } from '@/lib/supabaseConfig';
 
 const SESSION_KEY = 'hisab_sarraf_sandbox_auth_v1';
-const ALLOWED = { '33333333': 'sarraaf', '11111111': 'customer' };
+const ALLOWED = { '33333333': 'sarraaf' };
 
 async function callSandboxAuth(payload) {
   const config = getSupabaseConfig();
-  const response = await fetch(`${config.url}/functions/v1/sarraf-sandbox-auth`, {
+  const response = await fetch(`${config.url}/functions/v1/sarraf-preview-readonly`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -19,41 +19,6 @@ async function callSandboxAuth(payload) {
   try { data = await response.json(); } catch {}
   if (!response.ok && !data) throw new Error('ارتباط با سرویس احراز هویت برقرار نشد.');
   return data || { success: false, error: 'auth_failed' };
-}
-
-export async function authenticateSandboxCredentials(username, password) {
-  const normalized = String(username || '').trim()
-    .replace(/[۰-۹]/g, digit => String(digit.charCodeAt(0) - 1776))
-    .replace(/[٠-٩]/g, digit => String(digit.charCodeAt(0) - 1632));
-  const expectedRole = ALLOWED[normalized];
-  if (normalized !== '33333333' || expectedRole !== 'sarraaf') {
-    throw new Error('این حساب اجازه ورود به محیط آزمایشی صراف را ندارد.');
-  }
-  if (!password) throw new Error('رمز عبور را وارد کنید.');
-  const data = await callSandboxAuth({ action: 'login', username: normalized, password });
-  if (!data?.success || !data?.user || !data?.token) {
-    const messages = {
-      invalid_credentials: 'نام کاربری یا رمز عبور اشتباه است.',
-      wrong_password: 'رمز عبور اشتباه است.',
-      user_not_found: 'حساب کاربری پیدا نشد.',
-      user_inactive: 'این حساب غیرفعال است.',
-      too_many_attempts: 'تلاش‌های ناموفق زیاد است؛ بعداً دوباره امتحان کنید.',
-      sandbox_access_denied: 'این حساب اجازه ورود به محیط آزمایشی را ندارد.'
-    };
-    throw new Error(messages[data?.error] || 'ورود انجام نشد؛ اطلاعات حساب را بررسی کنید.');
-  }
-  const actualUsername = String(data.user.username || '');
-  if (actualUsername !== normalized || data.user.role !== expectedRole || data.user.status !== 'active') {
-    throw new Error('نقش یا وضعیت این حساب با دسترسی آزمایشی مطابقت ندارد.');
-  }
-  const session = {
-    username: normalized,
-    token: data.token,
-    user: data.user,
-    authenticatedAt: new Date().toISOString()
-  };
-  saveSandboxSession(session);
-  return session;
 }
 
 export function readSandboxSession() {
@@ -136,7 +101,7 @@ export default function Version21SandboxAuth({ onAuthenticated }) {
       <div className="text-center">
         <div className="text-xs font-bold text-amber-700">محیط مستقل آزمایشی</div>
         <h1 className="mt-2 text-2xl font-black text-slate-800">ورود به حساب صراف</h1>
-        <p className="mt-2 text-sm leading-7 text-slate-500">با نام کاربری و رمز حساب موجود وارد شوید. این محیط از داده‌های مالی اصلی استفاده نمی‌کند.</p>
+        <p className="mt-2 text-sm leading-7 text-slate-500">با نام کاربری و رمز حساب موجود وارد شوید. این محیط اطلاعات صرافی آزمایشی شما را فقط برای مشاهده می‌خواند؛ هیچ عملیات مالی در سرور ثبت نمی‌شود.</p>
       </div>
       <label className="block text-sm font-semibold text-slate-700">نام کاربری
         <input autoComplete="username" value={username} onChange={e=>setUsername(e.target.value)} className="mt-2 h-12 w-full rounded-xl border px-3 text-left" dir="ltr" required />
@@ -146,7 +111,7 @@ export default function Version21SandboxAuth({ onAuthenticated }) {
       </label>
       {error && <p role="alert" className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</p>}
       <button disabled={busy} className="h-12 w-full rounded-xl bg-slate-900 font-bold text-white disabled:opacity-50">{busy ? 'در حال بررسی…' : 'ورود به محیط آزمایشی'}</button>
-      <p className="text-center text-xs text-slate-400">ورود فقط برای دو حساب آزمایشی تعیین‌شده فعال است.</p>
+      <p className="text-center text-xs text-slate-400">ورود فقط برای حساب آزمایشی 33333333 فعال است.</p>
     </form>
   </main>;
 }
