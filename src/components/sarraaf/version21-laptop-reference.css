@@ -785,3 +785,26 @@
     display: none !important;
   }
 }
+
+
+/* Adaptive desktop sizing for compact laptops and mobile browsers requesting
+   Desktop site. Keep the same desktop composition and handlers; scale the whole
+   reference window proportionally so it fits the available viewport. */
+@media (min-width: 768px) and (max-width: 1279px) {
+  html body .v21-workspace-root:has(> .v21-lt-titlebar) {
+    --v21-desktop-scale: clamp(0.68, calc(100vw / 1280), 1);
+    zoom: var(--v21-desktop-scale);
+    width: calc(100% / var(--v21-desktop-scale)) !important;
+    height: calc(82vh / var(--v21-desktop-scale)) !important;
+    max-height: calc((100dvh - 5rem) / var(--v21-desktop-scale)) !important;
+    margin-top: calc(5vh / var(--v21-desktop-scale)) !important;
+  }
+}
+
+/* A phone/tablet that requests Desktop site gets the same desktop layout,
+   while the normal narrow mobile viewport keeps its existing mobile layout. */
+@media (min-width: 768px) and (max-width: 1279px) {
+  html body .v21-workspace-root.v21-force-desktop:has(> .v21-lt-titlebar) {
+    --v21-desktop-scale: clamp(0.68, calc(100vw / 1280), 1);
+  }
+}
