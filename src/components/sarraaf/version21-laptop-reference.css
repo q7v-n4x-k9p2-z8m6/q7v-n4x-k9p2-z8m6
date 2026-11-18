@@ -1329,3 +1329,71 @@
     font-size: 11px !important;
   }
 }
+
+
+/* Final compact sizing for the six 3-button panels.
+   Prevent tile buttons from stretching to the full panel height on phone
+   browsers that emulate a desktop viewport. Visual-only: no button behavior. */
+@media (min-width: 768px) {
+  html body .v21-workspace-shell .v21-lt-groups {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    grid-template-rows: clamp(108px, 18dvh, 144px) clamp(96px, 15.5dvh, 124px) !important;
+    align-items: stretch !important;
+    gap: clamp(6px, 1dvh, 10px) !important;
+  }
+
+  html body .v21-workspace-shell .v21-lt-group {
+    min-width: 0 !important;
+    min-height: 0 !important;
+    height: 100% !important;
+  }
+
+  html body .v21-workspace-shell .v21-lt-group-tiles {
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    align-items: center !important;
+    justify-content: stretch !important;
+    gap: clamp(3px, .45vw, 7px) !important;
+    padding: 4px !important;
+  }
+
+  html body .v21-workspace-shell .v21-lt-group-tiles > .v21-lt-tile,
+  html body .v21-workspace-shell [data-lt-group] .v21-lt-tile,
+  html body .v21-workspace-shell [data-lt-group] .v21-lt-tile:nth-child(n) {
+    flex: 1 1 0 !important;
+    width: 0 !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    height: clamp(58px, 12.125dvh, 97px) !important;
+    min-height: 0 !important;
+    max-height: 97px !important;
+    padding: 4px 2px !important;
+    gap: 3px !important;
+    justify-content: center !important;
+    overflow: hidden !important;
+    font-size: clamp(10px, 1.4dvh, 12px) !important;
+    line-height: 1.15 !important;
+  }
+
+  html body .v21-workspace-shell [data-lt-group="accounting-reports"] .v21-lt-tile,
+  html body .v21-workspace-shell [data-lt-group="extras"] .v21-lt-tile,
+  html body .v21-workspace-shell [data-lt-group="settings"] .v21-lt-tile {
+    height: clamp(48px, 9.75dvh, 78px) !important;
+    max-height: 78px !important;
+  }
+
+  html body .v21-workspace-shell .v21-lt-group-tiles > .v21-lt-tile > svg {
+    flex: 0 0 clamp(18px, 2.8dvh, 23px) !important;
+    width: clamp(18px, 2.8dvh, 23px) !important;
+    height: clamp(18px, 2.8dvh, 23px) !important;
+    max-width: 100% !important;
+    margin: 0 0 2px !important;
+  }
+
+  html body .v21-workspace-shell .v21-lt-group-tiles > .v21-lt-tile > span {
+    width: 100% !important;
+    font-size: clamp(10px, 1.4dvh, 12px) !important;
+    line-height: 1.15 !important;
+    overflow-wrap: anywhere !important;
+  }
+}
