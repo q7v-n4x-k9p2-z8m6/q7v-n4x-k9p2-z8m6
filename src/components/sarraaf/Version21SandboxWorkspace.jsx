@@ -546,7 +546,7 @@ export default function Version21SandboxWorkspace(){
       </nav>    </div>
     <main className="min-h-0 min-w-0 flex-1 overflow-y-auto bg-[#f9fafb] p-3">
      {active==='home'?<>
-<div className="v21-lt-home hidden lg:block">
+<div className="v21-lt-home hidden min-[768px]:block">
       <div className="v21-lt-band"><div className="v21-lt-band-date"><CalendarDays/><span>{ltDate}</span></div><h2 className="v21-lt-band-title">مرکز عملیات صرافی</h2><Home className="v21-lt-band-home" aria-hidden="true"/></div>
       <div className="v21-lt-stats">
        {[['تعداد مشتریان',Users,canViewModule('customers')&&dbStatus==='connected'?fmt(data.customers.length):'-'],['صندوق‌های تعریف‌شده',Vault,canViewModule('cash')&&dbStatus==='connected'?fmt(data.cash.length):'-'],['عملیات امروز',RefreshCw,(canViewModule('reports')||canViewModule('cash'))&&dbStatus==='connected'?fmt(dailyTransactions.length):'-'],['مفاد معاملات',BarChart3,'-']].map(([label,I,value])=><div key={label} className="v21-lt-stat"><div className="v21-lt-stat-head"><I/><span>{label}</span></div><b>{value}</b></div>)}
@@ -570,7 +570,7 @@ export default function Version21SandboxWorkspace(){
        </div>
       </div>
      </div>
-     <div className="lg:hidden">
+     <div className="min-[768px]:hidden">
       <div className="v21-reference-dashboard-title mb-3 flex flex-wrap items-center justify-between gap-3 border-b-2 border-[#315e80] pb-2">
        <div><div className="text-[9px] text-slate-500">سیستم حسابداری صراف / مرکز عملیات</div><h2 className="text-sm font-bold text-[#24496d]">مرکز عملیات صرافی</h2><p className="mt-1 text-[10px] text-slate-500">دسترسی به داده‌های ساختگی دفاتر، صندوق‌ها، حواله‌ها و معاملات</p></div>
        <div className="text-left text-[10px]"><b className="block text-[#24496d]">{today()}</b><span className="text-emerald-700">{dbStatus==='connected'?'محیط آزمایشی محلی فعال است':'در انتظار محیط آزمایشی'}</span></div>
