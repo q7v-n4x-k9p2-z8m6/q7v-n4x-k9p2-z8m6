@@ -506,7 +506,7 @@ export default function Version21Workspace(){
   {key:'accounting-reports',title:'حسابداری و گزارشات',items:[
    ['دفتر روزنامه ·',ShoppingCart,()=>goModule('journal')],
    ['دفتر کل',ClipboardList,()=>goModule('ledger')],
-   ['دفتر ریگال',CalendarDays]
+   ['تنظیمات برنامه',CalendarDays]
   ]},
   {key:'extras',title:'امکانات تکمیلی · اسکلت اولیه',items:[
    ['محصولات آنلاین',ShoppingCart,()=>goModule('products')],
