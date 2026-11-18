@@ -193,7 +193,7 @@ export default function Version21SandboxWorkspace(){
  const notify=s=>{setNotice(s);setTimeout(()=>setNotice(''),4500);};
  const refreshDatabase=async()=>{
   setDbStatus('loading');setDbError('');
-  try{const result=await loadVersion21Database();setData(result.data);setExchangeProfile(result.exchange);setLastLoaded(result.loadedAt);setDbStatus('connected');setLocalPreview(false);setSelected(null);setCustomerDetail(null);setBranchDetail(null);notify('داده‌های ساختگی محیط آزمایشی دوباره بارگذاری شدند.');}
+  try{const result=await loadVersion21Database();setData(result.data);setExchangeProfile(result.exchange);setLastLoaded(result.loadedAt);setDbStatus('connected');setLocalPreview(false);setSelected(null);setCustomerDetail(null);setBranchDetail(null);notify('اطلاعات حساب آزمایشی از سرور بارگذاری شد؛ دسترسی فقط‌خواندنی است.');}
   catch(error){setDbStatus('error');setDbError(error?.message||'بارگذاری داده‌های آزمایشی ناموفق بود.');captureVersion21Error(error,'loadDatabase');}
  };
  useEffect(()=>{let activeRequest=true;(async()=>{try{const result=await loadVersion21Database();if(!activeRequest)return;setData(result.data);setExchangeProfile(result.exchange);setLastLoaded(result.loadedAt);setDbStatus('connected');setLocalPreview(false);}catch(error){if(!activeRequest)return;setDbStatus('error');setDbError(error?.message||'بارگذاری داده‌های آزمایشی ناموفق بود.');}})();return()=>{activeRequest=false;};},[]);
