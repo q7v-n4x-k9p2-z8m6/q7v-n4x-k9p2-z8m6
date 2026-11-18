@@ -157,8 +157,7 @@ export default function Version21SandboxWorkspace(){
  useEffect(()=>{const update=()=>setDesktopSiteMode(detectDesktopSiteMode());window.addEventListener('resize',update);window.addEventListener('orientationchange',update);return()=>{window.removeEventListener('resize',update);window.removeEventListener('orientationchange',update);};},[]);
  const [lastLoaded,setLastLoaded]=useState(null);
  // Both real exchange tenants and the shared demo workspace may use CRUD UI.
- // Demo writes are isolated by Version21DemoAdapter; real writes retain server-side
- // role, employee-permission, and tenant-scoped authorization in Version21WriteAdapter.
+ // Sandbox writes are handled only by the local browser storage adapter; no live API is used.
  const readOnly=false;
  const [searchParams]=useSearchParams();
  const requestedModule=searchParams.get('module');
@@ -482,7 +481,7 @@ export default function Version21SandboxWorkspace(){
  const dailyTransactions=data.transactions.filter(t=>t.date===today());
  const profit=data.exchange.reduce((s,x)=>s+n(x.profit),0);
  const currencies=[...new Set([...data.cash.map(x=>x.currency),...data.transactions.map(x=>x.currency),'AFN'])];
- const {user:authUser}=useAuth();
+ const {user:authUser}=useSandboxAuth();
  const ltDateParts=new Intl.DateTimeFormat('fa-IR-u-ca-persian',{weekday:'long',day:'numeric',month:'long',year:'numeric'}).formatToParts(new Date()).reduce((a,x)=>{a[x.type]=x.value;return a;},{});
  const ltDate=(ltDateParts.weekday||'')+'، '+(ltDateParts.day||'')+' '+(ltDateParts.month||'')+' '+(ltDateParts.year||'');
  const ltUserName=authUser?.full_name||authUser?.username||exchangeProfile?.name||'کاربر';
