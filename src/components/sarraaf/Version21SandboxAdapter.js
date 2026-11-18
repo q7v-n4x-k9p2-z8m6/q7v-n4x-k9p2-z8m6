@@ -1,11 +1,14 @@
-const STORAGE_KEY = 'hisab_sarraf_v21_sandbox_data_v1';
+let activeTenantId = 'anonymous';
+let activeTenantRole = 'sarraaf';
+export function setSandboxTenantId(id, role='sarraaf') { activeTenantId = String(id || 'anonymous').replace(/[^a-zA-Z0-9_-]/g, '_'); activeTenantRole = role === 'customer' ? 'customer' : 'sarraaf'; }
+const storageKey = () => 'hisab_sarraf_v21_sandbox_data_v1_' + activeTenantId;
 const today = () => new Date().toLocaleDateString('en-CA');
 const makeId = () => 'sandbox-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2,7);
 
 function seedData() {
   const date = today();
   return {
-    role: 'sarraaf', permissions: [], isDemoAccount: false,
+    role: activeTenantRole, permissions: [], isDemoAccount: false,
     customers: [
       {id:'c-1',code:'C-001',name:'احمد رضایی (نمونه)',kind:'دائمی',phone:'09•••۱۲۳۴',currency:'AFN',opening:12000,status:'فعال'},
       {id:'c-2',code:'C-002',name:'محمد کریمی (نمونه)',kind:'موقتی',phone:'09•••۵۶۷۸',currency:'USD',opening:-150,status:'فعال'},
@@ -37,10 +40,10 @@ function seedData() {
   };
 }
 function readData() {
-  try { const raw=localStorage.getItem(STORAGE_KEY); if(raw){const parsed=JSON.parse(raw); if(parsed&&Array.isArray(parsed.customers)&&Array.isArray(parsed.transactions)) return parsed;} } catch {}
+  try { const raw=localStorage.getItem(storageKey()); if(raw){const parsed=JSON.parse(raw); if(parsed&&Array.isArray(parsed.customers)&&Array.isArray(parsed.transactions)) return parsed;} } catch {}
   const initial=seedData(); writeData(initial); return initial;
 }
-function writeData(data){ try{localStorage.setItem(STORAGE_KEY,JSON.stringify(data));}catch{} return data; }
+function writeData(data){ try{localStorage.setItem(storageKey(),JSON.stringify(data));}catch{} return data; }
 function addActivity(data,action,entity,description){data.activity=[{id:makeId(),date:today(),action,entity,entityId:'sandbox',description,status:'موفق'},...(data.activity||[])].slice(0,100);}
 const MODULE_KEYS={customers:'customers',branches:'branches',cash:'cash',banks:'banks',currencies:'currencies',accounts:'accounts',expenses:'expenses',remittance:'remittance',exchange:'exchange',journal:'journal',transactions:'transactions'};
 export async function loadVersion21Database(){const data=readData();return {data,exchange:{id:'sandbox-exchange',name:'صراف آزمایشی'},loadedAt:new Date().toISOString()};}
