@@ -2982,3 +2982,83 @@
     padding-bottom: 8px !important;
   }
 }
+
+
+/* A1 phone bottom navigation: pin the four shortcuts to the viewport,
+   not to the tall dashboard content; constrain every item to a compact bar. */
+@media (max-width: 1023px) {
+  html body .v21-workspace-root,
+  html body .v21-workspace-shell {
+    transform: none !important;
+    filter: none !important;
+    perspective: none !important;
+    contain: none !important;
+  }
+  html body .v21-workspace-root {
+    box-sizing: border-box !important;
+    padding-bottom: calc(88px + env(safe-area-inset-bottom)) !important;
+  }
+  html body .v21-workspace-shell .v21-mobile-bottom {
+    position: fixed !important;
+    inset: auto 0 0 0 !important;
+    z-index: 9999 !important;
+    display: grid !important;
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    align-items: center !important;
+    justify-items: stretch !important;
+    width: 100% !important;
+    height: calc(70px + env(safe-area-inset-bottom)) !important;
+    min-height: calc(70px + env(safe-area-inset-bottom)) !important;
+    max-height: calc(70px + env(safe-area-inset-bottom)) !important;
+    box-sizing: border-box !important;
+    margin: 0 !important;
+    padding: 5px 8px calc(5px + env(safe-area-inset-bottom)) !important;
+    gap: 5px !important;
+    overflow: hidden !important;
+    background: rgb(255 255 255 / 98%) !important;
+    border-top: 1px solid #dce5ee !important;
+    box-shadow: 0 -4px 16px rgb(25 53 79 / 10%) !important;
+    backdrop-filter: blur(12px) !important;
+    transform: none !important;
+  }
+  html body .v21-workspace-shell .v21-mobile-bottom > button {
+    display: flex !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    min-height: 48px !important;
+    max-height: 52px !important;
+    height: 100% !important;
+    flex: 0 1 auto !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 3px !important;
+    box-sizing: border-box !important;
+    margin: 0 !important;
+    padding: 3px 2px !important;
+    font-size: 10px !important;
+    line-height: 1.15 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    transform: none !important;
+  }
+  html body .v21-workspace-shell .v21-mobile-bottom > button > svg {
+    display: block !important;
+    width: 19px !important;
+    min-width: 19px !important;
+    height: 19px !important;
+    min-height: 19px !important;
+    flex: 0 0 19px !important;
+  }
+  html body .v21-workspace-shell .v21-mobile-bottom > button > span {
+    display: block !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    font-size: 10px !important;
+    line-height: 1.15 !important;
+    text-align: center !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+}
