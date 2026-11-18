@@ -22,12 +22,16 @@ import { useAuth } from '@/lib/AuthContext';
 function detectDesktopSiteMode() {
   if (typeof window === 'undefined') return false;
   const ua = navigator.userAgent || '';
-  const uaMobile = /Android|iPhone|iPod|Mobile|Windows Phone/i.test(ua);
-  const touch = (navigator.maxTouchPoints || 0) > 0 || window.matchMedia?.('(pointer: coarse)').matches;
+  const uaMobile = navigator.userAgentData?.mobile === true || /Android|iPhone|iPod|Mobile|Windows Phone/i.test(ua);
+  const touch = (navigator.maxTouchPoints || 0) > 0 || window.matchMedia?.('(pointer: coarse)').matches === true;
   const screenWidth = window.screen?.width || window.innerWidth;
   const viewportWidth = document.documentElement.clientWidth || window.innerWidth;
-  const uaDataMobile = navigator.userAgentData?.mobile;
-  return ((uaDataMobile === true || uaMobile) && viewportWidth > 767 && touch && screenWidth <= 900) || (!uaMobile && touch && screenWidth <= 900 && viewportWidth > 767);
+  // Mobile browsers in "Desktop site" mode expose a desktop-sized layout
+  // viewport while the physical CSS screen remains phone/tablet-sized.
+  const expandedDesktopViewport = viewportWidth >= 768 && screenWidth > 0 && viewportWidth >= screenWidth * 1.15;
+  return touch && viewportWidth >= 768 && (
+    (uaMobile && screenWidth <= 900) || expandedDesktopViewport
+  );
 }
 
 const CURRENCIES = ['AFN','USD','EUR','IRR','TRY','PKR','AED','SAR','GBP','CNY'];
