@@ -788,23 +788,41 @@
 
 
 /* Adaptive desktop sizing for compact laptops and mobile browsers requesting
-   Desktop site. Keep the same desktop composition and handlers; scale the whole
-   reference window proportionally so it fits the available viewport. */
-@media (min-width: 768px) and (max-width: 1279px) {
+   Desktop site. Keep the same desktop composition and handlers; scale the complete
+   reference window in stable viewport bands without relying on experimental CSS math. */
+@media (min-width: 768px) and (max-width: 899px) {
   html body .v21-workspace-root:has(> .v21-lt-titlebar) {
-    --v21-desktop-scale: clamp(0.68, calc(100vw / 1280), 1);
-    zoom: var(--v21-desktop-scale);
-    width: calc(100% / var(--v21-desktop-scale)) !important;
-    height: calc(82vh / var(--v21-desktop-scale)) !important;
-    max-height: calc((100dvh - 5rem) / var(--v21-desktop-scale)) !important;
-    margin-top: calc(5vh / var(--v21-desktop-scale)) !important;
+    zoom: .68;
+    width: 147.0588% !important;
+    height: 120.5882vh !important;
+    max-height: calc(147.0588dvh - 7.3529rem) !important;
+    margin-top: 7.3529vh !important;
   }
 }
-
-/* A phone/tablet that requests Desktop site gets the same desktop layout,
-   while the normal narrow mobile viewport keeps its existing mobile layout. */
-@media (min-width: 768px) and (max-width: 1279px) {
-  html body .v21-workspace-root.v21-force-desktop:has(> .v21-lt-titlebar) {
-    --v21-desktop-scale: clamp(0.68, calc(100vw / 1280), 1);
+@media (min-width: 900px) and (max-width: 1023px) {
+  html body .v21-workspace-root:has(> .v21-lt-titlebar) {
+    zoom: .74;
+    width: 135.1351% !important;
+    height: 110.8108vh !important;
+    max-height: calc(135.1351dvh - 6.7568rem) !important;
+    margin-top: 6.7568vh !important;
+  }
+}
+@media (min-width: 1024px) and (max-width: 1151px) {
+  html body .v21-workspace-root:has(> .v21-lt-titlebar) {
+    zoom: .82;
+    width: 121.9512% !important;
+    height: 100vh !important;
+    max-height: calc(121.9512dvh - 6.0976rem) !important;
+    margin-top: 6.0976vh !important;
+  }
+}
+@media (min-width: 1152px) and (max-width: 1279px) {
+  html body .v21-workspace-root:has(> .v21-lt-titlebar) {
+    zoom: .92;
+    width: 108.6957% !important;
+    height: 89.1304vh !important;
+    max-height: calc(108.6957dvh - 5.4348rem) !important;
+    margin-top: 5.4348vh !important;
   }
 }
