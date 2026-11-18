@@ -89,7 +89,7 @@ const NAV_MENUS = [
  {label:'تنظیمات',items:[['تنظیمات محلی','settings'],['انتخاب زبان','language'],['پشتیبانی','support'],['راهنما','help']]},
  {label:'امکانات تکمیلی',items:[['گروه و چت','sarraafGroups'],['هوش مصنوعی','assistant']] }
 ];
-const LAPTOP_NAV_MENUS = NAV_MENUS;
+const LAPTOP_NAV_MENUS = NAV_MENUS.map(menu => menu.label === 'فایل' ? {...menu, items:menu.items.filter(([,action]) => action !== 'print')} : menu);
 const LAPTOP_TOOLBAR = [
  {id:'home',label:'میزکار',icon:Home},
  {id:'language',label:'زبان برنامه',icon:Globe},
