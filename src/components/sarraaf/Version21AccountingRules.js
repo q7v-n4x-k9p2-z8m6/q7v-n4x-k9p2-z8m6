@@ -68,6 +68,15 @@ export function isChartAccountLedgerLine(line, account) {
     String(line.account_name || '').trim() === String(account.account_name || '').trim();
 }
 
+export function sumBankLedgerMovement(transactions, accountId, currency, side) {
+  if (!Array.isArray(transactions) || !['debit', 'credit'].includes(side) || !(Number(accountId) > 0)) return 0;
+  return transactions
+    .filter(row => row && String(row.accountType || '').toLowerCase() === 'bank' &&
+      String(row.accountId || '') === String(accountId) &&
+      String(row.currency || 'AFN') === String(currency || 'AFN') && !row.deleted)
+    .reduce((total, row) => total + number(row[side]), 0);
+}
+
 export function sumCashLedgerMovement(transactions, currency) {
   if (!Array.isArray(transactions)) return 0;
   return transactions
