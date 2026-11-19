@@ -246,7 +246,9 @@ export default function Version21Workspace(){
    setModal('');setDraft({});
    await refreshDatabase();
    setSelected(null);
-   notify(result?.warning||result?.auditWarning?'عملیات در دیتابیس ثبت شد؛ '+(result.warning||result.auditWarning):'اطلاعات در دیتابیس همین صراف ثبت شد.');
+   notify(result?.warning||result?.auditWarning
+    ? (data.isDemoAccount?'عملیات آزمایشی انجام شد؛ ':'عملیات در دیتابیس ثبت شد؛ ')+(result.warning||result.auditWarning)
+    : data.isDemoAccount?'رکورد موقت در فضای آزمایشی همین حساب ذخیره شد.':'اطلاعات در دیتابیس همین صراف ثبت شد.');
   }catch(error){
    await captureVersion21Error(error,'save:'+mod);
    setDbError(error?.message||'ثبت اطلاعات ناموفق بود.');
@@ -265,9 +267,11 @@ export default function Version21Workspace(){
   if(active==='ledger'&&!selected.documentId){notify('شناسه سند اصلی برای این سطر موجود نیست؛ برای جلوگیری از ابطال سند اشتباه، عملیات متوقف شد.');return;}
   const masterDataModules=['customers','branches','cash','banks','currencies','accounts'];
   const isMasterData=masterDataModules.includes(targetModule);
-  const confirmMessage=isMasterData
-   ? 'این رکورد حذف فیزیکی نمی‌شود و فقط غیرفعال خواهد شد؛ سوابق مالی و ارتباطات آن حفظ می‌شود. ادامه می‌دهید؟'
-   : 'این عملیات روی دیتابیس همین صراف اجرا می‌شود. برای اسناد مالی، سند معکوس ثبت خواهد شد و سابقه اصلی حفظ می‌شود. ادامه می‌دهید؟';
+  const confirmMessage=data.isDemoAccount
+   ? 'این عملیات فقط روی رکورد موقت فضای آزمایشی همین حساب انجام می‌شود؛ اطلاعات مالی اصلی تغییر نمی‌کند. ادامه می‌دهید؟'
+   : isMasterData
+    ? 'این رکورد حذف فیزیکی نمی‌شود و فقط غیرفعال خواهد شد؛ سوابق مالی و ارتباطات آن حفظ می‌شود. ادامه می‌دهید؟'
+    : 'این عملیات روی دیتابیس همین صراف اجرا می‌شود. برای اسناد مالی، سند معکوس ثبت خواهد شد و سابقه اصلی حفظ می‌شود. ادامه می‌دهید؟';
   if(!window.confirm(confirmMessage))return;
   try{
    const target=selected;
