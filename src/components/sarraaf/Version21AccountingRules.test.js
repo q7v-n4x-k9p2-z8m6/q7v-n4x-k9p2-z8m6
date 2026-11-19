@@ -14,6 +14,16 @@ test('number treats blank values as zero but rejects malformed numeric input', (
   assert.equal(Number.isNaN(number('12x')), true);
 });
 
+test('chart account ledger mapping rejects cash/customer/branch rows with colliding IDs', async () => {
+  const { isChartAccountLedgerLine } = await import('./Version21AccountingRules.js');
+  const account = { id: '12', account_name: 'مصارف دفتر' };
+  assert.equal(isChartAccountLedgerLine({ account_type: 'suspense', account_id: '12', account_name: 'مصارف دفتر' }, account), true);
+  assert.equal(isChartAccountLedgerLine({ account_type: 'cash', account_id: '12', account_name: 'صندوق اصلی' }, account), false);
+  assert.equal(isChartAccountLedgerLine({ account_type: 'customer', account_id: '12', account_name: 'احمد' }, account), false);
+  assert.equal(isChartAccountLedgerLine({ account_type: 'suspense', account_id: '12', account_name: 'نمایندگی کابل' }, account), false);
+  assert.equal(isChartAccountLedgerLine({ account_type: 'suspense', account_id: '99', account_name: 'مصارف دفتر' }, account), false);
+});
+
 test('cash movement totals exclude customer and non-cash ledger rows per currency', async () => {
   const { sumCashLedgerMovement } = await import('./Version21AccountingRules.js');
   const rows = [
