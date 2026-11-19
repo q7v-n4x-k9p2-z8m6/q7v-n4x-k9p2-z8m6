@@ -1,6 +1,5 @@
 import { supabase } from '@/lib/supabaseClient';
 import { getExchangeCode } from '@/lib/supabaseApi';
-import { loadDemoPreviewRecords } from './Version21DemoAdapter';
 
 const num = value => Number(value ?? 0) || 0;
 const dateOnly = value => value ? String(value).slice(0, 10) : '';
@@ -523,9 +522,6 @@ export async function loadVersion21Database() {
     _sourceTable: 'audit_logs',
   }));
 
-  const isDemoAccount = Number(userId) === 107 && exchangeCode === 'EX-261019-9B2573C5';
-  const demoPreviewRecords = isDemoAccount ? await loadDemoPreviewRecords() : [];
-
   return {
     exchange: {
       id: String(exchange.id),
@@ -535,8 +531,6 @@ export async function loadVersion21Database() {
     },
     permissions: userPermissions,
     data: {
-      isDemoAccount,
-      demoPreviewRecords,
       role: String(sessionUser.role || '').toLowerCase(),
       permissions: userPermissions,
       customers: mappedCustomers,
