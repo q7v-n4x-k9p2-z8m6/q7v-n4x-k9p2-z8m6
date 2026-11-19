@@ -9,7 +9,7 @@ import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
   Shield, Users, CreditCard, Lock, Bell, MessageSquare,
-  Server, Wallet, Crown, Upload, LogOut, Download, AlertTriangle, UserCog, Clock, Eye, Mail, Smartphone, Gamepad2, Zap, Globe, Store, FlaskConical, Database, Bot, LayoutGrid, BookOpen, Network, Share2, Bitcoin
+  Server, Wallet, Crown, Upload, LogOut, Download, AlertTriangle, UserCog, Clock, Eye, Mail, Smartphone, Gamepad2, Zap, Globe, Store, Database, Bot, LayoutGrid, BookOpen, Network, Share2, Bitcoin
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -100,7 +100,7 @@ const TAB_CATEGORIES = [
   { label: 'کاربران و دسترسی', value: 'access', icon: Users, tabs: ['users', 'perms', 'co_creators', 'email_verify'] },
   { label: 'مالی و پلن‌ها', value: 'finance', icon: Wallet, tabs: ['plans', 'pricing', 'payments', 'withdrawals', 'trial'] },
   { label: 'ارتباطات', value: 'communication', icon: MessageSquare, tabs: ['notif', 'chat', 'masnavi_ai'] },
-  { label: 'خدمات و فروش', value: 'services', icon: Store, tabs: ['uc_manager', 'recharge', 'afghan5', 'sellers', 'sandbox'] },
+  { label: 'خدمات و فروش', value: 'services', icon: Store, tabs: ['uc_manager', 'recharge', 'afghan5', 'sellers'] },
   { label: 'ابزار و نگهداری', value: 'tools', icon: Database, tabs: ['maintenance', 'version', 'hex_library', 'backup', 'backup_v2', 'triple_backup', 'supabase_audit', 'db_explorer'] },
 ];
 
@@ -125,7 +125,7 @@ export default function BuilderPanel() {
 
   // مجوزها روی شناسه تک‌تک تب‌ها اعمال می‌شوند، نه شناسه گروه‌های نمایشی.
   const visibleTabGroups = useMemo(() => TAB_GROUPS.filter((group) => {
-    const creatorOnlyTabs = ['co_creators', 'creator_preview', 'layout_preview', 'layout_studio', 'supabase_audit', 'db_explorer', 'masnavi_ai'];
+    const creatorOnlyTabs = ['co_creators', 'hex_library', 'supabase_audit', 'db_explorer', 'masnavi_ai'];
     if (group.value === 'masnavi_ai' && user?.role !== 'creator') return false;
     if (group.value === 'maintenance' && user?.role !== 'creator') return false;
     if (creatorOnlyTabs.includes(group.value) && !isFullCreator) return false;
@@ -533,7 +533,7 @@ export default function BuilderPanel() {
           <TrialManager />
         </TabsContent>
 
-        {/* آزمایشگاه یکپارچه موبایل و لپ‌تاپ؛ پیش‌نمایش‌های قبلی مستقل می‌مانند */}
+        {/* کتابخانه HEX — ابزار مدیریت دارایی‌های تصویری */}
         {isFullCreator && (
           <TabsContent value="hex_library">
             <LayoutHexLibrary />
