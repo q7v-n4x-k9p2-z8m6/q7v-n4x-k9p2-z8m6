@@ -44,13 +44,20 @@ export default function CustomerDetail() {
     balances[currency] = (balances[currency] || 0) + Number(customer.opening_balance);
   }
   const transactionTotals = {};
-  for (const tx of (txs || [])) {
-    if (tx.deleted) continue;
-    const currency = tx.currency || 'AFN';
+  for (const item of (customerBalancesData || [])) {
+    if (String(item.customer_id) !== String(id)) continue;
+    const currency = item.currency || 'AFN';
     const total = transactionTotals[currency] || { debit: 0, credit: 0 };
-    const amount = Number(tx.amount) || 0;
-    if (tx.customer_side === 'debit') total.debit += amount;
-    if (tx.customer_side === 'credit') total.credit += amount;
+    total.debit += Number(item.debit_total) || 0;
+    total.credit += Number(item.credit_total) || 0;
+    transactionTotals[currency] = total;
+  }
+  if (customer && Number(customer.opening_balance)) {
+    const currency = customer.balance_currency || 'AFN';
+    const total = transactionTotals[currency] || { debit: 0, credit: 0 };
+    const opening = Number(customer.opening_balance);
+    if (opening > 0) total.debit += opening;
+    else total.credit += Math.abs(opening);
     transactionTotals[currency] = total;
   }
 
