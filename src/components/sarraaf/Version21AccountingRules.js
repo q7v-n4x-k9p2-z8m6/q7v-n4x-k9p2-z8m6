@@ -4,6 +4,21 @@ export const number = value => {
   return Number.isFinite(parsed) ? parsed : Number.NaN;
 };
 
+export function withRunningPartyBalances(rows, openingByCurrency = {}) {
+  if (!Array.isArray(rows)) return [];
+  const balances = new Map();
+  return [...rows]
+    .sort((a, b) => String(a.created_at || a.date || '').localeCompare(String(b.created_at || b.date || '')) || String(a.id || '').localeCompare(String(b.id || '')))
+    .map(row => {
+      const currency = String(row.currency || 'AFN');
+      if (!balances.has(currency)) balances.set(currency, number(openingByCurrency[currency] ?? 0));
+      // Party ledger rows are mapped as credit - debit; a positive opening balance is debit.
+      const balance = balances.get(currency) - number(row.amount);
+      balances.set(currency, balance);
+      return { ...row, runningNet: balance, runningBalance: Math.abs(balance), runningSide: balance > 0 ? 'بدهکار' : balance < 0 ? 'بستانکار' : 'تسویه' };
+    });
+}
+
 export function documentDateTimestamp(value) {
   if (value === null || value === undefined || String(value).trim() === '') return null;
   const date = String(value).trim();
