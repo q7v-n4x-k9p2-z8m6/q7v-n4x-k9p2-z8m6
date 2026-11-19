@@ -218,3 +218,17 @@ test('bank ledger mapping uses the exact bank account identity', async () => {
   assert.throws(() => bankLedgerRef({ id: 0, bank_name: 'بانک نمونه' }), /حساب بانکی/);
   assert.throws(() => bankLedgerRef({ id: 42, bank_name: '' }), /حساب بانکی/);
 });
+
+test('party ledger running balances continue row by row and remain separate by currency', async () => {
+  const { withRunningPartyBalances } = await import('./Version21AccountingRules.js');
+  const rows = withRunningPartyBalances([
+    { id: '3', date: '2026-11-03', currency: 'AFN', amount: 300 },
+    { id: '1', date: '2026-11-01', currency: 'AFN', amount: -500 },
+    { id: '2', date: '2026-11-02', currency: 'USD', amount: 40 },
+  ], { AFN: 1000, USD: -10 });
+  assert.deepEqual(rows.map(row => [row.id, row.runningBalance, row.runningSide]), [
+    ['1', 1500, 'بدهکار'],
+    ['2', 50, 'بستانکار'],
+    ['3', 1200, 'بدهکار'],
+  ]);
+});
