@@ -825,20 +825,29 @@ export async function editVersion21Record(module, draft) {
       updated_at: new Date().toISOString(),
     }).eq('id', Number(draft.id)).eq('exchange_code', ctx.exchangeCode);
     if (updateError) throw updateError;
-    const { data: feeDoc, error: feeDocError } = await supabase.from('documents').select('id')
+    const { data: feeDoc, error: feeDocError } = await supabase.from('documents').select('id,reversed')
       .eq('exchange_code', ctx.exchangeCode).eq('related_type', 'transfer')
-      .eq('related_id', Number(draft.id)).eq('doc_type', 'transfer_fee').limit(1).maybeSingle();
+      .eq('related_id', Number(draft.id)).eq('doc_type', 'transfer_fee').order('id', { ascending: false }).limit(1).maybeSingle();
     if (feeDocError) throw feeDocError;
+    let warning = dateWarning;
     if (feeAmount > 0) {
+      const revenueAccount = await chartAccountLedgerRefByType(ctx, 'revenue', 'درآمد کمیشن حواله');
       const feeLines = [
-        { account_type: 'customer', account_id: String(customer?.id || ''), account_name: direction === 'send' ? draft.sender : draft.receiver, currency: draft.currency, debit: feeAmount, credit: 0 },
-        { account_type: 'suspense', account_id: '', account_name: 'درآمد کمیشن حواله', currency: draft.currency, debit: 0, credit: feeAmount },
+        { account_type: 'customer', account_id: String(customer?.id || ''), account_name: direction === 'send' ? draft.sender : draft.receiver, currency: draft.currency || 'AFN', debit: feeAmount, credit: 0 },
+        { ...revenueAccount, currency: draft.currency || 'AFN', debit: 0, credit: feeAmount },
       ];
-      if (feeDoc) await editDocument(ctx, feeDoc.id, 'کمیشن حواله ' + (draft.number || ''), feeAmount, draft.currency, feeLines);
-      else await postDocument(ctx, { docType: 'transfer_fee', currency: draft.currency, amount: feeAmount,
-        relatedType: 'transfer', relatedId: Number(draft.id), relatedName: draft.sender,
-        description: 'کمیشن حواله ' + (draft.number || ''), lines: feeLines });
-    } else if (feeDoc) {
+      let feeDocumentId = feeDoc?.id || null;
+      if (feeDoc && !feeDoc.reversed) {
+        await editDocument(ctx, feeDoc.id, 'کمیشن حواله ' + (draft.number || ''), feeAmount, draft.currency, feeLines);
+      } else {
+        const createdFee = await postDocument(ctx, { docType: 'transfer_fee', currency: draft.currency || 'AFN', amount: feeAmount,
+          relatedType: 'transfer', relatedId: Number(draft.id), relatedName: draft.sender,
+          description: 'کمیشن حواله ' + (draft.number || ''), lines: feeLines });
+        feeDocumentId = createdFee?.document_id || null;
+      }
+      const feeDateWarning = await applyDocumentDate(ctx, feeDocumentId, draft.date);
+      if (feeDateWarning) warning = [warning, 'تاریخ سند کمیشن کامل همگام نشد: ' + feeDateWarning].filter(Boolean).join(' | ');
+    } else if (feeDoc && !feeDoc.reversed) {
       const { data: reversedFee, error: reverseFeeError } = await supabase.rpc('reverse_document_transaction', {
         p_exchange_code: ctx.exchangeCode, p_document_id: feeDoc.id,
         p_registered_by: ctx.userName, p_reason: 'کمیشن حواله در ویرایش حذف شد.',
@@ -847,7 +856,7 @@ export async function editVersion21Record(module, draft) {
       if (reversedFee?.error) throw new Error(reversedFee.error);
     }
     const auditWarning = await writeAudit(ctx, 'update', 'transfer', draft.id, 'ویرایش حواله و سند دفتر کل', transfer, draft);
-    return { id: String(draft.id), auditWarning, warning: dateWarning };
+    return { id: String(draft.id), auditWarning, warning };
   }
 
   throw new Error(`ویرایش واقعی برای بخش ${module} هنوز تعریف نشده است.`);
