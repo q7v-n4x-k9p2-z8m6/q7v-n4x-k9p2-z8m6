@@ -94,22 +94,6 @@ function validateBalancedLines(lines, label = 'سند') {
   }
 }
 
-async function assertNotDemoCoreWrite(ctx) {
-  const isDemoIdentity = ctx.userId === 107 || ctx.exchangeCode === 'EX-261019-9B2573C5';
-  if (!isDemoIdentity) return;
-
-  if (ctx.userId !== 107 || ctx.exchangeCode !== 'EX-261019-9B2573C5') {
-    throw new Error('نشست حساب نمایشی نامعتبر است؛ عملیات متوقف شد.');
-  }
-  const { data, error } = await supabase.from('users')
-    .select('username,role,status').eq('id', 107).maybeSingle();
-  if (error) throw new Error('اعتبارسنجی حساب نمایشی ناموفق بود: ' + error.message);
-  if (!data || data.username !== '22222222' || data.status !== 'active' || !['exchange','sarraaf'].includes(String(data.role).toLowerCase())) {
-    throw new Error('حساب نمایشی فعال و معتبر نیست؛ عملیات متوقف شد.');
-  }
-  throw new Error('در حساب نمایشی، ثبت و ویرایش اطلاعات فقط در فضای موقت یک‌ساعته انجام می‌شود.');
-}
-
 function sessionContext() {
   const exchangeCode = getExchangeCode();
   let user = {};
@@ -217,18 +201,20 @@ async function getSafe(ctx, name, currency) {
   return data;
 }
 
-async function getBranch(ctx, name) {
-  if (!name) return null;
-  const { data, error } = await supabase.from('origins').select('id,name')
-    .eq('exchange_code', ctx.exchangeCode).eq('name', name).maybeSingle();
+async function getBranch(ctx, name, id = null) {
+  if (!name && !id) return null;
+  let query = supabase.from('origins').select('id,name').eq('exchange_code', ctx.exchangeCode);
+  query = id ? query.eq('id', Number(id)) : query.eq('name', name);
+  const { data, error } = await query.maybeSingle();
   if (error) throw error;
   return data || null;
 }
 
-async function getCustomer(ctx, name) {
-  if (!name) return null;
-  const { data, error } = await supabase.from('customers').select('id,name,mobile')
-    .eq('exchange_code', ctx.exchangeCode).eq('name', name).maybeSingle();
+async function getCustomer(ctx, name, id = null) {
+  if (!name && !id) return null;
+  let query = supabase.from('customers').select('id,name,mobile').eq('exchange_code', ctx.exchangeCode);
+  query = id ? query.eq('id', Number(id)) : query.eq('name', name);
+  const { data, error } = await query.maybeSingle();
   if (error) throw error;
   return data || null;
 }
@@ -330,7 +316,6 @@ async function applyDocumentDate(ctx, documentId, date, linkedTable = null, link
 
 export async function saveVersion21Record(module, draft) {
   const ctx = sessionContext();
-  await assertNotDemoCoreWrite(ctx);
   await requireModulePermission(ctx, module, draft?.id ? 'edit' : 'create');
   if (TABLES[module]) {
     const table = TABLES[module];
@@ -576,7 +561,7 @@ export async function saveVersion21Record(module, draft) {
 
   if (module === 'journal') {
     const amount = number(draft.amount);
-    if (amount <= 0) throw new Error('مبلغ سند باید مثبت باشد.');
+    if (!Number.isFinite(amount) || amount <= 0) throw new Error('مبلغ سند باید مثبت و معتبر باشد.');
     const debit = await resolveLedgerAccount(ctx, draft.debitAccount, draft.currency || 'AFN');
     const credit = await resolveLedgerAccount(ctx, draft.creditAccount, draft.currency || 'AFN');
     if (debit.account_id === credit.account_id && debit.account_type === credit.account_type) throw new Error('حساب بدهکار و بستانکار یکسان است.');
@@ -592,12 +577,52 @@ export async function saveVersion21Record(module, draft) {
     return { id: String(doc?.document_id || ''), auditWarning, warning: dateWarning };
   }
 
+  if (module === 'transactions') {
+    const amount = number(draft.amount);
+    const currency = String(draft.currency || 'AFN').trim().toUpperCase();
+    const partyType = draft.partyType || 'customer';
+    const partyName = String(draft.party || '').trim();
+    if (!Number.isFinite(amount) || amount === 0) throw new Error('مبلغ گردش باید عدد معتبر و غیرصفر باشد.');
+    if (!partyName && partyType !== 'other') throw new Error('طرف حساب را انتخاب کنید.');
+    if (!partyName && partyType === 'other') throw new Error('شرح طرف حساب الزامی است.');
+    const safe = await getSafe(ctx, draft.cash, currency);
+    let counter;
+    let relatedType = 'none';
+    let relatedId = null;
+    if (partyType === 'customer') {
+      const customer = await getCustomer(ctx, partyName, draft.partyId);
+      if (!customer) throw new Error('مشتری انتخاب‌شده در همین صراف پیدا نشد.');
+      counter = { account_type: 'customer', account_id: String(customer.id), account_name: customer.name };
+      relatedType = 'customer'; relatedId = customer.id;
+    } else if (partyType === 'branch') {
+      const branch = await getBranch(ctx, partyName, draft.partyId);
+      if (!branch) throw new Error('نمایندگی انتخاب‌شده در همین صراف پیدا نشد.');
+      counter = { account_type: 'suspense', account_id: String(branch.id), account_name: branch.name };
+      relatedType = 'branch'; relatedId = branch.id;
+    } else {
+      counter = { account_type: 'suspense', account_id: '', account_name: partyName };
+    }
+    const cashLine = { account_type: 'cash', account_id: String(safe.id), account_name: safe.name, currency };
+    const counterLine = { ...counter, currency };
+    const lines = amount > 0
+      ? [{ ...cashLine, debit: amount, credit: 0 }, { ...counterLine, debit: 0, credit: amount }]
+      : [{ ...counterLine, debit: Math.abs(amount), credit: 0 }, { ...cashLine, debit: 0, credit: Math.abs(amount) }];
+    const description = String(draft.description || draft.type || 'گردش حساب').trim();
+    const doc = await postDocument(ctx, {
+      docType: 'cash', currency, amount: Math.abs(amount), relatedType, relatedId,
+      relatedName: partyName, description, lines, clientOperationId: draft.clientOperationId,
+    });
+    const dateWarning = await applyDocumentDate(ctx, doc?.document_id, draft.date);
+    const auditWarning = await writeAudit(ctx, 'create', 'cash_transaction', doc?.document_id,
+      'ثبت گردش حساب و سند متوازن دفتر کل', null, { ...draft, amount, currency, partyId: relatedId });
+    return { id: String(doc?.document_id || ''), documentId: String(doc?.document_id || ''), auditWarning, warning: dateWarning };
+  }
+
   throw new Error(`فرم «${module}» هنوز به عملیات پایگاه داده متصل نشده است.`);
 }
 
 export async function seedVersion21BaseAccounts() {
   const ctx = sessionContext();
-  await assertNotDemoCoreWrite(ctx);
   await requireModulePermission(ctx, 'accounts', 'create');
   const seeds = [
     { code: '1000', name: 'دارایی‌ها', type: 'asset', normal: 'debit' },
@@ -673,7 +698,6 @@ async function editDocument(ctx, documentId, description, amount, currency, line
 
 export async function editVersion21Record(module, draft) {
   const ctx = sessionContext();
-  await assertNotDemoCoreWrite(ctx);
   if (!draft?.id) throw new Error('شناسه رکورد برای ویرایش موجود نیست.');
   await requireModulePermission(ctx, module, 'edit');
 
@@ -737,8 +761,8 @@ export async function editVersion21Record(module, draft) {
     const amount = number(draft.amount);
     if (!amount) throw new Error('مبلغ گردش نمی‌تواند صفر باشد.');
     const currency = draft.currency || oldCash.currency || 'AFN';
-    const customer = draft.partyType === 'customer' ? await getCustomer(ctx, draft.party) : null;
-    const branch = draft.partyType === 'branch' ? await getBranch(ctx, draft.party) : null;
+    const customer = draft.partyType === 'customer' ? await getCustomer(ctx, draft.party, draft.partyId) : null;
+    const branch = draft.partyType === 'branch' ? await getBranch(ctx, draft.party, draft.partyId) : null;
     const other = customer
       ? { account_type: 'customer', account_id: String(customer.id), account_name: customer.name }
       : branch
@@ -891,7 +915,6 @@ const MASTER_RECORD_DEACTIVATION = {
 
 export async function deactivateVersion21MasterRecord(module, record) {
   const ctx = sessionContext();
-  await assertNotDemoCoreWrite(ctx);
   if (!record?.id) throw new Error('رکورد انتخاب‌شده معتبر نیست.');
   const config = MASTER_RECORD_DEACTIVATION[module];
   if (!config) throw new Error('غیرفعال‌سازی برای این نوع رکورد تعریف نشده است.');
@@ -912,7 +935,6 @@ export async function deactivateVersion21MasterRecord(module, record) {
 
 export async function deleteVersion21Record(module, record) {
   const ctx = sessionContext();
-  await assertNotDemoCoreWrite(ctx);
   if (!record?.id) throw new Error('رکورد انتخاب‌شده معتبر نیست.');
   await requireModulePermission(ctx, module, 'delete');
 

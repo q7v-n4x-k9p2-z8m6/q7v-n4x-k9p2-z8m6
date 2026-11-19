@@ -57,13 +57,12 @@ jobs:
             [adapter.includes('p_fee: 0'), 'Transfer fee must be posted as a separate balanced document'],
             [workspace.includes('accountingStatus'), 'Accounting status is not displayed in workspace tables'],
             [workspace.includes('const readOnly=false'), 'Version 21 CRUD UI must remain available to real exchange tenants'],
-            [workspace.includes('saveDemoPreviewRecord(mod,payload'), 'Demo workspace writes must use isolated temporary storage'],
-            [adapter.includes('assertNotDemoCoreWrite(ctx'), 'Core Version 21 writes must reject only the shared demo account'],
-            [data.includes('loadDemoPreviewRecords') && data.includes('isDemoAccount'), 'Demo records must load only for the exact demo session'],
+            [!workspace.includes('saveDemoPreviewRecord(mod,payload') && !workspace.includes('deleteDemoPreviewRecord'), 'Real Version 21 workspace must not route tenant records through demo preview storage'],
+            [!adapter.includes('assertNotDemoCoreWrite(ctx'), 'Real exchange tenants must not be blocked by a hard-coded demo identity guard'],
+            [!data.includes('loadDemoPreviewRecords') && !data.includes('isDemoAccount') && !data.includes('demoPreviewRecords'), 'Version 21 tenant loader must use real tenant data without demo overlays'],
             [demo.includes("record_kind', 'temporary'") && demo.includes('expires_at'), 'Temporary demo records must have a bounded expiry'],
             [demo.includes("row.record_kind === 'sample'"), 'Fixed demo samples must be distinguished from temporary records'],
-            [workspace.includes('data.isDemoAccount&&!target._demoPreview'), 'Demo delete must never touch existing core accounting records'],
-            [workspace.includes('data.isDemoAccount&&!selected._demoPreview'), 'Demo edit must never touch existing core accounting records'],
+            [!workspace.includes('data.isDemoAccount') && !workspace.includes('_demoPreview'), 'Version 21 workspace must not expose demo records in a real tenant session'],
             [demo.includes(".eq('record_kind', 'temporary')") && demo.includes(".eq('owner_user_id', ctx.userId)"), 'Demo mutations must be tenant-scoped and temporary-only'],
           ];
           for (const [ok, message] of checks) {
