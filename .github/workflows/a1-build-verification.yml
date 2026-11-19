@@ -92,6 +92,7 @@ jobs:
             [adapter.includes("if (value.startsWith('بانک: '))") && adapter.includes('getBankById(ctx, bankId, currency)') && adapter.includes('bankLedgerRef(bank)'), 'Bank journal entries must resolve the exact active tenant bank account and currency'],
             [workspace.includes("value:'بانک: '+x.id") && workspace.includes("accountType||'').toLowerCase()==='bank'") && workspace.includes('ثبت سند بانکی'), 'Bank book must offer bank account posting and display bank-identified ledger lines'],
             [fs.readFileSync('src/components/sarraaf/Version21AccountingRules.test.js', 'utf8').includes('bank ledger mapping uses the exact bank account identity') && accountingRules.includes('export function bankLedgerRef'), 'Bank ledger identity mapping must be covered by unit tests'],
+            [accountingRules.includes("['cash', 'customer', 'bank']") && fs.readFileSync('src/components/sarraaf/Version21AccountingRules.test.js', 'utf8').includes('balanced journal requires a valid linked bank account ID'), 'Bank ledger lines must require a valid bank account ID'],
           ];
           for (const [ok, message] of checks) {
             if (!ok) throw new Error(message);
