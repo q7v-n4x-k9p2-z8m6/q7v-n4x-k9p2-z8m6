@@ -828,6 +828,9 @@ export async function editVersion21Record(module, draft) {
       .eq('exchange_code', ctx.exchangeCode).eq('transfer_id', Number(draft.id)).limit(1).maybeSingle();
     if (docError) throw docError;
     if (!doc) throw new Error('سند مالی حواله پیدا نشد؛ ویرایش امن ممکن نیست.');
+    if (!['ارسالی', 'دریافتی'].includes(String(draft.direction || '').trim())) {
+      throw new Error('نوع حواله باید صریحاً «ارسالی» یا «دریافتی» انتخاب شود؛ حواله نامشخص نباید به‌صورت خودکار ارسالی اصلاح شود.');
+    }
     const direction = draft.direction === 'دریافتی' ? 'receive' : 'send';
     const customer = await getCustomer(ctx, direction === 'receive' ? draft.receiver : draft.sender);
     if (!customer) throw new Error('برای اصلاح حواله، طرف حساب باید در فهرست مشتریان همین صراف موجود باشد؛ سند بدون شناسه مشتری اصلاح نمی‌شود.');
