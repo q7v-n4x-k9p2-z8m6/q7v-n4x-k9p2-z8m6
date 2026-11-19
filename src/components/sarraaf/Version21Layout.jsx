@@ -68,9 +68,7 @@ const MODULES = [
   { id: 'budgets', label: 'بودجه و مراکز هزینه', icon: FolderKanban, group: 'حسابداری و دفاتر', roles: ['creator','admin','sarraaf'] },
   { id: 'fiscalPeriods', label: 'دوره‌های مالی و بستن حساب‌ها', icon: CalendarDays, group: 'حسابداری و دفاتر', roles: ['creator','admin','sarraaf'] },
 
-  { id: 'currencies', label: 'تعریف اسعار', path: '/currencies', icon: Coins, group: 'ارز، شبکه و ارتباطات', roles: ['creator','admin','sarraaf'] },
   { id: 'agencyNetwork', label: 'شبکه نمایندگی‌ها', path: '/agency-network', icon: Network, group: 'ارز، شبکه و ارتباطات', roles: ['creator','admin','sarraaf'] },
-  { id: 'marketRates', label: 'نرخ بازار صراف‌ها', icon: ChartNoAxesCombined, group: 'ارز، شبکه و ارتباطات', roles: ['creator','admin','sarraaf'] },
   { id: 'chat', label: 'گروه و چت صراف‌ها', path: '/chat', icon: MessagesSquare, group: 'ارز، شبکه و ارتباطات', roles: ['creator','admin','sarraaf'] },
   { id: 'market', label: 'بازار صراف‌ها', path: '/sarraaf-market', icon: ShoppingBag, group: 'ارز، شبکه و ارتباطات', roles: ['creator','admin','sarraaf'] },
   { id: 'sarraafChat', label: 'چت صراف‌ها', path: '/sarraaf-chat', icon: MessagesSquare, group: 'ارز، شبکه و ارتباطات', roles: ['creator','admin','sarraaf'] },

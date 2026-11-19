@@ -70,7 +70,6 @@ const Trade = lazyWithRetry(() => import('@/pages/Trade'));
 const Transfer = lazyWithRetry(() => import('@/pages/Transfer'));
 const Cash = lazyWithRetry(() => import('@/pages/Cash'));
 const Bank = lazyWithRetry(() => import('@/pages/Bank'));
-const Currencies = lazyWithRetry(() => import('@/pages/Currencies'));
 const Reports = lazyWithRetry(() => import('@/pages/Reports'));
 const ProfitLoss = lazyWithRetry(() => import('@/pages/ProfitLoss'));
 const Settings = lazyWithRetry(() => import('@/pages/Settings'));
@@ -252,7 +251,7 @@ const AppRoutes = () => {
             <Route path="/transfers/:direction" element={<FeatureGate featureKey="transfers"><Transfer /></FeatureGate>} />
             <Route path="/cash" element={<FeatureGate featureKey="cash"><Cash /></FeatureGate>} />
             <Route path="/bank" element={<FeatureGate featureKey="bank"><Bank /></FeatureGate>} />
-            <Route path="/currencies" element={<FeatureGate featureKey="currencies"><Currencies /></FeatureGate>} />
+            <Route path="/currencies" element={<Navigate to="/dashboard" replace />} />
             <Route path="/reports" element={<FeatureGate featureKey="reports"><Reports /></FeatureGate>} />
             <Route path="/profit-loss" element={<FeatureGate featureKey="profit_loss"><ProfitLoss /></FeatureGate>} />
             <Route path="/settings" element={<FeatureGate featureKey="settings"><Settings /></FeatureGate>} />
