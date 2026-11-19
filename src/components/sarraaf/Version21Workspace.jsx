@@ -153,9 +153,9 @@ export default function Version21Workspace(){
  const [localPreview,setLocalPreview]=useState(false);
  const [exchangeProfile,setExchangeProfile]=useState(null);
  const [lastLoaded,setLastLoaded]=useState(null);
- // Both real exchange tenants and the shared demo workspace may use CRUD UI.
- // Demo writes are isolated by Version21DemoAdapter; real writes retain server-side
- // role, employee-permission, and tenant-scoped authorization in Version21WriteAdapter.
+ // Authorized real exchange tenants share this workspace. All writes pass through
+ // Version21WriteAdapter, which verifies server-side role, employee permissions,
+ // and the active exchange tenant before touching financial records.
  const readOnly=false;
  const [searchParams]=useSearchParams();
  const requestedModule=searchParams.get('module');
