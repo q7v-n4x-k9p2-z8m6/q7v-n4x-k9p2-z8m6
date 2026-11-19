@@ -96,7 +96,7 @@ const LAPTOP_TOOLBAR = [
  {id:'exchange',label:'خرید و فروش اسعار',icon:ArrowLeftRight},
  {id:'cash',label:'صندوق‌ها و موجودی',icon:Vault},
  {id:'remittance',label:'دفتر حواله‌ها',icon:ArrowLeftRight},
- {id:'banks',label:'بانک و چک چک',icon:Landmark},
+ {id:'banks',label:'بانک و چک',icon:Landmark},
  {id:'branchLedger',label:'دفتر حساب نمایندگی‌ها',icon:Users},
  {id:'customers',label:'تعریف مشتریان',icon:User},
  {id:'customerLedger',label:'دفتر حساب مشتریان',icon:User}
@@ -483,7 +483,7 @@ export default function Version21Workspace(){
    ['فهرست معاملات',ArrowLeftRight,()=>goModule('exchange')]
   ]},
   {key:'accounting-reports',title:'حسابداری و گزارشات',items:[
-   ['دفتر روزنامه ·',ShoppingCart,()=>goModule('journal')],
+   ['دفتر روزنامه',ShoppingCart,()=>goModule('journal')],
    ['دفتر کل',ClipboardList,()=>goModule('ledger')],
    ['بیلانس عمومی',Scale,()=>goModule('balance')]
   ]},
@@ -535,7 +535,7 @@ export default function Version21Workspace(){
        {ltGroups.map(group=><div key={group.key} data-lt-group={group.key} className="v21-lt-group">
         <div className="v21-lt-group-title">{group.title}</div>
         <div className="v21-lt-group-tiles">
-         {group.items.map(([label,I,run])=>{const permissionId=({'تعریف مشتریان':'customers','تعریف نمایندگی‌ها':'branches','دفتر حساب مشتریان':'customerLedger','صندوق‌ها و موجودی':'cash','بانک و چک':'banks','دفتر حواله‌ها':'remittance','خرید و فروش اسعار':'exchange','مصارف و پرداخت‌ها':'expenses','دفتر روزنامه ·':'journal','دفتر کل':'ledger','محصولات آنلاین':'products','گروه و چت':'sarraafGroups','هوش مصنوعی':'assistant','تنظیمات':'language','زبان برنامه':'language'})[label];const createRestricted=['خرید و فروش اسعار','مصارف و پرداخت‌ها'].includes(label);const allowed=Boolean(run)&&(!permissionId||canViewModule(permissionId))&&(!createRestricted||canModuleAction(permissionId,'create'));return <button key={label} type="button" onClick={allowed?run:undefined} disabled={!allowed} aria-disabled={!allowed} title={allowed?label:'این گزینه برای حساب شما فعال نیست'} className={'v21-lt-tile '+(!allowed?'cursor-not-allowed opacity-40':'')}><I/><span>{label}</span></button>;})}
+         {group.items.map(([label,I,run])=>{const permissionId=({'تعریف مشتریان':'customers','تعریف نمایندگی‌ها':'branches','دفتر حساب مشتریان':'customerLedger','صندوق‌ها و موجودی':'cash','بانک و چک':'banks','دفتر حواله‌ها':'remittance','خرید و فروش اسعار':'exchange','مصارف و پرداخت‌ها':'expenses','دفتر روزنامه':'journal','دفتر کل':'ledger','محصولات آنلاین':'products','گروه و چت':'sarraafGroups','هوش مصنوعی':'assistant','تنظیمات':'language','زبان برنامه':'language'})[label];const createRestricted=['خرید و فروش اسعار','مصارف و پرداخت‌ها'].includes(label);const allowed=Boolean(run)&&(!permissionId||canViewModule(permissionId))&&(!createRestricted||canModuleAction(permissionId,'create'));return <button key={label} type="button" onClick={allowed?run:undefined} disabled={!allowed} aria-disabled={!allowed} title={allowed?label:'این گزینه برای حساب شما فعال نیست'} className={'v21-lt-tile '+(!allowed?'cursor-not-allowed opacity-40':'')}><I/><span>{label}</span></button>;})}
         </div>
        </div>)}
       </div>
