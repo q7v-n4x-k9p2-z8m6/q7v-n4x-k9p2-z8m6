@@ -179,9 +179,17 @@ export default function Version21Workspace(){
  useEffect(()=>{if(dbStatus==='connected'&&isEmployee&&!canViewModule(active)){const fallback=MODULES.find(m=>canViewModule(m.id));setActive(fallback?.id||'home');setSelected(null);}},[dbStatus,isEmployee,data.permissions,active]);
  const notify=s=>{setNotice(s);setTimeout(()=>setNotice(''),4500);};
  const refreshDatabase=async()=>{
+  const customerId=customerDetail?.id;
+  const branchId=branchDetail?.id;
   setDbStatus('loading');setDbError('');
-  try{const result=await loadVersion21Database();setData(result.data);setExchangeProfile(result.exchange);setLastLoaded(result.loadedAt);setDbStatus('connected');setLocalPreview(false);setSelected(null);setCustomerDetail(null);setBranchDetail(null);notify('اطلاعات واقعی دیتابیس دوباره بارگذاری شد.');}
-  catch(error){setDbStatus('error');setDbError(error?.message||'اتصال به دیتابیس ناموفق بود.');captureVersion21Error(error,'loadDatabase');}
+  try{
+   const result=await loadVersion21Database();
+   setData(result.data);setExchangeProfile(result.exchange);setLastLoaded(result.loadedAt);
+   setDbStatus('connected');setLocalPreview(false);setSelected(null);
+   setCustomerDetail(customerId?result.data.customers.find(x=>String(x.id)===String(customerId))||null:null);
+   setBranchDetail(branchId?result.data.branches.find(x=>String(x.id)===String(branchId))||null:null);
+   notify('اطلاعات واقعی دیتابیس دوباره بارگذاری شد.');
+  }catch(error){setDbStatus('error');setDbError(error?.message||'اتصال به دیتابیس ناموفق بود.');captureVersion21Error(error,'loadDatabase');}
  };
  useEffect(()=>{let activeRequest=true;(async()=>{try{const result=await loadVersion21Database();if(!activeRequest)return;setData(result.data);setExchangeProfile(result.exchange);setLastLoaded(result.loadedAt);setDbStatus('connected');setLocalPreview(false);}catch(error){if(!activeRequest)return;setDbStatus('error');setDbError(error?.message||'اتصال به دیتابیس ناموفق بود.');}})();return()=>{activeRequest=false;};},[]);
  const page=MODULES.find(x=>x.id===active)||MODULES[0];
@@ -232,12 +240,8 @@ export default function Version21Workspace(){
    const result=payload.id
     ? await editVersion21Record(mod,payload)
     : await saveVersion21Record(mod,payload);
-   const keepCustomerDetail=mod==='transactions'?customerDetail:null;
-   const keepBranchDetail=mod==='transactions'?branchDetail:null;
    setModal('');setDraft({});
    await refreshDatabase();
-   if(keepCustomerDetail)setCustomerDetail(keepCustomerDetail);
-   if(keepBranchDetail)setBranchDetail(keepBranchDetail);
    setSelected(null);
    notify(result?.warning||result?.auditWarning?'عملیات در دیتابیس ثبت شد؛ '+(result.warning||result.auditWarning):'اطلاعات در دیتابیس همین صراف ثبت شد.');
   }catch(error){
