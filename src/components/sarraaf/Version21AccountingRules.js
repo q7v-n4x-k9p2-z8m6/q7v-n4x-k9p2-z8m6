@@ -52,6 +52,13 @@ export function validateCashTransactionPartyIdentity(document, partyType, party,
   return true;
 }
 
+export function sumCashLedgerMovement(transactions, currency) {
+  if (!Array.isArray(transactions)) return 0;
+  return transactions
+    .filter(row => row && row.cash && String(row.currency || 'AFN') === String(currency || 'AFN'))
+    .reduce((total, row) => total + number(row.amount), 0);
+}
+
 export function validateBalancedLines(lines, label = 'سند') {
   if (!Array.isArray(lines) || lines.length < 2) {
     throw new Error(`${label}: حداقل دو سطر حسابداری لازم است.`);
