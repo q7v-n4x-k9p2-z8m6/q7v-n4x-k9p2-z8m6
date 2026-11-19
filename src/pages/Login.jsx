@@ -12,6 +12,7 @@ import { HOME_BY_ROLE, normalizeRole } from '@/lib/rbac';
 import { directLogin, checkLegacyUser } from '@/lib/directAuth';
 import { login as localLogin } from '@/lib/localAuth';
 import { tryMigrateLocalUser } from '@/lib/legacyMigration';
+import { isLocalTestMode } from '@/lib/localTestMode';
 import LegacyUserNotice from '@/components/LegacyUserNotice';
 import ContactInfo from '@/components/sarraaf/ContactInfo';
 import { loginWithProvider, handleGoogleCallback } from '@/lib/googleAuth';
@@ -380,7 +381,7 @@ export default function Login() {
 
       // ── اگر ورود Supabase ناموفق بود و کاربر یافت نشد (یا دیتابیس در دسترس نبود)،
       //    ورود محلی را امتحان کن — سپس مهاجرت بی‌صدا به Supabase ──
-      if (!result.success && (result.error === 'user_not_found' || result.error === 'rpc_error' || result.error === 'empty_response')) {
+      if (import.meta.env.DEV && isLocalTestMode() && !result.success && (result.error === 'user_not_found' || result.error === 'rpc_error' || result.error === 'empty_response')) {
         const localResult = localLogin(identifier, password);
         if (localResult.success) {
           // Enforce the server-owned second restriction for local/offline fallback too.
