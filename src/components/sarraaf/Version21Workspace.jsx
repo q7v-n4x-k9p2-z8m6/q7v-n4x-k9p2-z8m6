@@ -18,7 +18,7 @@ import {
 } from 'lucide-react';
 import SarraafLogo from '@/components/SarraafLogo';
 import { useAuth } from '@/lib/AuthContext';
-import { sumCashLedgerMovement, sumBankLedgerMovement } from './Version21AccountingRules';
+import { sumCashLedgerMovement, sumCashLedgerSide, sumBankLedgerMovement } from './Version21AccountingRules';
 
 const CURRENCIES = ['AFN','USD','EUR','IRR','TRY','PKR','AED','SAR','GBP','CNY'];
 const MODULES = [
@@ -402,9 +402,8 @@ export default function Version21Workspace(){
    const accounts=selectedRows;
    accounts.forEach(account=>{
     const currency=account.currency||'AFN';totals[currency]??={debit:0,credit:0};
-    const tx=data.transactions.filter(t=>t.cash===account.name&&t.currency===currency);
-    totals[currency].debit+=Math.max(n(account.opening),0)+tx.filter(t=>n(t.amount)>0).reduce((s,t)=>s+n(t.amount),0);
-    totals[currency].credit+=Math.max(-n(account.opening),0)+tx.filter(t=>n(t.amount)<0).reduce((s,t)=>s+Math.abs(n(t.amount)),0);
+    totals[currency].debit+=Math.max(n(account.opening),0)+sumCashLedgerSide(data.transactions,account.id,currency,'debit');
+    totals[currency].credit+=Math.max(-n(account.opening),0)+sumCashLedgerSide(data.transactions,account.id,currency,'credit');
    });
   } else if(active==='banks'){
    for(const account of selectedRows){
