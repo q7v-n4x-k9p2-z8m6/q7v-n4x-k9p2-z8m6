@@ -73,6 +73,8 @@ jobs:
             [data.includes("row.direction === 'send' ? 'ارسالی' : 'نامعلوم'"), 'Unknown remittance direction must never be displayed as outgoing'],
             [adapter.includes('حواله نامشخص نباید به‌صورت خودکار ارسالی اصلاح شود'), 'Unknown remittance direction must be rejected during edits'],
             [workspace.includes("label:'مبدأ'") && workspace.includes("label:'مقصد'"), 'Remittance lists must show origin and destination separately'],
+            [data.includes("const isBranch = linkedDocument?.related_type === 'branch'") && data.includes("(isCustomer || isBranch) ? credit - debit"), 'Customer and branch ledger balance signs must match the actual debit-credit sides'],
+            [workspace.includes("{fmt(n(r.debit))}") && workspace.includes("{fmt(n(r.credit))}"), 'Customer and branch ledger detail rows must display raw debit and credit values'],
           ];
           for (const [ok, message] of checks) {
             if (!ok) throw new Error(message);
