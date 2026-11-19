@@ -1,9 +1,10 @@
 import { supabase } from '@/lib/supabaseClient';
 import { getExchangeCode } from '@/lib/supabaseApi';
 
-const DEMO_USER_ID = 107;
-const DEMO_USERNAME = '22222222';
-const DEMO_EXCHANGE_CODE = 'EX-261019-9B2573C5';
+const DEMO_USERS = {
+  107: { username: '22222222', exchangeCode: 'EX-261019-9B2573C5' },
+  114: { username: '33333333', exchangeCode: 'EX-261028-27497E95' },
+};
 
 function sessionUser() {
   try { return JSON.parse(localStorage.getItem('auth_user') || 'null') || {}; }
@@ -14,13 +15,14 @@ async function requireDemoSession() {
   const user = sessionUser();
   const userId = Number(user.id || user.user_id || 0);
   const exchangeCode = getExchangeCode();
-  if (userId !== DEMO_USER_ID || exchangeCode !== DEMO_EXCHANGE_CODE) {
-    throw new Error('این عملیات فقط برای حساب نمایشی مجاز است.');
+  const expected = DEMO_USERS[userId];
+  if (!expected || exchangeCode !== expected.exchangeCode) {
+    throw new Error('این عملیات فقط برای یکی از دو حساب نمایشی مجاز است.');
   }
   const { data, error } = await supabase.from('users')
     .select('id,username,role,status')
-    .eq('id', DEMO_USER_ID)
-    .eq('username', DEMO_USERNAME)
+    .eq('id', userId)
+    .eq('username', expected.username)
     .maybeSingle();
   if (error) throw new Error('اعتبارسنجی حساب نمایشی ناموفق بود: ' + error.message);
   if (!data || data.status !== 'active' || !['exchange','sarraaf'].includes(String(data.role).toLowerCase())) {
