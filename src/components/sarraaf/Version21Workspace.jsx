@@ -421,8 +421,8 @@ export default function Version21Workspace(){
   ];
   if(mod==='customerLedger'&&customerDetail)return [
    {key:'date',label:'تاریخ'},{key:'type',label:'نوع عملیات'},{key:'description',label:'شرح'},
-   {key:'debit',label:'بدهکار',render:r=><span className="inline-flex min-w-[82px] justify-center rounded-lg bg-rose-50 px-2 py-1 font-bold text-rose-700">{fmt(n(r.amount)<0?Math.abs(n(r.amount)):0)}</span>},
-   {key:'credit',label:'بستانکار',render:r=><span className="inline-flex min-w-[82px] justify-center rounded-lg bg-emerald-50 px-2 py-1 font-bold text-emerald-700">{fmt(n(r.amount)>0?n(r.amount):0)}</span>},{key:'currency',label:'ارز'},{key:'status',label:'وضعیت سند'}
+   {key:'debit',label:'بدهکار',render:r=><span className="inline-flex min-w-[82px] justify-center rounded-lg bg-rose-50 px-2 py-1 font-bold text-rose-700">{fmt(n(r.debit))}</span>},
+   {key:'credit',label:'بستانکار',render:r=><span className="inline-flex min-w-[82px] justify-center rounded-lg bg-emerald-50 px-2 py-1 font-bold text-emerald-700">{fmt(n(r.credit))}</span>},{key:'currency',label:'ارز'},{key:'status',label:'وضعیت سند'}
   ];
   if(mod==='branchLedger'&&!branchDetail)return [
    {key:'code',label:'کد نمایندگی'},{key:'name',label:'نام نمایندگی'},{key:'city',label:'موقعیت'},{key:'currency',label:'ارز اصلی'},
@@ -430,8 +430,8 @@ export default function Version21Workspace(){
   ];
   if(mod==='branchLedger'&&branchDetail)return [
    {key:'date',label:'تاریخ'},{key:'type',label:'نوع عملیات'},{key:'description',label:'شرح'},
-   {key:'debit',label:'بدهکار',render:r=><span className="inline-flex min-w-[82px] justify-center rounded-lg bg-rose-50 px-2 py-1 font-bold text-rose-700">{fmt(n(r.amount)<0?Math.abs(n(r.amount)):0)}</span>},
-   {key:'credit',label:'بستانکار',render:r=><span className="inline-flex min-w-[82px] justify-center rounded-lg bg-emerald-50 px-2 py-1 font-bold text-emerald-700">{fmt(n(r.amount)>0?n(r.amount):0)}</span>},{key:'currency',label:'ارز'},{key:'status',label:'وضعیت سند'}
+   {key:'debit',label:'بدهکار',render:r=><span className="inline-flex min-w-[82px] justify-center rounded-lg bg-rose-50 px-2 py-1 font-bold text-rose-700">{fmt(n(r.debit))}</span>},
+   {key:'credit',label:'بستانکار',render:r=><span className="inline-flex min-w-[82px] justify-center rounded-lg bg-emerald-50 px-2 py-1 font-bold text-emerald-700">{fmt(n(r.credit))}</span>},{key:'currency',label:'ارز'},{key:'status',label:'وضعیت سند'}
   ];
   const fields=SCHEMAS[mod]?.fields||[];
   if(mod==='accounts')return [
