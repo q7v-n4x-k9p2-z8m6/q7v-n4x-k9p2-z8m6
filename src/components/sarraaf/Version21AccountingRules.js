@@ -52,6 +52,15 @@ export function validateCashTransactionPartyIdentity(document, partyType, party,
   return true;
 }
 
+export function bankLedgerRef(bank) {
+  const id = String(bank?.id ?? '').trim();
+  const name = String(bank?.bank_name || bank?.name || '').trim();
+  if (!/^[1-9]\d*$/.test(id) || !name) {
+    throw new Error('حساب بانکی برای اتصال به دفتر کل معتبر نیست.');
+  }
+  return { account_type: 'bank', account_id: id, account_name: name };
+}
+
 export function isChartAccountLedgerLine(line, account) {
   if (!line || !account) return false;
   return String(line.account_type || '').toLowerCase() === 'suspense' &&
