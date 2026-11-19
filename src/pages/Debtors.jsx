@@ -122,55 +122,60 @@ export default function Debtors() {
       ) : rows.length === 0 ? (
         <EmptyState icon={Wallet} title="موردی یافت نشد" description="مشتری با مانده غیرصفر وجود ندارد" />
       ) : (
-        <div className="space-y-2">
-          {rows.map(({ customer, balances, net }) => {
-            const isDebtor = net > 0;
-            return (
-              <div
-                key={customer.id}
-                className="flex items-center justify-between gap-2 p-3 rounded-xl border bg-card hover:bg-muted/30 transition-colors cursor-pointer"
-                onClick={() => navigate(`/customers/${customer.id}`)}
-              >
-                <div className="flex items-center gap-2 min-w-0">
-                  <div
+        <div className="w-full overflow-x-auto rounded-xl border bg-card">
+          <table dir="rtl" className="w-full min-w-[720px] border-collapse text-right text-xs">
+            <thead className="bg-muted/80 text-foreground">
+              <tr>
+                <th className="whitespace-nowrap border-b px-4 py-3 font-semibold">نام مشتری</th>
+                <th className="whitespace-nowrap border-b px-4 py-3 font-semibold">کد مشتری</th>
+                <th className="whitespace-nowrap border-b px-4 py-3 font-semibold">شماره تماس</th>
+                <th className="whitespace-nowrap border-b px-4 py-3 font-semibold">نوع حساب</th>
+                <th className="whitespace-nowrap border-b px-4 py-3 font-semibold">مانده حساب</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map(({ customer, balances, net }, index) => {
+                const isDebtor = net > 0;
+                return (
+                  <tr
+                    key={customer.id}
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => navigate(`/customers/${customer.id}`)}
+                    onKeyDown={event => {
+                      if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault();
+                        navigate(`/customers/${customer.id}`);
+                      }
+                    }}
                     className={cn(
-                      'w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm shrink-0',
-                      isDebtor ? 'bg-rose-100 text-rose-700 ring-1 ring-rose-200' : 'bg-emerald-100 text-emerald-700 ring-1 ring-emerald-200'
+                      'cursor-pointer transition-colors hover:bg-muted/50',
+                      index % 2 === 1 && 'bg-muted/20'
                     )}
                   >
-                    {(customer.name || '?').charAt(0)}
-                  </div>
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-sm font-medium truncate">{customer.name}</span>
+                    <td className="whitespace-nowrap border-b px-4 py-3 font-semibold">{customer.name || '—'}</td>
+                    <td className="whitespace-nowrap border-b px-4 py-3">{customer.code || '—'}</td>
+                    <td className="whitespace-nowrap border-b px-4 py-3" dir="ltr">{customer.phone || '—'}</td>
+                    <td className="whitespace-nowrap border-b px-4 py-3">
                       <StatusBadge
                         status={isDebtor ? 'active' : 'inactive'}
                         labels={{ active: 'بدهکار', inactive: 'بستانکار' }}
                         variant={isDebtor ? 'destructive' : 'success'}
                       />
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      {customer.phone || '—'} {customer.code ? ` • ${customer.code}` : ''}
-                    </p>
-                    <div className="flex flex-wrap gap-x-2 mt-0.5">
+                    </td>
+                    <td className={cn(
+                      'whitespace-nowrap border-b px-4 py-3 font-bold tabular-nums',
+                      isDebtor ? 'text-rose-700' : 'text-emerald-700'
+                    )}>
                       {Object.entries(balances).map(([cur, val]) => (
-                        <span
-                          key={cur}
-                          className={cn(
-                            'text-xs font-semibold',
-                            val >= 0 ? 'text-rose-700' : 'text-emerald-700'
-                          )}
-                        >
-                          {formatAmount(val, cur)}
-                        </span>
+                        <span key={cur} className="ml-3 inline-block">{formatAmount(Math.abs(val), cur)}</span>
                       ))}
-                    </div>
-                  </div>
-                </div>
-                <ChevronLeft className="w-4 h-4 text-muted-foreground shrink-0" />
-              </div>
-            );
-          })}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
       )}
     </>
