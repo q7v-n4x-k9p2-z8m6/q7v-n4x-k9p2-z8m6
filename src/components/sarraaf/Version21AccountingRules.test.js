@@ -108,3 +108,19 @@ test('document date rejects impossible or non-ISO dates before posting', async (
     assert.throws(() => documentDateTimestamp(value), /تاریخ سند/);
   }
 });
+
+
+test('cash transaction party requires the selected customer or branch to resolve', async () => {
+  const { validateCashTransactionParty } = await import('./Version21AccountingRules.js');
+  assert.equal(validateCashTransactionParty('customer', 'احمد', { id: 12 }), 'customer');
+  assert.equal(validateCashTransactionParty('branch', 'نمایندگی کابل', { id: 3 }), 'branch');
+  assert.throws(() => validateCashTransactionParty('customer', 'احمد', null), /مشتری انتخاب‌شده/);
+  assert.throws(() => validateCashTransactionParty('branch', 'نمایندگی کابل', null), /نمایندگی انتخاب‌شده/);
+});
+
+test('cash transaction permits suspense counterpart only for explicit other type', async () => {
+  const { validateCashTransactionParty } = await import('./Version21AccountingRules.js');
+  assert.equal(validateCashTransactionParty('other', 'حساب متفرقه'), 'other');
+  assert.throws(() => validateCashTransactionParty('', 'حساب متفرقه'), /نوع طرف حساب/);
+  assert.throws(() => validateCashTransactionParty('other', ''), /طرف حساب/);
+});
