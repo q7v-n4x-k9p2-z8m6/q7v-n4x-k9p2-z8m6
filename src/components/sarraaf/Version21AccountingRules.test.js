@@ -175,6 +175,22 @@ test('balanced journal requires a valid linked bank account ID', () => {
   ]));
 });
 
+test('bank ledger totals match exact bank ID, currency and active ledger rows', async () => {
+  const { sumBankLedgerMovement } = await import('./Version21AccountingRules.js');
+  const rows = [
+    { accountType: 'bank', accountId: '12', currency: 'AFN', debit: 100, credit: 0 },
+    { accountType: 'bank', accountId: '12', currency: 'AFN', debit: 0, credit: 25 },
+    { accountType: 'bank', accountId: '123', currency: 'AFN', debit: 900, credit: 0 },
+    { accountType: 'bank', accountId: '12', currency: 'USD', debit: 700, credit: 0 },
+    { accountType: 'cash', accountId: '12', currency: 'AFN', debit: 500, credit: 0 },
+    { accountType: 'bank', accountId: '12', currency: 'AFN', debit: 300, credit: 0, deleted: true },
+  ];
+  assert.equal(sumBankLedgerMovement(rows, 12, 'AFN', 'debit'), 100);
+  assert.equal(sumBankLedgerMovement(rows, 12, 'AFN', 'credit'), 25);
+  assert.equal(sumBankLedgerMovement(rows, 12, 'USD', 'debit'), 700);
+  assert.equal(sumBankLedgerMovement(rows, 999, 'AFN', 'debit'), 0);
+});
+
 test('bank ledger mapping uses the exact bank account identity', async () => {
   const { bankLedgerRef } = await import('./Version21AccountingRules.js');
   assert.deepEqual(bankLedgerRef({ id: 42, bank_name: 'بانک نمونه' }), {
