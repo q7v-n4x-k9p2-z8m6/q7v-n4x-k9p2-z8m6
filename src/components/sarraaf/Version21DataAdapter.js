@@ -40,13 +40,21 @@ function getSessionUserId() {
 }
 
 async function readTenantTable(table, exchangeCode) {
-  const { data, error } = await supabase
-    .from(table)
-    .select('*')
-    .eq('exchange_code', exchangeCode)
-    .order('id', { ascending: true });
-  if (error) throw new Error(`خواندن جدول ${table} ناموفق بود: ${error.message}`);
-  return data || [];
+  const pageSize = 1000;
+  const rows = [];
+  for (let start = 0; ; start += pageSize) {
+    const { data, error } = await supabase
+      .from(table)
+      .select('*')
+      .eq('exchange_code', exchangeCode)
+      .order('id', { ascending: true })
+      .range(start, start + pageSize - 1);
+    if (error) throw new Error(`خواندن جدول ${table} ناموفق بود: ${error.message}`);
+    const page = data || [];
+    rows.push(...page);
+    if (page.length < pageSize) break;
+  }
+  return rows;
 }
 
 export async function loadVersion21Database() {
@@ -318,18 +326,26 @@ export async function loadVersion21Database() {
     const accountType = String(row.account_type || '').toLowerCase();
     const isCustomer = accountType === 'customer';
     const isCash = accountType === 'cash';
+    // Branch balances belong only to the branch counter-line, not to the
+    // cash line in the same document. In Version 21 branch counter-lines are
+    // stored as suspense rows whose account_id is the tenant's origin id.
+    const isBranch = accountType === 'origin' || accountType === 'branch' ||
+      (accountType === 'suspense' &&
+        linkedDocument?.related_type === 'branch' &&
+        String(row.account_id || '') === String(linkedDocument?.related_id || ''));
     const currency = row.currency || linkedDocument?.currency || 'AFN';
     const debit = num(row.debit);
     const credit = num(row.credit);
-    const amount = isCustomer ? credit - debit : debit - credit;
+    const amount = (isCustomer || isBranch) ? credit - debit : debit - credit;
     const safe = isCash ? safeById.get(String(row.account_id || '')) : null;
     return {
       id: String(row.id),
       date: dateOnly(row.created_at),
       created_at: row.created_at,
       type: documentTypeLabel(linkedDocument?.doc_type || row.type || accountType, linkedDocument?.description || row.description),
-      party: (linkedDocument?.related_name && linkedDocument.related_type === 'branch' ? linkedDocument.related_name : row.account_name) || linkedDocument?.related_name || '',
-      partyType: isCustomer ? 'customer' : (linkedDocument?.related_type === 'branch' || accountType === 'origin' || accountType === 'branch' ? 'branch' : 'other'),
+      party: isBranch ? (row.account_name || linkedDocument?.related_name || '') : (row.account_name || linkedDocument?.related_name || ''),
+      partyType: isCustomer ? 'customer' : isBranch ? 'branch' : 'other',
+      partyId: (isCustomer || isBranch) ? String(row.account_id || '') : '',
       currency,
       amount,
       cash: isCash ? (safe?.name || row.account_name || 'صندوق') : '',
