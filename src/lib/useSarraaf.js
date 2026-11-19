@@ -6,7 +6,7 @@ import { syncPendingWrites, getPendingCount } from './offlineQueue';
 import { createSupabaseEntity } from './supabaseApi';
 import { generateUniqueInviteCode } from './referralSystem';
 import { trackOp, finishOp } from './syncStatus';
-import { postDocument, postTransfer, executeTransfer, reverseDocument, editDocument, getBalances, listDocuments } from './ledgerApi';
+import { postDocument, postTransfer, executeTransfer, reverseDocument, editDocument, getBalances, listDocuments, getLedgerCurrencyBalances } from './ledgerApi';
 import { getMyExchange, listTransactions } from './supabaseApi';
 
 // Direct Supabase entity instances (no localStorage cache — always reads from server)
@@ -488,6 +488,20 @@ export function useBankBalances() {
   return useQuery({
     queryKey: ['balances', 'bank'],
     queryFn: () => getBalances('bank'),
+  });
+}
+
+export function useCustomerLedgerBalances() {
+  return useQuery({
+    queryKey: ['balances', 'customer', 'currency-safe'],
+    queryFn: () => getLedgerCurrencyBalances('customer'),
+  });
+}
+
+export function useAgentLedgerBalances() {
+  return useQuery({
+    queryKey: ['balances', 'agent', 'currency-safe'],
+    queryFn: () => getLedgerCurrencyBalances('agent'),
   });
 }
 
