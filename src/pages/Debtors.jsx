@@ -4,7 +4,7 @@ import { useCustomers, useCustomerBalances } from '@/lib/useSarraaf';
 import { PageHeader, StatCard, EmptyState, LoadingState, StatusBadge } from '@/components/sarraaf/Pieces';
 import { Input } from '@/components/ui/input';
 import { formatNumber, formatAmount } from '@/lib/sarraaf';
-import { Search, Handshake, Wallet, TrendingDown, TrendingUp, ChevronLeft } from 'lucide-react';
+import { Search, Handshake, Wallet, TrendingDown, TrendingUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const TABS = [
