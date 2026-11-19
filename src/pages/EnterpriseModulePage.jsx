@@ -1,0 +1,1072 @@
+import React, { useMemo, useState } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useParams } from 'react-router-dom';
+import { getExchangeCode } from '@/lib/supabaseApi';
+import { supabase } from '@/lib/supabaseClient';
+import { FEATURE_CATALOG } from '@/lib/features';
+import { PageHeader, LoadingState } from '@/components/sarraaf/Pieces';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
+import { Switch } from '@/components/ui/switch';
+import { toast } from '@/components/ui/use-toast';
+import { ListTree, Plus, Pencil, Check, X, RefreshCw, ShieldCheck, Lock, AlertTriangle, CalendarDays, GitBranch } from 'lucide-react';
+import { formatNumber } from '@/lib/sarraaf';
+import { useTreasuryBalances, useBankBalances } from '@/lib/useSarraaf';
+
+const TYPES = [
+  { value: 'asset', label: 'دارایی', balance: 'debit' },
+  { value: 'liability', label: 'بدهی', balance: 'credit' },
+  { value: 'equity', label: 'سرمایه', balance: 'credit' },
+  { value: 'revenue', label: 'درآمد', balance: 'credit' },
+  { value: 'expense', label: 'هزینه', balance: 'debit' },
+];
+const EMPTY = { account_code: '', account_name: '', account_type: 'asset', parent_id: '', currency: '', description: '', is_active: true };
+const ROOTS = [
+  ['1000','دارایی‌ها','asset','debit'], ['2000','بدهی‌ها','liability','credit'],
+  ['3000','سرمایه','equity','credit'], ['4000','درآمدها','revenue','credit'],
+  ['5000','هزینه‌ها','expense','debit'],
+];
+const CHILDREN = [
+  ['1100','صندوق‌ها','asset','debit','1000'], ['1200','بانک‌ها','asset','debit','1000'],
+  ['1300','حساب‌های دریافتنی','asset','debit','1000'], ['2100','حساب‌های پرداختنی','liability','credit','2000'],
+  ['4100','درآمد کارمزد','revenue','credit','4000'], ['5100','هزینه‌های عملیاتی','expense','debit','5000'],
+];
+
+const MODULE_INFO = {
+  subsidiary_ledger:['دفاتر معین و تفصیلی','گردش و مانده حساب‌ها به تفکیک مشتری، صندوق، بانک و نماینده',['دفتر معین هر حساب','دفتر تفصیلی اشخاص','مانده اول دوره و گردش بدهکار/بستانکار']],
+  trial_balance:['تراز آزمایشی','گزارش مانده بدهکار و بستانکار حساب‌ها',['تراز دو و چهار ستونی','تفکیک ارز','کنترل اختلاف تراز']],
+  cash_flow:['جریان وجوه نقد','تحلیل ورود و خروج نقدینگی بر اساس اسناد ثبت‌شده',['جریان عملیاتی','جریان سرمایه‌گذاری','جریان تأمین مالی']],
+  cost_centers:['مراکز هزینه و سود','گزارش عملکرد شعب، واحدها و فعالیت‌ها',['تعریف مرکز هزینه','تخصیص سند','گزارش سود و هزینه']],
+  fiscal_periods:['دوره‌های مالی','مدیریت سال مالی بدون تغییر سوابق دوره‌های قبلی',['تعریف دوره','تاریخ شروع و پایان','وضعیت دوره']],
+  period_close:['بستن دوره مالی','کنترل و بستن دوره پس از بررسی اسناد و مانده‌ها',['کنترل اسناد ناتراز','کنترل حساب‌های موقت','گزارش بستن دوره']],
+  fixed_assets:['دارایی‌های ثابت','ثبت و پیگیری دارایی‌های بلندمدت و استهلاک',['دفتر دارایی','روش استهلاک','گزارش تغییرات']],
+  accounts_receivable:['حساب‌های دریافتنی','مدیریت مطالبات از مشتریان و طرف‌های حساب',['سن مطالبات','سررسیدها','تطبیق دریافت‌ها']],
+  accounts_payable:['حساب‌های پرداختنی','مدیریت بدهی به تأمین‌کنندگان و طرف‌های حساب',['سن بدهی‌ها','سررسیدها','تطبیق پرداخت‌ها']],
+  budgets:['بودجه و پیش‌بینی','برنامه‌ریزی درآمد و هزینه در سطح شعبه و شرکت',['بودجه دوره‌ای','مقایسه بودجه و عملکرد','پیش‌بینی نقدینگی']],
+  treasury:['خزانه‌داری و نقدینگی','مدیریت وجوه نقد، صندوق‌ها و بانک‌ها',['وضعیت نقدینگی','انتقال داخلی','پیش‌بینی نیاز نقدی']],
+  intercompany:['حساب‌های بین‌صرافی','ثبت و تطبیق حساب‌های فی‌مابین صرافی‌ها',['حساب طرف مقابل','اسناد متقابل','تطبیق مانده']],
+  multi_company:['مدیریت چندشرکتی','ساختار شرکت‌ها و شعب با جداسازی داده‌ها',['واحدهای سازمانی','سطح دسترسی','گزارش تجمیعی']],
+  kyc:['احراز هویت مشتری','مدیریت اطلاعات شناسایی و وضعیت بررسی مشتری',['چک‌لیست مدارک','وضعیت تأیید','تاریخچه تغییرات']],
+  compliance:['انطباق و مقررات','کنترل فرایندها و الزامات قانونی حوزه فعالیت',['سیاست‌های انطباق','کنترل عملیاتی','موارد نیازمند بررسی']],
+  audit_log:['ردپای حسابرسی','تاریخچه اقدامات کاربران و تغییرات ثبت‌شده',['عامل و زمان تغییر','موضوع رکورد','دلیل عملیات']],
+  document_center:['مرکز اسناد','مدیریت مدارک مرتبط با اسناد مالی',['دسته‌بندی مدارک','اتصال به سند','سطح دسترسی']],
+  approvals:['گردش تأییدها','تعریف مراحل تأیید برای عملیات حساس',['سطوح تأیید','مسئول هر مرحله','تاریخچه تصمیم']],
+  fx_exposure:['موقعیت و ریسک ارزی','بررسی دارایی و بدهی باز به تفکیک ارز',['موقعیت خالص ارز','حساسیت به نرخ','تمرکز ریسک']],
+  tax:['مالیات و گزارش قانونی','ساختار گزارش‌های قانونی متناسب با حوزه قضایی',['تنظیمات مالیاتی','گزارش دوره‌ای','سوابق ارسال']],
+  standards:['استانداردهای حسابداری','تنظیم سیاست‌های حسابداری و مبنای گزارش‌دهی',['مبنای ثبت','سیاست ارزی','نسخه استاندارد']],
+  aml_screening:['کنترل AML و غربالگری','چارچوب بررسی هشدارها و موارد نیازمند رسیدگی',['ثبت هشدار','ارجاع بررسی','ثبت نتیجه']],
+  fx_revaluation:['تسعیر و ارزیابی مجدد ارز','محاسبه آثار تغییر نرخ بر مانده‌های ارزی',['نرخ مبنا','محاسبه اختلاف','سند تعدیل']],
+  consolidation:['صورت‌های مالی تلفیقی','تجمیع گزارش واحدها پس از تطبیق اقلام درون‌گروهی',['دامنه تلفیق','تطبیق حساب‌ها','گزارش تلفیقی']],
+  internal_controls:['کنترل‌های داخلی و ریسک','تعریف کنترل‌های دسترسی و پایش ریسک فرایندها',['تفکیک وظایف','کنترل عملیات حساس','گزارش استثنا']],
+  data_governance:['حاکمیت داده و حریم خصوصی','مدیریت نگهداری، دسترسی و ردگیری داده‌ها',['طبقه‌بندی داده','سیاست دسترسی','گزارش دسترسی']],
+};
+
+function AccountEditor({ form, setForm, accounts, editing, onSubmit, onCancel, busy }) {
+  const parents = accounts.filter(a => a.is_active !== false && a.id !== editing?.id && a.account_type === (editing?.account_type || form.account_type));
+  return <Card className="border-primary/30"><CardContent className="p-4 space-y-3">
+    <div className="flex justify-between items-center"><h3 className="font-semibold text-sm">{editing ? 'ویرایش حساب' : 'افزودن حساب'}</h3><Button type="button" size="icon" variant="ghost" onClick={onCancel}><X className="w-4 h-4"/></Button></div>
+    <form onSubmit={onSubmit} className="space-y-3">
+      {!editing && <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="space-y-1"><Label>کد حساب</Label><Input value={form.account_code} onChange={e=>setForm(p=>({...p,account_code:e.target.value.trim()}))} placeholder="مثلاً 1110" required/></div>
+        <div className="space-y-1"><Label>گروه حساب</Label><Select value={form.account_type} onValueChange={v=>setForm(p=>({...p,account_type:v,parent_id:''}))}><SelectTrigger><SelectValue/></SelectTrigger><SelectContent>{TYPES.map(t=><SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}</SelectContent></Select></div>
+      </div>}
+      <div className="space-y-1"><Label>نام حساب</Label><Input value={form.account_name} onChange={e=>setForm(p=>({...p,account_name:e.target.value}))} required/></div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="space-y-1"><Label>حساب مادر</Label><Select value={form.parent_id || 'none'} onValueChange={v=>setForm(p=>({...p,parent_id:v==='none'?'':v}))}><SelectTrigger><SelectValue/></SelectTrigger><SelectContent><SelectItem value="none">بدون حساب مادر</SelectItem>{parents.map(a=><SelectItem key={a.id} value={String(a.id)}>{a.account_code} — {a.account_name}</SelectItem>)}</SelectContent></Select></div>
+        <div className="space-y-1"><Label>ارز اختصاصی (اختیاری)</Label><Input value={form.currency} onChange={e=>setForm(p=>({...p,currency:e.target.value.toUpperCase()}))} placeholder="AFN / USD"/></div>
+      </div>
+      <div className="space-y-1"><Label>توضیحات</Label><Textarea rows={2} value={form.description} onChange={e=>setForm(p=>({...p,description:e.target.value}))}/></div>
+      <div className="flex items-center justify-between rounded-lg bg-muted/50 p-3"><Label htmlFor="coa-active">حساب فعال باشد</Label><Switch id="coa-active" checked={form.is_active} onCheckedChange={v=>setForm(p=>({...p,is_active:v}))}/></div>
+      {editing && <p className="text-xs text-muted-foreground">کد، گروه و ماهیت حساب پس از ایجاد تغییر نمی‌کند تا طبقه‌بندی سوابق مالی دچار تغییر نشود.</p>}
+      <div className="flex gap-2"><Button type="submit" disabled={busy} className="flex-1"><Check className="w-4 h-4"/>{busy?'در حال ذخیره…':'ذخیره حساب'}</Button><Button type="button" variant="outline" onClick={onCancel}>انصراف</Button></div>
+    </form>
+  </CardContent></Card>;
+}
+
+function ChartOfAccounts() {
+  const exchangeCode = getExchangeCode();
+  const qc = useQueryClient();
+  const [search,setSearch] = useState('');
+  const [inactive,setInactive] = useState(false);
+  const [editor,setEditor] = useState(false);
+  const [editing,setEditing] = useState(null);
+  const [form,setForm] = useState(EMPTY);
+  const query = useQuery({queryKey:['chartOfAccounts',exchangeCode],queryFn:async()=>{ const {data,error}=await supabase.from('chart_of_accounts').select('*').eq('exchange_code',exchangeCode).order('account_code',{ascending:true}).limit(1000); if(error) throw new Error(error.message); return data||[]; },enabled:!!exchangeCode});
+  const accounts = query.data || [];
+
+  const createAccount = async (record) => { const { data, error } = await supabase.from('chart_of_accounts').insert({ ...record, exchange_code:exchangeCode }).select().single(); if(error) throw new Error(error.message); return data; };
+
+  const save = useMutation({
+    mutationFn: async () => {
+      const code=form.account_code.trim(), name=form.account_name.trim();
+      if(!name) throw new Error('نام حساب الزامی است');
+      if(!editing && !/^\d{3,12}$/.test(code)) throw new Error('کد حساب باید عددی و حداقل سه رقم باشد');
+      if(!editing && accounts.some(a=>a.account_code===code)) throw new Error('این کد حساب قبلاً ثبت شده است');
+      const parentId=form.parent_id?Number(form.parent_id):null;
+      const parent=parentId?accounts.find(a=>Number(a.id)===parentId):null;
+      if(parentId && (!parent || parent.account_type!==(editing?.account_type||form.account_type))) throw new Error('حساب مادر باید از همان گروه حساب باشد');
+      if(parentId && editing) {
+        let node=parent; const seen=new Set();
+        while(node) { if(Number(node.id)===Number(editing.id)) throw new Error('این انتخاب باعث حلقه در ساختار حساب‌ها می‌شود'); if(seen.has(Number(node.id))) break; seen.add(Number(node.id)); node=node.parent_id?accounts.find(a=>Number(a.id)===Number(node.parent_id)):null; }
+      }
+      if(editing) { const { data, error } = await supabase.from('chart_of_accounts').update({ account_name:name, parent_id:parentId, currency:form.currency.trim()||null, description:form.description.trim()||null, is_active:form.is_active, updated_at:new Date().toISOString() }).eq('id',editing.id).eq('exchange_code',exchangeCode).select().single(); if(error) throw new Error(error.message); return data; }
+      const { data, error } = await supabase.from('chart_of_accounts').insert({ exchange_code:exchangeCode, account_code:code, account_name:name, account_type:form.account_type, normal_balance:TYPES.find(t=>t.value===form.account_type)?.balance||'debit', parent_id:parentId, currency:form.currency.trim()||null, description:form.description.trim()||null, is_active:form.is_active, is_system:false }).select().single(); if(error) throw new Error(error.message); return data;
+    },
+    onSuccess:()=>{qc.invalidateQueries({queryKey:['chartOfAccounts',exchangeCode]});setEditor(false);setEditing(null);setForm(EMPTY);toast({title:'ذخیره شد',description:'کدینگ حساب‌ها به‌روزرسانی شد'});},
+    onError:e=>toast({title:'خطا در ذخیره حساب',description:e.message,variant:'destructive'}),
+  });
+
+  const seed = useMutation({
+    mutationFn: async()=>{
+      const byCode=new Map(accounts.map(a=>[a.account_code,a]));
+      for(const [code,name,type,balance] of ROOTS) if(!byCode.has(code)) byCode.set(code,await createAccount({account_code:code,account_name:name,account_type:type,normal_balance:balance,parent_id:null,is_system:true,is_active:true}));
+      for(const [code,name,type,balance,parentCode] of CHILDREN) if(!byCode.has(code)) { const parent=byCode.get(parentCode); if(!parent) throw new Error('حساب مادر پایه پیدا نشد'); byCode.set(code,await createAccount({account_code:code,account_name:name,account_type:type,normal_balance:balance,parent_id:parent.id,is_system:true,is_active:true})); }
+    },
+    onSuccess:()=>{qc.invalidateQueries({queryKey:['chartOfAccounts',exchangeCode]});toast({title:'کدینگ پایه ایجاد شد',description:'حساب‌های پایه افزوده شدند؛ سوابق و مانده‌های قبلی تغییر نکردند.'});},
+    onError:e=>{qc.invalidateQueries({queryKey:['chartOfAccounts',exchangeCode]});toast({title:'ایجاد کدینگ ناموفق بود',description:e.message,variant:'destructive'});},
+  });
+
+  const filtered=useMemo(()=>accounts.filter(a=>(inactive||a.is_active!==false)&&(!search||[a.account_code,a.account_name,a.description].some(v=>String(v||'').toLowerCase().includes(search.toLowerCase())))),[accounts,inactive,search]);
+  const openEdit=a=>{setEditing(a);setForm({...EMPTY,account_code:a.account_code,account_name:a.account_name,account_type:a.account_type,parent_id:a.parent_id?String(a.parent_id):'',currency:a.currency||'',description:a.description||'',is_active:a.is_active!==false});setEditor(true);};
+  if(!exchangeCode) return <Card><CardContent className="p-5 space-y-2"><div className="flex items-center gap-2 font-semibold"><Lock className="w-4 h-4"/>انتخاب صرافی لازم است</div><p className="text-sm text-muted-foreground">برای جلوگیری از نمایش اطلاعات چند صرافی در یک صفحه، مدیریت کدینگ فقط با نشست همان صرافی انجام می‌شود.</p></CardContent></Card>;
+
+  return <div className="space-y-4">
+    <Card><CardContent className="p-4 space-y-3">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2"><div><h2 className="font-bold">کدینگ حساب‌ها</h2><p className="text-xs text-muted-foreground mt-1">درخت حساب‌های مستقل برای هر صرافی</p></div><div className="flex gap-2"><Button size="sm" variant="outline" onClick={()=>query.refetch()} disabled={query.isFetching}><RefreshCw className="w-4 h-4"/>بروزرسانی</Button><Button size="sm" onClick={()=>{setEditing(null);setForm(EMPTY);setEditor(true);}}><Plus className="w-4 h-4"/>حساب جدید</Button></div></div>
+      <div className="grid grid-cols-3 gap-2"><div className="rounded-lg bg-muted/50 p-3"><p className="text-xs text-muted-foreground">کل حساب‌ها</p><p className="text-xl font-bold">{accounts.length}</p></div><div className="rounded-lg bg-muted/50 p-3"><p className="text-xs text-muted-foreground">فعال</p><p className="text-xl font-bold">{accounts.filter(a=>a.is_active!==false).length}</p></div><div className="rounded-lg bg-muted/50 p-3"><p className="text-xs text-muted-foreground">سیستمی</p><p className="text-xl font-bold">{accounts.filter(a=>a.is_system).length}</p></div></div>
+      <div className="flex flex-col sm:flex-row gap-2"><Input value={search} onChange={e=>setSearch(e.target.value)} placeholder="جستجوی کد یا نام حساب…"/><label className="flex items-center gap-2 text-xs text-muted-foreground whitespace-nowrap"><Switch checked={inactive} onCheckedChange={setInactive}/>نمایش غیرفعال‌ها</label></div>
+    </CardContent></Card>
+    {editor&&<AccountEditor form={form} setForm={setForm} accounts={accounts} editing={editing} onSubmit={e=>{e.preventDefault();save.mutate();}} onCancel={()=>{setEditor(false);setEditing(null);}} busy={save.isPending}/>}
+    {query.isLoading?<LoadingState/>:query.isError?<Card><CardContent className="p-4 space-y-2"><p className="text-sm text-destructive">{query.error?.message||'دریافت حساب‌ها ناموفق بود'}</p><Button size="sm" onClick={()=>query.refetch()}>تلاش دوباره</Button></CardContent></Card>:accounts.length===0?<Card><CardContent className="p-5 text-center space-y-3"><ListTree className="w-9 h-9 mx-auto text-muted-foreground"/><h3 className="font-semibold">کدینگ حسابی ثبت نشده است</h3><p className="text-sm text-muted-foreground">ساختار پایه را ایجاد کنید یا حساب‌ها را دستی تعریف کنید. این کار فقط جدول جدید کدینگ را پر می‌کند و هیچ سند یا ماندهٔ قبلی را تغییر نمی‌دهد.</p><div className="flex flex-col sm:flex-row justify-center gap-2"><Button onClick={()=>seed.mutate()} disabled={seed.isPending}>ایجاد کدینگ پایه</Button><Button variant="outline" onClick={()=>{setEditing(null);setForm(EMPTY);setEditor(true);}}>تعریف دستی حساب</Button></div></CardContent></Card>:<Card><CardContent className="p-0 overflow-x-auto"><table className="w-full min-w-[650px] text-sm"><thead><tr className="border-b bg-muted/40 text-right">{['کد','نام حساب','گروه','حساب مادر','ماهیت','وضعیت','عملیات'].map(h=><th key={h} className="p-3">{h}</th>)}</tr></thead><tbody>{filtered.map(a=>{const parent=accounts.find(p=>Number(p.id)===Number(a.parent_id));return <tr key={a.id} className="border-b last:border-0"><td className="p-3 font-mono">{a.account_code}</td><td className="p-3"><div className="font-medium">{a.account_name}</div>{a.is_system&&<span className="text-[10px] text-primary">حساب پایه سیستم</span>}</td><td className="p-3">{TYPES.find(t=>t.value===a.account_type)?.label||a.account_type}</td><td className="p-3 text-muted-foreground">{parent?parent.account_code+' — '+parent.account_name:'—'}</td><td className="p-3">{a.normal_balance==='credit'?'بستانکار':'بدهکار'}</td><td className="p-3">{a.is_active===false?'غیرفعال':'فعال'}</td><td className="p-3"><Button size="sm" variant="ghost" onClick={()=>openEdit(a)}><Pencil className="w-4 h-4"/>ویرایش</Button></td></tr>;})}</tbody></table>{filtered.length===0&&<p className="p-5 text-center text-sm text-muted-foreground">موردی پیدا نشد.</p>}</CardContent></Card>}
+    <div className="flex items-start gap-2 rounded-lg border p-3 text-xs text-muted-foreground"><ShieldCheck className="w-4 h-4 shrink-0 text-primary"/><p>حذف حساب در این مرحله وجود ندارد. کد، گروه و ماهیت حساب پس از ایجاد ثابت می‌ماند. این مرحله کدینگ جدید را ثبت می‌کند و سوابق قدیمی را بازطبقه‌بندی نمی‌کند.</p></div>
+  </div>;
+}
+
+
+async function fetchAllTenantRows(table, columns, exchangeCode) {
+  const rows = [];
+  const pageSize = 1000;
+  for (let offset = 0; ; offset += pageSize) {
+    const { data, error } = await supabase.from(table).select(columns)
+      .eq('exchange_code', exchangeCode).order('id', { ascending: true })
+      .range(offset, offset + pageSize - 1);
+    if (error) throw new Error(error.message || 'دریافت دفترکل ناموفق بود');
+    rows.push(...(data || []));
+    if (!data || data.length < pageSize) break;
+  }
+  return rows;
+}
+
+function TrialBalance() {
+  const exchangeCode = getExchangeCode();
+  const [fromDate, setFromDate] = useState('');
+  const [toDate, setToDate] = useState('');
+  const [search, setSearch] = useState('');
+  const snapshot = useQuery({
+    queryKey: ['enterpriseTrialBalance', exchangeCode],
+    enabled: !!exchangeCode,
+    queryFn: async () => {
+      const [entries, documents] = await Promise.all([
+        fetchAllTenantRows('ledger_entries', 'id,document_id,account_type,account_id,account_name,currency,debit,credit,deleted,created_at', exchangeCode),
+        fetchAllTenantRows('documents', 'id,deleted,reversed,created_at,doc_number,doc_type', exchangeCode),
+      ]);
+      const docs = new Map(documents.map(d => [String(d.id), d]));
+      return entries.filter(e => {
+        if (e.deleted === true) return false;
+        const doc = e.document_id ? docs.get(String(e.document_id)) : null;
+        return !doc || (doc.deleted !== true && doc.reversed !== true);
+      }).map(e => {
+        const doc = e.document_id ? docs.get(String(e.document_id)) : null;
+        return { ...e, report_date: doc?.created_at || e.created_at, document_no: doc?.doc_number || '' };
+      });
+    },
+    staleTime: 30000,
+  });
+  const reportRows = useMemo(() => {
+    const groups = new Map();
+    for (const entry of snapshot.data || []) {
+      const date = entry.report_date ? String(entry.report_date).slice(0, 10) : '';
+      if (fromDate && date && date < fromDate) continue;
+      if (toDate && date && date > toDate) continue;
+      const name = entry.account_name || entry.account_id || entry.account_type || 'حساب نامشخص';
+      const term = search.trim().toLowerCase();
+      if (term && ![name, entry.account_type, entry.account_id, entry.currency].some(v => String(v || '').toLowerCase().includes(term))) continue;
+      const key = [entry.account_type || '', entry.account_id || '', name, entry.currency || ''].join('|');
+      const row = groups.get(key) || { key, account_type: entry.account_type || '—', account_id: entry.account_id || '', account_name: name, currency: entry.currency || '—', debit: 0, credit: 0, lines: 0 };
+      row.debit += Number(entry.debit || 0);
+      row.credit += Number(entry.credit || 0);
+      row.lines += 1;
+      groups.set(key, row);
+    }
+    return [...groups.values()].sort((a,b) => String(a.account_type).localeCompare(String(b.account_type)) || String(a.account_name).localeCompare(String(b.account_name)));
+  }, [snapshot.data, fromDate, toDate, search]);
+  const totals = useMemo(() => {
+    const map = new Map();
+    for (const row of reportRows) {
+      const t = map.get(row.currency) || { debit: 0, credit: 0, accounts: 0 };
+      t.debit += row.debit; t.credit += row.credit; t.accounts += 1; map.set(row.currency, t);
+    }
+    return [...map.entries()].map(([currency, value]) => ({ currency, ...value, difference: value.debit - value.credit }));
+  }, [reportRows]);
+  if (!exchangeCode) return <Card><CardContent className="p-5 text-sm text-muted-foreground">برای مشاهده تراز آزمایشی، ابتدا با حساب همان صرافی وارد شوید.</CardContent></Card>;
+  return <div className="space-y-4">
+    <Card><CardContent className="p-4 space-y-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2"><div className="space-y-1"><Label>از تاریخ</Label><Input type="date" value={fromDate} onChange={e=>setFromDate(e.target.value)}/></div><div className="space-y-1"><Label>تا تاریخ</Label><Input type="date" value={toDate} onChange={e=>setToDate(e.target.value)}/></div></div>
+      <Input value={search} onChange={e=>setSearch(e.target.value)} placeholder="جستجو در نام، کد یا نوع حساب…"/>
+      <div className="flex justify-between items-center text-xs text-muted-foreground"><span>تعداد ردیف‌های دفترکل: {(snapshot.data||[]).length}</span><Button size="sm" variant="outline" onClick={()=>snapshot.refetch()} disabled={snapshot.isFetching}><RefreshCw className="w-4 h-4"/>بروزرسانی</Button></div>
+    </CardContent></Card>
+    {snapshot.isLoading ? <LoadingState/> : snapshot.isError ? <Card><CardContent className="p-4 space-y-2"><p className="text-sm text-destructive">{snapshot.error?.message||'دریافت تراز آزمایشی ناموفق بود'}</p><Button size="sm" onClick={()=>snapshot.refetch()}>تلاش دوباره</Button></CardContent></Card> : <>
+      {totals.map(t=><Card key={t.currency}><CardContent className="p-4 space-y-2"><div className="flex justify-between font-semibold"><span>جمع {t.currency}</span><span>{Math.abs(t.difference)<0.01?'تراز':'دارای اختلاف'}</span></div><div className="grid grid-cols-3 gap-2 text-xs"><div><p className="text-muted-foreground">بدهکار</p><p className="font-mono font-semibold">{formatNumber(t.debit,2)}</p></div><div><p className="text-muted-foreground">بستانکار</p><p className="font-mono font-semibold">{formatNumber(t.credit,2)}</p></div><div><p className="text-muted-foreground">اختلاف</p><p className={Math.abs(t.difference)<0.01?'text-emerald-600':'text-destructive'}>{formatNumber(t.difference,2)}</p></div></div></CardContent></Card>)}
+      <Card><CardContent className="p-0 overflow-x-auto"><table className="w-full min-w-[620px] text-sm"><thead><tr className="border-b bg-muted/40 text-right">{['نوع حساب','شناسه','نام حساب','ارز','بدهکار','بستانکار','ردیف'].map(h=><th key={h} className="p-3">{h}</th>)}</tr></thead><tbody>{reportRows.map(row=><tr key={row.key} className="border-b last:border-0"><td className="p-3">{row.account_type}</td><td className="p-3 font-mono">{row.account_id||'—'}</td><td className="p-3">{row.account_name}</td><td className="p-3">{row.currency}</td><td className="p-3 font-mono">{formatNumber(row.debit,2)}</td><td className="p-3 font-mono">{formatNumber(row.credit,2)}</td><td className="p-3">{row.lines}</td></tr>)}</tbody></table>{reportRows.length===0&&<p className="p-5 text-center text-sm text-muted-foreground">برای این بازه اطلاعاتی وجود ندارد.</p>}</CardContent></Card>
+    </>}
+    <div className="rounded-lg border p-3 text-xs text-muted-foreground">گزارش از ردیف‌های موجود دفترکل ساخته می‌شود؛ اسناد حذف‌شده یا معکوس‌شده در محاسبه وارد نمی‌شوند. مانده‌ها به تفکیک ارز نمایش داده می‌شوند و ارزهای متفاوت با هم جمع نمی‌شوند.</div>
+  </div>;
+}
+
+
+function SubsidiaryLedger() {
+  const exchangeCode = getExchangeCode();
+  const [selected, setSelected] = useState('');
+  const [search, setSearch] = useState('');
+  const [fromDate, setFromDate] = useState('');
+  const [toDate, setToDate] = useState('');
+  const query = useQuery({
+    queryKey: ['enterpriseSubsidiaryLedger', exchangeCode],
+    enabled: !!exchangeCode,
+    queryFn: async () => {
+      const [entries, documents] = await Promise.all([
+        fetchAllTenantRows('ledger_entries', 'id,document_id,account_type,account_id,account_name,currency,debit,credit,description,deleted,created_at', exchangeCode),
+        fetchAllTenantRows('documents', 'id,deleted,reversed,created_at,doc_number,doc_type,description', exchangeCode),
+      ]);
+      const docs = new Map(documents.map(d => [String(d.id), d]));
+      return entries.filter(e => {
+        if (e.deleted === true) return false;
+        const doc = e.document_id ? docs.get(String(e.document_id)) : null;
+        return !doc || (doc.deleted !== true && doc.reversed !== true);
+      }).map(e => {
+        const doc = e.document_id ? docs.get(String(e.document_id)) : null;
+        return { ...e, report_date: doc?.created_at || e.created_at, document_no: doc?.doc_number || '', document_type: doc?.doc_type || '', document_description: doc?.description || '' };
+      });
+    },
+    staleTime: 30000,
+  });
+  const entries = query.data || [];
+  const accountKey = e => [e.account_type || '',e.account_id || '',e.account_name || '',e.currency || ''].join('|');
+  const accountOptions = useMemo(() => {
+    const map = new Map();
+    for (const e of entries) {
+      const key = accountKey(e);
+      if (!map.has(key)) map.set(key,{ key, account_type:e.account_type||'—', account_id:e.account_id||'', account_name:e.account_name||e.account_id||e.account_type||'حساب نامشخص', currency:e.currency||'—' });
+    }
+    return [...map.values()].sort((a,b)=>String(a.account_name).localeCompare(String(b.account_name)));
+  },[entries]);
+  const filtered = useMemo(() => entries.filter(e => {
+    if (selected && accountKey(e)!==selected) return false;
+    const date=e.report_date?String(e.report_date).slice(0,10):'';
+    if(fromDate&&date&&date<fromDate) return false;
+    if(toDate&&date&&date>toDate) return false;
+    const term=search.trim().toLowerCase();
+    return !term||[e.document_no,e.description,e.document_description,e.document_type].some(v=>String(v||'').toLowerCase().includes(term));
+  }).sort((a,b)=>String(a.report_date||'').localeCompare(String(b.report_date||''))||Number(a.id)-Number(b.id)),[entries,selected,fromDate,toDate,search]);
+  const totals=useMemo(()=>filtered.reduce((t,e)=>({debit:t.debit+Number(e.debit||0),credit:t.credit+Number(e.credit||0)}),{debit:0,credit:0}),[filtered]);
+  if(!exchangeCode) return <Card><CardContent className="p-5 text-sm text-muted-foreground">برای مشاهده دفتر معین، ابتدا با حساب همان صرافی وارد شوید.</CardContent></Card>;
+  return <div className="space-y-4">
+    <Card><CardContent className="p-4 space-y-3">
+      <div className="space-y-1"><Label>انتخاب حساب</Label><Select value={selected||'all'} onValueChange={v=>setSelected(v==='all'?'':v)}><SelectTrigger><SelectValue placeholder="همه حساب‌ها"/></SelectTrigger><SelectContent><SelectItem value="all">همه حساب‌ها</SelectItem>{accountOptions.map(a=><SelectItem key={a.key} value={a.key}>{a.account_name} · {a.account_type} · {a.currency}</SelectItem>)}</SelectContent></Select></div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2"><div className="space-y-1"><Label>از تاریخ</Label><Input type="date" value={fromDate} onChange={e=>setFromDate(e.target.value)}/></div><div className="space-y-1"><Label>تا تاریخ</Label><Input type="date" value={toDate} onChange={e=>setToDate(e.target.value)}/></div></div>
+      <Input value={search} onChange={e=>setSearch(e.target.value)} placeholder="جستجو شماره سند یا شرح…"/>
+      <div className="flex justify-between items-center text-xs text-muted-foreground"><span>{filtered.length} ردیف</span><Button size="sm" variant="outline" onClick={()=>query.refetch()} disabled={query.isFetching}><RefreshCw className="w-4 h-4"/>بروزرسانی</Button></div>
+    </CardContent></Card>
+    {query.isLoading?<LoadingState/>:query.isError?<Card><CardContent className="p-4 space-y-2"><p className="text-sm text-destructive">{query.error?.message||'دریافت دفتر معین ناموفق بود'}</p><Button size="sm" onClick={()=>query.refetch()}>تلاش دوباره</Button></CardContent></Card>:<>
+      <div className="grid grid-cols-3 gap-2"><Card><CardContent className="p-3"><p className="text-xs text-muted-foreground">بدهکار</p><p className="font-mono text-sm font-semibold">{formatNumber(totals.debit,2)}</p></CardContent></Card><Card><CardContent className="p-3"><p className="text-xs text-muted-foreground">بستانکار</p><p className="font-mono text-sm font-semibold">{formatNumber(totals.credit,2)}</p></CardContent></Card><Card><CardContent className="p-3"><p className="text-xs text-muted-foreground">مانده</p><p className="font-mono text-sm font-semibold">{formatNumber(totals.debit-totals.credit,2)}</p></CardContent></Card></div>
+      <Card><CardContent className="p-0 overflow-x-auto"><table className="w-full min-w-[700px] text-sm"><thead><tr className="border-b bg-muted/40 text-right">{['تاریخ','شماره سند','شرح','ارز','بدهکار','بستانکار'].map(h=><th key={h} className="p-3">{h}</th>)}</tr></thead><tbody>{filtered.map(e=><tr key={e.id} className="border-b last:border-0"><td className="p-3 whitespace-nowrap">{e.report_date?new Date(e.report_date).toLocaleDateString('fa-IR'):'—'}</td><td className="p-3 font-mono">{e.document_no||'—'}</td><td className="p-3">{e.description||e.document_description||e.document_type||'—'}</td><td className="p-3">{e.currency||'—'}</td><td className="p-3 font-mono">{formatNumber(Number(e.debit||0),2)}</td><td className="p-3 font-mono">{formatNumber(Number(e.credit||0),2)}</td></tr>)}</tbody></table>{filtered.length===0&&<p className="p-5 text-center text-sm text-muted-foreground">برای این فیلتر ردیفی وجود ندارد.</p>}</CardContent></Card>
+    </>}
+    <div className="rounded-lg border p-3 text-xs text-muted-foreground">دفتر معین از ردیف‌های موجود دفترکل و اسناد مرتبط استفاده می‌کند. این گزارش فقط خواندنی است و امکان تغییر سوابق مالی از این صفحه وجود ندارد.</div>
+  </div>;
+}
+
+
+function AuditLogViewer() {
+  const exchangeCode=getExchangeCode();
+  const [search,setSearch]=useState('');
+  const [status,setStatus]=useState('all');
+  const query=useQuery({
+    queryKey:['enterpriseAuditLog',exchangeCode],
+    enabled:!!exchangeCode,
+    queryFn:async()=>{
+      const {data,error}=await supabase.from('audit_logs')
+        .select('id,user_name,user_type,action,entity_type,entity_id,target_name,description,status,reason,ip_address,created_at')
+        .eq('exchange_code',exchangeCode).order('created_at',{ascending:false}).limit(500);
+      if(error) throw new Error(error.message||'دریافت ردپای حسابرسی ناموفق بود');
+      return data||[];
+    },
+    staleTime:30000,
+  });
+  const rows=useMemo(()=>(query.data||[]).filter(row=>{
+    if(status!=='all'&&String(row.status||'').toLowerCase()!==status) return false;
+    const term=search.trim().toLowerCase();
+    return !term||[row.user_name,row.user_type,row.action,row.entity_type,row.entity_id,row.target_name,row.description,row.reason,row.ip_address].some(v=>String(v||'').toLowerCase().includes(term));
+  }),[query.data,status,search]);
+  if(!exchangeCode) return <Card><CardContent className="p-5 text-sm text-muted-foreground">برای مشاهده گزارش حسابرسی، ابتدا با حساب همان صرافی وارد شوید.</CardContent></Card>;
+  return <div className="space-y-4">
+    <Card><CardContent className="p-4 space-y-3">
+      <div className="flex justify-between items-center gap-2"><div><h2 className="font-semibold">ردپای حسابرسی</h2><p className="text-xs text-muted-foreground">۵۰۰ رویداد اخیر ثبت‌شده برای همین صرافی</p></div><Button size="sm" variant="outline" onClick={()=>query.refetch()} disabled={query.isFetching}><RefreshCw className="w-4 h-4"/>بروزرسانی</Button></div>
+      <Input value={search} onChange={e=>setSearch(e.target.value)} placeholder="جستجو کاربر، عملیات، رکورد یا شرح…"/>
+      <Select value={status} onValueChange={setStatus}><SelectTrigger><SelectValue/></SelectTrigger><SelectContent><SelectItem value="all">همه وضعیت‌ها</SelectItem><SelectItem value="success">موفق</SelectItem><SelectItem value="failed">ناموفق</SelectItem><SelectItem value="warning">هشدار</SelectItem></SelectContent></Select>
+      <p className="text-xs text-muted-foreground">{rows.length} رویداد</p>
+    </CardContent></Card>
+    {query.isLoading?<LoadingState/>:query.isError?<Card><CardContent className="p-4 space-y-2"><p className="text-sm text-destructive">{query.error?.message||'دریافت گزارش ناموفق بود'}</p><Button size="sm" onClick={()=>query.refetch()}>تلاش دوباره</Button></CardContent></Card>:rows.length===0?<Card><CardContent className="p-5 text-center text-sm text-muted-foreground">رویدادی برای این فیلتر پیدا نشد.</CardContent></Card>:<div className="space-y-2">{rows.map(row=><Card key={row.id}><CardContent className="p-3 space-y-2"><div className="flex justify-between items-start gap-2"><div className="min-w-0"><p className="text-sm font-semibold">{row.action||'عملیات ثبت‌شده'} · {row.target_name||row.entity_type||'—'}</p><p className="text-xs text-muted-foreground">{row.user_name||'کاربر نامشخص'}{row.user_type?' · '+row.user_type:''}</p></div><span className="text-[10px] text-muted-foreground whitespace-nowrap">{row.created_at?new Date(row.created_at).toLocaleString('fa-IR'):'—'}</span></div><p className="text-xs leading-5">{row.description||row.reason||'بدون شرح'}</p><div className="flex flex-wrap gap-2 text-[10px] text-muted-foreground"><span>{row.entity_type||'—'}</span>{row.entity_id&&<span>شناسه: {row.entity_id}</span>}{row.status&&<span>وضعیت: {row.status}</span>}{row.ip_address&&<span>IP: {row.ip_address}</span>}</div></CardContent></Card>)}</div>}
+    <div className="rounded-lg border p-3 text-xs text-muted-foreground">این گزارش فقط‌خواندنی است و فقط رویدادهای دارای کد همین صرافی را می‌خواند. رویدادها از این صفحه ویرایش یا حذف نمی‌شوند.</div>
+  </div>;
+}
+
+
+function DocumentCenter() {
+  const exchangeCode=getExchangeCode();
+  const [search,setSearch]=useState('');
+  const [state,setState]=useState('active');
+  const [selectedId,setSelectedId]=useState('');
+  const docsQuery=useQuery({
+    queryKey:['enterpriseDocuments',exchangeCode],
+    enabled:!!exchangeCode,
+    queryFn:async()=>{
+      const {data,error}=await supabase.from('documents')
+        .select('id,doc_number,doc_type,amount,currency,fee,related_type,related_id,related_name,description,registered_by,created_at,deleted,reversed,reverse_reason')
+        .eq('exchange_code',exchangeCode).order('created_at',{ascending:false}).limit(500);
+      if(error) throw new Error(error.message||'دریافت اسناد ناموفق بود');
+      return data||[];
+    },
+    staleTime:30000,
+  });
+  const docs=docsQuery.data||[];
+  const filtered=useMemo(()=>docs.filter(d=>{
+    if(state==='active'&&(d.deleted||d.reversed)) return false;
+    if(state==='deleted'&&!d.deleted) return false;
+    if(state==='reversed'&&!d.reversed) return false;
+    const term=search.trim().toLowerCase();
+    return !term||[d.doc_number,d.doc_type,d.related_name,d.description,d.registered_by,d.currency].some(v=>String(v||'').toLowerCase().includes(term));
+  }),[docs,state,search]);
+  const selected=docs.find(d=>String(d.id)===String(selectedId))||null;
+  const linesQuery=useQuery({
+    queryKey:['enterpriseDocumentLines',exchangeCode,selectedId],
+    enabled:!!exchangeCode&&!!selectedId,
+    queryFn:async()=>{
+      const {data,error}=await supabase.from('ledger_entries')
+        .select('id,account_type,account_id,account_name,currency,debit,credit,description,doc_line_no')
+        .eq('exchange_code',exchangeCode).eq('document_id',selectedId).order('doc_line_no',{ascending:true});
+      if(error) throw new Error(error.message||'دریافت ردیف‌های سند ناموفق بود');
+      return data||[];
+    },
+  });
+  if(!exchangeCode) return <Card><CardContent className="p-5 text-sm text-muted-foreground">برای مشاهده اسناد، ابتدا با حساب همان صرافی وارد شوید.</CardContent></Card>;
+  return <div className="space-y-4">
+    <Card><CardContent className="p-4 space-y-3">
+      <div className="flex justify-between items-center gap-2"><div><h2 className="font-semibold">مرکز اسناد</h2><p className="text-xs text-muted-foreground">۵۰۰ سند اخیر این صرافی · فقط‌خواندنی</p></div><Button size="sm" variant="outline" onClick={()=>docsQuery.refetch()} disabled={docsQuery.isFetching}><RefreshCw className="w-4 h-4"/>بروزرسانی</Button></div>
+      <Input value={search} onChange={e=>setSearch(e.target.value)} placeholder="جستجو شماره سند، نوع، طرف حساب یا شرح…"/>
+      <Select value={state} onValueChange={setState}><SelectTrigger><SelectValue/></SelectTrigger><SelectContent><SelectItem value="active">اسناد فعال</SelectItem><SelectItem value="deleted">حذف‌شده‌ها</SelectItem><SelectItem value="reversed">معکوس‌شده‌ها</SelectItem><SelectItem value="all">همه اسناد</SelectItem></SelectContent></Select>
+      <p className="text-xs text-muted-foreground">{filtered.length} سند</p>
+    </CardContent></Card>
+    {docsQuery.isLoading?<LoadingState/>:docsQuery.isError?<Card><CardContent className="p-4 space-y-2"><p className="text-sm text-destructive">{docsQuery.error?.message||'دریافت اسناد ناموفق بود'}</p><Button size="sm" onClick={()=>docsQuery.refetch()}>تلاش دوباره</Button></CardContent></Card>:<div className="grid grid-cols-1 xl:grid-cols-2 gap-3">
+      <div className="space-y-2">{filtered.map(d=><button key={d.id} type="button" onClick={()=>setSelectedId(String(d.id))} className={`w-full rounded-xl border p-3 text-right transition-colors ${String(d.id)===String(selectedId)?'border-primary bg-primary/5':'bg-card hover:bg-muted/50'}`}><div className="flex justify-between gap-2"><span className="font-semibold text-sm">{d.doc_number||'بدون شماره'}</span><span className="text-[10px] text-muted-foreground">{d.created_at?new Date(d.created_at).toLocaleDateString('fa-IR'):'—'}</span></div><p className="text-xs mt-1">{d.description||d.related_name||d.doc_type||'سند مالی'}</p><div className="flex justify-between mt-2 text-[10px] text-muted-foreground"><span>{d.doc_type||'—'} · {d.currency||'—'}</span><span>{d.deleted?'حذف‌شده':d.reversed?'معکوس‌شده':'ثبت‌شده'}</span></div></button>)}</div>
+      <Card><CardContent className="p-4 space-y-3">
+        {!selected?<p className="text-sm text-muted-foreground">برای مشاهده جزئیات، یک سند را انتخاب کنید.</p>:<>
+          <div><h3 className="font-bold">{selected.doc_number||'سند بدون شماره'}</h3><p className="text-xs text-muted-foreground mt-1">{selected.description||selected.related_name||selected.doc_type}</p></div>
+          <div className="grid grid-cols-2 gap-2 text-xs"><div className="rounded-lg bg-muted/50 p-2"><p className="text-muted-foreground">مبلغ</p><p className="font-semibold">{formatNumber(Number(selected.amount||0),2)} {selected.currency}</p></div><div className="rounded-lg bg-muted/50 p-2"><p className="text-muted-foreground">کارمزد</p><p className="font-semibold">{formatNumber(Number(selected.fee||0),2)} {selected.currency}</p></div><div className="rounded-lg bg-muted/50 p-2"><p className="text-muted-foreground">طرف حساب</p><p className="font-semibold">{selected.related_name||'—'}</p></div><div className="rounded-lg bg-muted/50 p-2"><p className="text-muted-foreground">ثبت‌کننده</p><p className="font-semibold">{selected.registered_by||'—'}</p></div></div>
+          {(selected.deleted||selected.reversed)&&<div className="rounded-lg border border-amber-300 p-2 text-xs text-amber-700">{selected.deleted?'این سند حذف‌شده است.':'این سند معکوس شده است.'} {selected.reverse_reason||''}</div>}
+          <div><h4 className="text-sm font-semibold mb-2">ردیف‌های دفترکل</h4>{linesQuery.isLoading?<LoadingState/>:linesQuery.isError?<p className="text-xs text-destructive">{linesQuery.error?.message}</p>:<div className="space-y-2">{(linesQuery.data||[]).map(line=><div key={line.id} className="rounded-lg border p-2 text-xs"><div className="flex justify-between gap-2"><span className="font-medium">{line.account_name||line.account_type||'حساب'}</span><span>{line.currency}</span></div><div className="flex justify-between mt-1 text-muted-foreground"><span>بدهکار: {formatNumber(Number(line.debit||0),2)}</span><span>بستانکار: {formatNumber(Number(line.credit||0),2)}</span></div>{line.description&&<p className="mt-1 text-muted-foreground">{line.description}</p>}</div>)}{(linesQuery.data||[]).length===0&&<p className="text-xs text-muted-foreground">ردیف دفترکل برای این سند پیدا نشد.</p>}</div>}</div>
+        </>}
+      </CardContent></Card>
+    </div>}
+    <div className="rounded-lg border p-3 text-xs text-muted-foreground">این مرکز فقط اسناد و ردیف‌های موجود را نمایش می‌دهد. هیچ سندی از این صفحه حذف، ویرایش یا معکوس نمی‌شود.</div>
+  </div>;
+}
+
+
+function TreasuryOverview() {
+  const exchangeCode=getExchangeCode();
+  const cashQuery=useTreasuryBalances();
+  const bankQuery=useBankBalances();
+  const transactionsQuery=useQuery({
+    queryKey:['enterpriseTreasuryTransactions',exchangeCode],
+    enabled:!!exchangeCode,
+    queryFn:async()=>{
+      const {data,error}=await supabase.from('treasury_transactions')
+        .select('id,currency,amount,type,description,registered_by,created_at')
+        .eq('exchange_code',exchangeCode).order('created_at',{ascending:false}).limit(200);
+      if(error) throw new Error(error.message||'دریافت گردش خزانه ناموفق بود');
+      return data||[];
+    },
+    staleTime:30000,
+  });
+  if(!exchangeCode) return <Card><CardContent className="p-5 text-sm text-muted-foreground">برای مشاهده خزانه‌داری، ابتدا با حساب همان صرافی وارد شوید.</CardContent></Card>;
+  const loading=cashQuery.isLoading||bankQuery.isLoading||transactionsQuery.isLoading;
+  const error=cashQuery.error||bankQuery.error||transactionsQuery.error;
+  return <div className="space-y-4">
+    <Card><CardContent className="p-4 space-y-2"><div className="flex justify-between items-center"><h2 className="font-semibold">خلاصه خزانه و نقدینگی</h2><Button size="sm" variant="outline" onClick={()=>{cashQuery.refetch();bankQuery.refetch();transactionsQuery.refetch();}} disabled={loading}><RefreshCw className="w-4 h-4"/>بروزرسانی</Button></div><p className="text-xs text-muted-foreground">مانده‌ها از نماهای مالی فعلی خوانده می‌شوند؛ هیچ مبلغی در این صفحه ثبت یا تغییر داده نمی‌شود.</p></CardContent></Card>
+    {loading?<LoadingState/>:error?<Card><CardContent className="p-4 space-y-2"><p className="text-sm text-destructive">{error.message||'دریافت اطلاعات خزانه ناموفق بود'}</p><Button size="sm" onClick={()=>{cashQuery.refetch();bankQuery.refetch();transactionsQuery.refetch();}}>تلاش دوباره</Button></CardContent></Card>:<>
+      <Card><CardContent className="p-4 space-y-3"><h3 className="font-semibold text-sm">موجودی نقدی صندوق به تفکیک ارز</h3>{(cashQuery.data||[]).length===0?<p className="text-xs text-muted-foreground">مانده‌ای ثبت نشده است.</p>:(cashQuery.data||[]).map((item,i)=><div key={item.currency||i} className="flex justify-between border-b last:border-0 py-2 text-sm"><span>{item.currency}</span><span className="font-mono font-semibold">{formatNumber(Number(item.balance||0),2)}</span></div>)}</CardContent></Card>
+      <Card><CardContent className="p-4 space-y-3"><h3 className="font-semibold text-sm">مانده حساب‌های بانکی</h3>{(bankQuery.data||[]).length===0?<p className="text-xs text-muted-foreground">حساب بانکی فعالی در گزارش موجود نیست.</p>:(bankQuery.data||[]).map((item,i)=><div key={item.bank_id||i} className="flex justify-between gap-3 border-b last:border-0 py-2 text-sm"><div className="min-w-0"><p className="font-medium truncate">{item.bank_name||'بانک'}</p><p className="text-[10px] text-muted-foreground">{item.account_number||''} · {item.currency}</p></div><span className="font-mono font-semibold whitespace-nowrap">{formatNumber(Number(item.current_balance||0),2)}</span></div>)}</CardContent></Card>
+      <Card><CardContent className="p-4 space-y-3"><h3 className="font-semibold text-sm">گردش‌های اخیر خزانه</h3>{(transactionsQuery.data||[]).length===0?<p className="text-xs text-muted-foreground">گردشی ثبت نشده است.</p>:(transactionsQuery.data||[]).map(row=><div key={row.id} className="flex justify-between gap-3 border-b last:border-0 py-2 text-xs"><div className="min-w-0"><p className="font-medium">{row.description||row.type||'عملیات خزانه'}</p><p className="text-muted-foreground">{row.created_at?new Date(row.created_at).toLocaleString('fa-IR'):'—'} · {row.registered_by||'—'}</p></div><div className="text-left whitespace-nowrap"><p className="font-mono font-semibold">{formatNumber(Number(row.amount||0),2)} {row.currency}</p><p className="text-muted-foreground">{row.type||'—'}</p></div></div>)}</CardContent></Card>
+    </>}
+    <div className="rounded-lg border p-3 text-xs text-muted-foreground">این صفحه نمای کلی و گزارش‌خوانی خزانه است. عملیات انتقال یا ثبت پرداخت از مسیرهای مالی موجود انجام می‌شود تا کنترل‌های ثبت سند و تراز حفظ شود.</div>
+  </div>;
+}
+
+
+function CashFlowReport() {
+  const exchangeCode=getExchangeCode();
+  const [fromDate,setFromDate]=useState('');
+  const [toDate,setToDate]=useState('');
+  const query=useQuery({
+    queryKey:['enterpriseCashFlow',exchangeCode],
+    enabled:!!exchangeCode,
+    queryFn:async()=>{
+      const [entries,docs]=await Promise.all([
+        fetchAllTenantRows('ledger_entries','id,document_id,account_type,currency,debit,credit,deleted,created_at',exchangeCode),
+        fetchAllTenantRows('documents','id,deleted,reversed,created_at,doc_number,doc_type',exchangeCode),
+      ]);
+      const docMap=new Map(docs.map(d=>[String(d.id),d]));
+      return entries.filter(e=>{
+        if(e.deleted===true||!['cash','bank'].includes(String(e.account_type||'').toLowerCase())) return false;
+        const doc=e.document_id?docMap.get(String(e.document_id)):null;
+        return !doc||(doc.deleted!==true&&doc.reversed!==true);
+      }).map(e=>{const doc=e.document_id?docMap.get(String(e.document_id)):null;return {...e,report_date:doc?.created_at||e.created_at,doc_number:doc?.doc_number||''};});
+    },
+    staleTime:30000,
+  });
+  const filtered=useMemo(()=>(query.data||[]).filter(e=>{const d=e.report_date?String(e.report_date).slice(0,10):'';return (!fromDate||!d||d>=fromDate)&&(!toDate||!d||d<=toDate);}),[query.data,fromDate,toDate]);
+  const totals=useMemo(()=>{const map=new Map();for(const e of filtered){const cur=e.currency||'—';const t=map.get(cur)||{debit:0,credit:0,rows:0};t.debit+=Number(e.debit||0);t.credit+=Number(e.credit||0);t.rows++;map.set(cur,t);}return [...map.entries()].map(([currency,v])=>({currency,...v,net:v.debit-v.credit}));},[filtered]);
+  if(!exchangeCode)return <Card><CardContent className="p-5 text-sm text-muted-foreground">برای مشاهده گردش صندوق و بانک، ابتدا با حساب همان صرافی وارد شوید.</CardContent></Card>;
+  return <div className="space-y-4">
+    <Card><CardContent className="p-4 space-y-3"><div className="grid grid-cols-1 sm:grid-cols-2 gap-2"><div className="space-y-1"><Label>از تاریخ</Label><Input type="date" value={fromDate} onChange={e=>setFromDate(e.target.value)}/></div><div className="space-y-1"><Label>تا تاریخ</Label><Input type="date" value={toDate} onChange={e=>setToDate(e.target.value)}/></div></div><div className="flex justify-between items-center text-xs text-muted-foreground"><span>{filtered.length} ردیف دفتر صندوق و بانک</span><Button size="sm" variant="outline" onClick={()=>query.refetch()} disabled={query.isFetching}><RefreshCw className="w-4 h-4"/>بروزرسانی</Button></div></CardContent></Card>
+    {query.isLoading?<LoadingState/>:query.isError?<Card><CardContent className="p-4 space-y-2"><p className="text-sm text-destructive">{query.error?.message||'دریافت گردش نقدی ناموفق بود'}</p><Button size="sm" onClick={()=>query.refetch()}>تلاش دوباره</Button></CardContent></Card>:totals.length===0?<Card><CardContent className="p-5 text-center text-sm text-muted-foreground">برای این بازه گردش صندوق یا بانک ثبت نشده است.</CardContent></Card>:totals.map(t=><Card key={t.currency}><CardContent className="p-4 space-y-3"><div className="font-semibold">گردش {t.currency}</div><div className="grid grid-cols-3 gap-2 text-xs"><div><p className="text-muted-foreground">ورودی (بدهکار)</p><p className="font-mono font-semibold">{formatNumber(t.debit,2)}</p></div><div><p className="text-muted-foreground">خروجی (بستانکار)</p><p className="font-mono font-semibold">{formatNumber(t.credit,2)}</p></div><div><p className="text-muted-foreground">خالص گردش</p><p className="font-mono font-semibold">{formatNumber(t.net,2)}</p></div></div><p className="text-[10px] text-muted-foreground">{t.rows} ردیف دفترکل</p></CardContent></Card>)}
+    <div className="rounded-lg border p-3 text-xs text-muted-foreground">این گزارش فقط گردش حساب‌های نوع صندوق و بانک را از دفترکل استخراج می‌کند؛ طبقه‌بندی سه‌گانهٔ جریان عملیاتی، سرمایه‌گذاری و تأمین مالی تا زمان تکمیل کدینگ و سیاست‌های حسابداری در دسترس نیست.</div>
+  </div>;
+}
+
+function CustomerBalancesReport() {
+  const exchangeCode=getExchangeCode();
+  const [search,setSearch]=useState('');
+  const [currency,setCurrency]=useState('all');
+  const query=useQuery({
+    queryKey:['enterpriseCustomerBalances',exchangeCode],
+    enabled:!!exchangeCode,
+    queryFn:async()=>{
+      const [entries,docs]=await Promise.all([
+        fetchAllTenantRows('ledger_entries','id,document_id,account_type,account_id,account_name,currency,debit,credit,deleted',exchangeCode),
+        fetchAllTenantRows('documents','id,deleted,reversed',exchangeCode),
+      ]);
+      const docMap=new Map(docs.map(d=>[String(d.id),d]));
+      return entries.filter(e=>{
+        if(e.deleted===true)return false;
+        const doc=e.document_id?docMap.get(String(e.document_id)):null;
+        return !doc||(doc.deleted!==true&&doc.reversed!==true);
+      });
+    },
+    staleTime:30000,
+  });
+  const rows=useMemo(()=>{
+    const map=new Map();
+    for(const e of query.data||[]){
+      if(e.deleted===true||String(e.account_type||'').toLowerCase()!=='customer')continue;
+      const cur=e.currency||'—';const key=[e.account_id||'',e.account_name||'',cur].join('|');
+      const row=map.get(key)||{key,account_id:e.account_id||'',account_name:e.account_name||e.account_id||'مشتری بدون نام',currency:cur,debit:0,credit:0};
+      row.debit+=Number(e.debit||0);row.credit+=Number(e.credit||0);map.set(key,row);
+    }
+    const term=search.trim().toLowerCase();
+    return [...map.values()].filter(r=>(currency==='all'||r.currency===currency)&&(!term||[r.account_id,r.account_name].some(v=>String(v).toLowerCase().includes(term)))).map(r=>({...r,balance:r.debit-r.credit})).sort((a,b)=>Math.abs(b.balance)-Math.abs(a.balance));
+  },[query.data,search,currency]);
+  const currencies=[...new Set((query.data||[]).filter(e=>e.deleted!==true&&String(e.account_type||'').toLowerCase()==='customer').map(e=>e.currency||'—'))];
+  if(!exchangeCode)return <Card><CardContent className="p-5 text-sm text-muted-foreground">برای مشاهده مانده حساب مشتریان، ابتدا با حساب همان صرافی وارد شوید.</CardContent></Card>;
+  return <div className="space-y-4">
+    <Card><CardContent className="p-4 space-y-3"><Input value={search} onChange={e=>setSearch(e.target.value)} placeholder="جستجوی نام یا شناسه مشتری…"/><Select value={currency} onValueChange={setCurrency}><SelectTrigger><SelectValue/></SelectTrigger><SelectContent><SelectItem value="all">همه ارزها</SelectItem>{currencies.map(cur=><SelectItem key={cur} value={cur}>{cur}</SelectItem>)}</SelectContent></Select><div className="flex justify-between items-center text-xs text-muted-foreground"><span>{rows.length} حساب مشتری</span><Button size="sm" variant="outline" onClick={()=>query.refetch()} disabled={query.isFetching}><RefreshCw className="w-4 h-4"/>بروزرسانی</Button></div></CardContent></Card>
+    {query.isLoading?<LoadingState/>:query.isError?<Card><CardContent className="p-4 space-y-2"><p className="text-sm text-destructive">{query.error?.message||'دریافت مانده مشتریان ناموفق بود'}</p><Button size="sm" onClick={()=>query.refetch()}>تلاش دوباره</Button></CardContent></Card>:<Card><CardContent className="p-0 overflow-x-auto"><table className="w-full min-w-[600px] text-sm"><thead><tr className="border-b bg-muted/40 text-right">{['شناسه','مشتری','ارز','بدهکار','بستانکار','مانده'].map(h=><th key={h} className="p-3">{h}</th>)}</tr></thead><tbody>{rows.map(r=><tr key={r.key} className="border-b last:border-0"><td className="p-3 font-mono">{r.account_id||'—'}</td><td className="p-3">{r.account_name}</td><td className="p-3">{r.currency}</td><td className="p-3 font-mono">{formatNumber(r.debit,2)}</td><td className="p-3 font-mono">{formatNumber(r.credit,2)}</td><td className="p-3 font-mono">{formatNumber(r.balance,2)} <span className="text-[10px] text-muted-foreground">{r.balance>0?'بدهکار':r.balance<0?'بستانکار':'تسویه'}</span></td></tr>)}</tbody></table>{rows.length===0&&<p className="p-5 text-center text-sm text-muted-foreground">حساب مشتری‌ای برای این فیلتر پیدا نشد.</p>}</CardContent></Card>}
+    <div className="rounded-lg border p-3 text-xs text-muted-foreground">مانده از جمع بدهکار منهای بستانکار ردیف‌های حساب مشتری در دفترکل محاسبه می‌شود و فقط‌خواندنی است. حساب‌های پرداختنی و تأمین‌کنندگان در این گزارش لحاظ نشده‌اند.</div>
+  </div>;
+}
+
+
+function FiscalPeriodsManager() {
+  const exchangeCode=getExchangeCode();
+  const qc=useQueryClient();
+  const EMPTY_PERIOD={period_code:'',period_name:'',start_date:'',end_date:'',description:''};
+  const [form,setForm]=useState(EMPTY_PERIOD);
+  const [editing,setEditing]=useState(null);
+  const [open,setOpen]=useState(false);
+  const query=useQuery({queryKey:['enterpriseFiscalPeriods',exchangeCode],enabled:!!exchangeCode,queryFn:async()=>{const {data,error}=await supabase.from('fiscal_periods').select('*').eq('exchange_code',exchangeCode).order('start_date',{ascending:false}).limit(300);if(error)throw new Error(error.message);return data||[];}});
+  const save=useMutation({
+    mutationFn:async()=>{
+      const code=form.period_code.trim(),name=form.period_name.trim();
+      if(!code||!name||!form.start_date||!form.end_date)throw new Error('کد، نام و بازهٔ دوره مالی الزامی است');
+      if(form.start_date>form.end_date)throw new Error('تاریخ شروع باید قبل از تاریخ پایان باشد');
+      const conflict=(query.data||[]).find(p=>p.id!==editing?.id&&form.start_date<=p.end_date&&form.end_date>=p.start_date);
+      if(conflict)throw new Error('این بازه با دورهٔ باز دیگری هم‌پوشانی دارد');
+      const payload={period_code:code,period_name:name,start_date:form.start_date,end_date:form.end_date,description:form.description.trim()||null,updated_at:new Date().toISOString()};
+      if(editing){const {data,error}=await supabase.from('fiscal_periods').update(payload).eq('id',editing.id).eq('exchange_code',exchangeCode).eq('status','open').select().single();if(error)throw new Error(error.message);return data;}
+      const {data,error}=await supabase.from('fiscal_periods').insert({...payload,exchange_code:exchangeCode,status:'open'}).select().single();if(error)throw new Error(error.message);return data;
+    },
+    onSuccess:()=>{qc.invalidateQueries({queryKey:['enterpriseFiscalPeriods',exchangeCode]});setOpen(false);setEditing(null);setForm(EMPTY_PERIOD);toast({title:'دوره مالی ذخیره شد'});},
+    onError:e=>toast({title:'ذخیره دوره مالی ناموفق بود',description:e.message,variant:'destructive'}),
+  });
+  const beginEdit=p=>{setEditing(p);setForm({period_code:p.period_code,period_name:p.period_name,start_date:p.start_date,end_date:p.end_date,description:p.description||''});setOpen(true);};
+  if(!exchangeCode)return <Card><CardContent className="p-5 text-sm text-muted-foreground">برای مدیریت دوره‌های مالی، ابتدا با حساب همان صرافی وارد شوید.</CardContent></Card>;
+  return <div className="space-y-4">
+    <Card><CardContent className="p-4 space-y-3"><div className="flex justify-between items-center gap-2"><div><h2 className="font-semibold">دوره‌های مالی</h2><p className="text-xs text-muted-foreground">تعریف بازه‌های مالی مستقل برای این صرافی</p></div><Button size="sm" onClick={()=>{setEditing(null);setForm(EMPTY_PERIOD);setOpen(true);}}><Plus className="w-4 h-4"/>دوره جدید</Button></div><div className="grid grid-cols-2 gap-2 text-xs"><div className="rounded-lg bg-muted/50 p-3">کل دوره‌ها <b className="block text-lg">{(query.data||[]).length}</b></div><div className="rounded-lg bg-muted/50 p-3">دوره‌های باز <b className="block text-lg">{(query.data||[]).filter(p=>p.status==='open').length}</b></div></div></CardContent></Card>
+    {open&&<Card><CardContent className="p-4 space-y-3"><div className="flex justify-between"><h3 className="font-semibold">{editing?'ویرایش دوره مالی':'تعریف دوره مالی'}</h3><Button size="icon" variant="ghost" onClick={()=>setOpen(false)}><X className="w-4 h-4"/></Button></div><div className="grid grid-cols-1 sm:grid-cols-2 gap-2"><div className="space-y-1"><Label>کد دوره</Label><Input value={form.period_code} onChange={e=>setForm(p=>({...p,period_code:e.target.value}))} disabled={!!editing}/></div><div className="space-y-1"><Label>نام دوره</Label><Input value={form.period_name} onChange={e=>setForm(p=>({...p,period_name:e.target.value}))}/></div><div className="space-y-1"><Label>تاریخ شروع</Label><Input type="date" value={form.start_date} onChange={e=>setForm(p=>({...p,start_date:e.target.value}))}/></div><div className="space-y-1"><Label>تاریخ پایان</Label><Input type="date" value={form.end_date} onChange={e=>setForm(p=>({...p,end_date:e.target.value}))}/></div></div><div className="space-y-1"><Label>توضیحات</Label><Textarea rows={2} value={form.description} onChange={e=>setForm(p=>({...p,description:e.target.value}))}/></div><div className="flex gap-2"><Button className="flex-1" onClick={()=>save.mutate()} disabled={save.isPending}><Check className="w-4 h-4"/>ذخیره</Button><Button variant="outline" onClick={()=>setOpen(false)}>انصراف</Button></div></CardContent></Card>}
+    {query.isLoading?<LoadingState/>:query.isError?<Card><CardContent className="p-4 text-sm text-destructive">{query.error?.message}</CardContent></Card>:<Card><CardContent className="p-0 overflow-x-auto"><table className="w-full min-w-[600px] text-sm"><thead><tr className="border-b bg-muted/40 text-right">{['کد','نام دوره','شروع','پایان','وضعیت','عملیات'].map(h=><th key={h} className="p-3">{h}</th>)}</tr></thead><tbody>{(query.data||[]).map(p=><tr key={p.id} className="border-b last:border-0"><td className="p-3 font-mono">{p.period_code}</td><td className="p-3">{p.period_name}</td><td className="p-3">{p.start_date}</td><td className="p-3">{p.end_date}</td><td className="p-3">{p.status==='closed'?'بسته':'باز'}</td><td className="p-3"><Button size="sm" variant="ghost" disabled={p.status!=='open'} onClick={()=>beginEdit(p)}><Pencil className="w-4 h-4"/>ویرایش</Button></td></tr>)}</tbody></table>{(query.data||[]).length===0&&<p className="p-5 text-center text-sm text-muted-foreground">هنوز دوره مالی تعریف نشده است.</p>}</CardContent></Card>}
+    <div className="rounded-lg border p-3 text-xs text-muted-foreground">در این مرحله فقط تعریف و ویرایش دوره‌های باز انجام می‌شود. بستن دوره تا تکمیل کنترل اسناد، تراز و جلوگیری از ثبت در دوره بسته غیرفعال است؛ هیچ سند یا مانده‌ای تغییر نمی‌کند.</div>
+  </div>;
+}
+
+function CostCentersManager() {
+  const exchangeCode=getExchangeCode();
+  const qc=useQueryClient();
+  const EMPTY_CENTER={center_code:'',center_name:'',center_type:'department',parent_id:'',description:'',is_active:true};
+  const [form,setForm]=useState(EMPTY_CENTER);
+  const [editing,setEditing]=useState(null);
+  const [open,setOpen]=useState(false);
+  const [search,setSearch]=useState('');
+  const query=useQuery({queryKey:['enterpriseCostCenters',exchangeCode],enabled:!!exchangeCode,queryFn:async()=>{const {data,error}=await supabase.from('cost_centers').select('*').eq('exchange_code',exchangeCode).order('center_code',{ascending:true}).limit(500);if(error)throw new Error(error.message);return data||[];}});
+  const save=useMutation({
+    mutationFn:async()=>{
+      const code=form.center_code.trim(),name=form.center_name.trim();
+      if(!code||!name)throw new Error('کد و نام مرکز هزینه الزامی است');
+      const parentId=form.parent_id?Number(form.parent_id):null;
+      let parent=parentId?(query.data||[]).find(x=>Number(x.id)===parentId):null;
+      if(parentId&&!parent)throw new Error('مرکز مادر معتبر نیست');
+      if(editing&&parentId){const seen=new Set();while(parent){if(Number(parent.id)===Number(editing.id))throw new Error('انتخاب مرکز مادر باعث ایجاد حلقه می‌شود');if(seen.has(Number(parent.id)))break;seen.add(Number(parent.id));parent=parent.parent_id?(query.data||[]).find(x=>Number(x.id)===Number(parent.parent_id)):null;}}
+      const payload={center_code:code,center_name:name,center_type:form.center_type,parent_id:parentId,description:form.description.trim()||null,is_active:form.is_active,updated_at:new Date().toISOString()};
+      if(editing){const {data,error}=await supabase.from('cost_centers').update(payload).eq('id',editing.id).eq('exchange_code',exchangeCode).select().single();if(error)throw new Error(error.message);return data;}
+      const {data,error}=await supabase.from('cost_centers').insert({...payload,exchange_code:exchangeCode}).select().single();if(error)throw new Error(error.message);return data;
+    },
+    onSuccess:()=>{qc.invalidateQueries({queryKey:['enterpriseCostCenters',exchangeCode]});setOpen(false);setEditing(null);setForm(EMPTY_CENTER);toast({title:'مرکز هزینه ذخیره شد'});},
+    onError:e=>toast({title:'ذخیره مرکز هزینه ناموفق بود',description:e.message,variant:'destructive'}),
+  });
+  const rows=(query.data||[]).filter(x=>!search||[x.center_code,x.center_name,x.center_type].some(v=>String(v||'').toLowerCase().includes(search.toLowerCase())));
+  const beginEdit=x=>{setEditing(x);setForm({center_code:x.center_code,center_name:x.center_name,center_type:x.center_type,parent_id:x.parent_id?String(x.parent_id):'',description:x.description||'',is_active:x.is_active});setOpen(true);};
+  if(!exchangeCode)return <Card><CardContent className="p-5 text-sm text-muted-foreground">برای مدیریت مراکز هزینه، ابتدا با حساب همان صرافی وارد شوید.</CardContent></Card>;
+  return <div className="space-y-4">
+    <Card><CardContent className="p-4 space-y-3"><div className="flex justify-between items-center gap-2"><div><h2 className="font-semibold">مراکز هزینه و سود</h2><p className="text-xs text-muted-foreground">ساختار سازمانی و مراکز هزینهٔ مستقل هر صرافی</p></div><Button size="sm" onClick={()=>{setEditing(null);setForm(EMPTY_CENTER);setOpen(true);}}><Plus className="w-4 h-4"/>مرکز جدید</Button></div><Input value={search} onChange={e=>setSearch(e.target.value)} placeholder="جستجوی کد یا نام مرکز…"/></CardContent></Card>
+    {open&&<Card><CardContent className="p-4 space-y-3"><div className="flex justify-between"><h3 className="font-semibold">{editing?'ویرایش مرکز':'تعریف مرکز هزینه'}</h3><Button size="icon" variant="ghost" onClick={()=>setOpen(false)}><X className="w-4 h-4"/></Button></div><div className="grid grid-cols-1 sm:grid-cols-2 gap-2"><div className="space-y-1"><Label>کد مرکز</Label><Input value={form.center_code} onChange={e=>setForm(p=>({...p,center_code:e.target.value}))} disabled={!!editing}/></div><div className="space-y-1"><Label>نام مرکز</Label><Input value={form.center_name} onChange={e=>setForm(p=>({...p,center_name:e.target.value}))}/></div><div className="space-y-1"><Label>نوع مرکز</Label><Select value={form.center_type} onValueChange={v=>setForm(p=>({...p,center_type:v}))}><SelectTrigger><SelectValue/></SelectTrigger><SelectContent><SelectItem value="department">واحد / اداره</SelectItem><SelectItem value="branch">شعبه</SelectItem><SelectItem value="project">پروژه</SelectItem><SelectItem value="profit_center">مرکز سود</SelectItem></SelectContent></Select></div><div className="space-y-1"><Label>مرکز مادر</Label><Select value={form.parent_id||'none'} onValueChange={v=>setForm(p=>({...p,parent_id:v==='none'?'':v}))}><SelectTrigger><SelectValue/></SelectTrigger><SelectContent><SelectItem value="none">بدون مرکز مادر</SelectItem>{(query.data||[]).filter(x=>x.id!==editing?.id&&x.is_active).map(x=><SelectItem key={x.id} value={String(x.id)}>{x.center_code} — {x.center_name}</SelectItem>)}</SelectContent></Select></div></div><div className="space-y-1"><Label>توضیحات</Label><Textarea rows={2} value={form.description} onChange={e=>setForm(p=>({...p,description:e.target.value}))}/></div><div className="flex items-center justify-between rounded-lg bg-muted/50 p-3"><Label>مرکز فعال باشد</Label><Switch checked={form.is_active} onCheckedChange={v=>setForm(p=>({...p,is_active:v}))}/></div><div className="flex gap-2"><Button className="flex-1" onClick={()=>save.mutate()} disabled={save.isPending}><Check className="w-4 h-4"/>ذخیره</Button><Button variant="outline" onClick={()=>setOpen(false)}>انصراف</Button></div></CardContent></Card>}
+    {query.isLoading?<LoadingState/>:query.isError?<Card><CardContent className="p-4 text-sm text-destructive">{query.error?.message}</CardContent></Card>:<Card><CardContent className="p-0 overflow-x-auto"><table className="w-full min-w-[600px] text-sm"><thead><tr className="border-b bg-muted/40 text-right">{['کد','مرکز','نوع','مرکز مادر','وضعیت','عملیات'].map(h=><th key={h} className="p-3">{h}</th>)}</tr></thead><tbody>{rows.map(x=><tr key={x.id} className="border-b last:border-0"><td className="p-3 font-mono">{x.center_code}</td><td className="p-3">{x.center_name}</td><td className="p-3">{x.center_type}</td><td className="p-3">{(query.data||[]).find(p=>p.id===x.parent_id)?.center_name||'—'}</td><td className="p-3">{x.is_active?'فعال':'غیرفعال'}</td><td className="p-3"><Button size="sm" variant="ghost" onClick={()=>beginEdit(x)}><Pencil className="w-4 h-4"/>ویرایش</Button></td></tr>)}</tbody></table>{rows.length===0&&<p className="p-5 text-center text-sm text-muted-foreground">مرکزی ثبت نشده است.</p>}</CardContent></Card>}
+    <div className="rounded-lg border p-3 text-xs text-muted-foreground">تعریف مراکز هزینه مستقل و فقط برای همین صرافی است. تخصیص سند و گزارش سود/هزینه تا اتصال کامل به دفترکل در حالت به‌روزرسانی می‌ماند.</div>
+  </div>;
+}
+
+
+function FxExposureReport() {
+  const exchangeCode=getExchangeCode();
+  const [currency,setCurrency]=useState('all');
+  const query=useQuery({
+    queryKey:['enterpriseFxExposure',exchangeCode],
+    enabled:!!exchangeCode,
+    queryFn:async()=>{
+      const [entries,docs]=await Promise.all([
+        fetchAllTenantRows('ledger_entries','id,document_id,account_type,account_id,account_name,currency,debit,credit,deleted',exchangeCode),
+        fetchAllTenantRows('documents','id,deleted,reversed',exchangeCode),
+      ]);
+      const docMap=new Map(docs.map(d=>[String(d.id),d]));
+      return entries.filter(e=>{
+        if(e.deleted===true)return false;
+        const doc=e.document_id?docMap.get(String(e.document_id)):null;
+        return !doc||(doc.deleted!==true&&doc.reversed!==true);
+      });
+    },
+    staleTime:30000,
+  });
+  const rows=useMemo(()=>{
+    const map=new Map();
+    for(const e of query.data||[]){
+      const cur=e.currency||'—';const type=e.account_type||'نامشخص';const key=cur+'|'+type;
+      const row=map.get(key)||{key,currency:cur,account_type:type,debit:0,credit:0,lines:0};
+      row.debit+=Number(e.debit||0);row.credit+=Number(e.credit||0);row.lines++;map.set(key,row);
+    }
+    return [...map.values()].filter(r=>currency==='all'||r.currency===currency).sort((a,b)=>a.currency.localeCompare(b.currency)||a.account_type.localeCompare(b.account_type)).map(r=>({...r,net:r.debit-r.credit}));
+  },[query.data,currency]);
+  const currencies=[...new Set((query.data||[]).map(e=>e.currency||'—'))];
+  if(!exchangeCode)return <Card><CardContent className="p-5 text-sm text-muted-foreground">برای مشاهده موقعیت ارزی، ابتدا با حساب همان صرافی وارد شوید.</CardContent></Card>;
+  return <div className="space-y-4">
+    <Card><CardContent className="p-4 space-y-3"><div className="flex justify-between items-center gap-2"><div><h2 className="font-semibold">موقعیت مانده ارزی</h2><p className="text-xs text-muted-foreground">مانده‌های ثبت‌شده به ارز اصلی، بدون تبدیل ارزی</p></div><Button size="sm" variant="outline" onClick={()=>query.refetch()} disabled={query.isFetching}><RefreshCw className="w-4 h-4"/>بروزرسانی</Button></div><Select value={currency} onValueChange={setCurrency}><SelectTrigger><SelectValue/></SelectTrigger><SelectContent><SelectItem value="all">همه ارزها</SelectItem>{currencies.map(x=><SelectItem key={x} value={x}>{x}</SelectItem>)}</SelectContent></Select></CardContent></Card>
+    {query.isLoading?<LoadingState/>:query.isError?<Card><CardContent className="p-4 space-y-2"><p className="text-sm text-destructive">{query.error?.message||'دریافت موقعیت ارزی ناموفق بود'}</p><Button size="sm" onClick={()=>query.refetch()}>تلاش دوباره</Button></CardContent></Card>:<Card><CardContent className="p-0 overflow-x-auto"><table className="w-full min-w-[620px] text-sm"><thead><tr className="border-b bg-muted/40 text-right">{['ارز','نوع حساب','بدهکار','بستانکار','خالص','ردیف'].map(h=><th key={h} className="p-3">{h}</th>)}</tr></thead><tbody>{rows.map(r=><tr key={r.key} className="border-b last:border-0"><td className="p-3 font-semibold">{r.currency}</td><td className="p-3">{r.account_type}</td><td className="p-3 font-mono">{formatNumber(r.debit,2)}</td><td className="p-3 font-mono">{formatNumber(r.credit,2)}</td><td className="p-3 font-mono">{formatNumber(r.net,2)}</td><td className="p-3">{r.lines}</td></tr>)}</tbody></table>{rows.length===0&&<p className="p-5 text-center text-sm text-muted-foreground">اطلاعاتی برای نمایش وجود ندارد.</p>}</CardContent></Card>}
+    <div className="rounded-lg border p-3 text-xs text-muted-foreground">این گزارش فقط ماندهٔ دفترکل را به تفکیک ارز و نوع حساب نشان می‌دهد. تبدیل به ارز مبنا، سنجش حساسیت نرخ و محاسبهٔ سود/زیان تسعیر تا تکمیل منبع نرخ و سیاست‌های ارزی انجام نمی‌شود.</div>
+  </div>;
+}
+
+
+function PeriodCloseReadiness() {
+  const exchangeCode = getExchangeCode();
+  const [selectedPeriodId, setSelectedPeriodId] = useState('');
+  const query = useQuery({
+    queryKey: ['enterprisePeriodCloseReadiness', exchangeCode],
+    enabled: !!exchangeCode,
+    queryFn: async () => {
+      const [periodResult, documents, entries] = await Promise.all([
+        supabase.from('fiscal_periods')
+          .select('id,period_code,period_name,start_date,end_date,status')
+          .eq('exchange_code', exchangeCode)
+          .order('start_date', { ascending: false })
+          .limit(300),
+        fetchAllTenantRows('documents', 'id,doc_number,doc_type,created_at,deleted,reversed,description', exchangeCode),
+        fetchAllTenantRows('ledger_entries', 'id,document_id,currency,debit,credit,deleted', exchangeCode),
+      ]);
+      if (periodResult.error) throw new Error(periodResult.error.message || 'دریافت دوره‌های مالی ناموفق بود');
+      return { periods: periodResult.data || [], documents, entries };
+    },
+    staleTime: 30000,
+  });
+  const periods = query.data?.periods || [];
+  const selectedPeriod = periods.find(p => String(p.id) === String(selectedPeriodId))
+    || periods.find(p => p.status === 'open')
+    || periods[0]
+    || null;
+  const review = useMemo(() => {
+    if (!selectedPeriod || !query.data) return null;
+    const docs = query.data.documents.filter(doc => {
+      const date = String(doc.created_at || '').slice(0, 10);
+      return date && date >= selectedPeriod.start_date && date <= selectedPeriod.end_date;
+    });
+    const docIds = new Set(docs.map(doc => String(doc.id)));
+    const periodEntries = query.data.entries.filter(entry =>
+      entry.document_id != null && docIds.has(String(entry.document_id))
+    );
+    const activeEntriesByDocument = new Map();
+    for (const entry of periodEntries) {
+      if (entry.deleted === true) continue;
+      const key = String(entry.document_id);
+      activeEntriesByDocument.set(key, (activeEntriesByDocument.get(key) || 0) + 1);
+    }
+    const activeDocs = docs.filter(doc => doc.deleted !== true && doc.reversed !== true);
+    const missingLedger = activeDocs.filter(doc => !activeEntriesByDocument.has(String(doc.id)));
+    const balances = new Map();
+    for (const entry of periodEntries) {
+      if (entry.deleted === true) continue;
+      const key = String(entry.document_id) + '|' + String(entry.currency || '—');
+      const balance = balances.get(key) || { documentId: String(entry.document_id), currency: entry.currency || '—', debit: 0, credit: 0 };
+      balance.debit += Number(entry.debit || 0);
+      balance.credit += Number(entry.credit || 0);
+      balances.set(key, balance);
+    }
+    const documentMap = new Map(docs.map(doc => [String(doc.id), doc]));
+    const unbalanced = [...balances.values()]
+      .filter(item => Math.abs(item.debit - item.credit) > 0.000001)
+      .map(item => ({ ...item, document: documentMap.get(item.documentId) }))
+      .filter(item => item.document && item.document.deleted !== true && item.document.reversed !== true);
+    return {
+      documents: docs,
+      activeDocuments: activeDocs.length,
+      deletedDocuments: docs.filter(doc => doc.deleted === true).length,
+      reversedDocuments: docs.filter(doc => doc.reversed === true).length,
+      ledgerLines: periodEntries.filter(entry => entry.deleted !== true).length,
+      missingLedger,
+      unbalanced,
+    };
+  }, [selectedPeriod, query.data]);
+
+  if (!exchangeCode) return <Card><CardContent className="p-5 text-sm text-muted-foreground">برای بررسی بستن دوره، ابتدا با حساب همان صرافی وارد شوید.</CardContent></Card>;
+
+  return <div className="space-y-4">
+    <Card><CardContent className="p-4 space-y-3">
+      <div className="flex items-center justify-between gap-2">
+        <div><h2 className="font-semibold">کنترل‌های پیش از بستن دوره</h2><p className="text-xs text-muted-foreground">مرور اسناد و ردیف‌های دفترکل در بازه انتخاب‌شده</p></div>
+        <Button size="sm" variant="outline" onClick={() => query.refetch()} disabled={query.isFetching}><RefreshCw className="w-4 h-4"/>بروزرسانی</Button>
+      </div>
+      <div className="space-y-1"><Label>دوره مالی</Label>
+        <Select value={selectedPeriod ? String(selectedPeriod.id) : ''} onValueChange={setSelectedPeriodId}>
+          <SelectTrigger><SelectValue placeholder="انتخاب دوره مالی"/></SelectTrigger>
+          <SelectContent>{periods.map(period => <SelectItem key={period.id} value={String(period.id)}>{period.period_name} · {period.start_date} تا {period.end_date} · {period.status === 'closed' ? 'بسته' : 'باز'}</SelectItem>)}</SelectContent>
+        </Select>
+      </div>
+    </CardContent></Card>
+    {query.isLoading ? <LoadingState/> : query.isError ? <Card><CardContent className="p-4 space-y-2"><p className="text-sm text-destructive">{query.error?.message || 'بررسی دوره ناموفق بود'}</p><Button size="sm" onClick={() => query.refetch()}>تلاش دوباره</Button></CardContent></Card> : !selectedPeriod ? <Card><CardContent className="p-5 text-center space-y-2"><CalendarDays className="w-8 h-8 mx-auto text-muted-foreground"/><p className="font-semibold">دوره مالی تعریف نشده است</p><p className="text-sm text-muted-foreground">ابتدا از بخش دوره‌های مالی، یک دوره برای این صرافی تعریف کنید.</p></CardContent></Card> : review && <>
+      <Card><CardContent className="p-4 space-y-2"><div className="flex justify-between items-center"><h3 className="font-semibold">{selectedPeriod.period_name}</h3><span className={`text-xs rounded-full px-2 py-1 ${selectedPeriod.status === 'closed' ? 'bg-muted text-muted-foreground' : 'bg-amber-100 text-amber-800'}`}>{selectedPeriod.status === 'closed' ? 'دوره بسته' : 'دوره باز'}</span></div><p className="text-xs text-muted-foreground">{selectedPeriod.period_code} · {selectedPeriod.start_date} تا {selectedPeriod.end_date}</p>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          <div className="rounded-lg bg-muted/50 p-3"><p className="text-xs text-muted-foreground">کل اسناد</p><p className="text-xl font-bold">{review.documents.length}</p></div>
+          <div className="rounded-lg bg-muted/50 p-3"><p className="text-xs text-muted-foreground">اسناد فعال</p><p className="text-xl font-bold">{review.activeDocuments}</p></div>
+          <div className="rounded-lg bg-muted/50 p-3"><p className="text-xs text-muted-foreground">ردیف‌های دفترکل</p><p className="text-xl font-bold">{review.ledgerLines}</p></div>
+          <div className="rounded-lg bg-muted/50 p-3"><p className="text-xs text-muted-foreground">اسناد بدون ردیف فعال</p><p className="text-xl font-bold">{review.missingLedger.length}</p></div>
+        </div>
+      </CardContent></Card>
+      <Card><CardContent className="p-4 space-y-3">
+        <h3 className="font-semibold text-sm">موارد نیازمند بازبینی</h3>
+        <div className="flex flex-wrap gap-2 text-xs"><span className="rounded-md bg-muted px-2 py-1">حذف‌شده: {review.deletedDocuments}</span><span className="rounded-md bg-muted px-2 py-1">معکوس‌شده: {review.reversedDocuments}</span><span className="rounded-md bg-muted px-2 py-1">سند نامتوازن: {review.unbalanced.length}</span></div>
+        <div className="space-y-2"><p className="text-xs font-semibold">اسناد فعال بدون ردیف دفترکل</p>{review.missingLedger.length === 0 ? <p className="text-sm text-muted-foreground">موردی پیدا نشد.</p> : <div className="space-y-2">{review.missingLedger.slice(0, 50).map(doc => <div key={doc.id} className="rounded-lg border p-3 text-sm"><div className="flex justify-between gap-2"><span className="font-medium">{doc.doc_number || ('سند ' + doc.id)}</span><span className="text-xs text-muted-foreground">{doc.created_at ? new Date(doc.created_at).toLocaleDateString('fa-IR') : '—'}</span></div><p className="text-xs text-muted-foreground mt-1">{doc.description || doc.doc_type || 'بدون شرح'}</p></div>)}{review.missingLedger.length > 50 && <p className="text-xs text-muted-foreground">۵۰ مورد نخست از {review.missingLedger.length} مورد نمایش داده شده است.</p>}</div>}</div>
+        <div className="space-y-2"><p className="text-xs font-semibold">اسناد نامتوازن به تفکیک ارز</p>{review.unbalanced.length === 0 ? <p className="text-sm text-muted-foreground">در ردیف‌های فعال بررسی‌شده، اختلاف بدهکار و بستانکار پیدا نشد.</p> : <div className="space-y-2">{review.unbalanced.slice(0, 50).map((item, index) => <div key={item.documentId + '-' + item.currency + '-' + index} className="rounded-lg border p-3 text-xs"><div className="flex justify-between gap-2"><span className="font-medium">{item.document?.doc_number || ('سند ' + item.documentId)}</span><span>{item.currency}</span></div><div className="flex justify-between mt-1 text-muted-foreground"><span>بدهکار: {formatNumber(item.debit, 4)}</span><span>بستانکار: {formatNumber(item.credit, 4)}</span></div><p className="mt-1 text-destructive">اختلاف: {formatNumber(item.debit - item.credit, 4)}</p></div>)}{review.unbalanced.length > 50 && <p className="text-xs text-muted-foreground">۵۰ مورد نخست از {review.unbalanced.length} مورد نمایش داده شده است.</p>}</div>}</div>
+      </CardContent></Card>
+      <div className="rounded-lg border p-3 text-xs text-muted-foreground">این صفحه فقط‌خواندنی است. نبود ردیف دفترکل به‌تنهایی اثبات خطای حسابداری نیست؛ نوع سند باید بررسی شود. کنترل تراز بدهکار و بستانکار، کنترل ثبت‌های معوق و قفل‌کردن ثبت در دوره بسته باید در سمت سرور و در یک عملیات اتمیک تکمیل شود؛ بنابراین از این صفحه هیچ دوره‌ای بسته نمی‌شود و هیچ سند یا مانده‌ای تغییر نمی‌کند.</div>
+    </>}
+  </div>;
+}
+
+
+function InternalControlsReview() {
+  const exchangeCode = getExchangeCode();
+  const query = useQuery({
+    queryKey: ['enterpriseInternalControls', exchangeCode],
+    enabled: !!exchangeCode,
+    queryFn: async () => {
+      const [documents, entries] = await Promise.all([
+        fetchAllTenantRows('documents', 'id,doc_number,doc_type,created_at,deleted,reversed,exchange_code', exchangeCode),
+        fetchAllTenantRows('ledger_entries', 'id,document_id,currency,debit,credit,deleted,exchange_code', exchangeCode),
+      ]);
+      const docsById = new Map(documents.map(doc => [String(doc.id), doc]));
+      const activeDocs = documents.filter(doc => doc.deleted !== true && doc.reversed !== true);
+      const activeEntries = entries.filter(entry => entry.deleted !== true);
+      const entriesByDoc = new Map();
+      const balances = new Map();
+      for (const entry of activeEntries) {
+        if (entry.document_id == null) continue;
+        const id = String(entry.document_id);
+        entriesByDoc.set(id, (entriesByDoc.get(id) || 0) + 1);
+        const key = id + '|' + String(entry.currency || '—');
+        const total = balances.get(key) || { documentId: id, currency: entry.currency || '—', debit: 0, credit: 0 };
+        total.debit += Number(entry.debit || 0);
+        total.credit += Number(entry.credit || 0);
+        balances.set(key, total);
+      }
+      const missingLedger = activeDocs.filter(doc => !entriesByDoc.has(String(doc.id)));
+      const orphanEntries = activeEntries.filter(entry => entry.document_id != null && !docsById.has(String(entry.document_id)));
+      const unbalanced = [...balances.values()].filter(item => Math.abs(item.debit - item.credit) > 0.000001);
+      const duplicateNumbers = new Map();
+      for (const doc of activeDocs) {
+        const number = String(doc.doc_number || '').trim();
+        if (!number) continue;
+        duplicateNumbers.set(number, (duplicateNumbers.get(number) || 0) + 1);
+      }
+      const duplicates = [...duplicateNumbers.entries()].filter(([, count]) => count > 1);
+      return { documents, entries, activeDocs, activeEntries, missingLedger, orphanEntries, unbalanced, duplicates };
+    },
+    staleTime: 30000,
+  });
+  if (!exchangeCode) return <Card><CardContent className="p-5 text-sm text-muted-foreground">برای اجرای کنترل‌های داخلی، ابتدا با حساب همان صرافی وارد شوید.</CardContent></Card>;
+  const data = query.data;
+  const checks = data ? [
+    { label: 'اسناد فعال بدون ردیف دفترکل', count: data.missingLedger.length },
+    { label: 'ردیف‌های دفترکل با سند ناموجود', count: data.orphanEntries.length },
+    { label: 'اختلاف بدهکار و بستانکار به تفکیک ارز', count: data.unbalanced.length },
+    { label: 'شماره سند تکراری در اسناد فعال', count: data.duplicates.length },
+  ] : [];
+  return <div className="space-y-4">
+    <Card><CardContent className="p-4 space-y-3">
+      <div className="flex items-center justify-between gap-2"><div><h2 className="font-semibold">مرور کنترل‌های داخلی</h2><p className="text-xs text-muted-foreground">کنترل‌های اولیه یکپارچگی اسناد و دفترکل؛ فقط‌خواندنی</p></div><Button size="sm" variant="outline" onClick={() => query.refetch()} disabled={query.isFetching}><RefreshCw className="w-4 h-4"/>بروزرسانی</Button></div>
+      {query.isLoading ? <LoadingState/> : query.isError ? <div className="space-y-2"><p className="text-sm text-destructive">{query.error?.message || 'اجرای کنترل‌ها ناموفق بود'}</p><Button size="sm" onClick={() => query.refetch()}>تلاش دوباره</Button></div> : <>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+          <div className="rounded-lg bg-muted/50 p-3"><p className="text-xs text-muted-foreground">کل اسناد</p><p className="text-xl font-bold">{data.documents.length}</p></div>
+          <div className="rounded-lg bg-muted/50 p-3"><p className="text-xs text-muted-foreground">اسناد فعال</p><p className="text-xl font-bold">{data.activeDocs.length}</p></div>
+          <div className="rounded-lg bg-muted/50 p-3"><p className="text-xs text-muted-foreground">ردیف‌های فعال دفترکل</p><p className="text-xl font-bold">{data.activeEntries.length}</p></div>
+        </div>
+        <div className="space-y-2">{checks.map(item => <div key={item.label} className="flex items-center justify-between gap-3 rounded-lg border p-3 text-sm"><span>{item.label}</span><span className={item.count ? 'font-semibold text-amber-700' : 'font-semibold text-emerald-700'}>{item.count}</span></div>)}</div>
+      </>}
+    </CardContent></Card>
+    {data && <>
+      {data.orphanEntries.length > 0 && <Card><CardContent className="p-4 space-y-2"><h3 className="font-semibold text-sm">ردیف‌های دفترکل بدون سند متناظر</h3>{data.orphanEntries.slice(0,30).map(row=><div key={row.id} className="flex justify-between border-b last:border-0 py-2 text-xs"><span>ردیف دفترکل #{row.id} · سند #{row.document_id}</span><span>{row.currency || '—'} · {formatNumber(Number(row.debit||0)-Number(row.credit||0),4)}</span></div>)}</CardContent></Card>}
+      {data.unbalanced.length > 0 && <Card><CardContent className="p-4 space-y-2"><h3 className="font-semibold text-sm">اختلاف ثبت‌ها</h3>{data.unbalanced.slice(0,30).map((row,index)=><div key={row.documentId+'-'+row.currency+'-'+index} className="flex justify-between gap-2 border-b last:border-0 py-2 text-xs"><span>سند #{row.documentId} · {row.currency}</span><span className="text-destructive">{formatNumber(row.debit-row.credit,4)}</span></div>)}</CardContent></Card>}
+      {data.duplicates.length > 0 && <Card><CardContent className="p-4 space-y-2"><h3 className="font-semibold text-sm">شماره‌های سند تکراری</h3>{data.duplicates.slice(0,30).map(([number,count])=><div key={number} className="flex justify-between border-b last:border-0 py-2 text-xs"><span>{number}</span><span>{count} بار</span></div>)}</CardContent></Card>}
+      <div className="rounded-lg border p-3 text-xs text-muted-foreground">این کنترل‌ها هشدار اولیه‌اند، نه حکم قطعی تخلف یا خطای حسابداری. اصلاح خودکار، حذف، معکوس‌سازی یا تغییر مانده از این صفحه انجام نمی‌شود. کنترل‌های دسترسی، تأیید دو مرحله‌ای، محدودیت دوره بسته و گزارش کامل تغییرات باید جداگانه در سطح سرور و سیاست‌های دیتابیس اعتبارسنجی شوند.</div>
+    </>}
+  </div>;
+}
+
+
+function AccountsReceivableReadiness() {
+  const exchangeCode = getExchangeCode();
+  const query = useQuery({
+    queryKey: ['accountsReceivableReadiness', exchangeCode],
+    enabled: !!exchangeCode,
+    queryFn: async () => {
+      const [documents, entries, accounts] = await Promise.all([
+        fetchAllTenantRows('documents', 'id,doc_number,doc_type,related_type,related_name,amount,currency,created_at,deleted,reversed,exchange_code', exchangeCode),
+        fetchAllTenantRows('ledger_entries', 'id,document_id,account_type,account_id,account_name,debit,credit,currency,deleted,exchange_code', exchangeCode),
+        fetchAllTenantRows('chart_of_accounts', 'id,account_code,account_name,account_type,is_active,exchange_code', exchangeCode),
+      ]);
+      const isReceivable = row => /receivable|customer_due|customer_debt|دریافتنی|مطالبات/i.test(String(row.related_type || '') + ' ' + String(row.doc_type || ''));
+      const taggedDocuments = documents.filter(row => row.deleted !== true && row.reversed !== true && isReceivable(row));
+      const receivableAccounts = accounts.filter(row => row.is_active !== false && /receivable|دریافتنی|مطالبات/i.test(String(row.account_type || '') + ' ' + String(row.account_name || '') + ' ' + String(row.account_code || '')));
+      const docIds = new Set(taggedDocuments.map(row => String(row.id)));
+      const linkedEntries = entries.filter(row => row.deleted !== true && row.document_id != null && docIds.has(String(row.document_id)));
+      return { taggedDocuments, receivableAccounts, linkedEntries };
+    },
+    staleTime: 30000,
+  });
+  if (!exchangeCode) return <Card><CardContent className="p-5 text-sm text-muted-foreground">برای بررسی دریافتنی‌ها، ابتدا با حساب همان صرافی وارد شوید.</CardContent></Card>;
+  const data = query.data;
+  return <div className="space-y-4">
+    <Card><CardContent className="p-4 space-y-3">
+      <div className="flex items-center justify-between gap-2"><div><h2 className="font-semibold">آمادگی حساب‌های دریافتنی</h2><p className="text-xs text-muted-foreground">بررسی حساب‌ها و اسناد برچسب‌خورده؛ بدون محاسبه مانده ساختگی</p></div><Button size="sm" variant="outline" onClick={() => query.refetch()} disabled={query.isFetching}><RefreshCw className="w-4 h-4"/>بروزرسانی</Button></div>
+      {query.isLoading ? <LoadingState/> : query.isError ? <p className="text-sm text-destructive">{query.error?.message || 'بررسی دریافتنی‌ها ناموفق بود'}</p> : <>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+          <div className="rounded-lg bg-muted/50 p-3"><p className="text-xs text-muted-foreground">حساب‌های دریافتنی فعال</p><p className="text-xl font-bold">{data.receivableAccounts.length}</p></div>
+          <div className="rounded-lg bg-muted/50 p-3"><p className="text-xs text-muted-foreground">اسناد دریافتنی شناسایی‌شده</p><p className="text-xl font-bold">{data.taggedDocuments.length}</p></div>
+          <div className="rounded-lg bg-muted/50 p-3"><p className="text-xs text-muted-foreground">ردیف‌های دفترکل متصل</p><p className="text-xl font-bold">{data.linkedEntries.length}</p></div>
+        </div>
+        {data.receivableAccounts.length > 0 && <div className="rounded-lg border p-3 space-y-2"><h3 className="text-sm font-semibold">حساب‌های مرتبط</h3>{data.receivableAccounts.slice(0,25).map(row=><div key={row.id} className="flex justify-between gap-3 border-b last:border-0 py-2 text-xs"><span>{row.account_name}</span><span className="font-mono text-muted-foreground">{row.account_code || '—'}</span></div>)}</div>}
+        {data.taggedDocuments.length > 0 && <div className="rounded-lg border p-3 space-y-2"><h3 className="text-sm font-semibold">اسناد دارای برچسب دریافتنی</h3>{data.taggedDocuments.slice(0,25).map(row=><div key={row.id} className="flex justify-between gap-3 border-b last:border-0 py-2 text-xs"><span>سند {row.doc_number || row.id} · {row.related_name || row.related_type || row.doc_type || '—'}</span><span>{row.currency || '—'}</span></div>)}</div>}
+        <div className="rounded-lg border p-3 space-y-2"><div className="flex items-center gap-2 text-sm font-semibold"><AlertTriangle className="w-4 h-4 text-amber-600"/>چرخه عملیاتی مطالبات کامل تأیید نشده است</div><p className="text-sm text-muted-foreground">دفتر مستقل فاکتورهای مشتری، تاریخ سررسید، برنامه اقساط، تخصیص دریافت، مانده باز قابل اتکا، گزارش سن مطالبات و تطبیق خودکار دریافت‌ها در ساختار بررسی‌شده تأیید نشده‌اند.</p><p className="text-xs text-muted-foreground">این شمارش‌ها معادل مانده دریافتنی یا مبلغ بدهی مشتری نیستند و هیچ داده مالی تغییر نمی‌کند.</p></div>
+      </>}
+    </CardContent></Card>
+    <div className="rounded-lg border p-3 text-xs text-muted-foreground">برای تکمیل واقعی باید گردش فاکتور/مطالبه، سررسید، دریافت جزئی و کامل، تخصیص وجه، برگشت و تطبیق با دفترکل به‌صورت تراکنشی و قابل ممیزی طراحی شود.</div>
+  </div>;
+}
+
+
+function IntercompanyReadiness() {
+  const exchangeCode = getExchangeCode();
+  const query = useQuery({
+    queryKey: ['intercompanyReadiness', exchangeCode],
+    enabled: !!exchangeCode,
+    queryFn: async () => {
+      const [documents, entries] = await Promise.all([
+        fetchAllTenantRows('documents', 'id,doc_number,doc_type,related_type,related_id,related_name,amount,currency,created_at,deleted,reversed,exchange_code', exchangeCode),
+        fetchAllTenantRows('ledger_entries', 'id,document_id,related_type,account_type,account_id,account_name,debit,credit,currency,deleted,exchange_code', exchangeCode),
+      ]);
+      const matches = value => /inter.?exchange|intercompany|بین.?صراف|صرافی.?متقابل/i.test(String(value || ''));
+      const taggedDocuments = documents.filter(row => row.deleted !== true && row.reversed !== true &&
+        (matches(row.related_type) || matches(row.doc_type)));
+      const taggedEntries = entries.filter(row => row.deleted !== true &&
+        (matches(row.related_type) || matches(row.account_type)));
+      const relatedIds = new Set(taggedDocuments.map(row => String(row.id)));
+      const linkedEntries = taggedEntries.filter(row => row.document_id != null && relatedIds.has(String(row.document_id)));
+      return { documents, entries, taggedDocuments, taggedEntries, linkedEntries };
+    },
+    staleTime: 30000,
+  });
+  if (!exchangeCode) return <Card><CardContent className="p-5 text-sm text-muted-foreground">برای بررسی حساب‌های بین‌صرافی، ابتدا با حساب همان صرافی وارد شوید.</CardContent></Card>;
+  const data = query.data;
+  return <div className="space-y-4">
+    <Card><CardContent className="p-4 space-y-3">
+      <div className="flex items-center justify-between gap-2"><div><h2 className="font-semibold">آمادگی حساب‌های بین‌صرافی</h2><p className="text-xs text-muted-foreground">جست‌وجوی نشانه‌های موجود در اسناد و دفترکل همان صرافی</p></div><Button size="sm" variant="outline" onClick={() => query.refetch()} disabled={query.isFetching}><RefreshCw className="w-4 h-4"/>بروزرسانی</Button></div>
+      {query.isLoading ? <LoadingState/> : query.isError ? <p className="text-sm text-destructive">{query.error?.message || 'بررسی حساب‌های بین‌صرافی ناموفق بود'}</p> : <>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+          <div className="rounded-lg bg-muted/50 p-3"><p className="text-xs text-muted-foreground">اسناد دارای برچسب بین‌صرافی</p><p className="text-xl font-bold">{data.taggedDocuments.length}</p></div>
+          <div className="rounded-lg bg-muted/50 p-3"><p className="text-xs text-muted-foreground">ردیف‌های دفترکل برچسب‌خورده</p><p className="text-xl font-bold">{data.taggedEntries.length}</p></div>
+          <div className="rounded-lg bg-muted/50 p-3"><p className="text-xs text-muted-foreground">ردیف‌های متصل به سند برچسب‌خورده</p><p className="text-xl font-bold">{data.linkedEntries.length}</p></div>
+        </div>
+        {data.taggedDocuments.length > 0 && <div className="rounded-lg border p-3 space-y-2"><h3 className="text-sm font-semibold">اسناد شناسایی‌شده</h3>{data.taggedDocuments.slice(0,25).map(row=><div key={row.id} className="flex justify-between gap-3 border-b last:border-0 py-2 text-xs"><span>سند {row.doc_number || row.id} · {row.related_name || row.related_type || row.doc_type || '—'}</span><span>{row.currency || '—'}</span></div>)}</div>}
+        <div className="rounded-lg border p-3 space-y-2"><div className="flex items-center gap-2 text-sm font-semibold"><AlertTriangle className="w-4 h-4 text-amber-600"/>گردش بین‌صرافی کامل تأیید نشده است</div><p className="text-sm text-muted-foreground">این بررسی فقط برچسب‌های متنی موجود را پیدا می‌کند. در ساختار فعلی، موجودیت مستقل طرف‌حساب بین‌صرافی، شناسه متناظر دوطرف، تسویه متقابل، کنترل نرخ و ارز، تطبیق مانده و ثبت اتمیک دو صرافی تأیید نشده‌اند.</p><p className="text-xs text-muted-foreground">تعداد اسناد برچسب‌خورده به معنی تأیید مانده یا تسویه نیست؛ هیچ انتقال یا ثبت مالی انجام نمی‌شود.</p></div>
+      </>}
+    </CardContent></Card>
+    <div className="rounded-lg border p-3 text-xs text-muted-foreground">برای عملیاتی‌سازی، به طراحی شناسه مشترک امن، طرف‌حساب متقابل، چرخه وضعیت دوطرفه، تطبیق اختلاف‌ها و ثبت دفترکل قابل بازگشت نیاز است. این صفحه فقط‌خواندنی است و داده صرافی دیگری را جست‌وجو نمی‌کند.</div>
+  </div>;
+}
+
+
+function BudgetReadiness() {
+  const exchangeCode = getExchangeCode();
+  const query = useQuery({
+    queryKey: ['budgetReadiness', exchangeCode],
+    enabled: !!exchangeCode,
+    queryFn: async () => {
+      const [centers, periods] = await Promise.all([
+        fetchAllTenantRows('cost_centers', 'id,center_code,center_name,center_type,parent_id,is_active,exchange_code', exchangeCode),
+        fetchAllTenantRows('fiscal_periods', 'id,period_code,period_name,start_date,end_date,status,exchange_code', exchangeCode),
+      ]);
+      return {
+        centers,
+        activeCenters: centers.filter(row => row.is_active !== false),
+        periods,
+        openPeriods: periods.filter(row => !['closed','locked'].includes(String(row.status || '').toLowerCase())),
+      };
+    },
+    staleTime: 30000,
+  });
+  if (!exchangeCode) return <Card><CardContent className="p-5 text-sm text-muted-foreground">برای بررسی بودجه، ابتدا با حساب همان صرافی وارد شوید.</CardContent></Card>;
+  const data = query.data;
+  return <div className="space-y-4">
+    <Card><CardContent className="p-4 space-y-3">
+      <div className="flex items-center justify-between gap-2"><div><h2 className="font-semibold">آمادگی بودجه و پیش‌بینی</h2><p className="text-xs text-muted-foreground">بررسی ساختار مراکز هزینه و دوره‌های مالی؛ فقط‌خواندنی</p></div><Button size="sm" variant="outline" onClick={() => query.refetch()} disabled={query.isFetching}><RefreshCw className="w-4 h-4"/>بروزرسانی</Button></div>
+      {query.isLoading ? <LoadingState/> : query.isError ? <p className="text-sm text-destructive">{query.error?.message || 'بررسی ساختار بودجه ناموفق بود'}</p> : <>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+          <div className="rounded-lg bg-muted/50 p-3"><p className="text-xs text-muted-foreground">کل مراکز هزینه</p><p className="text-xl font-bold">{data.centers.length}</p></div>
+          <div className="rounded-lg bg-muted/50 p-3"><p className="text-xs text-muted-foreground">مراکز فعال</p><p className="text-xl font-bold">{data.activeCenters.length}</p></div>
+          <div className="rounded-lg bg-muted/50 p-3"><p className="text-xs text-muted-foreground">دوره‌های مالی باز</p><p className="text-xl font-bold">{data.openPeriods.length}</p></div>
+        </div>
+        {data.activeCenters.length > 0 && <div className="rounded-lg border p-3 space-y-2"><h3 className="text-sm font-semibold">مراکز هزینه فعال</h3>{data.activeCenters.slice(0,30).map(row=><div key={row.id} className="flex justify-between gap-3 border-b last:border-0 py-2 text-sm"><span>{row.center_name}</span><span className="font-mono text-xs text-muted-foreground">{row.center_code || '—'}</span></div>)}</div>}
+        {data.periods.length > 0 && <div className="rounded-lg border p-3 space-y-2"><h3 className="text-sm font-semibold">دوره‌های مالی تعریف‌شده</h3>{data.periods.slice(0,20).map(row=><div key={row.id} className="flex justify-between gap-3 border-b last:border-0 py-2 text-xs"><span>{row.period_name || row.period_code}</span><span className="text-muted-foreground">{row.start_date} تا {row.end_date} · {row.status || 'بدون وضعیت'}</span></div>)}</div>}
+        <div className="rounded-lg border p-3 space-y-2"><div className="flex items-center gap-2 text-sm font-semibold"><AlertTriangle className="w-4 h-4 text-amber-600"/>دفتر بودجه و پیش‌بینی هنوز وجود ندارد</div><p className="text-sm text-muted-foreground">در ساختار فعلی، مراکز هزینه و دوره‌های مالی موجودند؛ اما جدول بودجه مصوب، نسخه‌بندی بودجه، ردیف‌های درآمد/هزینه، تخصیص به مرکز هزینه، اصلاحیه، پیش‌بینی و مقایسه بودجه با عملکرد تأیید نشده‌اند.</p><p className="text-xs text-muted-foreground">بنابراین هیچ مبلغ بودجه یا انحرافی از داده‌های موجود حدس زده یا محاسبه نمی‌شود.</p></div>
+      </>}
+    </CardContent></Card>
+    <div className="rounded-lg border p-3 text-xs text-muted-foreground">این صفحه فقط آمادگی زیرساخت را نشان می‌دهد. مرحله بعدی طراحی دفتر بودجه افزایشی و سازگار با داده‌های موجود، همراه با کنترل دوره مالی و اتصال حسابداری قابل ممیزی است؛ فعلاً هیچ رکورد مالی ایجاد یا تغییر نمی‌شود.</div>
+  </div>;
+}
+
+
+function DataGovernanceReadiness() {
+  const exchangeCode = getExchangeCode();
+  const query = useQuery({
+    queryKey: ['dataGovernanceReadiness', exchangeCode],
+    enabled: !!exchangeCode,
+    queryFn: async () => {
+      const [logs, documents, entries] = await Promise.all([
+        fetchAllTenantRows('audit_logs', 'id,action,entity_type,created_at,status,exchange_code', exchangeCode),
+        fetchAllTenantRows('documents', 'id,deleted,reversed,exchange_code', exchangeCode),
+        fetchAllTenantRows('ledger_entries', 'id,deleted,exchange_code', exchangeCode),
+      ]);
+      const recentCutoff = Date.now() - 30 * 24 * 60 * 60 * 1000;
+      const recentLogs = logs.filter(row => row.created_at && new Date(row.created_at).getTime() >= recentCutoff);
+      const actionCounts = new Map();
+      for (const row of logs) {
+        const action = String(row.action || 'نامشخص');
+        actionCounts.set(action, (actionCounts.get(action) || 0) + 1);
+      }
+      const statusCounts = new Map();
+      for (const row of logs) {
+        const status = String(row.status || 'ثبت‌نشده');
+        statusCounts.set(status, (statusCounts.get(status) || 0) + 1);
+      }
+      return {
+        logs, recentLogs, documents, entries,
+        actionCounts: [...actionCounts.entries()].sort((a,b) => b[1]-a[1]).slice(0,8),
+        statusCounts: [...statusCounts.entries()].sort((a,b) => b[1]-a[1]).slice(0,6),
+        activeDocuments: documents.filter(row => row.deleted !== true && row.reversed !== true).length,
+        activeEntries: entries.filter(row => row.deleted !== true).length,
+      };
+    },
+    staleTime: 30000,
+  });
+  if (!exchangeCode) return <Card><CardContent className="p-5 text-sm text-muted-foreground">برای بررسی حاکمیت داده، ابتدا با حساب همان صرافی وارد شوید.</CardContent></Card>;
+  const data = query.data;
+  return <div className="space-y-4">
+    <Card><CardContent className="p-4 space-y-3">
+      <div className="flex items-center justify-between gap-2"><div><h2 className="font-semibold">مرور حاکمیت داده و ردپای تغییرات</h2><p className="text-xs text-muted-foreground">نمایش فقط‌خواندنی پوشش ثبت رویدادها در محدوده صرافی جاری</p></div><Button size="sm" variant="outline" onClick={() => query.refetch()} disabled={query.isFetching}><RefreshCw className="w-4 h-4"/>بروزرسانی</Button></div>
+      {query.isLoading ? <LoadingState/> : query.isError ? <div className="space-y-2"><p className="text-sm text-destructive">{query.error?.message || 'دریافت اطلاعات ناموفق بود'}</p><Button size="sm" onClick={() => query.refetch()}>تلاش دوباره</Button></div> : <>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          <div className="rounded-lg bg-muted/50 p-3"><p className="text-xs text-muted-foreground">کل رویدادهای ثبت‌شده</p><p className="text-xl font-bold">{data.logs.length}</p></div>
+          <div className="rounded-lg bg-muted/50 p-3"><p className="text-xs text-muted-foreground">رویدادهای ۳۰ روز اخیر</p><p className="text-xl font-bold">{data.recentLogs.length}</p></div>
+          <div className="rounded-lg bg-muted/50 p-3"><p className="text-xs text-muted-foreground">اسناد فعال</p><p className="text-xl font-bold">{data.activeDocuments}</p></div>
+          <div className="rounded-lg bg-muted/50 p-3"><p className="text-xs text-muted-foreground">ردیف‌های فعال دفترکل</p><p className="text-xl font-bold">{data.activeEntries}</p></div>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="rounded-lg border p-3 space-y-2"><h3 className="text-sm font-semibold">پراکندگی نوع رویداد</h3>{data.actionCounts.length ? data.actionCounts.map(([name,count])=><div key={name} className="flex justify-between gap-3 border-b last:border-0 py-1.5 text-xs"><span>{name}</span><strong>{count}</strong></div>) : <p className="text-xs text-muted-foreground">رویدادی برای نمایش وجود ندارد.</p>}</div>
+          <div className="rounded-lg border p-3 space-y-2"><h3 className="text-sm font-semibold">وضعیت رویدادها</h3>{data.statusCounts.length ? data.statusCounts.map(([name,count])=><div key={name} className="flex justify-between gap-3 border-b last:border-0 py-1.5 text-xs"><span>{name}</span><strong>{count}</strong></div>) : <p className="text-xs text-muted-foreground">وضعیتی برای نمایش وجود ندارد.</p>}</div>
+        </div>
+      </>}
+    </CardContent></Card>
+    <div className="rounded-lg border p-3 space-y-2 text-xs text-muted-foreground">
+      <div className="flex items-center gap-2 text-sm font-semibold text-foreground"><ShieldCheck className="w-4 h-4"/>محدودیت‌های این بررسی</div>
+      <p>وجود رکورد در audit_logs اثبات نمی‌کند که همه عملیات حساس ثبت شده‌اند یا دسترسی‌ها به‌درستی محدودند. این صفحه فقط داده‌های موجود را می‌شمارد و نمایش می‌دهد؛ هیچ داده‌ای تغییر نمی‌کند.</p>
+      <p>طبقه‌بندی اطلاعات، دوره نگهداری، درخواست حذف/دسترسی، ممیزی دسترسی به داده‌های حساس، پوشش کامل ثبت رویدادها و آزمون سیاست‌های RLS هنوز باید جداگانه بررسی و پیاده‌سازی شوند.</p>
+    </div>
+  </div>;
+}
+
+
+function AccountsPayableReadiness() {
+  const exchangeCode = getExchangeCode();
+  const query = useQuery({
+    queryKey: ['accountsPayableReadiness', exchangeCode],
+    enabled: !!exchangeCode,
+    queryFn: async () => {
+      const [accounts, entries, documents] = await Promise.all([
+        fetchAllTenantRows('chart_of_accounts', 'id,account_code,account_name,account_type,is_active,exchange_code', exchangeCode),
+        fetchAllTenantRows('ledger_entries', 'id,account_type,account_id,document_id,debit,credit,currency,deleted,exchange_code', exchangeCode),
+        fetchAllTenantRows('documents', 'id,doc_number,doc_type,related_type,related_id,related_name,amount,currency,created_at,deleted,reversed,exchange_code', exchangeCode),
+      ]);
+      const liabilities = accounts.filter(a => a.account_type === 'liability' && a.is_active !== false);
+      const activeEntries = entries.filter(e => e.deleted !== true);
+      const supplierEntries = activeEntries.filter(e => ['supplier','vendor','payable'].includes(String(e.account_type || '').toLowerCase()));
+      const supplierDocuments = documents.filter(d => d.deleted !== true && d.reversed !== true &&
+        ['supplier','vendor'].includes(String(d.related_type || '').toLowerCase()));
+      return { liabilities, activeEntries, supplierEntries, supplierDocuments };
+    },
+    staleTime: 30000,
+  });
+
+  if (!exchangeCode) return <Card><CardContent className="p-5 text-sm text-muted-foreground">برای بررسی حساب‌های پرداختنی، ابتدا با حساب همان صرافی وارد شوید.</CardContent></Card>;
+
+  return <div className="space-y-4">
+    <Card><CardContent className="p-4 space-y-2">
+      <div className="flex items-center justify-between gap-2">
+        <div><h2 className="font-semibold">آمادگی حساب‌های پرداختنی</h2><p className="text-xs text-muted-foreground">بررسی اتصال تأمین‌کنندگان، اسناد بدهی و دفترکل؛ بدون ثبت یا تغییر داده</p></div>
+        <Button size="sm" variant="outline" onClick={() => query.refetch()} disabled={query.isFetching}><RefreshCw className="w-4 h-4"/>بروزرسانی</Button>
+      </div>
+      {query.isLoading ? <LoadingState/> : query.isError ? <p className="text-sm text-destructive">{query.error?.message || 'بررسی ساختار ناموفق بود'}</p> : <>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+          <div className="rounded-lg bg-muted/50 p-3"><p className="text-xs text-muted-foreground">حساب‌های بدهی فعال</p><p className="text-xl font-bold">{query.data.liabilities.length}</p></div>
+          <div className="rounded-lg bg-muted/50 p-3"><p className="text-xs text-muted-foreground">ردیف دفترکل فعال</p><p className="text-xl font-bold">{query.data.activeEntries.length}</p></div>
+          <div className="rounded-lg bg-muted/50 p-3"><p className="text-xs text-muted-foreground">اسناد مرتبط با تأمین‌کننده</p><p className="text-xl font-bold">{query.data.supplierDocuments.length}</p></div>
+        </div>
+        <div className="rounded-lg border p-3 space-y-2">
+          <div className="flex items-center gap-2 text-sm font-semibold"><AlertTriangle className="w-4 h-4 text-amber-600"/>گردش پرداختنی هنوز عملیاتی نیست</div>
+          <p className="text-sm text-muted-foreground">در ساختار فعلی، حساب‌های بدهی در کدینگ قابل تعریف‌اند؛ اما موجودیت مستقل تأمین‌کننده، فاکتور خرید/بدهی، سررسید و تسویهٔ قابل ردیابی به‌صورت یک گردش‌کار کامل به هم متصل نشده‌اند.</p>
+          <ul className="list-disc pr-5 space-y-1 text-xs text-muted-foreground">
+            <li>ردیف‌های دفترکل با نوع تأمین‌کننده/فروشنده: {query.data.supplierEntries.length}</li>
+            <li>اسناد مرتبط با تأمین‌کننده: {query.data.supplierDocuments.length}</li>
+            <li>تعداد حساب‌های بدهی صرفاً وجود کدینگ را نشان می‌دهد و به‌تنهایی ماندهٔ قابل پرداخت را اثبات نمی‌کند.</li>
+          </ul>
+        </div>
+        {query.data.liabilities.length > 0 && <div className="rounded-lg border p-3 space-y-2"><h3 className="text-sm font-semibold">حساب‌های بدهی تعریف‌شده</h3>{query.data.liabilities.map(a => <div key={a.id} className="flex justify-between gap-3 border-b last:border-0 py-2 text-sm"><span>{a.account_name}</span><span className="font-mono text-muted-foreground">{a.account_code}</span></div>)}</div>}
+      </>}
+    </CardContent></Card>
+    <div className="rounded-lg border p-3 text-xs text-muted-foreground">این صفحه فقط وضعیت آمادگی ساختار را گزارش می‌کند. تا زمان طراحی و اعمال امن جداول تأمین‌کنندگان، اسناد پرداختنی، تسویه‌ها، کنترل مانده و اتصال اتمیک به دفترکل، هیچ بدهی یا پرداختی ثبت یا محاسبهٔ قطعی نمی‌شود.</div>
+  </div>;
+}
+
+
+function FixedAssetsReadiness() {
+  const exchangeCode = getExchangeCode();
+  const query = useQuery({
+    queryKey: ['fixedAssetsReadiness', exchangeCode],
+    enabled: !!exchangeCode,
+    queryFn: async () => {
+      const [accounts, documents, entries] = await Promise.all([
+        fetchAllTenantRows('chart_of_accounts', 'id,account_code,account_name,account_type,is_active,exchange_code', exchangeCode),
+        fetchAllTenantRows('documents', 'id,doc_number,doc_type,related_type,related_name,amount,currency,created_at,deleted,reversed,exchange_code', exchangeCode),
+        fetchAllTenantRows('ledger_entries', 'id,account_type,account_id,document_id,debit,credit,currency,deleted,exchange_code', exchangeCode),
+      ]);
+      const assetAccounts = accounts.filter(a => a.account_type === 'asset' && a.is_active !== false);
+      const taggedDocs = documents.filter(d => d.deleted !== true && d.reversed !== true &&
+        ['fixed_asset','asset_purchase','asset_disposal'].includes(String(d.related_type || '').toLowerCase()));
+      const taggedEntries = entries.filter(e => e.deleted !== true &&
+        ['fixed_asset','asset'].includes(String(e.account_type || '').toLowerCase()));
+      return { assetAccounts, taggedDocs, taggedEntries };
+    },
+    staleTime: 30000,
+  });
+  if (!exchangeCode) return <Card><CardContent className="p-5 text-sm text-muted-foreground">برای بررسی دارایی‌های ثابت، ابتدا با حساب همان صرافی وارد شوید.</CardContent></Card>;
+  return <div className="space-y-4"><Card><CardContent className="p-4 space-y-3">
+    <div className="flex items-center justify-between gap-2"><div><h2 className="font-semibold">آمادگی دفتر دارایی‌های ثابت</h2><p className="text-xs text-muted-foreground">بررسی فقط‌خواندنی کدینگ دارایی، اسناد و ردیف‌های مرتبط</p></div><Button size="sm" variant="outline" onClick={()=>query.refetch()} disabled={query.isFetching}><RefreshCw className="w-4 h-4"/>بروزرسانی</Button></div>
+    {query.isLoading ? <LoadingState/> : query.isError ? <p className="text-sm text-destructive">{query.error?.message || 'دریافت اطلاعات ناموفق بود'}</p> : <>
+      <div className="grid grid-cols-3 gap-2"><div className="rounded-lg bg-muted/50 p-3"><p className="text-xs text-muted-foreground">حساب‌های دارایی فعال</p><p className="text-xl font-bold">{query.data.assetAccounts.length}</p></div><div className="rounded-lg bg-muted/50 p-3"><p className="text-xs text-muted-foreground">اسناد برچسب‌خورده</p><p className="text-xl font-bold">{query.data.taggedDocs.length}</p></div><div className="rounded-lg bg-muted/50 p-3"><p className="text-xs text-muted-foreground">ردیف‌های دفترکل مرتبط</p><p className="text-xl font-bold">{query.data.taggedEntries.length}</p></div></div>
+      <div className="rounded-lg border p-3 space-y-2"><div className="flex items-center gap-2 text-sm font-semibold"><AlertTriangle className="w-4 h-4 text-amber-600"/>دفتر دارایی ثابت هنوز گردش‌کار کامل ندارد</div><p className="text-sm text-muted-foreground">کدینگ دارایی عمومی موجود است، اما دفتر مستقل دارایی، تاریخ بهره‌برداری، بهای تمام‌شده، ارزش اسقاط، روش و عمر استهلاک، محاسبه دوره‌ای و سند حسابداری استهلاک به‌صورت یک زنجیره قابل ردیابی تأیید نشده‌اند.</p><p className="text-xs text-muted-foreground">هیچ استهلاک، ارزش دفتری یا سود و زیان واگذاری از این شمارنده‌ها استنباط نمی‌شود.</p></div>
+      {query.data.assetAccounts.length>0 && <div className="rounded-lg border p-3 space-y-2"><h3 className="text-sm font-semibold">حساب‌های دارایی موجود</h3>{query.data.assetAccounts.slice(0,30).map(a=><div key={a.id} className="flex justify-between gap-3 border-b last:border-0 py-2 text-sm"><span>{a.account_name}</span><span className="font-mono text-muted-foreground">{a.account_code}</span></div>)}</div>}
+    </>}
+  </CardContent></Card><div className="rounded-lg border p-3 text-xs text-muted-foreground">این صفحه فقط آمادگی داده‌ها را نمایش می‌دهد. تا طراحی دفتر دارایی، قواعد استهلاک و ثبت دوطرفهٔ قابل بازبینی تکمیل نشود، هیچ داده مالی جدیدی ثبت یا تغییر نمی‌کند.</div></div>;
+}
+
+export default function EnterpriseModulePage() {
+  const { moduleKey='' } = useParams();
+  const key=String(moduleKey).replace(/-/g,'_');
+  const feature=FEATURE_CATALOG.find(f=>f.feature_key===key);
+  if(key==='chart_of_accounts') return <><PageHeader title="کدینگ حساب‌ها" icon={ListTree}/><ChartOfAccounts/></>;
+  if(key==='trial_balance') return <><PageHeader title="تراز آزمایشی" icon={ListTree}/><TrialBalance/></>;
+  if(key==='subsidiary_ledger') return <><PageHeader title="دفاتر معین و تفصیلی" icon={ListTree}/><SubsidiaryLedger/></>;
+  if(key==='audit_log') return <><PageHeader title="ردپای حسابرسی" icon={ListTree}/><AuditLogViewer/></>;
+  if(key==='cash_flow') return <><PageHeader title="گردش وجوه نقد" icon={ListTree}/><CashFlowReport/></>;
+  if(key==='fx_exposure') return <><PageHeader title="موقعیت و ریسک ارزی" icon={ListTree}/><FxExposureReport/></>;
+  if(key==='accounts_receivable') return <><PageHeader title="مانده حساب مشتریان و آمادگی دریافتنی" icon={ListTree}/><CustomerBalancesReport/><AccountsReceivableReadiness/></>;
+  if(key==='accounts_payable') return <><PageHeader title="حساب‌های پرداختنی" icon={ListTree}/><AccountsPayableReadiness/></>;
+
+  if(key==='fixed_assets') return <><PageHeader title="دارایی‌های ثابت" icon={ListTree}/><FixedAssetsReadiness/></>;
+  if(key==='fiscal_periods') return <><PageHeader title="دوره‌های مالی" icon={CalendarDays}/><FiscalPeriodsManager/></>;
+  if(key==='period_close') return <><PageHeader title="بستن دوره مالی" icon={CalendarDays}/><PeriodCloseReadiness/></>;
+  if(key==='internal_controls') return <><PageHeader title="کنترل‌های داخلی" icon={ShieldCheck}/><InternalControlsReview/></>;
+  if(key==='budgets') return <><PageHeader title="بودجه و پیش‌بینی" icon={ListTree}/><BudgetReadiness/></>;
+  if(key==='intercompany') return <><PageHeader title="حساب‌های بین‌صرافی" icon={GitBranch}/><IntercompanyReadiness/></>;
+  if(key==='data_governance') return <><PageHeader title="حاکمیت داده و حریم خصوصی" icon={ShieldCheck}/><DataGovernanceReadiness/></>;
+  if(key==='cost_centers') return <><PageHeader title="مراکز هزینه و سود" icon={GitBranch}/><CostCentersManager/></>;
+  if(key==='document_center') return <><PageHeader title="مرکز اسناد" icon={ListTree}/><DocumentCenter/></>;
+  if(key==='treasury') return <><PageHeader title="خزانه‌داری و نقدینگی" icon={ListTree}/><TreasuryOverview/></>;
+  const info=MODULE_INFO[key];
+  return <>
+    <PageHeader title={info?.[0]||feature?.name||'ماژول سازمانی'} icon={ListTree}/>
+    <Card><CardContent className="p-5 space-y-4">
+      <div className="flex items-center gap-2 text-sm font-semibold"><AlertTriangle className="w-4 h-4 text-amber-500"/>مسیر و صفحهٔ این ماژول فعال است؛ عملیات واقعی هنوز تکمیل نشده است.</div>
+      <p className="text-sm text-muted-foreground">{info?.[1]||feature?.default_message||'این ماژول در ساختار سازمانی حساب صراف تعریف شده است.'}</p>
+      {info?.[2]?.length>0&&<div className="space-y-2"><h3 className="text-sm font-semibold">دامنهٔ عملکرد برنامه</h3><ul className="list-disc pr-5 space-y-1 text-sm text-muted-foreground">{info[2].map(x=><li key={x}>{x}</li>)}</ul></div>}
+      <div className="rounded-lg bg-muted/50 p-3 text-xs text-muted-foreground">تا زمان اتصال کامل به دفترکل، کنترل دسترسی و آزمون حسابداری، این صفحه اطلاعات مالی ساختگی ثبت نمی‌کند.</div>
+    </CardContent></Card>
+  </>;
+}
