@@ -407,7 +407,14 @@ export default function Version21Workspace(){
     totals[currency].credit+=Math.max(-n(account.opening),0)+tx.filter(t=>n(t.amount)<0).reduce((s,t)=>s+Math.abs(n(t.amount)),0);
    });
   } else if(active==='banks'){
-   for(const account of selectedRows){const currency=account.currency||'AFN';totals[currency]??={debit:0,credit:0};totals[currency].debit+=Math.max(n(account.opening),0);const related=data.journal.filter(j=>(j.debitAccount||'').includes(account.name)||(j.creditAccount||'').includes(account.name));totals[currency].debit+=related.filter(j=>(j.debitAccount||'').includes(account.name)).reduce((s,j)=>s+n(j.amount),0);totals[currency].credit+=related.filter(j=>(j.creditAccount||'').includes(account.name)).reduce((s,j)=>s+n(j.amount),0);}
+   for(const account of selectedRows){
+    const currency=account.currency||'AFN';totals[currency]??={debit:0,credit:0};
+    totals[currency].debit+=Math.max(n(account.opening),0);
+    totals[currency].credit+=Math.max(-n(account.opening),0);
+    const related=(data.transactions||[]).filter(t=>String(t.accountType||'').toLowerCase()==='bank'&&String(t.accountId||'')===String(account.id)&&!t.deleted&&t.currency===currency);
+    totals[currency].debit+=related.reduce((s,t)=>s+n(t.debit),0);
+    totals[currency].credit+=related.reduce((s,t)=>s+n(t.credit),0);
+   }
   } else if(active==='journal'){
    selectedRows.filter(x=>x.status==='قطعی'||!x.status).forEach(row=>{const currency=row.currency||'AFN';totals[currency]??={debit:0,credit:0};totals[currency].debit+=n(row.debitTotal);totals[currency].credit+=n(row.creditTotal);});
   } else if(active==='ledger'){
