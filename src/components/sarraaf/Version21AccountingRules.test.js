@@ -196,6 +196,9 @@ test('bank ledger mapping uses the exact bank account identity', async () => {
   assert.deepEqual(bankLedgerRef({ id: 42, bank_name: 'بانک نمونه' }), {
     account_type: 'bank', account_id: '42', account_name: 'بانک نمونه',
   });
+  assert.deepEqual(bankLedgerRef({ id: 43, bank_name: '', holder: 'دارنده حساب' }), {
+    account_type: 'bank', account_id: '43', account_name: 'دارنده حساب',
+  });
   assert.throws(() => bankLedgerRef({ id: 0, bank_name: 'بانک نمونه' }), /حساب بانکی/);
   assert.throws(() => bankLedgerRef({ id: 42, bank_name: '' }), /حساب بانکی/);
 });
