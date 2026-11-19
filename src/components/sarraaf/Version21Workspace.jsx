@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import SarraafLogo from '@/components/SarraafLogo';
 import { useAuth } from '@/lib/AuthContext';
+import { sumCashLedgerMovement } from './Version21AccountingRules';
 
 const CURRENCIES = ['AFN','USD','EUR','IRR','TRY','PKR','AED','SAR','GBP','CNY'];
 const MODULES = [
@@ -349,7 +350,7 @@ export default function Version21Workspace(){
  const printPage=()=>window.print();
  const reset=()=>{if(window.confirm('فقط نمای محلی این صفحه پاک شود؟ هیچ رکوردی از دیتابیس حذف نمی‌شود.')){setData(emptyInitial());setLocalPreview(true);setSelected(null);notify('نمای محلی پاک شد؛ برای بارگذاری اطلاعات واقعی، تازه‌سازی را بزنید.');}};
  const balanceFor=(currency,cashName)=>{const opening=(data.cash.find(x=>x.currency===currency&&(!cashName||x.name===cashName))?.opening)||0;return opening+data.transactions.filter(t=>t.currency===currency&&(!cashName||t.cash===cashName)).reduce((s,t)=>s+n(t.amount),0);};
- const totalByCurrency=(currency)=>data.transactions.filter(t=>t.currency===currency).reduce((s,t)=>s+n(t.amount),0);
+ const totalByCurrency=(currency)=>sumCashLedgerMovement(data.transactions,currency);
  const customerSummary=(customer)=>{
   const tx=data.transactions.filter(t=>t.partyType==='customer'&&t.party===customer.name);
   const currencies=[...new Set([customer.currency||'AFN',...tx.map(t=>t.currency)])];
