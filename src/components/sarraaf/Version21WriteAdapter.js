@@ -1,6 +1,6 @@
 import { supabase } from '@/lib/supabaseClient';
 import { getExchangeCode } from '@/lib/supabaseApi';
-import { number, validateBalancedLines, documentDateTimestamp } from './Version21AccountingRules';
+import { number, validateBalancedLines, documentDateTimestamp, validateCashTransactionParty } from './Version21AccountingRules';
 
 const TABLES = {
   customers: 'customers',
@@ -723,11 +723,12 @@ export async function editVersion21Record(module, draft) {
     const currency = draft.currency || oldCash.currency || 'AFN';
     const customer = draft.partyType === 'customer' ? await getCustomer(ctx, draft.party) : null;
     const branch = draft.partyType === 'branch' ? await getBranch(ctx, draft.party) : null;
-    const other = customer
+    const partyType = validateCashTransactionParty(draft.partyType, draft.party, customer || branch);
+    const other = partyType === 'customer'
       ? { account_type: 'customer', account_id: String(customer.id), account_name: customer.name }
-      : branch
+      : partyType === 'branch'
         ? { account_type: 'suspense', account_id: String(branch.id), account_name: branch.name }
-        : { account_type: 'suspense', account_id: '', account_name: draft.party || 'حساب مقابل' };
+        : { account_type: 'suspense', account_id: '', account_name: draft.party.trim() };
     const cash = { account_type: 'cash', account_id: String(oldCash.account_id), account_name: oldCash.account_name, currency };
     const lines = amount > 0
       ? [{ ...cash, debit: amount, credit: 0 }, { ...other, currency, debit: 0, credit: amount }]
