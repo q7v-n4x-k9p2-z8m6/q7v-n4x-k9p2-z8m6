@@ -70,6 +70,9 @@ jobs:
             [workspace.includes("['status','active','accountingStatus'].includes(column.key)"), 'Regular sarraaf lists must hide internal status flags'],
             [workspace.includes("label:'حساب بدهکار'") && workspace.includes("label:'حساب بستانکار'"), 'Operation lists must show debit and credit account details'],
             [workspace.includes("label:'شماره حواله'") && workspace.includes("label:'شماره سند'"), 'Operation lists must show transfer and document numbers'],
+            [data.includes("row.direction === 'send' ? 'ارسالی' : 'نامعلوم'"), 'Unknown remittance direction must never be displayed as outgoing'],
+            [adapter.includes('حواله نامشخص نباید به‌صورت خودکار ارسالی اصلاح شود'), 'Unknown remittance direction must be rejected during edits'],
+            [workspace.includes("label:'مبدأ'") && workspace.includes("label:'مقصد'"), 'Remittance lists must show origin and destination separately'],
           ];
           for (const [ok, message] of checks) {
             if (!ok) throw new Error(message);
