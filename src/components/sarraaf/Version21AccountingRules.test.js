@@ -79,6 +79,12 @@ test('demo identity rejects malformed or missing session identity', () => {
   assert.equal(resolveSessionUserId('{}', 'not-a-token'), '');
 });
 
+test('demo identity reads the claims segment of a standard three-part JWT', () => {
+  const header = Buffer.from(JSON.stringify({ alg: 'HS256', typ: 'JWT' })).toString('base64url');
+  const claims = Buffer.from(JSON.stringify({ sub: 'auth-subject', uid: 107 })).toString('base64url');
+  assert.equal(resolveSessionUserId('{}', header + '.' + claims + '.signature'), '107');
+});
+
 test('demo tenant matching accepts only the exact user and exchange pair', async () => {
   const { matchDemoAccount } = await import('./Version21DemoRules.js');
   assert.equal(matchDemoAccount(107, 'EX-261019-9B2573C5')?.username, '22222222');

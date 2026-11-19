@@ -1,6 +1,7 @@
 import { supabase } from '@/lib/supabaseClient';
 import { getExchangeCode } from '@/lib/supabaseApi';
 import { loadDemoPreviewRecords } from './Version21DemoAdapter';
+import { resolveSessionUserId } from './Version21DemoRules';
 
 const num = value => Number(value ?? 0) || 0;
 const dateOnly = value => value ? String(value).slice(0, 10) : '';
@@ -25,19 +26,10 @@ const documentTypeLabel = (value, description = '') => {
 };
 
 function getSessionUserId() {
-  try {
-    const user = JSON.parse(localStorage.getItem('auth_user') || 'null');
-    if (user?.id !== undefined && user?.id !== null) return String(user.id);
-    const token = localStorage.getItem('auth_token') || '';
-    const payloadPart = token.split('.')[0];
-    if (!payloadPart) return '';
-    let base64 = payloadPart.replace(/-/g, '+').replace(/_/g, '/');
-    while (base64.length % 4) base64 += '=';
-    const payload = JSON.parse(atob(base64));
-    return payload?.uid !== undefined && payload?.uid !== null ? String(payload.uid) : '';
-  } catch {
-    return '';
-  }
+  return resolveSessionUserId(
+    localStorage.getItem('auth_user') || 'null',
+    localStorage.getItem('auth_token') || ''
+  );
 }
 
 async function readTenantTable(table, exchangeCode) {

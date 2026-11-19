@@ -6,17 +6,25 @@ export function resolveSessionUserId(authUserRaw, authToken = '') {
   } catch {
     // A malformed cached user must not prevent trying the signed session token.
   }
-  try {
-    const payloadPart = String(authToken || '').split('.')[0];
-    if (!payloadPart) return '';
-    let base64 = payloadPart.replace(/-/g, '+').replace(/_/g, '/');
-    while (base64.length % 4) base64 += '=';
-    const payload = JSON.parse(atob(base64));
-    const id = payload?.uid ?? payload?.user_id ?? payload?.id;
-    return id === undefined || id === null ? '' : String(id);
-  } catch {
-    return '';
+  const tokenParts = String(authToken || '').split('.');
+  // Standard JWTs store claims in segment 2; legacy app tokens may store
+  // their JSON payload in segment 1. Try both without trusting either alone.
+  const candidates = tokenParts.length >= 3
+    ? [tokenParts[1], tokenParts[0]]
+    : [tokenParts[0]];
+  for (const payloadPart of candidates) {
+    try {
+      if (!payloadPart) continue;
+      let base64 = payloadPart.replace(/-/g, '+').replace(/_/g, '/');
+      while (base64.length % 4) base64 += '=';
+      const payload = JSON.parse(atob(base64));
+      const id = payload?.uid ?? payload?.user_id ?? payload?.id;
+      if (id !== undefined && id !== null && String(id).trim()) return String(id);
+    } catch {
+      // Try the next supported token segment.
+    }
   }
+  return '';
 }
 
 export const DEMO_USERS = Object.freeze({

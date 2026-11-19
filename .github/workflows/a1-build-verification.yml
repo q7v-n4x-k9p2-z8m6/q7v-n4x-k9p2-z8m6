@@ -70,6 +70,7 @@ jobs:
             [demo.includes(".eq('record_kind', 'temporary')") && demo.includes(".eq('owner_user_id', ctx.userId)"), 'Demo mutations must be tenant-scoped and temporary-only'],
             [demo.includes(".gt('expires_at', now)"), 'Expired temporary demo records must not be editable or deletable'],
             [demoRules.includes("114: Object.freeze({ username: '33333333', exchangeCode: 'EX-261028-27497E95' })"), 'Second test sarraaf account must use its own isolated demo tenant'],
+            [demoRules.includes("tokenParts[1]") && data.includes("resolveSessionUserId("), 'Session identity must support standard JWT claims and the shared resolver'],
             [adapter.includes("[114, { username: '33333333', exchangeCode: 'EX-261028-27497E95' }]"), 'Second test sarraaf account must be blocked from core financial writes'],
             [data.includes("Number(userId) === 114 && exchangeCode === 'EX-261028-27497E95'"), 'Second test sarraaf account must load only its isolated preview records'],
             [workspace.includes("['status','active','accountingStatus'].includes(column.key)"), 'Regular sarraaf lists must hide internal status flags'],
