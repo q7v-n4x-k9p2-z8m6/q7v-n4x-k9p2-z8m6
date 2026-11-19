@@ -54,7 +54,7 @@ export function validateCashTransactionPartyIdentity(document, partyType, party,
 
 export function bankLedgerRef(bank) {
   const id = String(bank?.id ?? '').trim();
-  const name = String(bank?.bank_name || bank?.name || '').trim();
+  const name = String(bank?.bank_name || bank?.name || bank?.holder || '').trim();
   if (!/^[1-9]\d*$/.test(id) || !name) {
     throw new Error('حساب بانکی برای اتصال به دفتر کل معتبر نیست.');
   }
