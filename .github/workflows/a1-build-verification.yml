@@ -37,6 +37,7 @@ jobs:
           const adapter = fs.readFileSync('src/components/sarraaf/Version21WriteAdapter.js', 'utf8');
           const data = fs.readFileSync('src/components/sarraaf/Version21DataAdapter.js', 'utf8');
           const demo = fs.readFileSync('src/components/sarraaf/Version21DemoAdapter.js', 'utf8');
+        const demoRules = fs.readFileSync('src/components/sarraaf/Version21DemoRules.js', 'utf8');
           const accountingRules = fs.readFileSync('src/components/sarraaf/Version21AccountingRules.js', 'utf8');
           const checks = [
             [!workspace.includes('\\${'), 'Workspace contains a literal escaped JSX expression'],
@@ -67,7 +68,7 @@ jobs:
             [workspace.includes('data.isDemoAccount&&!target._demoPreview'), 'Demo delete must never touch existing core accounting records'],
             [workspace.includes('data.isDemoAccount&&!selected._demoPreview'), 'Demo edit must never touch existing core accounting records'],
             [demo.includes(".eq('record_kind', 'temporary')") && demo.includes(".eq('owner_user_id', ctx.userId)"), 'Demo mutations must be tenant-scoped and temporary-only'],
-            [demo.includes("114: { username: '33333333', exchangeCode: 'EX-261028-27497E95' }"), 'Second test sarraaf account must use its own isolated demo tenant'],
+            [demoRules.includes("114: Object.freeze({ username: '33333333', exchangeCode: 'EX-261028-27497E95' })"), 'Second test sarraaf account must use its own isolated demo tenant'],
             [adapter.includes("[114, { username: '33333333', exchangeCode: 'EX-261028-27497E95' }]"), 'Second test sarraaf account must be blocked from core financial writes'],
             [data.includes("Number(userId) === 114 && exchangeCode === 'EX-261028-27497E95'"), 'Second test sarraaf account must load only its isolated preview records'],
             [workspace.includes("['status','active','accountingStatus'].includes(column.key)"), 'Regular sarraaf lists must hide internal status flags'],
