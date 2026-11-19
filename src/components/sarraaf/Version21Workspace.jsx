@@ -2,7 +2,6 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { loadVersion21Database } from './Version21DataAdapter';
 import { saveVersion21Record, editVersion21Record, deleteVersion21Record, deactivateVersion21MasterRecord, captureVersion21Error, seedVersion21BaseAccounts } from './Version21WriteAdapter';
 import { loadVersion21LocalState, saveVersion21LocalState } from './Version21LocalStore';
-import { saveDemoPreviewRecord, deleteDemoPreviewRecord } from './Version21DemoAdapter';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import LanguageSettings from './LanguageSettings';
 import { hasPermission } from '@/lib/permissions';
@@ -193,17 +192,6 @@ export default function Version21Workspace(){
   if(active==='branchLedger') source=branchDetail?data.transactions.filter(x=>x.partyType==='branch'&&x.party===branchDetail.name):data.branches;
   if(active==='ledger') source=data.ledger||[];
   if(active==='reports') source=data.reports||[];
-  const demoModule = active==='customerLedger' ? (customerDetail?'transactions':'customers') : active==='branchLedger' ? (branchDetail?'transactions':'branches') : active;
-  const demoRows = (data.demoPreviewRecords||[]).filter(r=>{
-   if(r.module_key!==demoModule)return false;
-   if(active==='customerLedger'&&customerDetail)return r.payload?.party===customerDetail.name;
-   if(active==='branchLedger'&&branchDetail)return r.payload?.party===branchDetail.name;
-   return true;
-  }).map(r=>({
-   ...(r.payload||{}), id:'demo-'+r.id, _demoRecordId:r.id, _demoModule:r.module_key,
-   _demoPreview:true, _demoFixed:r.record_kind==='sample'
-  }));
-  source=[...source,...demoRows];
   const q=query.trim().toLowerCase();
   return source.filter(r=>(!q||Object.values(r).join(' ').toLowerCase().includes(q))&&(filterCurrency==='همه'||!r.currency||r.currency===filterCurrency)&&(!dateFrom||!r.date||r.date>=dateFrom)&&(!dateTo||!r.date||r.date<=dateTo));
  },[data,active,customerDetail,branchDetail,query,filterCurrency,dateFrom,dateTo]);
@@ -233,9 +221,9 @@ export default function Version21Workspace(){
   const payload={...draft,clientOperationId:draft.clientOperationId||(globalThis.crypto?.randomUUID?.()||('v21-'+Date.now()+'-'+Math.random().toString(36).slice(2)))};
   setDraft(payload);
   try{
-   const result=data.isDemoAccount
-    ? await saveDemoPreviewRecord(mod,payload,payload._demoRecordId||null)
-    : (payload.id?await editVersion21Record(mod,payload):await saveVersion21Record(mod,payload));
+   const result=payload.id
+    ? await editVersion21Record(mod,payload)
+    : await saveVersion21Record(mod,payload);
    setModal('');setDraft({});
    await refreshDatabase();
    setSelected(null);
@@ -264,14 +252,6 @@ export default function Version21Workspace(){
   if(!window.confirm(confirmMessage))return;
   try{
    const target=selected;
-   if(data.isDemoAccount&&!target._demoPreview){notify('در این حساب فقط رکوردهای موقت قابل حذف هستند؛ اطلاعات اصلی حساب دست‌نخورده می‌ماند.');return;}
-   if(target._demoPreview){
-    if(target._demoFixed){notify('این رکورد ثابت است و امکان حذف آن وجود ندارد.');return;}
-    await deleteDemoPreviewRecord(target._demoRecordId);
-    await refreshDatabase();
-    notify('رکورد موقت حذف شد.');
-    return;
-   }
    const result=isMasterData
     ? await deactivateVersion21MasterRecord(targetModule,target)
     : await deleteVersion21Record(targetModule,target);
@@ -289,15 +269,6 @@ export default function Version21Workspace(){
   if(!canModuleAction(active,'edit')){notify('مجوز ویرایش این بخش برای حساب شما فعال نیست.');return;}
   if(dbStatus!=='connected'||localPreview){notify('در پیش‌نمایش محلی ویرایش غیرفعال است؛ ابتدا اطلاعات واقعی را تازه‌سازی کنید.');return;}
   if(!selected){notify('ابتدا یک ردیف را انتخاب کنید.');return;}
-  if(data.isDemoAccount&&!selected._demoPreview){notify('در این حساب فقط رکوردهای موقت قابل ویرایش هستند؛ اطلاعات اصلی حساب دست‌نخورده می‌ماند.');return;}
-  if(selected._demoPreview){
-   if(selected._demoFixed){notify('این رکورد ثابت است و امکان ویرایش آن وجود ندارد.');return;}
-   const demoEditModule=selected._demoModule;
-   if(!SCHEMAS[demoEditModule]){notify('ویرایش این نوع رکورد از این بخش پشتیبانی نمی‌شود.');return;}
-   setDraft({...selected});
-   setModal(demoEditModule);
-   return;
-  }
   if(active==='ledger'){notify('دفتر کل گزارش سطرهای ثبت‌شده است؛ برای اصلاح، سند اصلی را در روزنامچه یا بخش عملیات مربوط باز کنید.');return;}
   if(['customerLedger','branchLedger'].includes(active)&&selected.documentId){
    setDraft({...selected});setModal('transactions');return;
@@ -317,13 +288,7 @@ export default function Version21Workspace(){
   const payload={...draft,clientOperationId:draft.clientOperationId||(globalThis.crypto?.randomUUID?.()||('v21-'+Date.now()+'-'+Math.random().toString(36).slice(2)))};
   setDraft(payload);
   try{
-   const result=data.isDemoAccount
-    ? await saveDemoPreviewRecord('transactions',{
-      date:payload.date,type:payload.kind,partyType:payload.partyType,party:payload.party,
-      currency:payload.currency,amount:(payload.kind==='خرج'?-1:1)*Number(payload.amount||0),
-      cash:payload.cash,description:payload.description,status:'موقت'
-    })
-    : await saveVersion21Record('cashAction',payload);
+   const result=await saveVersion21Record('cashAction',payload);
    setModal('');setDraft({});
    await refreshDatabase();
    notify(result?.warning||result?.auditWarning?'گردش صندوق ثبت شد؛ '+(result.warning||result.auditWarning):'گردش صندوق و سند حسابداری در دیتابیس ثبت شد.');
@@ -603,7 +568,7 @@ export default function Version21Workspace(){
        {profitReport.accounts.length>0&&<div className="overflow-auto border bg-white"><div className="border-b bg-[#edf3f7] px-3 py-2 text-[11px] font-bold">تفکیک بر اساس حساب</div><table className="w-full text-xs"><thead className="bg-slate-100"><tr><th className="p-2 text-right">کد حساب</th><th>نام حساب</th><th>نوع</th><th>ارز</th><th>مبلغ خالص</th></tr></thead><tbody>{profitReport.accounts.map((x,i)=><tr key={x.accountId+'-'+x.currency+'-'+i} className="border-t"><td className="p-2">{x.code}</td><td>{x.account}</td><td>{x.accountType==='revenue'?'درآمد':'مصرف'}</td><td>{x.currency}</td><td className="text-center">{fmt(x.amount)}</td></tr>)}</tbody></table></div>}
        {profitUnclassified.length>0&&<div className="border border-amber-300 bg-amber-50 px-3 py-2 text-[10px] leading-5 text-amber-900">تعداد {fmt(profitUnclassified.length)} سطر مالی با عنوان درآمد/مصرف هنوز به حساب کدینگ وصل نیست؛ این سطرها عمداً در سود و زیان محاسبه نشده‌اند تا عدد غیرواقعی نمایش داده نشود.</div>}
       </section>}
-      {!readOnly&&!data.isDemoAccount&&active==='accounts'&&['1000','1010','1020','1030','2000','2010','3000','4000','4010','4020','5000','5010','5020'].some(code=>!data.accounts.some(account=>account.code===code))&&<div className="mb-3 flex flex-wrap items-center justify-between gap-2 border border-amber-300 bg-amber-50 px-3 py-3 text-[11px] leading-5 text-amber-900"><span>کدینگ پایه نسخهٔ ۲۱ کامل نیست. می‌توانید فقط حساب‌های پایهٔ غایب را برای همین صراف ایجاد کنید؛ حساب‌های موجود و سوابق قبلی تغییر نمی‌کنند.</span><button onClick={async()=>{if(dbStatus!=='connected'||localPreview){notify('ابتدا اطلاعات واقعی دیتابیس را تازه‌سازی کنید.');return;}if(!canModuleAction('accounts','create')){notify('مجوز ایجاد کدینگ برای این حساب فعال نیست.');return;}if(!window.confirm('کدینگ پایه فقط برای همین کد صرافی ایجاد شود؟ حساب‌ها و اسناد موجود حذف یا بازنویسی نمی‌شوند.'))return;setSaving(true);try{const result=await seedVersion21BaseAccounts();await refreshDatabase();notify('کدینگ پایه ایجاد شد. تعداد حساب‌های پایه: '+fmt(result.created)+(result.auditWarning?'؛ هشدار ثبت سوابق: '+result.auditWarning:''));}catch(error){await captureVersion21Error(error,'seedChartOfAccounts');notify('ایجاد کدینگ انجام نشد: '+(error?.message||'خطای نامشخص'));}finally{setSaving(false);}}} disabled={saving||dbStatus!=='connected'} className="shrink-0 border border-blue-300 bg-white px-3 py-2 font-bold text-blue-900 disabled:opacity-50">{saving?'در حال ایجاد...':'ایجاد کدینگ پایه'}</button></div>}
+      {!readOnly&&active==='accounts'&&['1000','1010','1020','1030','2000','2010','3000','4000','4010','4020','5000','5010','5020'].some(code=>!data.accounts.some(account=>account.code===code))&&<div className="mb-3 flex flex-wrap items-center justify-between gap-2 border border-amber-300 bg-amber-50 px-3 py-3 text-[11px] leading-5 text-amber-900"><span>کدینگ پایه نسخهٔ ۲۱ کامل نیست. می‌توانید فقط حساب‌های پایهٔ غایب را برای همین صراف ایجاد کنید؛ حساب‌های موجود و سوابق قبلی تغییر نمی‌کنند.</span><button onClick={async()=>{if(dbStatus!=='connected'||localPreview){notify('ابتدا اطلاعات واقعی دیتابیس را تازه‌سازی کنید.');return;}if(!canModuleAction('accounts','create')){notify('مجوز ایجاد کدینگ برای این حساب فعال نیست.');return;}if(!window.confirm('کدینگ پایه فقط برای همین کد صرافی ایجاد شود؟ حساب‌ها و اسناد موجود حذف یا بازنویسی نمی‌شوند.'))return;setSaving(true);try{const result=await seedVersion21BaseAccounts();await refreshDatabase();notify('کدینگ پایه ایجاد شد. تعداد حساب‌های پایه: '+fmt(result.created)+(result.auditWarning?'؛ هشدار ثبت سوابق: '+result.auditWarning:''));}catch(error){await captureVersion21Error(error,'seedChartOfAccounts');notify('ایجاد کدینگ انجام نشد: '+(error?.message||'خطای نامشخص'));}finally{setSaving(false);}}} disabled={saving||dbStatus!=='connected'} className="shrink-0 border border-blue-300 bg-white px-3 py-2 font-bold text-blue-900 disabled:opacity-50">{saving?'در حال ایجاد...':'ایجاد کدینگ پایه'}</button></div>}
       {active==='balance'&&<><div className="mb-2 border border-amber-300 bg-amber-50 px-3 py-2 text-[10px] leading-5 text-amber-900">این خلاصه فقط موجودی صندوق‌ها و گردش نقدی را نشان می‌دهد و جایگزین بیلانس آزمایشی یا ترازنامه بدهکار/بستانکار نیست.</div><div className="mb-3 overflow-auto border bg-white"><table className="w-full text-xs"><thead className="bg-slate-200"><tr><th className="p-2 text-right">ارز</th><th>مانده صندوق</th><th>گردش خالص</th></tr></thead><tbody>{currencies.map(c=><tr key={c} className="border-t"><td className="p-2">{c}</td><td className="text-center">{fmt(data.cash.filter(x=>x.currency===c).reduce((s,x)=>s+balanceFor(c,x.name),0))}</td><td className="text-center">{fmt(totalByCurrency(c))}</td></tr>)}</tbody></table></div></>}
       {active==='exchange'&&<div className="mb-2 flex gap-2"><button onClick={()=>openNew('exchange',{kind:'خرید'})} className="border bg-white px-3 py-2 text-[10px]">خرید اسعار</button><button onClick={()=>openNew('exchange',{kind:'فروش'})} className="border bg-white px-3 py-2 text-[10px]">فروش اسعار</button><button onClick={()=>openNew('exchange',{kind:'تبدیل'})} className="border bg-white px-3 py-2 text-[10px]">تبدیل ارز</button></div>}
       {active==='remittance'&&<div className="mb-2 flex gap-2"><button onClick={()=>openNew('remittance',{direction:'ارسالی'})} className="border bg-white px-3 py-2 text-[10px]">حواله ارسالی</button><button onClick={()=>openNew('remittance',{direction:'دریافتی'})} className="border bg-white px-3 py-2 text-[10px]">حواله دریافتی</button><button onClick={()=>openNew('remittance',{direction:'نامعلوم'})} className="border bg-white px-3 py-2 text-[10px]">حواله نامعلوم</button></div>}
