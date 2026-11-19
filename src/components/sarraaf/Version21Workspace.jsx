@@ -510,7 +510,7 @@ export default function Version21Workspace(){
  const mainTitle='حساب صراف'; return <div dir="rtl" className="v21-workspace-root space-y-2 text-[#253746]">
 
   <header className="v21-lt-titlebar hidden lg:flex" dir="ltr" aria-label="نوار عنوان برنامه">
-   <div className="v21-lt-titlebar-brand"><SarraafLogo size={22}/><span>چیدمان لپ‌تاپ حساب صراف — نسخه ۲۱</span></div>
+   <div className="v21-lt-titlebar-brand"><SarraafLogo size={22}/><span>حساب صراف</span></div>
    <div className="v21-lt-window-controls" aria-hidden="true"><Minus/><Square/><X/></div>
   </header>
   <section className="v21-workspace-shell flex max-h-[78vh] min-h-[640px] lg:max-h-none flex-col overflow-hidden border border-[#65798b] bg-[#eef1f4] shadow-md">
