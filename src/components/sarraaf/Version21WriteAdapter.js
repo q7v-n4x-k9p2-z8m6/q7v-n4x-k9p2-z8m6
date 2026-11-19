@@ -1,6 +1,6 @@
 import { supabase } from '@/lib/supabaseClient';
 import { getExchangeCode } from '@/lib/supabaseApi';
-import { number, validateBalancedLines, documentDateTimestamp, validateCashTransactionParty } from './Version21AccountingRules';
+import { number, validateBalancedLines, documentDateTimestamp, validateCashTransactionParty, validateCashTransactionPartyIdentity } from './Version21AccountingRules';
 
 const TABLES = {
   customers: 'customers',
@@ -712,6 +712,11 @@ export async function editVersion21Record(module, draft) {
   if (module === 'transactions') {
     const documentId = Number(draft.documentId || 0);
     if (!documentId) throw new Error('سند اصلی این گردش پیدا نشد.');
+    const { data: sourceDocument, error: sourceDocumentError } = await supabase.from('documents')
+      .select('related_type,related_id,related_name')
+      .eq('exchange_code', ctx.exchangeCode).eq('id', documentId).maybeSingle();
+    if (sourceDocumentError) throw sourceDocumentError;
+    if (!sourceDocument) throw new Error('سند اصلی گردش صندوق در همین صراف پیدا نشد.');
     const { data: oldLines, error: lineError } = await supabase.from('ledger_entries')
       .select('account_type,account_id,account_name,currency')
       .eq('exchange_code', ctx.exchangeCode).eq('document_id', documentId).eq('deleted', false);
@@ -724,6 +729,7 @@ export async function editVersion21Record(module, draft) {
     const customer = draft.partyType === 'customer' ? await getCustomer(ctx, draft.party) : null;
     const branch = draft.partyType === 'branch' ? await getBranch(ctx, draft.party) : null;
     const partyType = validateCashTransactionParty(draft.partyType, draft.party, customer || branch);
+    validateCashTransactionPartyIdentity(sourceDocument, partyType, draft.party, customer || branch);
     const other = partyType === 'customer'
       ? { account_type: 'customer', account_id: String(customer.id), account_name: customer.name }
       : partyType === 'branch'
