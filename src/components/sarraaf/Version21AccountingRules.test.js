@@ -14,6 +14,19 @@ test('number treats blank values as zero but rejects malformed numeric input', (
   assert.equal(Number.isNaN(number('12x')), true);
 });
 
+test('cash movement totals exclude customer and non-cash ledger rows per currency', async () => {
+  const { sumCashLedgerMovement } = await import('./Version21AccountingRules.js');
+  const rows = [
+    { cash: 'صندوق اصلی', currency: 'AFN', amount: 120 },
+    { cash: 'صندوق اصلی', currency: 'AFN', amount: -35 },
+    { cash: '', currency: 'AFN', amount: -85 },
+    { cash: 'صندوق دالر', currency: 'USD', amount: 50 },
+  ];
+  assert.equal(sumCashLedgerMovement(rows, 'AFN'), 85);
+  assert.equal(sumCashLedgerMovement(rows, 'USD'), 50);
+  assert.equal(sumCashLedgerMovement(rows, 'EUR'), 0);
+});
+
 test('accepts a balanced two-sided journal entry', () => {
   assert.doesNotThrow(() => validateBalancedLines([
     line('expense', 'مصارف', 250, 0),
