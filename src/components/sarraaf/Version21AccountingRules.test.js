@@ -124,3 +124,20 @@ test('cash transaction permits suspense counterpart only for explicit other type
   assert.throws(() => validateCashTransactionParty('', 'حساب متفرقه'), /نوع طرف حساب/);
   assert.throws(() => validateCashTransactionParty('other', ''), /طرف حساب/);
 });
+
+
+test('cash transaction edit cannot change its linked party or document relation', async () => {
+  const { validateCashTransactionPartyIdentity } = await import('./Version21AccountingRules.js');
+  assert.equal(validateCashTransactionPartyIdentity(
+    { related_type: 'branch', related_id: 8, related_name: 'نمایندگی هرات' },
+    'branch', 'نمایندگی هرات', { id: 8 }
+  ), true);
+  assert.throws(() => validateCashTransactionPartyIdentity(
+    { related_type: 'branch', related_id: 8, related_name: 'نمایندگی هرات' },
+    'branch', 'نمایندگی کابل', { id: 9 }
+  ), /طرف حساب یک گردش ثبت‌شده قابل تعویض نیست/);
+  assert.throws(() => validateCashTransactionPartyIdentity(
+    { related_type: 'customer', related_id: 12, related_name: 'احمد' },
+    'other', 'حساب متفرقه'
+  ), /طرف حساب یک گردش ثبت‌شده قابل تعویض نیست/);
+});
