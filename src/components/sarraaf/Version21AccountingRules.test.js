@@ -78,3 +78,12 @@ test('demo identity rejects malformed or missing session identity', () => {
   assert.equal(resolveSessionUserId('{bad json', ''), '');
   assert.equal(resolveSessionUserId('{}', 'not-a-token'), '');
 });
+
+test('demo tenant matching accepts only the exact user and exchange pair', async () => {
+  const { matchDemoAccount } = await import('./Version21DemoRules.js');
+  assert.equal(matchDemoAccount(107, 'EX-261019-9B2573C5')?.username, '22222222');
+  assert.equal(matchDemoAccount(114, 'EX-261028-27497E95')?.username, '33333333');
+  assert.equal(matchDemoAccount(107, 'EX-261028-27497E95'), null);
+  assert.equal(matchDemoAccount(114, 'EX-261019-9B2573C5'), null);
+  assert.equal(matchDemoAccount(999, 'EX-261019-9B2573C5'), null);
+});
