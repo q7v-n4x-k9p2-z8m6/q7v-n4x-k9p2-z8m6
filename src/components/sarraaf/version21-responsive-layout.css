@@ -3315,3 +3315,15 @@
     font-size: 8px !important;
   }
 }
+
+
+/* A1 laptop correction: the four-button dock is phone/tablet navigation only.
+   Keep the established laptop workspace and its original lower layout unchanged. */
+@media (min-width: 1024px) {
+  html body .v21-workspace-shell .v21-mobile-bottom {
+    display: none !important;
+  }
+  html body .v21-workspace-root {
+    padding-bottom: 0 !important;
+  }
+}
