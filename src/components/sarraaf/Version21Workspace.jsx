@@ -18,7 +18,7 @@ import {
 } from 'lucide-react';
 import SarraafLogo from '@/components/SarraafLogo';
 import { useAuth } from '@/lib/AuthContext';
-import { sumCashLedgerMovement, sumCashLedgerSide, sumBankLedgerMovement } from './Version21AccountingRules';
+import { sumCashLedgerMovement, sumCashLedgerSide, sumBankLedgerMovement, withRunningPartyBalances } from './Version21AccountingRules';
 
 const CURRENCIES = ['AFN','USD','EUR','IRR','TRY','PKR','AED','SAR','GBP','CNY'];
 const MODULES = [
@@ -213,7 +213,13 @@ export default function Version21Workspace(){
   }));
   source=[...source,...demoRows];
   const q=query.trim().toLowerCase();
-  return source.filter(r=>(!q||Object.values(r).join(' ').toLowerCase().includes(q))&&(filterCurrency==='همه'||!r.currency||r.currency===filterCurrency)&&(!dateFrom||!r.date||r.date>=dateFrom)&&(!dateTo||!r.date||r.date<=dateTo));
+  let preparedSource=source;
+  if(active==='customerLedger'&&customerDetail){
+   preparedSource=withRunningPartyBalances(source,{[customerDetail.currency||'AFN']:n(customerDetail.opening)});
+  } else if(active==='branchLedger'&&branchDetail){
+   preparedSource=withRunningPartyBalances(source,{[branchDetail.currency||'AFN']:n(branchDetail.opening)});
+  }
+  return preparedSource.filter(r=>(!q||Object.values(r).join(' ').toLowerCase().includes(q))&&(filterCurrency==='همه'||!r.currency||r.currency===filterCurrency)&&(!dateFrom||!r.date||r.date>=dateFrom)&&(!dateTo||!r.date||r.date<=dateTo));
  },[data,active,customerDetail,branchDetail,query,filterCurrency,dateFrom,dateTo]);
  const profitReport=useMemo(()=>{
   const totals=new Map(),accounts=new Map();
@@ -432,7 +438,8 @@ export default function Version21Workspace(){
   if(mod==='customerLedger'&&customerDetail)return [
    {key:'date',label:'تاریخ'},{key:'type',label:'نوع عملیات'},{key:'description',label:'شرح'},
    {key:'debit',label:'بدهکار',render:r=><span className="inline-flex min-w-[82px] justify-center rounded-lg bg-rose-50 px-2 py-1 font-bold text-rose-700">{fmt(n(r.debit))}</span>},
-   {key:'credit',label:'بستانکار',render:r=><span className="inline-flex min-w-[82px] justify-center rounded-lg bg-emerald-50 px-2 py-1 font-bold text-emerald-700">{fmt(n(r.credit))}</span>},{key:'currency',label:'ارز'},{key:'status',label:'وضعیت سند'}
+   {key:'credit',label:'بستانکار',render:r=><span className="inline-flex min-w-[82px] justify-center rounded-lg bg-emerald-50 px-2 py-1 font-bold text-emerald-700">{fmt(n(r.credit))}</span>},
+   {key:'runningBalance',label:'مانده پس از گردش',render:r=><span className="inline-flex min-w-[110px] justify-center rounded-lg bg-blue-50 px-2 py-1 font-bold text-blue-800">{fmt(r.runningBalance)} · {r.runningSide}</span>},{key:'currency',label:'ارز'},{key:'status',label:'وضعیت سند'}
   ];
   if(mod==='branchLedger'&&!branchDetail)return [
    {key:'code',label:'کد نمایندگی'},{key:'name',label:'نام نمایندگی'},{key:'city',label:'موقعیت'},{key:'currency',label:'ارز اصلی'},
@@ -441,7 +448,8 @@ export default function Version21Workspace(){
   if(mod==='branchLedger'&&branchDetail)return [
    {key:'date',label:'تاریخ'},{key:'type',label:'نوع عملیات'},{key:'description',label:'شرح'},
    {key:'debit',label:'بدهکار',render:r=><span className="inline-flex min-w-[82px] justify-center rounded-lg bg-rose-50 px-2 py-1 font-bold text-rose-700">{fmt(n(r.debit))}</span>},
-   {key:'credit',label:'بستانکار',render:r=><span className="inline-flex min-w-[82px] justify-center rounded-lg bg-emerald-50 px-2 py-1 font-bold text-emerald-700">{fmt(n(r.credit))}</span>},{key:'currency',label:'ارز'},{key:'status',label:'وضعیت سند'}
+   {key:'credit',label:'بستانکار',render:r=><span className="inline-flex min-w-[82px] justify-center rounded-lg bg-emerald-50 px-2 py-1 font-bold text-emerald-700">{fmt(n(r.credit))}</span>},
+   {key:'runningBalance',label:'مانده پس از گردش',render:r=><span className="inline-flex min-w-[110px] justify-center rounded-lg bg-blue-50 px-2 py-1 font-bold text-blue-800">{fmt(r.runningBalance)} · {r.runningSide}</span>},{key:'currency',label:'ارز'},{key:'status',label:'وضعیت سند'}
   ];
   const fields=SCHEMAS[mod]?.fields||[];
   if(mod==='accounts')return [
