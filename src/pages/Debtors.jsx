@@ -4,7 +4,7 @@ import { useCustomers, useCustomerLedgerBalances } from '@/lib/useSarraaf';
 import { PageHeader, EmptyState, LoadingState, StatusBadge } from '@/components/sarraaf/Pieces';
 import { Input } from '@/components/ui/input';
 import { formatNumber, formatAmount } from '@/lib/sarraaf';
-import { Search, Handshake, Wallet, TrendingDown, TrendingUp } from 'lucide-react';
+import { Search, Handshake, Wallet } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const TABS = [
@@ -125,7 +125,7 @@ export default function Debtors() {
               </tr>
             </thead>
             <tbody>
-              {rows.map(({ customer, balances, net }, index) => {
+              {rows.map(({ customer, balances }, index) => {
                 const currencyValues = Object.values(balances);
                 const isDebtor = currencyValues.some(value => value > 0.0001);
                 const isCreditor = currencyValues.some(value => value < -0.0001);
