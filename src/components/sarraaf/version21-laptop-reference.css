@@ -1005,3 +1005,313 @@
     min-height: 600px !important;
   }
 }
+
+
+
+
+/* ============================================================
+   A1 preview — designer-reference dashboard layout
+   One bounded vertical layout; only the laptop dashboard is targeted.
+   ============================================================ */
+@media (min-width: 768px) {
+  html body .v21-workspace-root:has(> .v21-lt-titlebar) {
+    display: flex !important;
+    flex-direction: column !important;
+    height: calc(100dvh - 16px) !important;
+    min-height: 0 !important;
+    max-height: calc(100dvh - 16px) !important;
+    margin: 8px 0 !important;
+    gap: 0 !important;
+    overflow: hidden !important;
+  }
+  html body .v21-workspace-root:has(> .v21-lt-titlebar) > .v21-lt-titlebar {
+    flex: 0 0 42px !important;
+    height: 42px !important;
+    min-height: 42px !important;
+    max-height: 42px !important;
+    margin: 0 !important;
+  }
+  html body .v21-workspace-root:has(> .v21-lt-titlebar) > .v21-workspace-shell {
+    display: flex !important;
+    flex: 1 1 0 !important;
+    width: 100% !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    margin: 0 !important;
+    overflow: hidden !important;
+  }
+  html body .v21-workspace-shell > div.flex.min-h-0 {
+    display: flex !important;
+    flex: 1 1 0 !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+  }
+
+  /* Menu bar and 14-item toolbar. */
+  html body .v21-workspace-shell .v21-laptop-toolbar {
+    display: flex !important;
+    flex: 0 0 auto !important;
+    flex-direction: column !important;
+    gap: 0 !important;
+  }
+  html body .v21-workspace-shell .v21-laptop-toolbar > nav[aria-label="منوی اصلی دسکتاپ"] {
+    display: flex !important;
+    flex: 0 0 38px !important;
+    height: 38px !important;
+    min-height: 38px !important;
+    max-height: 38px !important;
+    margin: 0 !important;
+    align-items: center !important;
+    overflow: hidden !important;
+    padding: 0 10px !important;
+  }
+  html body .v21-workspace-shell .v21-laptop-toolbar > aside.v21-module-icon-row {
+    display: flex !important;
+    flex: 0 0 92px !important;
+    width: 100% !important;
+    height: 92px !important;
+    min-height: 92px !important;
+    max-height: 92px !important;
+    flex-wrap: nowrap !important;
+    align-items: stretch !important;
+    justify-content: stretch !important;
+    gap: 2px !important;
+    overflow: hidden !important;
+    padding: 3px 5px !important;
+  }
+  html body .v21-workspace-shell .v21-laptop-toolbar > aside.v21-module-icon-row > button.v21-desktop-module-button {
+    display: flex !important;
+    flex: 1 1 0 !important;
+    width: 0 !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    height: 100% !important;
+    min-height: 0 !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 5px !important;
+    padding: 5px 2px !important;
+    overflow: hidden !important;
+  }
+  html body .v21-workspace-shell .v21-laptop-toolbar > aside.v21-module-icon-row > button.v21-desktop-module-button > svg {
+    display: block !important;
+    flex: 0 0 28px !important;
+    width: 28px !important;
+    height: 28px !important;
+    max-width: 100% !important;
+  }
+  html body .v21-workspace-shell .v21-laptop-toolbar > aside.v21-module-icon-row > button.v21-desktop-module-button > span {
+    display: block !important;
+    width: 100% !important;
+    font-size: 13px !important;
+    line-height: 1.2 !important;
+    text-align: center !important;
+    white-space: normal !important;
+    overflow-wrap: anywhere !important;
+  }
+
+  /* Main dashboard gets a bounded height instead of growing past its parent. */
+  html body .v21-workspace-shell main:has(> .v21-lt-home) {
+    display: flex !important;
+    flex: 1 1 0 !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+    padding: 8px !important;
+  }
+  html body .v21-workspace-shell main > .v21-lt-home {
+    display: flex !important;
+    flex: 1 1 0 !important;
+    flex-direction: column !important;
+    width: 100% !important;
+    height: auto !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    gap: 8px !important;
+    overflow: hidden !important;
+  }
+
+  /* Blue heading and four equal statistic cards. */
+  html body .v21-workspace-shell main > .v21-lt-home > .v21-lt-band {
+    display: flex !important;
+    flex: 0 0 55px !important;
+    height: 55px !important;
+    min-height: 55px !important;
+    max-height: 55px !important;
+    align-items: center !important;
+  }
+  html body .v21-workspace-shell main > .v21-lt-home > .v21-lt-stats {
+    display: grid !important;
+    flex: 0 0 78px !important;
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    gap: 7px !important;
+    width: 100% !important;
+    height: 78px !important;
+    min-height: 78px !important;
+    max-height: 78px !important;
+  }
+  html body .v21-workspace-shell .v21-lt-stat {
+    display: flex !important;
+    min-width: 0 !important;
+    height: 100% !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 7px 10px !important;
+  }
+
+  /* Six panels fill the remaining height in a 3 × 2 grid. */
+  html body .v21-workspace-shell main > .v21-lt-home > .v21-lt-groups {
+    display: grid !important;
+    flex: 1 1 0 !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    grid-template-rows: minmax(0, 1.16fr) minmax(0, 1fr) !important;
+    grid-auto-flow: row !important;
+    align-items: stretch !important;
+    gap: 8px !important;
+    width: 100% !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+  }
+  html body .v21-workspace-shell main > .v21-lt-home > .v21-lt-groups > .v21-lt-group {
+    display: flex !important;
+    flex: initial !important;
+    flex-direction: column !important;
+    width: 100% !important;
+    height: 100% !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+  }
+  html body .v21-workspace-shell .v21-lt-group-title {
+    display: flex !important;
+    flex: 0 0 34px !important;
+    height: 34px !important;
+    min-height: 34px !important;
+    max-height: 34px !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 3px 8px !important;
+    font-size: 15px !important;
+    line-height: 1.2 !important;
+  }
+  html body .v21-workspace-shell .v21-lt-group-tiles {
+    display: flex !important;
+    flex: 1 1 0 !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    align-items: stretch !important;
+    justify-content: stretch !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    height: auto !important;
+    gap: 4px !important;
+    padding: 4px !important;
+    overflow: hidden !important;
+  }
+  html body .v21-workspace-shell .v21-lt-group-tiles > .v21-lt-tile,
+  html body .v21-workspace-shell [data-lt-group] .v21-lt-tile,
+  html body .v21-workspace-shell [data-lt-group] .v21-lt-tile:nth-child(n) {
+    display: flex !important;
+    flex: 1 1 0 !important;
+    width: 0 !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    height: 100% !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 6px !important;
+    padding: 5px 3px !important;
+    overflow: hidden !important;
+    font-size: 14px !important;
+    line-height: 1.2 !important;
+  }
+  html body .v21-workspace-shell .v21-lt-group-tiles > .v21-lt-tile > svg {
+    display: block !important;
+    flex: 0 0 27px !important;
+    width: 27px !important;
+    height: 27px !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+  }
+  html body .v21-workspace-shell .v21-lt-group-tiles > .v21-lt-tile > span {
+    display: block !important;
+    width: 100% !important;
+    font-size: 14px !important;
+    line-height: 1.2 !important;
+    text-align: center !important;
+    overflow-wrap: anywhere !important;
+  }
+
+  /* Five quick actions and the fixed bottom status strip. */
+  html body .v21-workspace-shell main > .v21-lt-home > .v21-lt-quick {
+    display: flex !important;
+    flex: 0 0 125px !important;
+    flex-direction: column !important;
+    width: 100% !important;
+    height: 125px !important;
+    min-height: 125px !important;
+    max-height: 125px !important;
+  }
+  html body .v21-workspace-shell .v21-lt-quick .v21-lt-group-title {
+    flex: 0 0 30px !important;
+    height: 30px !important;
+    min-height: 30px !important;
+    max-height: 30px !important;
+  }
+  html body .v21-workspace-shell .v21-lt-quick-actions {
+    display: flex !important;
+    flex: 1 1 0 !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    gap: 6px !important;
+    padding: 4px 6px !important;
+  }
+  html body .v21-workspace-shell .v21-lt-quick-actions > button,
+  html body .v21-workspace-shell .v21-lt-quick-actions > button:nth-child(n) {
+    display: flex !important;
+    flex: 1 1 0 !important;
+    width: 0 !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    height: 100% !important;
+    min-height: 0 !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 5px !important;
+    padding: 5px 4px !important;
+    overflow: hidden !important;
+  }
+  html body .v21-workspace-shell .v21-lt-quick-actions > button > svg {
+    flex: 0 0 22px !important;
+    width: 22px !important;
+    height: 22px !important;
+  }
+  html body .v21-workspace-shell .v21-lt-quick-actions > button > span {
+    font-size: 15px !important;
+    line-height: 1.2 !important;
+    text-align: center !important;
+    white-space: normal !important;
+  }
+  html body .v21-workspace-shell .v21-lt-status {
+    display: flex !important;
+    flex: 0 0 42px !important;
+    width: 100% !important;
+    height: 42px !important;
+    min-height: 42px !important;
+    max-height: 42px !important;
+    align-items: center !important;
+    overflow: hidden !important;
+  }
+}
