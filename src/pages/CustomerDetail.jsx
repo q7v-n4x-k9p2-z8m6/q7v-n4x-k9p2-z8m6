@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { TX_TYPE_LABELS, CUSTOMER_TYPE_LABELS, formatDate, formatNumber } from '@/lib/sarraaf';
 import { Link } from 'react-router-dom';
+import { cn } from '@/lib/utils';
 import { ArrowLeftRight, TrendingUp, Send, Download, Repeat, Pencil } from 'lucide-react';
 
 const QUICK_ACTIONS = (id) => [
