@@ -138,6 +138,39 @@ export async function postTransfer({ direction, sender_name, sender_phone, recei
   return data;
 }
 
+// ── Execute Transfer (atomic document + ledger + status RPC) ──
+export async function executeTransfer({ transfer_id, pay_currency, pay_amount, pay_counter, bank_account_id }) {
+  const ec = getExchangeCode();
+  if (!ec) throw new Error('کد صرافی معتبر نیست؛ لطفاً دوباره وارد شوید');
+
+  const transferId = Number(transfer_id);
+  const amount = Number(pay_amount);
+  if (!Number.isInteger(transferId) || transferId <= 0) {
+    throw new Error('شناسه حواله معتبر نیست');
+  }
+  if (!Number.isFinite(amount) || amount <= 0) {
+    throw new Error('مبلغ پرداخت معتبر نیست');
+  }
+  if (!pay_currency || !['cash', 'bank'].includes(pay_counter)) {
+    throw new Error('ارز یا حساب پرداخت معتبر نیست');
+  }
+
+  const { data, error } = await supabase.rpc('execute_transfer_transaction', {
+    p_exchange_code: ec,
+    p_transfer_id: transferId,
+    p_pay_currency: pay_currency,
+    p_pay_amount: amount,
+    p_pay_counter: pay_counter,
+    p_bank_account_id: pay_counter === 'bank' && bank_account_id
+      ? Number(bank_account_id)
+      : null,
+  });
+
+  if (error) throw new Error(error.message || 'executeTransfer_failed');
+  if (!data || data.error) throw new Error(data?.error || 'executeTransfer_no_result');
+  return data;
+}
+
 // ── Reverse Document (via Supabase RPC) ──
 export async function reverseDocument(document_id, reason, exchange_code) {
   try {
