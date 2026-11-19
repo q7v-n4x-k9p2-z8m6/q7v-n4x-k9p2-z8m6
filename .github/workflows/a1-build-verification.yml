@@ -94,6 +94,7 @@ jobs:
             [fs.readFileSync('src/components/sarraaf/Version21AccountingRules.test.js', 'utf8').includes('bank ledger mapping uses the exact bank account identity') && accountingRules.includes('export function bankLedgerRef'), 'Bank ledger identity mapping must be covered by unit tests'],
             [accountingRules.includes("['cash', 'customer', 'bank']") && fs.readFileSync('src/components/sarraaf/Version21AccountingRules.test.js', 'utf8').includes('balanced journal requires a valid linked bank account ID'), 'Bank ledger lines must require a valid bank account ID'],
             [accountingRules.includes('export function sumBankLedgerMovement') && workspace.includes("sumBankLedgerMovement(data.transactions,account.id,currency,'debit')") && fs.readFileSync('src/components/sarraaf/Version21AccountingRules.test.js', 'utf8').includes('bank ledger totals match exact bank ID'), 'Bank balance totals must use exact tenant bank ID, currency and non-deleted ledger rows'],
+            [data.includes('const bankById = new Map(bankAccounts.map') && data.includes("line.account_type === 'bank' && bankById.has(String(line.account_id || ''))"), 'Bank control-account rollup must exclude orphan or foreign polymorphic bank IDs'],
           ];
           for (const [ok, message] of checks) {
             if (!ok) throw new Error(message);
