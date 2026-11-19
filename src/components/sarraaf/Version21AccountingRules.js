@@ -33,6 +33,25 @@ export function validateCashTransactionParty(partyType, party, resolvedParty = n
   throw new Error('نوع طرف حساب گردش صندوق معتبر نیست؛ مشتری، نمایندگی یا سایر را انتخاب کنید.');
 }
 
+export function validateCashTransactionPartyIdentity(document, partyType, party, resolvedParty = null) {
+  const type = String(partyType || '').trim();
+  const name = String(party || '').trim();
+  if (!document) throw new Error('سند اصلی گردش صندوق پیدا نشد؛ ویرایش متوقف شد.');
+  const expectedType = type === 'customer' || type === 'branch' ? type : type === 'other' ? 'none' : '';
+  if (!expectedType) throw new Error('نوع طرف حساب گردش صندوق معتبر نیست.');
+  const expectedId = type === 'customer' || type === 'branch' ? Number(resolvedParty?.id) : null;
+  if ((type === 'customer' || type === 'branch') && !(expectedId > 0)) {
+    throw new Error('طرف حساب انتخاب‌شده در همین صراف پیدا نشد؛ ویرایش متوقف شد.');
+  }
+  const currentType = String(document.related_type || 'none').trim().toLowerCase();
+  const currentId = document.related_id === null || document.related_id === undefined ? null : Number(document.related_id);
+  const currentName = String(document.related_name || '').trim();
+  if (currentType !== expectedType || currentId !== expectedId || currentName !== name) {
+    throw new Error('طرف حساب یک گردش ثبت‌شده قابل تعویض نیست؛ برای تغییر طرف حساب، گردش قبلی را از مسیر ابطال اصلاح و گردش تازه ثبت کنید.');
+  }
+  return true;
+}
+
 export function validateBalancedLines(lines, label = 'سند') {
   if (!Array.isArray(lines) || lines.length < 2) {
     throw new Error(`${label}: حداقل دو سطر حسابداری لازم است.`);
