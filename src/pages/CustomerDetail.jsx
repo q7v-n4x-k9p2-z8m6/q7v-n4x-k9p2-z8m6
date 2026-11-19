@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useTransactions, useCustomers, useUpdateCustomer, useCustomerBalances } from '@/lib/useSarraaf';
-import { PageHeader, BalanceCard, EmptyState, LoadingState, TransactionRow, StatusBadge } from '@/components/sarraaf/Pieces';
+import { PageHeader, BalanceCard, EmptyState, LoadingState, StatusBadge } from '@/components/sarraaf/Pieces';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { TX_TYPE_LABELS, CUSTOMER_TYPE_LABELS } from '@/lib/sarraaf';
+import { TX_TYPE_LABELS, CUSTOMER_TYPE_LABELS, formatDate, formatNumber } from '@/lib/sarraaf';
 import { Link } from 'react-router-dom';
 import { ArrowLeftRight, TrendingUp, Send, Download, Repeat, Pencil } from 'lucide-react';
 
@@ -105,10 +105,50 @@ export default function CustomerDetail() {
       ) : (txs || []).length === 0 ? (
         <EmptyState title="تراکنشی وجود ندارد" />
       ) : (
-        <div className="space-y-1">
-          {(txs || []).map(tx => (
-            <TransactionRow key={tx.id} tx={tx} labels={TX_TYPE_LABELS} onClick={() => navigate(`/receipt?type=tx&id=${tx.id}`)} />
-          ))}
+        <div className="w-full overflow-x-auto rounded-xl border border-[#e0e9f3] bg-white shadow-sm">
+          <table dir="rtl" className="w-full min-w-[900px] border-collapse text-right text-xs">
+            <thead className="sticky top-0 bg-[#174b7d] text-white">
+              <tr>
+                <th className="whitespace-nowrap border-l border-white/15 px-3 py-3 font-bold">تاریخ</th>
+                <th className="whitespace-nowrap border-l border-white/15 px-3 py-3 font-bold">شماره سند</th>
+                <th className="whitespace-nowrap border-l border-white/15 px-3 py-3 font-bold">نوع عملیات</th>
+                <th className="whitespace-nowrap border-l border-white/15 px-3 py-3 font-bold">شرح</th>
+                <th className="whitespace-nowrap border-l border-white/15 px-3 py-3 font-bold">مبلغ</th>
+                <th className="whitespace-nowrap border-l border-white/15 px-3 py-3 font-bold">ارز</th>
+                <th className="whitespace-nowrap px-3 py-3 font-bold">وضعیت</th>
+              </tr>
+            </thead>
+            <tbody>
+              {(txs || []).map((tx, index) => (
+                <tr
+                  key={tx.id}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => navigate(`/receipt?type=tx&id=${tx.id}`)}
+                  onKeyDown={event => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                      event.preventDefault();
+                      navigate(`/receipt?type=tx&id=${tx.id}`);
+                    }
+                  }}
+                  className={cn(
+                    'cursor-pointer transition-colors hover:bg-blue-50',
+                    index % 2 === 1 && 'bg-[#f7faff]'
+                  )}
+                >
+                  <td className="whitespace-nowrap border-b border-[#e5edf5] px-3 py-3">{formatDate(tx.date || tx.created_at) || '—'}</td>
+                  <td className="whitespace-nowrap border-b border-[#e5edf5] px-3 py-3" dir="ltr">{tx.document_no || '—'}</td>
+                  <td className="whitespace-nowrap border-b border-[#e5edf5] px-3 py-3 font-semibold">{TX_TYPE_LABELS[tx.type] || tx.type || '—'}</td>
+                  <td className="min-w-[220px] border-b border-[#e5edf5] px-3 py-3">{tx.description || '—'}</td>
+                  <td className="whitespace-nowrap border-b border-[#e5edf5] px-3 py-3 font-bold tabular-nums">{formatNumber(tx.amount || 0)}</td>
+                  <td className="whitespace-nowrap border-b border-[#e5edf5] px-3 py-3">{tx.currency || '—'}</td>
+                  <td className="whitespace-nowrap border-b border-[#e5edf5] px-3 py-3">
+                    {tx.deleted ? <StatusBadge status="inactive" labels={{ inactive: 'باطل‌شده' }} /> : tx.edited ? <StatusBadge status="active" labels={{ active: 'ویرایش‌شده' }} /> : <span className="text-muted-foreground">ثبت‌شده</span>}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       )}
 
