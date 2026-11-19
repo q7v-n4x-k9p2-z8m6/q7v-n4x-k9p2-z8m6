@@ -175,6 +175,17 @@ export default function Version21Workspace(){
  const [dateFrom,setDateFrom]=useState('');
  const [dateTo,setDateTo]=useState('');
  const [restoreText,setRestoreText]=useState('');
+ useEffect(()=>{
+  if(!modal)return;
+  const closeOnEscape=event=>{
+   if(event.key==='Escape'&&!saving){
+    setModal('');
+    setDraft({});
+   }
+  };
+  window.addEventListener('keydown',closeOnEscape);
+  return()=>window.removeEventListener('keydown',closeOnEscape);
+ },[modal,saving]);
  useEffect(()=>{let alive=true;loadVersion21LocalState().then(saved=>{if(!alive)return;const desktop=window.matchMedia?.('(min-width: 1024px)')?.matches===true;if(!desktop&&saved.active&&MODULES.some(x=>x.id===saved.active))setActive(saved.active);if(saved.filterCurrency)setFilterCurrency(saved.filterCurrency);if(saved.dateFrom)setDateFrom(saved.dateFrom);if(saved.dateTo)setDateTo(saved.dateTo);setLocalReady(true);});return()=>{alive=false;};},[]);
  useEffect(()=>{if(!localReady)return;saveVersion21LocalState({active,filterCurrency,dateFrom,dateTo});},[localReady,active,filterCurrency,dateFrom,dateTo]);
  const [showHelp,setShowHelp]=useState(false);
