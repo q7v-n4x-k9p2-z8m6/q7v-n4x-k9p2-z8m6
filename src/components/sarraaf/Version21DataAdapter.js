@@ -2,6 +2,7 @@ import { supabase } from '@/lib/supabaseClient';
 import { getExchangeCode } from '@/lib/supabaseApi';
 import { loadDemoPreviewRecords } from './Version21DemoAdapter';
 import { resolveSessionUserId } from './Version21DemoRules';
+import { isChartAccountLedgerLine } from './Version21AccountingRules';
 
 const num = value => Number(value ?? 0) || 0;
 const dateOnly = value => value ? String(value).slice(0, 10) : '';
@@ -199,7 +200,7 @@ export async function loadVersion21Database() {
 
   const mappedAccounts = chartAccounts.map(row => {
     const accountLines = activeLedgerEntries.filter(line =>
-      String(line.account_id || '') === String(row.id) &&
+      isChartAccountLedgerLine(line, row) &&
       !documentsById.get(String(line.document_id || ''))?.deleted
     );
     const balanceMap = new Map();
