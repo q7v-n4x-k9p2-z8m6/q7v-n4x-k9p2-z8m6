@@ -70,7 +70,6 @@ const MODULES = [
 
   { id: 'agencyNetwork', label: 'شبکه نمایندگی‌ها', path: '/agency-network', icon: Network, group: 'ارز، شبکه و ارتباطات', roles: ['creator','admin','sarraaf'] },
   { id: 'chat', label: 'گروه و چت صراف‌ها', path: '/chat', icon: MessagesSquare, group: 'ارز، شبکه و ارتباطات', roles: ['creator','admin','sarraaf'] },
-  { id: 'market', label: 'بازار صراف‌ها', path: '/sarraaf-market', icon: ShoppingBag, group: 'ارز، شبکه و ارتباطات', roles: ['creator','admin','sarraaf'] },
   { id: 'sarraafChat', label: 'چت صراف‌ها', path: '/sarraaf-chat', icon: MessagesSquare, group: 'ارز، شبکه و ارتباطات', roles: ['creator','admin','sarraaf'] },
   { id: 'multiCompany', label: 'مدیریت چندشرکتی', icon: Building2, group: 'ارز، شبکه و ارتباطات', roles: ['creator','admin','sarraaf'] },
 

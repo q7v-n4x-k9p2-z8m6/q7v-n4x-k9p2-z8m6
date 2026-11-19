@@ -81,7 +81,6 @@ const AgencyNetwork = lazyWithRetry(() => import('@/pages/AgencyNetwork'));
 const AgencyChooser = lazyWithRetry(() => import('@/pages/AgencyChooser'));
 const ChatGroups = lazyWithRetry(() => import('@/pages/ChatGroups'));
 const ChatGroupDetail = lazyWithRetry(() => import('@/pages/ChatGroupDetail'));
-const SarraafMarket = lazyWithRetry(() => import('@/pages/SarraafMarket'));
 const SarraafChat = lazyWithRetry(() => import('@/pages/SarraafChat'));
 const Backup = lazyWithRetry(() => import('@/pages/Backup'));
 const CustomerChat = lazyWithRetry(() => import('@/pages/CustomerChat'));
@@ -274,7 +273,7 @@ const AppRoutes = () => {
             <Route path="/agency" element={<FeatureGate featureKey="agency_network"><AgencyChooser /></FeatureGate>} />
             <Route path="/chat" element={<FeatureGate featureKey="chat_groups"><ChatGroups /></FeatureGate>} />
             <Route path="/chat/group/:id" element={<FeatureGate featureKey="chat_groups"><ChatGroupDetail /></FeatureGate>} />
-            <Route path="/sarraaf-market" element={<FeatureGate featureKey="sarraaf_market"><SarraafMarket /></FeatureGate>} />
+            <Route path="/sarraaf-market" element={<Navigate to="/dashboard" replace />} />
             <Route path="/sarraaf-chat" element={<FeatureGate featureKey="sarraaf_chat"><SarraafChat /></FeatureGate>} />
             <Route path="/backup" element={<FeatureGate featureKey="backup"><Backup /></FeatureGate>} />
             <Route path="/support" element={<FeatureGate featureKey="support"><SarraafSupport /></FeatureGate>} />
