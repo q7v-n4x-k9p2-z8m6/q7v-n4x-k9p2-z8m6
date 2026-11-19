@@ -1,17 +1,17 @@
 import React, { useState } from 'react';
-import { useAgents, useAgentBalances, useCreateAgent, useUpdateAgent } from '@/lib/useSarraaf';
+import { useAgents, useAgentLedgerBalances, useCreateAgent, useUpdateAgent } from '@/lib/useSarraaf';
 import { PageHeader, EmptyState, LoadingState } from '@/components/sarraaf/Pieces';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { formatNumber } from '@/lib/sarraaf';
+import { formatNumber, formatAmount } from '@/lib/sarraaf';
 import { Network, Plus, Pencil, Send, Download } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export default function Agents() {
   const { data: agents, isLoading } = useAgents();
-  const { data: agentBalancesData } = useAgentBalances();
+  const { data: agentBalancesData } = useAgentLedgerBalances();
   const createMut = useCreateAgent();
   const updateMut = useUpdateAgent();
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -29,9 +29,20 @@ export default function Agents() {
   };
 
   const getAgentBal = (agentId) => {
-    const b = (agentBalancesData || []).find(x => String(x.agent_id) === String(agentId));
-    return b ? { [b.currency || 'AFN']: b.balance || 0 } : {};
+    const result = {};
+    for (const row of (agentBalancesData || [])) {
+      if (String(row.agent_id) === String(agentId)) {
+        const currency = row.currency || 'AFN';
+        result[currency] = (result[currency] || 0) + (Number(row.balance) || 0);
+      }
+    }
+    return result;
   };
+  const totalsByCurrency = {};
+  for (const row of (agentBalancesData || [])) {
+    const currency = row.currency || 'AFN';
+    totalsByCurrency[currency] = (totalsByCurrency[currency] || 0) + (Number(row.balance) || 0);
+  }
 
   return (
     <>
@@ -39,36 +50,44 @@ export default function Agents() {
         actions={<Button size="sm" onClick={openCreate}><Plus className="w-4 h-4" /> افزودن</Button>}
       />
       {isLoading ? <LoadingState /> : (agents || []).length === 0 ? <EmptyState icon={Network} title="نماینده‌ای نیست" /> : (
-        <div className="space-y-2">
-          {(agents || []).map(a => {
-            const bal = getAgentBal(a.id);
-            return (
-              <div key={a.id} className="p-3 rounded-xl border bg-card">
-                <div className="flex items-center justify-between mb-2">
-                  <div>
-                    <span className="text-sm font-bold">{a.name}</span>
-                    {a.code && <span className="text-xs text-muted-foreground mr-2">{a.code}</span>}
-                  </div>
-                  <Button size="icon" variant="ghost" onClick={() => openEdit(a)}><Pencil className="w-4 h-4" /></Button>
-                </div>
-                <div className="text-xs text-muted-foreground mb-2">
-                  {a.phone && <p>موبایل: {a.phone}</p>}
-                  {a.city && <p>شهر: {a.city}</p>}
-                </div>
-                {Object.keys(bal).length > 0 && (
-                  <div className="flex gap-2 flex-wrap">
-                    {Object.entries(bal).map(([cur, val]) => (
-                      <span key={cur} className="text-xs px-2 py-1 rounded-lg bg-muted">{formatNumber(val)} {cur}</span>
-                    ))}
-                  </div>
-                )}
-                <div className="flex gap-1 mt-2">
-                  <Link to={`/transfers/send?agent=${a.id}`}><Button size="sm" variant="outline"><Send className="w-3.5 h-3.5" /> ارسال</Button></Link>
-                  <Link to={`/transfers/receive?agent=${a.id}`}><Button size="sm" variant="outline"><Download className="w-3.5 h-3.5" /> دریافت</Button></Link>
-                </div>
-              </div>
-            );
-          })}
+        <div className="w-full overflow-x-auto rounded-xl border bg-card">
+          <table dir="rtl" className="w-full min-w-[850px] border-collapse text-right text-xs">
+            <thead className="bg-muted/80">
+              <tr>
+                <th className="border-b px-3 py-3">نام نمایندگی</th>
+                <th className="border-b px-3 py-3">کد</th>
+                <th className="border-b px-3 py-3">تماس / شهر</th>
+                <th className="border-b px-3 py-3">مانده به تفکیک ارز</th>
+                <th className="border-b px-3 py-3">عملیات</th>
+              </tr>
+            </thead>
+            <tbody>
+              {(agents || []).map((a, index) => {
+                const bal = getAgentBal(a.id);
+                return (
+                  <tr key={a.id} className={index % 2 ? 'bg-muted/20' : ''}>
+                    <td className="border-b px-3 py-3 font-semibold whitespace-nowrap">{a.name || '—'}</td>
+                    <td className="border-b px-3 py-3 whitespace-nowrap">{a.code || '—'}</td>
+                    <td className="border-b px-3 py-3 whitespace-nowrap">{[a.phone, a.city].filter(Boolean).join(' · ') || '—'}</td>
+                    <td className="border-b px-3 py-3">
+                      {Object.entries(bal).map(([cur, val]) => <span key={cur} className="inline-block ml-3 whitespace-nowrap font-bold">{formatAmount(Math.abs(val), cur)} {val > 0 ? 'بدهکار' : val < 0 ? 'بستانکار' : ''}</span>)}
+                      {Object.keys(bal).length === 0 ? '—' : ''}
+                    </td>
+                    <td className="border-b px-3 py-3 whitespace-nowrap">
+                      <Button size="icon" variant="ghost" onClick={() => openEdit(a)}><Pencil className="w-4 h-4" /></Button>
+                      <Link to={`/transfers/send?agent=${a.id}`}><Button size="sm" variant="outline"><Send className="w-3.5 h-3.5" /> ارسال</Button></Link>
+                      <Link to={`/transfers/receive?agent=${a.id}`}><Button size="sm" variant="outline"><Download className="w-3.5 h-3.5" /> دریافت</Button></Link>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+            <tfoot className="sticky bottom-0 bg-[#eaf1f9] font-bold">
+              <tr><td colSpan={5} className="border-t-2 border-primary px-3 py-3">
+                جمع حساب نمایندگی‌ها: {Object.entries(totalsByCurrency).map(([cur, val]) => <span key={cur} className="inline-block ml-4 whitespace-nowrap">{cur}: {formatAmount(Math.abs(val), cur)} {val > 0 ? 'بدهکار' : val < 0 ? 'بستانکار' : 'تسویه'}</span>)}
+              </td></tr>
+            </tfoot>
+          </table>
         </div>
       )}
 
