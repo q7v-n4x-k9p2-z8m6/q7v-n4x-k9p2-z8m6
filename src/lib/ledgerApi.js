@@ -282,6 +282,43 @@ export async function getBalances(balance_type, params = {}) {
   }
 }
 
+// ── Currency-safe ledger aggregation (read-only; never mixes currencies) ──
+export async function getLedgerCurrencyBalances(accountType) {
+  const ec = getExchangeCode();
+  if (!ec) return [];
+  const grouped = new Map();
+  const pageSize = 1000;
+  for (let offset = 0; ; offset += pageSize) {
+    const { data, error } = await supabase
+      .from('ledger_entries')
+      .select('account_id,currency,debit,credit')
+      .eq('exchange_code', ec)
+      .eq('account_type', accountType)
+      .eq('deleted', false)
+      .range(offset, offset + pageSize - 1);
+    if (error) throw new Error(error.message || 'ledger_balance_read_failed');
+    const rows = data || [];
+    for (const row of rows) {
+      const accountId = String(row.account_id ?? '');
+      const currency = row.currency || 'AFN';
+      const key = accountId + '::' + currency;
+      const current = grouped.get(key) || { account_id: accountId, currency, debit_total: 0, credit_total: 0 };
+      current.debit_total += Number(row.debit) || 0;
+      current.credit_total += Number(row.credit) || 0;
+      grouped.set(key, current);
+    }
+    if (rows.length < pageSize) break;
+  }
+  return Array.from(grouped.values()).map(row => ({
+    ...row,
+    net_balance: row.debit_total - row.credit_total,
+    balance: row.debit_total - row.credit_total,
+    customer_id: accountType === 'customer' ? row.account_id : undefined,
+    agent_id: accountType === 'agent' ? row.account_id : undefined,
+    balance_currency: row.currency,
+  }));
+}
+
 // ── List Documents (with ledger lines) ──
 export async function listDocuments(filters = {}, sort, limit) {
   return listTransactions(filters, sort, limit);
