@@ -6,7 +6,7 @@ import { syncPendingWrites, getPendingCount } from './offlineQueue';
 import { createSupabaseEntity } from './supabaseApi';
 import { generateUniqueInviteCode } from './referralSystem';
 import { trackOp, finishOp } from './syncStatus';
-import { postDocument, postTransfer, reverseDocument, editDocument, getBalances, listDocuments } from './ledgerApi';
+import { postDocument, postTransfer, executeTransfer, reverseDocument, editDocument, getBalances, listDocuments } from './ledgerApi';
 import { getMyExchange, listTransactions } from './supabaseApi';
 
 // Direct Supabase entity instances (no localStorage cache — always reads from server)
@@ -241,23 +241,24 @@ export function useCreateTransfer() {
 export function useExecuteTransfer() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ transfer, payCurrency, payAmount, payCounter }) => {
+    mutationFn: async ({ transfer, payCurrency, payAmount, payCounter, bankAccountId }) => {
       if (transfer.status === 'paid' || transfer.status === 'cancelled') {
         throw new Error('این حواله قبلاً اجرا شده است');
       }
       trackOp();
       try {
-        // Update transfer status via direct CRUD
-        await sbTransfers.update(transfer.id, {
-          status: 'paid',
-          executed_date: new Date().toISOString(),
-          paid_amount: payAmount,
-          paid_currency: payCurrency,
+        const result = await executeTransfer({
+          transfer_id: transfer.id,
+          pay_currency: payCurrency,
+          pay_amount: payAmount,
           pay_counter: payCounter,
+          bank_account_id: bankAccountId || null,
         });
         qc.invalidateQueries({ queryKey: ['transfers'] });
         qc.invalidateQueries({ queryKey: ['transactions'] });
+        qc.invalidateQueries({ queryKey: ['documents'] });
         qc.invalidateQueries({ queryKey: ['balances'] });
+        return result;
       } finally {
         finishOp();
       }
