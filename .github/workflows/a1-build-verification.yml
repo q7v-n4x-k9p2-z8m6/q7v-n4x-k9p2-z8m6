@@ -88,6 +88,7 @@ jobs:
             [data.includes("const isBranch = !isCash &&") && data.includes("(isCustomer || isBranch) ? credit - debit"), 'Customer and branch ledger signs must match debit-credit sides without reversing cash balances'],
             [workspace.includes("{fmt(n(r.debit))}") && workspace.includes("{fmt(n(r.credit))}"), 'Customer and branch ledger detail rows must display raw debit and credit values'],
             [workspace.includes('sumCashLedgerMovement(data.transactions,currency)') && accountingRules.includes('export function sumCashLedgerMovement') && fs.readFileSync('src/components/sarraaf/Version21AccountingRules.test.js', 'utf8').includes('cash movement totals exclude customer and non-cash ledger rows'), 'Cash balance summary must total only cash ledger rows, excluding customer and other counterpart lines'],
+            [data.includes('isChartAccountLedgerLine(line, row)') && accountingRules.includes('export function isChartAccountLedgerLine') && fs.readFileSync('src/components/sarraaf/Version21AccountingRules.test.js', 'utf8').includes('chart account ledger mapping rejects cash/customer/branch rows'), 'Chart account balances must not absorb cash, customer or branch rows through coincident polymorphic IDs'],
           ];
           for (const [ok, message] of checks) {
             if (!ok) throw new Error(message);
