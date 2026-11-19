@@ -59,7 +59,7 @@ jobs:
             [fs.readFileSync('src/components/sarraaf/Version21Layout.jsx', 'utf8').includes("documents: 'document_center'"), 'Document center navigation must use the canonical feature key'],
             [adapter.includes("&& !['remittance', 'exchange'].includes(module)"), 'Linked transfer and conversion reversals must process all related documents'],
             [adapter.includes('p_fee: 0'), 'Transfer fee must be posted as a separate balanced document'],
-            [adapter.includes("chartAccountLedgerRefByType(ctx, 'revenue', 'درآمد کمیشن حواله')") && !adapter.includes("account_type: 'suspense', account_id: '', account_name: 'درآمد کمیشن حواله'"), 'Remittance fee edits must post to the revenue chart account, not a suspense account'],
+            [adapter.includes("requiredChartAccountLedgerRefByType(ctx, 'revenue', 'درآمد کمیشن حواله')") && adapter.includes('if (!account) throw new Error'), 'Remittance fee create/edit must require a real revenue chart account, never silently use suspense'],
             [adapter.includes("select('id,reversed')") && adapter.includes('if (feeDoc && !feeDoc.reversed)'), 'Reversed remittance fee documents must not be edited again'],
             [adapter.includes('applyDocumentDate(ctx, feeDocumentId, draft.date)'), 'Edited or recreated remittance fee documents must receive the selected document date'],
             [workspace.includes('accountingStatus'), 'Accounting status is not displayed in workspace tables'],
