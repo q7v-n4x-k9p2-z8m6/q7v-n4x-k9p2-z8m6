@@ -182,12 +182,23 @@ export default function TransferBook() {
                 {bankOptions.length === 0 && (
                   <p className="text-xs text-destructive mt-1">برای این ارز حساب بانکی فعال ثبت نشده است.</p>
                 )}
+                {bankAccountId && !bankOptions.some(account => String(account.id) === bankAccountId) && (
+                  <p className="text-xs text-destructive mt-1">حساب بانکی انتخاب‌شده دیگر فعال یا معتبر نیست.</p>
+                )}
               </div>
             )}
           </div>
+          {!execDialog?.customer_id && (
+            <p className="text-xs text-destructive">این حواله مشتری معتبر ندارد؛ برای جلوگیری از ثبت ناقص، اجرای آن مسدود است.</p>
+          )}
           <DialogFooter>
             <Button variant="outline" onClick={() => setExecDialog(null)}>انصراف</Button>
-            <Button onClick={handleExecute} disabled={execMut.isPending || Number(payAmount) !== Number(execDialog?.amount) || (payCounter === 'bank' && !bankAccountId)}>اجرا</Button>
+            <Button onClick={handleExecute} disabled={
+              execMut.isPending ||
+              !execDialog?.customer_id ||
+              Number(payAmount) !== Number(execDialog?.amount) ||
+              (payCounter === 'bank' && !bankOptions.some(account => String(account.id) === bankAccountId))
+            }>اجرا</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
