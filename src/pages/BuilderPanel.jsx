@@ -37,9 +37,6 @@ import ManualVerificationManager from '@/components/sarraaf/ManualVerificationMa
 import LegacyDataMigrator from '@/components/sarraaf/LegacyDataMigrator';
 import AccountRecoveryManager from '@/components/sarraaf/AccountRecoveryManager';
 import TrialManager from '@/components/sarraaf/TrialManager';
-import MobileLayoutPreview from '@/components/sarraaf/MobileLayoutPreview';
-import CreatorPreviewLab from '@/components/sarraaf/CreatorPreviewLab';
-import LayoutPreviewStudio from '@/components/sarraaf/LayoutPreviewStudio';
 import LayoutHexLibrary from '@/components/sarraaf/LayoutHexLibrary';
 import { lazy } from 'react';
 const BuilderLiveAssistant = lazy(() => import('@/pages/BuilderLiveAssistant'));
@@ -47,12 +44,10 @@ import UCManager from '@/components/sarraaf/UCManager';
 import RechargeManager from '@/components/sarraaf/RechargeManager';
 import Afghan5Manager from '@/components/sarraaf/Afghan5Manager';
 import SellerManager from '@/components/sarraaf/SellerManager';
-import SandboxPanel from '@/components/sandbox/SandboxPanel';
 import SupabaseAuditManager from '@/components/sarraaf/SupabaseAuditManager';
 import LiveDatabaseExplorer from '@/components/sarraaf/LiveDatabaseExplorer';
 import MaintenanceControl from '@/components/sarraaf/MaintenanceControl';
 import UserLoginRestrictionControl from '@/components/sarraaf/UserLoginRestrictionControl';
-import { SandboxProvider } from '@/components/sandbox/SandboxProvider';
 import { checkBuilderAccess, startBuilderSession } from '@/lib/builderAccess';
 import { useToast } from '@/components/ui/use-toast';
 
@@ -89,16 +84,13 @@ const TAB_GROUPS = [
   { label: 'کمک‌سازنده', value: 'co_creators', description: 'مدیریت دسترسی کمک‌سازنده‌ها' },
   { label: 'تأیید ایمیل', value: 'email_verify', description: 'درخواست‌های تأیید دستی ایمیل' },
   { label: 'دوره آزمایشی', value: 'trial', description: 'مدیریت دوره آزمایشی صرافان' },
-  { label: 'نسخه جدید چیدمان موبایل', value: 'layout_preview', description: 'پیش‌نمایش مستقل چیدمان موبایل' },
-  { label: 'چیدمان لپ‌تاپ', value: 'creator_preview', description: 'چیدمان دسکتاپ در محیط آزمایشگاهی مستقل' },
-  { label: 'آزمایشگاه چیدمان', value: 'layout_studio', description: 'نمای موبایل و لپ‌تاپ در یک محیط آزمایشی مستقل' },
   { label: 'دستیار زنده سازنده', value: 'masnavi_ai', description: 'دستیار اختصاصی و محرمانه برای گزارش وضعیت پنل سازنده' },
   { label: 'UC پابجی', value: 'uc_manager', description: 'مدیریت خدمات UC' },
   { label: 'شارژ و بسته', value: 'recharge', description: 'مدیریت شارژ و بسته اینترنت' },
   { label: 'افغان۵', value: 'afghan5', description: 'مدیریت خدمات افغان۵' },
   { label: 'فروشندگان', value: 'sellers', description: 'مدیریت فروشندگان و سفارش‌ها' },
-  { label: 'آزمایش فروش', value: 'sandbox', description: 'محیط آزمایشی مستقل فروش' },
-  { label: 'بررسی سوپابیس', value: 'supabase_audit', description: 'گزارش ساختار و سیاست‌های امنیتی' },
+  { label: 'کتابخانه HEX', value: 'hex_library', description: 'مدیریت کتابخانه تصاویر چیدمان' },
+  { label: 'بررسی سوپابیس', value: 'supabase_audit', description: 'گزارش ساختار و سیاست‌های امنیتی' }, 
   { label: 'دیتابیس زنده', value: 'db_explorer', description: 'ابزار مشاهده پایگاه داده زنده' },
 ];
 
@@ -109,7 +101,7 @@ const TAB_CATEGORIES = [
   { label: 'مالی و پلن‌ها', value: 'finance', icon: Wallet, tabs: ['plans', 'pricing', 'payments', 'withdrawals', 'trial'] },
   { label: 'ارتباطات', value: 'communication', icon: MessageSquare, tabs: ['notif', 'chat', 'masnavi_ai'] },
   { label: 'خدمات و فروش', value: 'services', icon: Store, tabs: ['uc_manager', 'recharge', 'afghan5', 'sellers', 'sandbox'] },
-  { label: 'ابزار و نگهداری', value: 'tools', icon: Database, tabs: ['maintenance', 'version', 'layout_preview', 'creator_preview', 'layout_studio', 'backup', 'backup_v2', 'triple_backup', 'supabase_audit', 'db_explorer'] },
+  { label: 'ابزار و نگهداری', value: 'tools', icon: Database, tabs: ['maintenance', 'version', 'hex_library', 'backup', 'backup_v2', 'triple_backup', 'supabase_audit', 'db_explorer'] },
 ];
 
 // شماره‌های ثابتِ نمایشی برای ارجاع آسان؛ مستقل از داده‌ها و پایگاه داده.
@@ -133,7 +125,7 @@ export default function BuilderPanel() {
 
   // مجوزها روی شناسه تک‌تک تب‌ها اعمال می‌شوند، نه شناسه گروه‌های نمایشی.
   const visibleTabGroups = useMemo(() => TAB_GROUPS.filter((group) => {
-    const creatorOnlyTabs = ['co_creators', 'creator_preview', 'layout_preview', 'layout_studio', 'sandbox', 'supabase_audit', 'db_explorer', 'masnavi_ai'];
+    const creatorOnlyTabs = ['co_creators', 'creator_preview', 'layout_preview', 'layout_studio', 'supabase_audit', 'db_explorer', 'masnavi_ai'];
     if (group.value === 'masnavi_ai' && user?.role !== 'creator') return false;
     if (group.value === 'maintenance' && user?.role !== 'creator') return false;
     if (creatorOnlyTabs.includes(group.value) && !isFullCreator) return false;
@@ -543,23 +535,8 @@ export default function BuilderPanel() {
 
         {/* آزمایشگاه یکپارچه موبایل و لپ‌تاپ؛ پیش‌نمایش‌های قبلی مستقل می‌مانند */}
         {isFullCreator && (
-          <TabsContent value="layout_studio">
-            <div className="space-y-4">
-              <LayoutPreviewStudio />
-              <LayoutHexLibrary />
-            </div>
-          </TabsContent>
-        )}
-
-        {/* پیش‌نمایش چیدمان موبایل */}
-        <TabsContent value="layout_preview">
-          <MobileLayoutPreview />
-        </TabsContent>
-
-        {/* آزمایشگاه توسعه — فقط پنل سازنده اصلی و کاملاً جدا از دیتابیس زنده */}
-        {isFullCreator && (
-          <TabsContent value="creator_preview">
-            <CreatorPreviewLab />
+          <TabsContent value="hex_library">
+            <LayoutHexLibrary />
           </TabsContent>
         )}
 
@@ -598,15 +575,6 @@ export default function BuilderPanel() {
         <TabsContent value="sellers">
           <SellerManager />
         </TabsContent>
-
-        {/* محیط آزمایشی فروش شارژ و خدمات دیجیتال — فقط سازندهٔ اصلی */}
-        {isFullCreator && (
-          <TabsContent value="sandbox">
-            <SandboxProvider>
-              <SandboxPanel />
-            </SandboxProvider>
-          </TabsContent>
-        )}
 
         {/* بررسی امن سوپابیس — فقط سازنده/مدیر */}
         {isFullCreator && (
