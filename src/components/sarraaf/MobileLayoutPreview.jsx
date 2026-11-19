@@ -1,10 +1,10 @@
 import React from 'react';
-import CreatorPreviewLab from '@/components/sarraaf/CreatorPreviewLab';
+import ComputerLayoutPreview from '@/components/sarraaf/ComputerLayoutPreview';
 
 export default function MobileLayoutPreview() {
   return (
     <div className="creator-mobile-preview w-full min-w-0">
-      <CreatorPreviewLab mobileMode />
+      <ComputerLayoutPreview />
       <style>{`
         .creator-mobile-preview,
         .creator-mobile-lab {
