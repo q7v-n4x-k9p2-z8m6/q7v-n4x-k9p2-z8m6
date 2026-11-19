@@ -30,6 +30,7 @@ import AppIconDownloader from '@/components/sarraaf/AppIconDownloader';
 import EmergencyBackup from '@/components/sarraaf/EmergencyBackup';
 import EmergencyBackupV2 from '@/components/sarraaf/EmergencyBackupV2';
 import TripleBackup from '@/components/sarraaf/TripleBackup';
+import ProjectTransferCenter from '@/components/sarraaf/ProjectTransferCenter';
 import KeepaliveStatus from '@/components/sarraaf/KeepaliveStatus';
 import WithdrawalManagement from '@/components/sarraaf/WithdrawalManagement';
 import CoCreatorManager from '@/components/sarraaf/CoCreatorManager';
@@ -84,6 +85,7 @@ const TAB_GROUPS = [
   { label: 'پشتیبان', value: 'backup', description: 'پشتیبان اضطراری' },
   { label: 'پشتیبان v2', value: 'backup_v2', description: 'نسخه کامل پشتیبان' },
   { label: 'پشتیبان سه‌گانه', value: 'triple_backup', description: 'خروجی‌های PDF، ZIP و ساختار پایگاه داده' },
+  { label: 'انتقال پروژه', value: 'project_transfer', description: 'دانلود سورس کامل، ساختار جدول‌ها و نقشه پروژه برای ادامه کار در دستگاه دیگر' },
   { label: 'کمک‌سازنده', value: 'co_creators', description: 'مدیریت دسترسی کمک‌سازنده‌ها' },
   { label: 'تأیید ایمیل', value: 'email_verify', description: 'درخواست‌های تأیید دستی ایمیل' },
   { label: 'دوره آزمایشی', value: 'trial', description: 'مدیریت دوره آزمایشی صرافان' },
@@ -106,7 +108,7 @@ const TAB_CATEGORIES = [
   { label: 'مالی و پلن‌ها', value: 'finance', icon: Wallet, tabs: ['plans', 'pricing', 'payments', 'withdrawals', 'trial'] },
   { label: 'ارتباطات', value: 'communication', icon: MessageSquare, tabs: ['notif', 'chat', 'masnavi_ai'] },
   { label: 'خدمات و فروش', value: 'services', icon: Store, tabs: ['uc_manager', 'recharge', 'afghan5', 'sellers'] },
-  { label: 'ابزار و نگهداری', value: 'tools', icon: Database, tabs: ['maintenance', 'version', 'layout_preview', 'computer_layout_preview', 'layout_studio', 'backup', 'backup_v2', 'triple_backup', 'supabase_audit', 'db_explorer'] },
+  { label: 'ابزار و نگهداری', value: 'tools', icon: Database, tabs: ['maintenance', 'version', 'layout_preview', 'computer_layout_preview', 'layout_studio', 'backup', 'backup_v2', 'triple_backup', 'project_transfer', 'supabase_audit', 'db_explorer'] },
 ];
 
 // شماره‌های ثابتِ نمایشی برای ارجاع آسان؛ مستقل از داده‌ها و پایگاه داده.
@@ -520,6 +522,13 @@ export default function BuilderPanel() {
         <TabsContent value="triple_backup">
           <TripleBackup />
         </TabsContent>
+
+        {/* بسته انتقال پروژه — فقط سازنده/مدیر اصلی */}
+        {isFullCreator && (
+          <TabsContent value="project_transfer">
+            <ProjectTransferCenter />
+          </TabsContent>
+        )}
 
         {/* کمک‌سازنده‌ها — فقط سازنده اصلی */}
         {isFullCreator && (
