@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { useTransactions, useCustomers, useUpdateCustomer, useCustomerBalances } from '@/lib/useSarraaf';
+import { useTransactions, useCustomers, useUpdateCustomer, useCustomerLedgerBalances } from '@/lib/useSarraaf';
 import { PageHeader, BalanceCard, EmptyState, LoadingState, StatusBadge } from '@/components/sarraaf/Pieces';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { TX_TYPE_LABELS, CUSTOMER_TYPE_LABELS, formatDate, formatNumber } from '@/lib/sarraaf';
+import { TX_TYPE_LABELS, CUSTOMER_TYPE_LABELS, formatDate, formatNumber, formatAmount } from '@/lib/sarraaf';
 import { Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { ArrowLeftRight, TrendingUp, Send, Download, Repeat, Pencil } from 'lucide-react';
@@ -26,16 +26,32 @@ export default function CustomerDetail() {
   const navigate = useNavigate();
   const { data: customers } = useCustomers();
   const { data: txs, isLoading } = useTransactions({ customer_id: id });
-  const { data: customerBalancesData } = useCustomerBalances();
+  const { data: customerBalancesData } = useCustomerLedgerBalances();
   const [editOpen, setEditOpen] = useState(false);
   const [form, setForm] = useState({});
   const updateMut = useUpdateCustomer();
 
   const customer = (customers || []).find(c => c.id === id);
-  const custBalanceRow = (customerBalancesData || []).find(b => String(b.customer_id) === String(id));
   const balances = {};
-  if (custBalanceRow) {
-    balances[custBalanceRow.balance_currency || 'AFN'] = custBalanceRow.net_balance || 0;
+  for (const item of (customerBalancesData || [])) {
+    if (String(item.customer_id) === String(id)) {
+      const currency = item.currency || 'AFN';
+      balances[currency] = (balances[currency] || 0) + (Number(item.net_balance) || 0);
+    }
+  }
+  if (customer && Number(customer.opening_balance)) {
+    const currency = customer.balance_currency || 'AFN';
+    balances[currency] = (balances[currency] || 0) + Number(customer.opening_balance);
+  }
+  const transactionTotals = {};
+  for (const tx of (txs || [])) {
+    if (tx.deleted) continue;
+    const currency = tx.currency || 'AFN';
+    const total = transactionTotals[currency] || { debit: 0, credit: 0 };
+    const amount = Number(tx.amount) || 0;
+    if (tx.customer_side === 'debit') total.debit += amount;
+    if (tx.customer_side === 'credit') total.credit += amount;
+    transactionTotals[currency] = total;
   }
 
   if (!customers) return <LoadingState />;
@@ -149,6 +165,25 @@ export default function CustomerDetail() {
                 </tr>
               ))}
             </tbody>
+            <tfoot className="sticky bottom-0 bg-[#eaf1f9] text-foreground font-bold">
+              <tr>
+                <td colSpan={7} className="border-t-2 border-[#174b7d] px-3 py-3">
+                  <div className="flex flex-wrap gap-x-6 gap-y-2">
+                    {Object.entries(transactionTotals).map(([currency, total]) => (
+                      <span key={currency} className="whitespace-nowrap">
+                        {currency}: جمع بدهکار {formatAmount(total.debit, currency)} · جمع بستانکار {formatAmount(total.credit, currency)} ·
+                        مانده حساب {formatAmount(Math.abs(balances[currency] || 0), currency)} {(balances[currency] || 0) > 0 ? 'بدهکار' : (balances[currency] || 0) < 0 ? 'بستانکار' : 'تسویه'}
+                      </span>
+                    ))}
+                    {Object.entries(balances).filter(([currency]) => !transactionTotals[currency]).map(([currency, balance]) => (
+                      <span key={currency} className="whitespace-nowrap">
+                        {currency}: جمع گردش ۰ · مانده حساب {formatAmount(Math.abs(balance), currency)} {balance > 0 ? 'بدهکار' : balance < 0 ? 'بستانکار' : 'تسویه'}
+                      </span>
+                    ))}
+                  </div>
+                </td>
+              </tr>
+            </tfoot>
           </table>
         </div>
       )}
