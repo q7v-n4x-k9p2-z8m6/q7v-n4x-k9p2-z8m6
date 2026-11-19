@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { formatNumber, formatAmount } from '@/lib/sarraaf';
+import { formatAmount } from '@/lib/sarraaf';
 import { Network, Plus, Pencil, Send, Download } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
