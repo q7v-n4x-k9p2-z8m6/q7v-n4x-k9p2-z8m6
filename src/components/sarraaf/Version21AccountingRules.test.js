@@ -164,6 +164,17 @@ test('cash transaction edit cannot change its linked party or document relation'
     'other', 'حساب متفرقه'
   ), /طرف حساب یک گردش ثبت‌شده قابل تعویض نیست/);
 });
+test('balanced journal requires a valid linked bank account ID', () => {
+  assert.throws(() => validateBalancedLines([
+    line('bank', 'بانک نمونه', 100, 0),
+    line('suspense', 'حساب مقابل', 0, 100, { account_id: '9' }),
+  ]), /شناسه حساب مرتبط/);
+  assert.doesNotThrow(() => validateBalancedLines([
+    line('bank', 'بانک نمونه', 100, 0, { account_id: '42' }),
+    line('suspense', 'حساب مقابل', 0, 100, { account_id: '9' }),
+  ]));
+});
+
 test('bank ledger mapping uses the exact bank account identity', async () => {
   const { bankLedgerRef } = await import('./Version21AccountingRules.js');
   assert.deepEqual(bankLedgerRef({ id: 42, bank_name: 'بانک نمونه' }), {
