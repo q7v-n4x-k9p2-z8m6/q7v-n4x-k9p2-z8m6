@@ -47,12 +47,10 @@ import UCManager from '@/components/sarraaf/UCManager';
 import RechargeManager from '@/components/sarraaf/RechargeManager';
 import Afghan5Manager from '@/components/sarraaf/Afghan5Manager';
 import SellerManager from '@/components/sarraaf/SellerManager';
-import SandboxPanel from '@/components/sandbox/SandboxPanel';
 import SupabaseAuditManager from '@/components/sarraaf/SupabaseAuditManager';
 import LiveDatabaseExplorer from '@/components/sarraaf/LiveDatabaseExplorer';
 import MaintenanceControl from '@/components/sarraaf/MaintenanceControl';
 import UserLoginRestrictionControl from '@/components/sarraaf/UserLoginRestrictionControl';
-import { SandboxProvider } from '@/components/sandbox/SandboxProvider';
 import { checkBuilderAccess, startBuilderSession } from '@/lib/builderAccess';
 import { useToast } from '@/components/ui/use-toast';
 
@@ -97,7 +95,6 @@ const TAB_GROUPS = [
   { label: 'شارژ و بسته', value: 'recharge', description: 'مدیریت شارژ و بسته اینترنت' },
   { label: 'افغان۵', value: 'afghan5', description: 'مدیریت خدمات افغان۵' },
   { label: 'فروشندگان', value: 'sellers', description: 'مدیریت فروشندگان و سفارش‌ها' },
-  { label: 'آزمایش فروش', value: 'sandbox', description: 'محیط آزمایشی مستقل فروش' },
   { label: 'بررسی سوپابیس', value: 'supabase_audit', description: 'گزارش ساختار و سیاست‌های امنیتی' },
   { label: 'دیتابیس زنده', value: 'db_explorer', description: 'ابزار مشاهده پایگاه داده زنده' },
 ];
@@ -108,7 +105,7 @@ const TAB_CATEGORIES = [
   { label: 'کاربران و دسترسی', value: 'access', icon: Users, tabs: ['users', 'perms', 'co_creators', 'email_verify'] },
   { label: 'مالی و پلن‌ها', value: 'finance', icon: Wallet, tabs: ['plans', 'pricing', 'payments', 'withdrawals', 'trial'] },
   { label: 'ارتباطات', value: 'communication', icon: MessageSquare, tabs: ['notif', 'chat', 'masnavi_ai'] },
-  { label: 'خدمات و فروش', value: 'services', icon: Store, tabs: ['uc_manager', 'recharge', 'afghan5', 'sellers', 'sandbox'] },
+  { label: 'خدمات و فروش', value: 'services', icon: Store, tabs: ['uc_manager', 'recharge', 'afghan5', 'sellers'] },
   { label: 'ابزار و نگهداری', value: 'tools', icon: Database, tabs: ['maintenance', 'version', 'layout_preview', 'computer_layout_preview', 'layout_studio', 'backup', 'backup_v2', 'triple_backup', 'supabase_audit', 'db_explorer'] },
 ];
 
@@ -133,7 +130,7 @@ export default function BuilderPanel() {
 
   // مجوزها روی شناسه تک‌تک تب‌ها اعمال می‌شوند، نه شناسه گروه‌های نمایشی.
   const visibleTabGroups = useMemo(() => TAB_GROUPS.filter((group) => {
-    const creatorOnlyTabs = ['co_creators', 'layout_preview', 'computer_layout_preview', 'layout_studio', 'sandbox', 'supabase_audit', 'db_explorer', 'masnavi_ai'];
+    const creatorOnlyTabs = ['co_creators', 'layout_preview', 'computer_layout_preview', 'layout_studio', 'supabase_audit', 'db_explorer', 'masnavi_ai'];
     if (group.value === 'masnavi_ai' && user?.role !== 'creator') return false;
     if (group.value === 'maintenance' && user?.role !== 'creator') return false;
     if (creatorOnlyTabs.includes(group.value) && !isFullCreator) return false;
@@ -599,15 +596,6 @@ export default function BuilderPanel() {
         <TabsContent value="sellers">
           <SellerManager />
         </TabsContent>
-
-        {/* محیط آزمایشی فروش شارژ و خدمات دیجیتال — فقط سازندهٔ اصلی */}
-        {isFullCreator && (
-          <TabsContent value="sandbox">
-            <SandboxProvider>
-              <SandboxPanel />
-            </SandboxProvider>
-          </TabsContent>
-        )}
 
         {/* بررسی امن سوپابیس — فقط سازنده/مدیر */}
         {isFullCreator && (
