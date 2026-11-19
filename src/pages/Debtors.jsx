@@ -168,6 +168,20 @@ export default function Debtors() {
                 );
               })}
             </tbody>
+            <tfoot className="sticky bottom-0 bg-[#eaf1f9] text-foreground font-bold">
+              <tr>
+                <td colSpan={5} className="border-t-2 border-[#174b7d] px-4 py-3">
+                  <div className="flex flex-wrap gap-x-6 gap-y-2">
+                    <span>جمع ردیف‌های قابل‌مشاهده: {formatNumber(totalCount)} نفر</span>
+                    {Object.entries(totalsByCurrency).map(([currency, total]) => (
+                      <span key={currency} className="whitespace-nowrap">
+                        {currency}: بدهکار {formatAmount(total.debit, currency)} · بستانکار {formatAmount(total.credit, currency)} · مانده {formatAmount(Math.abs(total.net), currency)} {total.net > 0 ? 'بدهکار' : total.net < 0 ? 'بستانکار' : 'تسویه'}
+                      </span>
+                    ))}
+                  </div>
+                </td>
+              </tr>
+            </tfoot>
           </table>
         </div>
       )}
