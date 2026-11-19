@@ -215,6 +215,7 @@ export const TX_TYPE_LABELS = {
 
 export const TRANSFER_STATUS_LABELS = {
   registered: 'ثبت‌شده',
+  done: 'آماده پرداخت',
   pending: 'در انتظار پرداخت',
   paid: 'پرداخت‌شده',
   cancelled: 'لغو‌شده',
