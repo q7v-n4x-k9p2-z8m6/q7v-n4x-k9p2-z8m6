@@ -297,22 +297,31 @@ export async function loadVersion21Database() {
     _sourceTable: 'transfers',
   }));
 
-  const mappedConversions = conversions.map(row => ({
-    ...row,
-    id: String(row.id),
-    date: dateOnly(row.created_at),
-    kind: 'تبدیل',
-    fromCurrency: row.from_currency || '',
-    fromAmount: num(row.from_amount),
-    toCurrency: row.to_currency || '',
-    toAmount: num(row.to_amount),
-    rate: num(row.rate),
-    profit: null,
-    accountingStatus: (() => { const doc = documents.find(item => item.related_type === 'conversion' && Number(item.related_id) === Number(row.id)); return !doc ? 'سند ندارد' : (doc.reversed ? 'ابطال شده' : isDocumentBalanced(doc.id) ? 'متوازن' : 'نیازمند بررسی'); })(),
-    party: row.customer_name || '',
-    note: row.description || '',
-    _sourceTable: 'conversions',
-  }));
+  const mappedConversions = conversions.map(row => {
+    const linkedDocument = documents.find(item => item.related_type === 'conversion' && Number(item.related_id) === Number(row.id));
+    const documentLines = linkedDocument
+      ? activeLedgerEntries.filter(line => String(line.document_id || '') === String(linkedDocument.id))
+      : [];
+    return {
+      ...row,
+      id: String(row.id),
+      date: dateOnly(row.created_at),
+      number: linkedDocument?.doc_number || '',
+      kind: 'تبدیل',
+      fromCurrency: row.from_currency || '',
+      fromAmount: num(row.from_amount),
+      toCurrency: row.to_currency || '',
+      toAmount: num(row.to_amount),
+      rate: num(row.rate),
+      profit: null,
+      debitAccount: [...new Set(documentLines.filter(line => num(line.debit) > 0).map(line => line.account_name).filter(Boolean))].join(' / '),
+      creditAccount: [...new Set(documentLines.filter(line => num(line.credit) > 0).map(line => line.account_name).filter(Boolean))].join(' / '),
+      accountingStatus: !linkedDocument ? 'سند ندارد' : (linkedDocument.reversed ? 'ابطال شده' : isDocumentBalanced(linkedDocument.id) ? 'متوازن' : 'نیازمند بررسی'),
+      party: row.customer_name || '',
+      note: row.description || '',
+      _sourceTable: 'conversions',
+    };
+  });
 
   const mappedTransactions = activeLedgerEntries.map(row => {
     const linkedDocument = row.document_id ? documentsById.get(String(row.document_id)) : null;
@@ -324,6 +333,11 @@ export async function loadVersion21Database() {
     const credit = num(row.credit);
     const amount = isCustomer ? credit - debit : debit - credit;
     const safe = isCash ? safeById.get(String(row.account_id || '')) : null;
+    const documentLines = linkedDocument
+      ? activeLedgerEntries.filter(line => String(line.document_id || '') === String(linkedDocument.id))
+      : [row];
+    const debitAccount = [...new Set(documentLines.filter(line => num(line.debit) > 0).map(line => line.account_name).filter(Boolean))].join(' / ');
+    const creditAccount = [...new Set(documentLines.filter(line => num(line.credit) > 0).map(line => line.account_name).filter(Boolean))].join(' / ');
     return {
       id: String(row.id),
       date: dateOnly(row.created_at),
@@ -336,6 +350,9 @@ export async function loadVersion21Database() {
       cash: isCash ? (safe?.name || row.account_name || 'صندوق') : '',
       description: row.description || linkedDocument?.description || '',
       number: linkedDocument?.doc_number || '',
+      account: row.account_name || '',
+      debitAccount,
+      creditAccount,
       debit,
       credit,
       accountType,
@@ -523,7 +540,8 @@ export async function loadVersion21Database() {
     _sourceTable: 'audit_logs',
   }));
 
-  const isDemoAccount = Number(userId) === 107 && exchangeCode === 'EX-261019-9B2573C5';
+  const isDemoAccount = (Number(userId) === 107 && exchangeCode === 'EX-261019-9B2573C5') ||
+    (Number(userId) === 114 && exchangeCode === 'EX-261028-27497E95');
   const demoPreviewRecords = isDemoAccount ? await loadDemoPreviewRecords() : [];
 
   return {
