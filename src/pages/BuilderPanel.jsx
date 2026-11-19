@@ -563,9 +563,6 @@ export default function BuilderPanel() {
           </TabsContent>
         )}
 
-        {/* آزمایشگاه توسعه — فقط پنل سازنده اصلی و کاملاً جدا از دیتابیس زنده */}
-        {isFullCreator && (
-        )}
 
         {/* دستیار زنده سازنده — مستقل از دستیار عمومی برنامه و فقط برای نقش creator */}
         {user?.role === 'creator' && (
