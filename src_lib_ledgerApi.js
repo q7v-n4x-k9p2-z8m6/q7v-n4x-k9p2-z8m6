@@ -99,7 +99,7 @@ export async function postDocument({ doc_type, currency, amount, fee, related_ty
 }
 
 // ── Post Transfer (via Supabase RPC) ──
-export async function postTransfer({ direction, sender_name, sender_phone, receiver_name, receiver_phone, destination, origin, amount, currency, rate, fee, fee_currency, description, client_operation_id, exchange_code }) {
+export async function postTransfer({ customer_id, agent_id, direction, sender_name, sender_phone, receiver_name, receiver_phone, destination, origin, amount, currency, rate, fee, fee_currency, description, client_operation_id, exchange_code }) {
   try {
     const ec = exchange_code || getExchangeCode();
     const userId = getSessionUserId();
@@ -107,7 +107,7 @@ export async function postTransfer({ direction, sender_name, sender_phone, recei
     const userName = user?.full_name || user?.name || '';
 
     // Try the RPC function first (atomic)
-    const { data, error } = await supabase.rpc('post_transfer_transaction', {
+    const { data, error } = await supabase.rpc('post_transfer_transaction_v2', {
       p_direction: direction,
       p_sender_name: sender_name || '',
       p_sender_phone: sender_phone || '',
@@ -123,56 +123,18 @@ export async function postTransfer({ direction, sender_name, sender_phone, recei
       p_description: description || '',
       p_exchange_code: ec,
       p_user_id: userId,
-      p_user_name: userName,
+      p_registered_by: userName,
       p_client_operation_id: client_operation_id || null,
+      p_customer_id: customer_id ? Number(customer_id) : null,
+      p_agent_id: agent_id ? Number(agent_id) : null,
     });
 
-    if (error) {
-      // Fallback: direct insert if RPC doesn't exist
-      if (error.message?.includes('Could not find the function') || error.code === '42883') {
-        return await postTransferDirect({ direction, sender_name, sender_phone, receiver_name, receiver_phone, destination, origin, amount, currency, rate, fee, fee_currency, description, client_operation_id, exchange_code: ec, userId, userName });
-      }
-      throw new Error(error.message || 'postTransfer_failed');
-    }
+    if (error) throw new Error(error.message || 'postTransfer_failed');
 
     return data || { success: true };
   } catch (err) {
     throw new Error(err.message || 'postTransfer_failed');
   }
-}
-
-// ── Post Transfer (direct fallback) ──
-async function postTransferDirect({ direction, sender_name, sender_phone, receiver_name, receiver_phone, destination, origin, amount, currency, rate, fee, fee_currency, description, client_operation_id, exchange_code, userId, userName }) {
-  const transferNumber = `TRF-${Date.now().toString(36).toUpperCase()}`;
-
-  const { data: transfer, error: transferError } = await supabase
-    .from('transfers')
-    .insert({
-      transfer_number: transferNumber,
-      direction,
-      sender_name: sender_name || '',
-      sender_phone: sender_phone || '',
-      receiver_name: receiver_name || '',
-      receiver_phone: receiver_phone || '',
-      destination: destination || '',
-      origin: origin || '',
-      amount: Number(amount),
-      currency: currency || 'AFN',
-      rate: rate ? Number(rate) : null,
-      fee: Number(fee) || 0,
-      fee_currency: fee_currency || null,
-      description: description || '',
-      exchange_code,
-      registered_by: userName,
-      registered_by_user_id: userId,
-      client_operation_id: client_operation_id || null,
-      status: 'done',
-    })
-    .select()
-    .single();
-
-  if (transferError) throw new Error(transferError.message || 'postTransfer_insert_failed');
-  return { id: transfer.id, transfer_number: transfer.transfer_number };
 }
 
 // ── Reverse Document (via Supabase RPC) ──
