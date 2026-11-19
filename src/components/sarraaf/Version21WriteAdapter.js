@@ -227,6 +227,12 @@ function chartAccountLedgerRef(account) {
   };
 }
 
+async function requiredChartAccountLedgerRefByType(ctx, accountType, label) {
+  const account = await findChartAccountByType(ctx, accountType);
+  if (!account) throw new Error('حساب درآمدی «' + label + '» در کدینگ این صراف وجود ندارد؛ کمیشن ثبت نشد تا به حساب واسط منتقل نشود.');
+  return chartAccountLedgerRef(account);
+}
+
 async function chartAccountLedgerRefByType(ctx, accountType, fallbackName) {
   const account = await findChartAccountByType(ctx, accountType);
   return account ? chartAccountLedgerRef(account) : {
@@ -426,7 +432,7 @@ export async function saveVersion21Record(module, draft) {
           description: 'کمیشن حواله ' + transferNumber, clientOperationId: operationId + '-fee',
           lines: [
             { account_type: 'customer', account_id: String(customer.id), account_name: draft.sender, currency: draft.currency || 'AFN', debit: feeAmount, credit: 0 },
-            { ...(await chartAccountLedgerRefByType(ctx, 'revenue', 'درآمد کمیشن حواله')), currency: draft.currency || 'AFN', debit: 0, credit: feeAmount },
+            { ...(await requiredChartAccountLedgerRefByType(ctx, 'revenue', 'درآمد کمیشن حواله')), currency: draft.currency || 'AFN', debit: 0, credit: feeAmount },
           ],
         });
         if (!feeDoc?.document_id) warning = 'حواله ثبت شد، اما سند کمیشن باید بررسی شود.';
