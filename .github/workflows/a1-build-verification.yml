@@ -64,6 +64,12 @@ jobs:
             [workspace.includes('data.isDemoAccount&&!target._demoPreview'), 'Demo delete must never touch existing core accounting records'],
             [workspace.includes('data.isDemoAccount&&!selected._demoPreview'), 'Demo edit must never touch existing core accounting records'],
             [demo.includes(".eq('record_kind', 'temporary')") && demo.includes(".eq('owner_user_id', ctx.userId)"), 'Demo mutations must be tenant-scoped and temporary-only'],
+            [demo.includes("114: { username: '33333333', exchangeCode: 'EX-261028-27497E95' }"), 'Second test sarraaf account must use its own isolated demo tenant'],
+            [adapter.includes("[114, { username: '33333333', exchangeCode: 'EX-261028-27497E95' }]"), 'Second test sarraaf account must be blocked from core financial writes'],
+            [data.includes("Number(userId) === 114 && exchangeCode === 'EX-261028-27497E95'"), 'Second test sarraaf account must load only its isolated preview records'],
+            [workspace.includes("['status','active','accountingStatus'].includes(column.key)"), 'Regular sarraaf lists must hide internal status flags'],
+            [workspace.includes("label:'حساب بدهکار'") && workspace.includes("label:'حساب بستانکار'"), 'Operation lists must show debit and credit account details'],
+            [workspace.includes("label:'شماره حواله'") && workspace.includes("label:'شماره سند'"), 'Operation lists must show transfer and document numbers'],
           ];
           for (const [ok, message] of checks) {
             if (!ok) throw new Error(message);
