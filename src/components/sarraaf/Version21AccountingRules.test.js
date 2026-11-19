@@ -93,3 +93,18 @@ test('demo tenant matching accepts only the exact user and exchange pair', async
   assert.equal(matchDemoAccount(114, 'EX-261019-9B2573C5'), null);
   assert.equal(matchDemoAccount(999, 'EX-261019-9B2573C5'), null);
 });
+
+
+test('document date accepts valid ISO calendar dates and preserves date-only value', async () => {
+  const { documentDateTimestamp } = await import('./Version21AccountingRules.js');
+  assert.equal(documentDateTimestamp('2024-02-29'), '2024-02-29T12:00:00.000Z');
+  assert.equal(documentDateTimestamp('2026-11-19'), '2026-11-19T12:00:00.000Z');
+  assert.equal(documentDateTimestamp(''), null);
+});
+
+test('document date rejects impossible or non-ISO dates before posting', async () => {
+  const { documentDateTimestamp } = await import('./Version21AccountingRules.js');
+  for (const value of ['2025-02-29', '2026-13-01', '2026-04-31', '19/11/2026', '2026-1-01']) {
+    assert.throws(() => documentDateTimestamp(value), /تاریخ سند/);
+  }
+});

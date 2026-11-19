@@ -1,6 +1,6 @@
 import { supabase } from '@/lib/supabaseClient';
 import { getExchangeCode } from '@/lib/supabaseApi';
-import { number, validateBalancedLines } from './Version21AccountingRules';
+import { number, validateBalancedLines, documentDateTimestamp } from './Version21AccountingRules';
 
 const TABLES = {
   customers: 'customers',
@@ -285,7 +285,7 @@ async function postDocument(ctx, {
 
 async function applyDocumentDate(ctx, documentId, date, linkedTable = null, linkedId = null) {
   if (!date || !documentId) return '';
-  const timestamp = new Date(`${date}T12:00:00.000Z`).toISOString();
+  const timestamp = documentDateTimestamp(date);
   const warnings = [];
   const { error: documentError } = await supabase.from('documents').update({ created_at: timestamp })
     .eq('id', Number(documentId)).eq('exchange_code', ctx.exchangeCode);
@@ -302,6 +302,7 @@ async function applyDocumentDate(ctx, documentId, date, linkedTable = null, link
 }
 
 export async function saveVersion21Record(module, draft) {
+  if (draft?.date) documentDateTimestamp(draft.date);
   const ctx = sessionContext();
   await assertNotDemoCoreWrite(ctx);
   await requireModulePermission(ctx, module, draft?.id ? 'edit' : 'create');
@@ -648,6 +649,7 @@ async function editDocument(ctx, documentId, description, amount, currency, line
 }
 
 export async function editVersion21Record(module, draft) {
+  if (draft?.date) documentDateTimestamp(draft.date);
   const ctx = sessionContext();
   await assertNotDemoCoreWrite(ctx);
   if (!draft?.id) throw new Error('شناسه رکورد برای ویرایش موجود نیست.');

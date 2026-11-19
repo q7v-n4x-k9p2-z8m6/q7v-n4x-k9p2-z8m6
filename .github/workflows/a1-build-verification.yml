@@ -42,6 +42,7 @@ jobs:
           const checks = [
             [!workspace.includes('\\${'), 'Workspace contains a literal escaped JSX expression'],
             [adapter.includes('validateBalancedLines'), 'Financial posting/edit balance validation is missing'],
+            [adapter.includes('documentDateTimestamp(draft.date)') && adapter.includes('documentDateTimestamp(date)'), 'Financial document dates must be validated before posting and before date synchronization'],
             [accountingRules.includes('Number.isFinite(parsed) ? parsed : Number.NaN'), 'Malformed numeric input must not be coerced to zero'],
             [data.includes('Number(line.debit)') && data.includes('Number(line.credit)'), 'Ledger balance checks must parse raw numeric values'],
             [adapter.includes('fee_currency: draft.currency || \'AFN\', total: amount + feeAmount'), 'Remittance edit must synchronize fee currency and total'],
