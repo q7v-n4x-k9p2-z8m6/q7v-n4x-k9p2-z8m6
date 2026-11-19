@@ -152,7 +152,7 @@ export default function TransferBook() {
               <p className="col-span-2 text-xs text-muted-foreground">برای اجرای کامل حواله، ارز و مبلغ پرداخت باید دقیقاً با حواله برابر باشد.</p>
             </div>
             <div>
-              <label className="text-xs">حساب پرداخت</label>
+              <label className="text-xs">{execDialog?.direction === 'send' ? 'حساب دریافت وجه' : 'حساب پرداخت به گیرنده'}</label>
               <Select value={payCounter} onValueChange={(value) => {
                 setPayCounter(value);
                 if (value === 'bank') {
