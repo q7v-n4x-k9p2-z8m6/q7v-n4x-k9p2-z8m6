@@ -2,7 +2,7 @@ import React from 'react';
 import { Monitor, Smartphone, ShieldCheck, Layers3 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import MobileLayoutPreview from '@/components/sarraaf/MobileLayoutPreview';
-import CreatorPreviewLab from '@/components/sarraaf/CreatorPreviewLab';
+import ComputerLayoutPreview from '@/components/sarraaf/ComputerLayoutPreview';
 import LayoutDesignCatalog from '@/components/sarraaf/LayoutDesignCatalog';
 import PdfLayoutSandboxPage from '@/components/sarraaf/PdfLayoutSandboxPage';
 
@@ -57,7 +57,7 @@ export default function LayoutPreviewStudio() {
               </TabsTrigger>
             </TabsList>
             <TabsContent value="old-laptop" className="mt-4 min-w-0">
-              <CreatorPreviewLab />
+              <ComputerLayoutPreview />
             </TabsContent>
             <TabsContent value="old-mobile" className="mt-4 min-w-0">
               <MobileLayoutPreview />
