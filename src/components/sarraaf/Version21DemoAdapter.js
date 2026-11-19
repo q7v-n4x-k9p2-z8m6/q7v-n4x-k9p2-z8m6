@@ -60,10 +60,12 @@ export async function saveDemoPreviewRecord(moduleKey, payload, recordId = null)
   delete cleanPayload._demoRecordId;
   delete cleanPayload._demoModule;
   if (recordId) {
+    const now = new Date().toISOString();
     const { data, error } = await supabase.from('demo_preview_records')
       .update({ payload: cleanPayload })
       .eq('id', recordId).eq('exchange_code', ctx.exchangeCode)
       .eq('owner_user_id', ctx.userId).eq('record_kind', 'temporary')
+      .gt('expires_at', now)
       .select('id').maybeSingle();
     if (error) throw new Error('ویرایش رکورد موقت ناموفق بود: ' + error.message);
     if (!data) throw new Error('رکورد ثابت است یا زمان نگهداری آن پایان یافته؛ ویرایش مجاز نیست.');
@@ -87,10 +89,12 @@ export async function saveDemoPreviewRecord(moduleKey, payload, recordId = null)
 
 export async function deleteDemoPreviewRecord(recordId) {
   const ctx = await requireDemoSession();
+  const now = new Date().toISOString();
   const { data, error } = await supabase.from('demo_preview_records')
     .delete()
     .eq('id', recordId).eq('exchange_code', ctx.exchangeCode)
     .eq('owner_user_id', ctx.userId).eq('record_kind', 'temporary')
+    .gt('expires_at', now)
     .select('id').maybeSingle();
   if (error) throw new Error('حذف رکورد موقت ناموفق بود: ' + error.message);
   if (!data) throw new Error('رکورد ثابت است یا زمان نگهداری آن پایان یافته؛ حذف مجاز نیست.');
