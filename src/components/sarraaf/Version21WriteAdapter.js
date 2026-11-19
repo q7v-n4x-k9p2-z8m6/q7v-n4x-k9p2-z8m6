@@ -201,18 +201,20 @@ async function getSafe(ctx, name, currency) {
   return data;
 }
 
-async function getBranch(ctx, name) {
-  if (!name) return null;
-  const { data, error } = await supabase.from('origins').select('id,name')
-    .eq('exchange_code', ctx.exchangeCode).eq('name', name).maybeSingle();
+async function getBranch(ctx, name, id = null) {
+  if (!name && !id) return null;
+  let query = supabase.from('origins').select('id,name').eq('exchange_code', ctx.exchangeCode);
+  query = id ? query.eq('id', Number(id)) : query.eq('name', name);
+  const { data, error } = await query.maybeSingle();
   if (error) throw error;
   return data || null;
 }
 
-async function getCustomer(ctx, name) {
-  if (!name) return null;
-  const { data, error } = await supabase.from('customers').select('id,name,mobile')
-    .eq('exchange_code', ctx.exchangeCode).eq('name', name).maybeSingle();
+async function getCustomer(ctx, name, id = null) {
+  if (!name && !id) return null;
+  let query = supabase.from('customers').select('id,name,mobile').eq('exchange_code', ctx.exchangeCode);
+  query = id ? query.eq('id', Number(id)) : query.eq('name', name);
+  const { data, error } = await query.maybeSingle();
   if (error) throw error;
   return data || null;
 }
@@ -559,7 +561,7 @@ export async function saveVersion21Record(module, draft) {
 
   if (module === 'journal') {
     const amount = number(draft.amount);
-    if (amount <= 0) throw new Error('مبلغ سند باید مثبت باشد.');
+    if (!Number.isFinite(amount) || amount <= 0) throw new Error('مبلغ سند باید مثبت و معتبر باشد.');
     const debit = await resolveLedgerAccount(ctx, draft.debitAccount, draft.currency || 'AFN');
     const credit = await resolveLedgerAccount(ctx, draft.creditAccount, draft.currency || 'AFN');
     if (debit.account_id === credit.account_id && debit.account_type === credit.account_type) throw new Error('حساب بدهکار و بستانکار یکسان است.');
@@ -573,6 +575,47 @@ export async function saveVersion21Record(module, draft) {
     const dateWarning = await applyDocumentDate(ctx, doc?.document_id, draft.date);
     const auditWarning = await writeAudit(ctx, 'create', 'journal', doc?.document_id, 'ثبت سند روزنامچه و سطرهای دفتر کل', null, draft);
     return { id: String(doc?.document_id || ''), auditWarning, warning: dateWarning };
+  }
+
+  if (module === 'transactions') {
+    const amount = number(draft.amount);
+    const currency = String(draft.currency || 'AFN').trim().toUpperCase();
+    const partyType = draft.partyType || 'customer';
+    const partyName = String(draft.party || '').trim();
+    if (!Number.isFinite(amount) || amount === 0) throw new Error('مبلغ گردش باید عدد معتبر و غیرصفر باشد.');
+    if (!partyName && partyType !== 'other') throw new Error('طرف حساب را انتخاب کنید.');
+    if (!partyName && partyType === 'other') throw new Error('شرح طرف حساب الزامی است.');
+    const safe = await getSafe(ctx, draft.cash, currency);
+    let counter;
+    let relatedType = 'none';
+    let relatedId = null;
+    if (partyType === 'customer') {
+      const customer = await getCustomer(ctx, partyName, draft.partyId);
+      if (!customer) throw new Error('مشتری انتخاب‌شده در همین صراف پیدا نشد.');
+      counter = { account_type: 'customer', account_id: String(customer.id), account_name: customer.name };
+      relatedType = 'customer'; relatedId = customer.id;
+    } else if (partyType === 'branch') {
+      const branch = await getBranch(ctx, partyName, draft.partyId);
+      if (!branch) throw new Error('نمایندگی انتخاب‌شده در همین صراف پیدا نشد.');
+      counter = { account_type: 'suspense', account_id: String(branch.id), account_name: branch.name };
+      relatedType = 'branch'; relatedId = branch.id;
+    } else {
+      counter = { account_type: 'suspense', account_id: '', account_name: partyName };
+    }
+    const cashLine = { account_type: 'cash', account_id: String(safe.id), account_name: safe.name, currency };
+    const counterLine = { ...counter, currency };
+    const lines = amount > 0
+      ? [{ ...cashLine, debit: amount, credit: 0 }, { ...counterLine, debit: 0, credit: amount }]
+      : [{ ...counterLine, debit: Math.abs(amount), credit: 0 }, { ...cashLine, debit: 0, credit: Math.abs(amount) }];
+    const description = String(draft.description || draft.type || 'گردش حساب').trim();
+    const doc = await postDocument(ctx, {
+      docType: 'cash', currency, amount: Math.abs(amount), relatedType, relatedId,
+      relatedName: partyName, description, lines, clientOperationId: draft.clientOperationId,
+    });
+    const dateWarning = await applyDocumentDate(ctx, doc?.document_id, draft.date);
+    const auditWarning = await writeAudit(ctx, 'create', 'cash_transaction', doc?.document_id,
+      'ثبت گردش حساب و سند متوازن دفتر کل', null, { ...draft, amount, currency, partyId: relatedId });
+    return { id: String(doc?.document_id || ''), documentId: String(doc?.document_id || ''), auditWarning, warning: dateWarning };
   }
 
   throw new Error(`فرم «${module}» هنوز به عملیات پایگاه داده متصل نشده است.`);
@@ -718,8 +761,8 @@ export async function editVersion21Record(module, draft) {
     const amount = number(draft.amount);
     if (!amount) throw new Error('مبلغ گردش نمی‌تواند صفر باشد.');
     const currency = draft.currency || oldCash.currency || 'AFN';
-    const customer = draft.partyType === 'customer' ? await getCustomer(ctx, draft.party) : null;
-    const branch = draft.partyType === 'branch' ? await getBranch(ctx, draft.party) : null;
+    const customer = draft.partyType === 'customer' ? await getCustomer(ctx, draft.party, draft.partyId) : null;
+    const branch = draft.partyType === 'branch' ? await getBranch(ctx, draft.party, draft.partyId) : null;
     const other = customer
       ? { account_type: 'customer', account_id: String(customer.id), account_name: customer.name }
       : branch
