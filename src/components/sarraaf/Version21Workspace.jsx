@@ -18,7 +18,7 @@ import {
 } from 'lucide-react';
 import SarraafLogo from '@/components/SarraafLogo';
 import { useAuth } from '@/lib/AuthContext';
-import { sumCashLedgerMovement } from './Version21AccountingRules';
+import { sumCashLedgerMovement, sumBankLedgerMovement } from './Version21AccountingRules';
 
 const CURRENCIES = ['AFN','USD','EUR','IRR','TRY','PKR','AED','SAR','GBP','CNY'];
 const MODULES = [
@@ -411,9 +411,8 @@ export default function Version21Workspace(){
     const currency=account.currency||'AFN';totals[currency]??={debit:0,credit:0};
     totals[currency].debit+=Math.max(n(account.opening),0);
     totals[currency].credit+=Math.max(-n(account.opening),0);
-    const related=(data.transactions||[]).filter(t=>String(t.accountType||'').toLowerCase()==='bank'&&String(t.accountId||'')===String(account.id)&&!t.deleted&&t.currency===currency);
-    totals[currency].debit+=related.reduce((s,t)=>s+n(t.debit),0);
-    totals[currency].credit+=related.reduce((s,t)=>s+n(t.credit),0);
+    totals[currency].debit+=sumBankLedgerMovement(data.transactions,account.id,currency,'debit');
+    totals[currency].credit+=sumBankLedgerMovement(data.transactions,account.id,currency,'credit');
    }
   } else if(active==='journal'){
    selectedRows.filter(x=>x.status==='قطعی'||!x.status).forEach(row=>{const currency=row.currency||'AFN';totals[currency]??={debit:0,credit:0};totals[currency].debit+=n(row.debitTotal);totals[currency].credit+=n(row.creditTotal);});
