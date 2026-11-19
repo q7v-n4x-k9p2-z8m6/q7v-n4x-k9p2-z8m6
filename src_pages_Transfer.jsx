@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { useCustomers, useAgents, useCreateTransfer, useCurrencies } from '@/lib/useSarraaf';
 import { PageHeader } from '@/components/sarraaf/Pieces';
@@ -23,6 +23,7 @@ export default function Transfer() {
   const { data: agents } = useAgents();
   const { data: currencies } = useCurrencies();
   const createMut = useCreateTransfer();
+  const operationIdRef = useRef(null);
 
   const [customer, setCustomer] = useState(customerId);
   const [senderName, setSenderName] = useState('');
@@ -40,13 +41,22 @@ export default function Transfer() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!customer || !amount) { toast({ title: 'خطا', description: 'مشتری و مبلغ الزامی است', variant: 'destructive' }); return; }
+    const selectedCustomer = (customers || []).find(c => String(c.id) === String(customer));
+    if (!selectedCustomer) { toast({ title: 'خطا', description: 'مشتری انتخاب‌شده پیدا نشد؛ فهرست مشتریان را تازه کنید', variant: 'destructive' }); return; }
+    if (!operationIdRef.current) {
+      operationIdRef.current = globalThis.crypto?.randomUUID?.() || `transfer-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    }
     try {
       const result = await createMut.mutateAsync({
         direction: isSend ? 'send' : 'receive',
+        customer_id: Number(selectedCustomer.id),
+        agent_id: agent ? Number(agent) : null,
         sender_name: senderName, sender_phone: senderPhone,
         receiver_name: receiverName, receiver_phone: receiverPhone,
         destination, amount, currency, rate, fee, description,
+        client_operation_id: operationIdRef.current,
       });
+      operationIdRef.current = null;
       toast({ title: 'ثبت شد', description: `حواله ${result.transfer_number || ''} ثبت شد` });
       navigate('/transfer-book');
     } catch (err) {
@@ -62,7 +72,7 @@ export default function Transfer() {
           <Select value={customer} onValueChange={setCustomer}>
             <SelectTrigger><SelectValue placeholder="انتخاب مشتری" /></SelectTrigger>
             <SelectContent>
-              {(customers || []).map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+              {(customers || []).map(c => <SelectItem key={c.id} value={String(c.id)}>{c.name}</SelectItem>)}
             </SelectContent>
           </Select>
         </Field>
@@ -88,7 +98,7 @@ export default function Transfer() {
             <Select value={agent} onValueChange={setAgent}>
               <SelectTrigger><SelectValue placeholder="نماینده" /></SelectTrigger>
               <SelectContent>
-                {(agents || []).map(a => <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>)}
+                {(agents || []).map(a => <SelectItem key={a.id} value={String(a.id)}>{a.name}</SelectItem>)}
               </SelectContent>
             </Select>
           </Field>
