@@ -18,3 +18,14 @@ export function resolveSessionUserId(authUserRaw, authToken = '') {
     return '';
   }
 }
+
+export const DEMO_USERS = Object.freeze({
+  107: Object.freeze({ username: '22222222', exchangeCode: 'EX-261019-9B2573C5' }),
+  114: Object.freeze({ username: '33333333', exchangeCode: 'EX-261028-27497E95' }),
+});
+
+export function matchDemoAccount(userId, exchangeCode) {
+  const expected = DEMO_USERS[Number(userId)];
+  if (!expected || expected.exchangeCode !== exchangeCode) return null;
+  return expected;
+}
