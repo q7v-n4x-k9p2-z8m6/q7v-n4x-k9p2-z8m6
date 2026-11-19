@@ -90,7 +90,7 @@ export function validateBalancedLines(lines, label = 'سند') {
     if (!line.account_type || !line.account_name) {
       throw new Error(`${label}: حساب سطر ${index + 1} مشخص نشده است.`);
     }
-    if (['cash', 'customer'].includes(String(line.account_type)) && !(Number(line.account_id) > 0)) {
+    if (['cash', 'customer', 'bank'].includes(String(line.account_type)) && !(Number(line.account_id) > 0)) {
       throw new Error(`${label}: شناسه حساب مرتبط در سطر ${index + 1} معتبر نیست.`);
     }
     const total = totals.get(currency) || { debit: 0, credit: 0 };
