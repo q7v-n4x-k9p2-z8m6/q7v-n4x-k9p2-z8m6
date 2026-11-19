@@ -1,0 +1,359 @@
+import React, { lazy, Suspense, useEffect, useState } from 'react';
+import { Toaster } from "@/components/ui/toaster"
+import { QueryClientProvider } from '@tanstack/react-query'
+import { queryClientInstance } from '@/lib/query-client'
+import { BrowserRouter as Router, Route, Routes, Navigate, useParams } from 'react-router-dom';
+import { AuthProvider, useAuth } from '@/lib/AuthContext';
+import { LayoutVersionProvider } from '@/lib/LayoutVersionContext';
+import { LanguageProvider } from '@/lib/i18n';
+import { UpgradeProvider } from '@/lib/UpgradeContext';
+import { ThemeProvider } from 'next-themes';
+import ScrollToTop from './components/ScrollToTop';
+import AppGate from '@/components/AppGate';
+import ErrorBoundary from '@/components/ErrorBoundary';
+import ProtectedRoute from '@/components/ProtectedRoute';
+import AdminRoute from '@/components/AdminRoute';
+import FeatureGate from '@/components/FeatureGate';
+import RouteTransition from '@/components/RouteTransition';
+import { getMaintenanceStatus } from '@/lib/maintenance';
+
+// ── Recover from stale/missing split chunks without causing endless reloads ──
+const CHUNK_RETRY_KEY = 'app-chunk-retry-at';
+
+function isChunkLoadError(error) {
+  const message = String(error?.message || error || '');
+  return /Failed to fetch dynamically imported module|Importing a module script failed|Loading chunk .* failed|ChunkLoadError|Unable to preload CSS/i.test(message);
+}
+
+function lazyWithRetry(importFn) {
+  return lazy(() =>
+    importFn().catch((error) => {
+      if (isChunkLoadError(error)) {
+        // Retry once per 30-second window. sessionStorage can be unavailable in
+        // private browsing, so storage failures must never hide the real error.
+        let lastRetryAt = 0;
+        try {
+          lastRetryAt = Number(sessionStorage.getItem(CHUNK_RETRY_KEY) || 0);
+        } catch { /* storage is optional */ }
+
+        if (Date.now() - lastRetryAt > 30000) {
+          try {
+            sessionStorage.setItem(CHUNK_RETRY_KEY, String(Date.now()));
+          } catch { /* storage is optional */ }
+          window.location.reload();
+        }
+      }
+      throw error;
+    })
+  );
+}
+
+// ── Lazy-loaded page imports for code-splitting & mobile performance ──
+const Welcome = lazyWithRetry(() => import('@/pages/Welcome'));
+const Login = lazyWithRetry(() => import('@/pages/Login'));
+const Register = lazyWithRetry(() => import('@/pages/Register'));
+const ForgotPassword = lazyWithRetry(() => import('@/pages/ForgotPassword'));
+const ResetPassword = lazyWithRetry(() => import('@/pages/ResetPassword'));
+const Version21Home = lazyWithRetry(() => import('@/components/sarraaf/Version21Home'));
+const Version21SandboxRoute = lazyWithRetry(() => import('@/components/sarraaf/Version21SandboxRoute'));
+
+// The PDF-based Version 21 workspace is the single dashboard surface.
+// Module selection is handled inside Version21Workspace from the URL query;
+// do not render the legacy Dashboard alongside it.
+function DashboardRoute() {
+  return <Version21Home />;
+}
+const Customers = lazyWithRetry(() => import('@/components/sarraaf/v21/Version21Customers'));
+const CustomerDetail = lazyWithRetry(() => import('@/pages/CustomerDetail'));
+const Dadogereft = lazyWithRetry(() => import('@/pages/Dadogereft'));
+const Trade = lazyWithRetry(() => import('@/pages/Trade'));
+const Transfer = lazyWithRetry(() => import('@/pages/Transfer'));
+const Cash = lazyWithRetry(() => import('@/pages/Cash'));
+const Bank = lazyWithRetry(() => import('@/pages/Bank'));
+const Currencies = lazyWithRetry(() => import('@/pages/Currencies'));
+const Reports = lazyWithRetry(() => import('@/pages/Reports'));
+const ProfitLoss = lazyWithRetry(() => import('@/pages/ProfitLoss'));
+const Settings = lazyWithRetry(() => import('@/pages/Settings'));
+const MainSettings = lazyWithRetry(() => import('@/pages/MainSettings'));
+const Agents = lazyWithRetry(() => import('@/pages/Agents'));
+const Debtors = lazyWithRetry(() => import('@/pages/Debtors'));
+const Notifications = lazyWithRetry(() => import('@/pages/Notifications'));
+const AgencyNetwork = lazyWithRetry(() => import('@/pages/AgencyNetwork'));
+const AgencyChooser = lazyWithRetry(() => import('@/pages/AgencyChooser'));
+const ChatGroups = lazyWithRetry(() => import('@/pages/ChatGroups'));
+const ChatGroupDetail = lazyWithRetry(() => import('@/pages/ChatGroupDetail'));
+const SarraafMarket = lazyWithRetry(() => import('@/pages/SarraafMarket'));
+const SarraafChat = lazyWithRetry(() => import('@/pages/SarraafChat'));
+const Backup = lazyWithRetry(() => import('@/pages/Backup'));
+const CustomerChat = lazyWithRetry(() => import('@/pages/CustomerChat'));
+const TransferBook = lazyWithRetry(() => import('@/pages/TransferBook'));
+const Journal = lazyWithRetry(() => import('@/pages/Journal'));
+const GeneralLedger = lazyWithRetry(() => import('@/pages/GeneralLedger'));
+const JournalEntry = lazyWithRetry(() => import('@/pages/JournalEntry'));
+const BalanceSheet = lazyWithRetry(() => import('@/pages/BalanceSheet'));
+const Reconciliation = lazyWithRetry(() => import('@/pages/Reconciliation'));
+const CurrencyConvert = lazyWithRetry(() => import('@/pages/CurrencyConvert'));
+const OnlineProducts = lazyWithRetry(() => import('@/pages/OnlineProducts'));
+const PaymentGateway = lazyWithRetry(() => import('@/pages/PaymentGateway'));
+const EnterpriseModulePage = lazyWithRetry(() => import('@/pages/EnterpriseModulePage'));
+const SarraafWallet = lazyWithRetry(() => import('@/pages/sarraaf/SarraafWallet'));
+const SarraafRecharge = lazyWithRetry(() => import('@/pages/sarraaf/SarraafRecharge'));
+const SarraafGames = lazyWithRetry(() => import('@/pages/sarraaf/SarraafGames'));
+const BuilderPanel = lazyWithRetry(() => import('@/pages/BuilderPanel'));
+const SarraafSupport = lazyWithRetry(() => import('@/pages/SarraafSupport'));
+const Assistant = lazyWithRetry(() => import('@/pages/Assistant'));
+const CustomerLayout = lazyWithRetry(() => import('@/components/CustomerLayout'));
+const CustomerHome = lazyWithRetry(() => import('@/pages/customer/CustomerHome'));
+const CustomerWallet = lazyWithRetry(() => import('@/pages/customer/CustomerWallet'));
+const CustomerRecharge = lazyWithRetry(() => import('@/pages/customer/CustomerRecharge'));
+const CustomerAfghan5 = lazyWithRetry(() => import('@/pages/customer/CustomerAfghan5'));
+const CustomerShop = lazyWithRetry(() => import('@/pages/customer/CustomerShop'));
+const SellerPanel = lazyWithRetry(() => import('@/pages/seller/SellerPanel'));
+const CustomerGames = lazyWithRetry(() => import('@/pages/customer/CustomerGames'));
+const CustomerTransfer = lazyWithRetry(() => import('@/pages/customer/CustomerTransfer'));
+const CustomerWithdraw = lazyWithRetry(() => import('@/pages/customer/CustomerWithdraw'));
+const CustomerSupport = lazyWithRetry(() => import('@/pages/customer/CustomerSupport'));
+const CustomerAccount = lazyWithRetry(() => import('@/pages/customer/CustomerAccount'));
+const CustomerOrders = lazyWithRetry(() => import('@/pages/customer/CustomerOrders'));
+const CustomerMessages = lazyWithRetry(() => import('@/pages/customer/CustomerMessages'));
+const CustomerNotifications = lazyWithRetry(() => import('@/pages/customer/CustomerNotifications'));
+const CustomerProfile = lazyWithRetry(() => import('@/pages/customer/CustomerProfile'));
+const Receipt = lazyWithRetry(() => import('@/pages/Receipt'));
+const PageNotFound = lazyWithRetry(() => import('@/lib/PageNotFound'));
+const SetupDatabase = lazyWithRetry(() => import('@/pages/SetupDatabase'));
+// Layout
+const Layout = lazyWithRetry(() => import('@/components/sarraaf/Version21Layout'));
+
+// ── Page loader fallback ──
+function PageLoader() {
+  return (
+    <div className="flex items-center justify-center min-h-[60vh] w-full">
+      <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+    </div>
+  );
+}
+
+function MaintenanceNotice({ message, until }) {
+  return (
+    <main dir="rtl" lang="fa" style={{minHeight:'100vh',display:'flex',alignItems:'center',justifyContent:'center',padding:'24px',background:'linear-gradient(145deg,#0b1720,#123b3a)',fontFamily:'Tahoma,Arial,sans-serif',color:'#f8fafc',textAlign:'center'}}>
+      <section style={{width:'100%',maxWidth:'560px',padding:'40px 28px',border:'1px solid rgba(255,255,255,.14)',borderRadius:'24px',background:'rgba(255,255,255,.06)',boxShadow:'0 24px 80px rgba(0,0,0,.24)'}}>
+        <div aria-hidden="true" style={{width:'72px',height:'72px',margin:'0 auto 22px',display:'grid',placeItems:'center',borderRadius:'22px',background:'rgba(45,212,191,.14)',color:'#5eead4',fontSize:'34px'}}>↻</div>
+        <div style={{fontSize:'14px',letterSpacing:'2px',color:'#99f6e4',marginBottom:'12px'}}>حساب صراف</div>
+        <h1 style={{fontSize:'clamp(25px,5vw,34px)',lineHeight:1.7,margin:'0 0 14px',fontWeight:800}}>برنامه در حال به‌روزرسانی است</h1>
+        <p style={{fontSize:'16px',lineHeight:2.1,color:'#dbeafe',margin:0}}>{message || 'برای بهبود خدمات و ارتقای سیستم، دسترسی عمومی به‌صورت موقت متوقف شده است.'}</p>
+        {until && <p style={{fontSize:'13px',lineHeight:2,color:'#fde68a',margin:'10px 0 0'}}>پایان زمان تعمیرات: {new Date(until).toLocaleString('fa-IR')}</p>}
+        <p style={{fontSize:'14px',lineHeight:2,color:'#a7f3d0',margin:'14px 0 0'}}>اطلاعات حساب‌ها و سوابق مالی شما در این مرحله تغییر داده نمی‌شود.</p>
+        <div style={{width:'100%',height:'4px',borderRadius:'99px',background:'rgba(255,255,255,.12)',overflow:'hidden',marginTop:'28px'}}>
+          <div style={{width:'38%',height:'100%',borderRadius:'99px',background:'linear-gradient(90deg,#2dd4bf,#a7f3d0)'}} />
+        </div>
+        <p style={{fontSize:'13px',color:'#cbd5e1',margin:'18px 0 0'}}>لطفاً تا پایان به‌روزرسانی شکیبا باشید.</p>
+      </section>
+    </main>
+  );
+}
+
+function EnterpriseModuleGate() {
+  const { moduleKey } = useParams();
+  const featureKey = String(moduleKey || '').replace(/-/g, '_');
+  return <FeatureGate featureKey={featureKey}><EnterpriseModulePage /></FeatureGate>;
+}
+
+const AppRoutes = () => {
+  const { user, isAuthenticated } = useAuth();
+  // Maintenance is checked once at startup and when the app returns to the foreground.
+  // The server owns the expiry timestamp; the browser schedules a local wake-up instead
+  // of polling the database every 15 seconds.
+  const [maintenanceStatus, setMaintenanceStatus] = useState({ enabled: false });
+
+  useEffect(() => {
+    let active = true;
+    let expiryTimer = null;
+
+    const refreshMaintenance = async () => {
+      try {
+        const status = await getMaintenanceStatus();
+        if (!active) return;
+
+        const normalizedStatus =
+          status && typeof status.enabled === 'boolean'
+            ? status
+            : { enabled: false, unavailable: true };
+
+        setMaintenanceStatus(normalizedStatus);
+
+        if (expiryTimer) {
+          clearTimeout(expiryTimer);
+          expiryTimer = null;
+        }
+
+        if (normalizedStatus.enabled === true && normalizedStatus.until) {
+          const expiresAt = Date.parse(normalizedStatus.until);
+          if (Number.isFinite(expiresAt)) {
+            const delay = Math.max(0, expiresAt - Date.now() + 250);
+            expiryTimer = setTimeout(() => {
+              if (!active) return;
+              setMaintenanceStatus((current) => ({ ...current, enabled: false }));
+              refreshMaintenance();
+            }, delay);
+          }
+        }
+      } catch {
+        if (!active) return;
+        // A temporary maintenance-status outage must not block the public app.
+        // Protected routes and financial operations remain guarded separately.
+        setMaintenanceStatus({ enabled: false, unavailable: true });
+      }
+    };
+
+    refreshMaintenance();
+    window.addEventListener('focus', refreshMaintenance);
+    return () => {
+      active = false;
+      if (expiryTimer) clearTimeout(expiryTimer);
+      window.removeEventListener('focus', refreshMaintenance);
+    };
+  }, []);
+
+  // Only an explicit server response can activate the global maintenance screen.
+  const maintenanceEnabled = maintenanceStatus?.enabled === true;
+
+  // Render public routes immediately; maintenance status is checked in the background.
+  // A confirmed maintenance window still displays the maintenance notice.
+  // Global maintenance is intentionally different from the login-only restriction:
+  // nobody, including the creator, may enter the login flow or builder while it is on.
+  // Access returns automatically when the server-side timer expires.
+  if (maintenanceEnabled) {
+    return <MaintenanceNotice message={maintenanceStatus?.message} until={maintenanceStatus?.until} />;
+  }
+  return (
+    <RouteTransition>
+      <Routes>
+        {/* Public */}
+        <Route path="/" element={<Navigate to="/login" replace />} />
+        <Route path="/setup-database" element={<SetupDatabase />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/lab/sarraf" element={<Version21SandboxRoute />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
+
+        {/* Public AI assistant route; homepage opens the same chat in a modal */}
+        <Route path="/assistant" element={<Assistant />} />
+
+        {/* Sarraaf Panel — gated by auth + role */}
+        <Route element={<ProtectedRoute unauthenticatedElement={<Navigate to="/login" replace />} allowedRoles={['creator', 'admin', 'sarraaf', 'employee']} />}>
+          <Route element={<Layout />}>
+            <Route path="/v21" element={<Navigate to="/dashboard" replace />} />
+            <Route path="/dashboard" element={<FeatureGate featureKey="dashboard"><DashboardRoute /></FeatureGate>} />
+            <Route path="/customers" element={<FeatureGate featureKey="customers"><Customers /></FeatureGate>} />
+            <Route path="/customers/:id" element={<FeatureGate featureKey="customers"><CustomerDetail /></FeatureGate>} />
+            <Route path="/dadogereft" element={<FeatureGate featureKey="dadogereft"><Dadogereft /></FeatureGate>} />
+            <Route path="/trade" element={<FeatureGate featureKey="trade"><Trade /></FeatureGate>} />
+            <Route path="/transfers/:direction" element={<FeatureGate featureKey="transfers"><Transfer /></FeatureGate>} />
+            <Route path="/cash" element={<FeatureGate featureKey="cash"><Cash /></FeatureGate>} />
+            <Route path="/bank" element={<FeatureGate featureKey="bank"><Bank /></FeatureGate>} />
+            <Route path="/currencies" element={<FeatureGate featureKey="currencies"><Currencies /></FeatureGate>} />
+            <Route path="/reports" element={<FeatureGate featureKey="reports"><Reports /></FeatureGate>} />
+            <Route path="/profit-loss" element={<FeatureGate featureKey="profit_loss"><ProfitLoss /></FeatureGate>} />
+            <Route path="/settings" element={<FeatureGate featureKey="settings"><Settings /></FeatureGate>} />
+            <Route path="/transfer-book" element={<FeatureGate featureKey="transfer_book"><TransferBook /></FeatureGate>} />
+            <Route path="/journal" element={<FeatureGate featureKey="journal"><Journal /></FeatureGate>} />
+            <Route path="/general-ledger" element={<FeatureGate featureKey="general_ledger"><GeneralLedger /></FeatureGate>} />
+            <Route path="/journal-entry" element={<FeatureGate featureKey="journal"><JournalEntry /></FeatureGate>} />
+            <Route path="/balance-sheet" element={<FeatureGate featureKey="balance_sheet"><BalanceSheet /></FeatureGate>} />
+            <Route path="/reconciliation" element={<FeatureGate featureKey="reconciliation"><Reconciliation /></FeatureGate>} />
+            <Route path="/convert" element={<FeatureGate featureKey="convert"><CurrencyConvert /></FeatureGate>} />
+            <Route path="/online-products" element={<FeatureGate featureKey="online_products"><OnlineProducts /></FeatureGate>} />
+            <Route path="/payment-gateway" element={<FeatureGate featureKey="payment_gateway"><PaymentGateway /></FeatureGate>} />
+            <Route path="/online-products/wallet" element={<FeatureGate featureKey="online_products"><SarraafWallet /></FeatureGate>} />
+            <Route path="/online-products/recharge" element={<FeatureGate featureKey="mobile_recharge"><SarraafRecharge /></FeatureGate>} />
+            <Route path="/online-products/games" element={<FeatureGate featureKey="pubg_uc"><SarraafGames /></FeatureGate>} />
+            <Route path="/agents" element={<FeatureGate featureKey="agents"><Agents /></FeatureGate>} />
+            <Route path="/debtors" element={<FeatureGate featureKey="debtors"><Debtors /></FeatureGate>} />
+            <Route path="/notifications" element={<Notifications />} />
+            <Route path="/agency-network" element={<FeatureGate featureKey="agency_network"><AgencyNetwork /></FeatureGate>} />
+            <Route path="/agency" element={<FeatureGate featureKey="agency_network"><AgencyChooser /></FeatureGate>} />
+            <Route path="/chat" element={<FeatureGate featureKey="chat_groups"><ChatGroups /></FeatureGate>} />
+            <Route path="/chat/group/:id" element={<FeatureGate featureKey="chat_groups"><ChatGroupDetail /></FeatureGate>} />
+            <Route path="/sarraaf-market" element={<FeatureGate featureKey="sarraaf_market"><SarraafMarket /></FeatureGate>} />
+            <Route path="/sarraaf-chat" element={<FeatureGate featureKey="sarraaf_chat"><SarraafChat /></FeatureGate>} />
+            <Route path="/backup" element={<FeatureGate featureKey="backup"><Backup /></FeatureGate>} />
+            <Route path="/support" element={<FeatureGate featureKey="support"><SarraafSupport /></FeatureGate>} />
+            <Route element={<ProtectedRoute allowedRoles={["creator", "admin", "sarraaf"]} />}>
+              <Route path="/enterprise/:moduleKey" element={<EnterpriseModuleGate />} />
+            </Route>
+          </Route>
+        </Route>
+
+        {/* Builder Panel — creator + admin + co-creators */}
+        <Route element={<AdminRoute />}>
+          <Route path="/builder" element={<BuilderPanel />} />
+          <Route path="/main-settings" element={<MainSettings />} />
+        </Route>
+
+        {/* Customer Panel */}
+        <Route element={<ProtectedRoute requiredRole="customer" unauthenticatedElement={<Navigate to="/login" replace />} />}>
+          <Route element={<CustomerLayout />}>
+            <Route path="/customer" element={<CustomerHome />} />
+            <Route path="/customer/wallet" element={<CustomerWallet />} />
+            <Route path="/customer/recharge" element={<FeatureGate featureKey="mobile_recharge"><CustomerRecharge /></FeatureGate>} />
+            <Route path="/customer/afghan5" element={<CustomerAfghan5 />} />
+            <Route path="/customer/shop" element={<CustomerShop />} />
+            <Route path="/customer/games" element={<FeatureGate featureKey="pubg_uc"><CustomerGames /></FeatureGate>} />
+            <Route path="/customer/transfer" element={<CustomerTransfer />} />
+            <Route path="/customer/withdraw" element={<CustomerWithdraw />} />
+            <Route path="/customer/support" element={<CustomerSupport />} />
+            <Route path="/customer/account" element={<CustomerAccount />} />
+            <Route path="/customer/orders" element={<CustomerOrders />} />
+            <Route path="/customer/messages" element={<CustomerMessages />} />
+            <Route path="/customer/notifications" element={<CustomerNotifications />} />
+            <Route path="/customer/profile" element={<CustomerProfile />} />
+            <Route path="/customer/chat" element={<CustomerChat />} />
+          </Route>
+        </Route>
+
+        {/* Seller Panel — any authenticated user (component checks seller access) */}
+        <Route element={<ProtectedRoute unauthenticatedElement={<Navigate to="/login" replace />} />}>
+          <Route path="/seller" element={<SellerPanel />} />
+        </Route>
+
+        {/* Receipt — any authenticated user */}
+        <Route element={<ProtectedRoute unauthenticatedElement={<Navigate to="/login" replace />} />}>
+          <Route path="/receipt" element={<Receipt />} />
+        </Route>
+
+        <Route path="*" element={<PageNotFound />} />
+      </Routes>
+    </RouteTransition>
+  );
+};
+
+function App() {
+  return (
+    <ErrorBoundary>
+      <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+        <AuthProvider>
+          <LayoutVersionProvider>
+          <LanguageProvider>
+            <QueryClientProvider client={queryClientInstance}>
+              <UpgradeProvider>
+                <Router>
+                  <ScrollToTop />
+                  <ErrorBoundary>
+                    <AppGate>
+                      <AppRoutes />
+                    </AppGate>
+                  </ErrorBoundary>
+                </Router>
+                <Toaster />
+              </UpgradeProvider>
+            </QueryClientProvider>
+          </LanguageProvider>
+          </LayoutVersionProvider>
+        </AuthProvider>
+      </ThemeProvider>
+    </ErrorBoundary>
+  )
+}
+
+export default App
