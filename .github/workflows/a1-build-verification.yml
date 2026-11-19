@@ -44,6 +44,7 @@ jobs:
             [adapter.includes('validateBalancedLines'), 'Financial posting/edit balance validation is missing'],
             [adapter.includes('documentDateTimestamp(draft.date)') && adapter.includes('documentDateTimestamp(date)'), 'Financial document dates must be validated before posting and before date synchronization'],
             [adapter.includes('validateCashTransactionParty(draft.partyType, draft.party, customer || branch)') && accountingRules.includes('export function validateCashTransactionParty'), 'Cash transaction edits must reject unresolved selected customers or branches instead of silently posting to suspense'],
+            [adapter.includes('validateCashTransactionPartyIdentity(sourceDocument, partyType, draft.party, customer || branch)') && accountingRules.includes('export function validateCashTransactionPartyIdentity'), 'Cash transaction edits must preserve the original linked party identity and document relation'],
             [accountingRules.includes('Number.isFinite(parsed) ? parsed : Number.NaN'), 'Malformed numeric input must not be coerced to zero'],
             [data.includes('Number(line.debit)') && data.includes('Number(line.credit)'), 'Ledger balance checks must parse raw numeric values'],
             [adapter.includes('fee_currency: draft.currency || \'AFN\', total: amount + feeAmount'), 'Remittance edit must synchronize fee currency and total'],
