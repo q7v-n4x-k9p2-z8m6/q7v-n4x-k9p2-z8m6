@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useTransactions, useBankAccounts, useSafes, useCreateSafe, useUpdateSafe, useCurrencies, usePostDocument } from '@/lib/useSarraaf';
-import { PageHeader, BalanceCard, TransactionRow, EmptyState, LoadingState } from '@/components/sarraaf/Pieces';
+import { PageHeader, BalanceCard, EmptyState, LoadingState } from '@/components/sarraaf/Pieces';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
