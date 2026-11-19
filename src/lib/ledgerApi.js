@@ -295,6 +295,7 @@ export async function getLedgerCurrencyBalances(accountType) {
       .eq('exchange_code', ec)
       .eq('account_type', accountType)
       .eq('deleted', false)
+      .order('id', { ascending: true })
       .range(offset, offset + pageSize - 1);
     if (error) throw new Error(error.message || 'ledger_balance_read_failed');
     const rows = data || [];
