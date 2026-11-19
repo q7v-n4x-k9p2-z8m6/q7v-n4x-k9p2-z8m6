@@ -423,6 +423,8 @@ export async function loadVersion21Database() {
     const lines = activeLedgerEntries.filter(line => String(line.document_id || '') === String(row.id));
     const cashLine = lines.find(line => line.account_type === 'cash');
     const cash = cashLine ? (safeById.get(String(cashLine.account_id || ''))?.name || cashLine.account_name || '') : '';
+    const debitLines = lines.filter(line => num(line.debit) > 0);
+    const creditLines = lines.filter(line => num(line.credit) > 0);
     return {
       id: String(row.id), documentId: String(row.id),
       date: dateOnly(row.created_at),
@@ -431,6 +433,11 @@ export async function loadVersion21Database() {
       partyType: row.related_type === 'customer' ? 'customer' : (row.related_type === 'branch' ? 'branch' : 'other'),
       currency: row.currency || 'AFN',
       amount: num(row.amount),
+      debit: debitLines.reduce((sum, line) => sum + num(line.debit), 0),
+      credit: creditLines.reduce((sum, line) => sum + num(line.credit), 0),
+      debitAccount: [...new Set(debitLines.map(line => line.account_name).filter(Boolean))].join(' / '),
+      creditAccount: [...new Set(creditLines.map(line => line.account_name).filter(Boolean))].join(' / '),
+      account: [...new Set(lines.map(line => line.account_name).filter(Boolean))].join(' / '),
       cash,
       description: row.description || '',
       number: row.doc_number || '',
@@ -454,6 +461,7 @@ export async function loadVersion21Database() {
         currency: row.currency || 'AFN',
         amount: num(row.amount),
         cash: cashLine ? (safeById.get(String(cashLine.account_id || ''))?.name || cashLine.account_name || '') : '',
+        number: row.doc_number || '',
         note: row.doc_number || '',
         status: row.reversed ? 'ابطال شده' : (isDocumentBalanced(row.id) ? 'قطعی' : 'نیازمند بررسی'),
         _sourceTable: 'documents',
