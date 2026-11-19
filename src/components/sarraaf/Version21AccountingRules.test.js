@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { number, validateBalancedLines } from './Version21AccountingRules.js';
+import { resolveSessionUserId } from './Version21DemoRules.js';
 
 const line = (account_type, account_name, debit, credit, extra = {}) => ({
   account_type, account_name, debit, credit, currency: 'AFN', ...extra,
@@ -61,4 +62,19 @@ test('allows small rounding differences up to the existing tolerance', () => {
     line('expense', 'مصارف', 100, 0),
     line('cash', 'صندوق', 0, 99.997, { account_id: 1 }),
   ]));
+});
+
+test('demo identity uses the cached signed-in user ID when available', () => {
+  assert.equal(resolveSessionUserId('{"id":107}', ''), '107');
+  assert.equal(resolveSessionUserId('{"user_id":114}', ''), '114');
+});
+
+test('demo identity falls back to the signed session token when cached user ID is absent', () => {
+  const encoded = Buffer.from(JSON.stringify({ uid: 114 })).toString('base64url');
+  assert.equal(resolveSessionUserId('{"username":"33333333"}', encoded + '.signature'), '114');
+});
+
+test('demo identity rejects malformed or missing session identity', () => {
+  assert.equal(resolveSessionUserId('{bad json', ''), '');
+  assert.equal(resolveSessionUserId('{}', 'not-a-token'), '');
 });
