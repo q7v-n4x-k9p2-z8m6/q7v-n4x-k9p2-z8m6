@@ -55,7 +55,6 @@ const Register = lazyWithRetry(() => import('@/pages/Register'));
 const ForgotPassword = lazyWithRetry(() => import('@/pages/ForgotPassword'));
 const ResetPassword = lazyWithRetry(() => import('@/pages/ResetPassword'));
 const Version21Home = lazyWithRetry(() => import('@/components/sarraaf/Version21Home'));
-const Version21SandboxRoute = lazyWithRetry(() => import('@/components/sarraaf/Version21SandboxRoute'));
 
 // The PDF-based Version 21 workspace is the single dashboard surface.
 // Module selection is handled inside Version21Workspace from the URL query;
@@ -232,7 +231,6 @@ const AppRoutes = () => {
         <Route path="/" element={<Navigate to="/login" replace />} />
         <Route path="/setup-database" element={<SetupDatabase />} />
         <Route path="/login" element={<Login />} />
-        <Route path="/lab/sarraf" element={<Version21SandboxRoute />} />
         <Route path="/register" element={<Register />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
