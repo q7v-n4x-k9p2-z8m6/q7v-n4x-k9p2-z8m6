@@ -101,7 +101,7 @@ function Field({field,value,onChange,choices}) {
 }
 function formatTableDate(value) {
  const raw=String(value??'');
- const match=raw.match(/^(\\d{4})-(\\d{2})-(\\d{2})/);
+ const match=raw.match(/^(\d{4})-(\d{2})-(\d{2})/);
  if(!match)return raw||'—';
  const [,year,month,day]=match.map(Number);
  return new Intl.DateTimeFormat('fa-IR-u-ca-persian',{year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(year,month-1,day));
