@@ -188,8 +188,8 @@ export default function Version21Workspace(){
  const schema=SCHEMAS[active];
  const rows=useMemo(()=>{
   let source=data[active]||[];
-  if(active==='customerLedger') source=customerDetail?data.transactions.filter(x=>x.partyType==='customer'&&x.party===customerDetail.name):data.customers;
-  if(active==='branchLedger') source=branchDetail?data.transactions.filter(x=>x.partyType==='branch'&&x.party===branchDetail.name):data.branches;
+  if(active==='customerLedger') source=customerDetail?data.transactions.filter(x=>x.partyType==='customer'&&(String(x.partyId||'')===String(customerDetail.id)||(!x.partyId&&x.party===customerDetail.name))):data.customers;
+  if(active==='branchLedger') source=branchDetail?data.transactions.filter(x=>x.partyType==='branch'&&(String(x.partyId||'')===String(branchDetail.id)||(!x.partyId&&x.party===branchDetail.name))):data.branches;
   if(active==='ledger') source=data.ledger||[];
   if(active==='reports') source=data.reports||[];
   const q=query.trim().toLowerCase();
@@ -303,9 +303,9 @@ export default function Version21Workspace(){
  const printPage=()=>window.print();
  const reset=()=>{if(window.confirm('فقط نمای محلی این صفحه پاک شود؟ هیچ رکوردی از دیتابیس حذف نمی‌شود.')){setData(emptyInitial());setLocalPreview(true);setSelected(null);notify('نمای محلی پاک شد؛ برای بارگذاری اطلاعات واقعی، تازه‌سازی را بزنید.');}};
  const balanceFor=(currency,cashName)=>{const opening=(data.cash.find(x=>x.currency===currency&&(!cashName||x.name===cashName))?.opening)||0;return opening+data.transactions.filter(t=>t.currency===currency&&(!cashName||t.cash===cashName)).reduce((s,t)=>s+n(t.amount),0);};
- const totalByCurrency=(currency)=>data.transactions.filter(t=>t.currency===currency).reduce((s,t)=>s+n(t.amount),0);
+ const totalByCurrency=(currency)=>data.transactions.filter(t=>t.currency===currency&&t.accountType==='cash').reduce((s,t)=>s+n(t.amount),0);
  const customerSummary=(customer)=>{
-  const tx=data.transactions.filter(t=>t.partyType==='customer'&&t.party===customer.name);
+  const tx=data.transactions.filter(t=>t.partyType==='customer'&&(String(t.partyId||'')===String(customer.id)||(!t.partyId&&t.party===customer.name)));
   const currencies=[...new Set([customer.currency||'AFN',...tx.map(t=>t.currency)])];
   return currencies.map(currency=>{
    const opening=customer.currency===currency?n(customer.opening):0;
@@ -324,14 +324,14 @@ export default function Version21Workspace(){
  };
  const customerDetailTotals=()=>{
   if(!customerDetail)return [];
-  const tx=data.transactions.filter(t=>t.partyType==='customer'&&t.party===customerDetail.name);
+  const tx=data.transactions.filter(t=>t.partyType==='customer'&&(String(t.partyId||'')===String(customerDetail.id)||(!t.partyId&&t.party===customerDetail.name)));
   const totals={};
   if(customerDetail.opening){const c=customerDetail.currency||'AFN';totals[c]={debit:Math.max(n(customerDetail.opening),0),credit:Math.max(-n(customerDetail.opening),0)};}
   tx.forEach(t=>{const c=t.currency||'AFN';totals[c]??={debit:0,credit:0};if(n(t.amount)<0)totals[c].debit+=Math.abs(n(t.amount));else totals[c].credit+=n(t.amount);});
   return Object.entries(totals).map(([currency,x])=>({currency,...x,net:x.debit-x.credit}));
  };
  const branchSummary=(branch)=>{
-  const tx=data.transactions.filter(t=>t.partyType==='branch'&&t.party===branch.name);
+  const tx=data.transactions.filter(t=>t.partyType==='branch'&&(String(t.partyId||'')===String(branch.id)||(!t.partyId&&t.party===branch.name)));
   const currencies=[...new Set([branch.currency||'AFN',...tx.map(t=>t.currency||'AFN')])];
   return currencies.map(currency=>{
    const opening=branch.currency===currency?n(branch.opening):0;
@@ -453,14 +453,14 @@ export default function Version21Workspace(){
   {key:'exchange-ops',title:'عملیات صرافی',items:[
    ['خرید و فروش اسعار',ArrowLeftRight,()=>openNew('exchange')],
    ['مصارف و پرداخت‌ها',CreditCard,()=>goModule('expenses')],
-   ['معاملات',ArrowLeftRight]
+   ['فهرست معاملات',ArrowLeftRight,()=>goModule('exchange')]
   ]},
   {key:'accounting-reports',title:'حسابداری و گزارشات',items:[
    ['دفتر روزنامه ·',ShoppingCart,()=>goModule('journal')],
    ['دفتر کل',ClipboardList,()=>goModule('ledger')],
-   ['دفتر ریگال',CalendarDays]
+   ['بیلانس عمومی',Scale,()=>goModule('balance')]
   ]},
-  {key:'extras',title:'امکانات تکمیلی · اسکلت اولیه',items:[
+  {key:'extras',title:'امکانات تکمیلی',items:[
    ['محصولات آنلاین',ShoppingCart,()=>goModule('products')],
    ['گروه و چت',Users,()=>goModule('sarraafGroups')],
    ['هوش مصنوعی',Bot,()=>goModule('assistant')]
@@ -468,7 +468,7 @@ export default function Version21Workspace(){
   {key:'settings',title:'تنظیمات',items:[
    ['تنظیمات',Settings,()=>menuAction('settings')],
    ['زبان برنامه',Globe,()=>goModule('language')],
-   ['درباره برنامه',LifeBuoy]
+   ['راهنما و درباره برنامه',LifeBuoy,()=>setModal('help')]
   ]}
  ];
  const ltDeletable=['customers','branches','cash','banks','currencies','accounts','transactions','cashAction','expenses','journal','ledger','remittance','exchange'].includes(active);
