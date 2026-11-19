@@ -39,7 +39,6 @@ import AccountRecoveryManager from '@/components/sarraaf/AccountRecoveryManager'
 import TrialManager from '@/components/sarraaf/TrialManager';
 import MobileLayoutPreview from '@/components/sarraaf/MobileLayoutPreview';
 import ComputerLayoutPreview from '@/components/sarraaf/ComputerLayoutPreview';
-import CreatorPreviewLab from '@/components/sarraaf/CreatorPreviewLab';
 import LayoutPreviewStudio from '@/components/sarraaf/LayoutPreviewStudio';
 import LayoutHexLibrary from '@/components/sarraaf/LayoutHexLibrary';
 import { lazy } from 'react';
@@ -92,7 +91,6 @@ const TAB_GROUPS = [
   { label: 'دوره آزمایشی', value: 'trial', description: 'مدیریت دوره آزمایشی صرافان' },
   { label: 'نسخه جدید چیدمان موبایل', value: 'layout_preview', description: 'پیش‌نمایش مستقل چیدمان موبایل' },
   { label: 'چیدمان کامپیوتر', value: 'computer_layout_preview', description: 'پیش‌نمایش مستقل چیدمان کامپیوتر' },
-  { label: 'چیدمان لپ‌تاپ', value: 'creator_preview', description: 'چیدمان دسکتاپ در محیط آزمایشگاهی مستقل' },
   { label: 'آزمایشگاه چیدمان', value: 'layout_studio', description: 'نمای موبایل و لپ‌تاپ در یک محیط آزمایشی مستقل' },
   { label: 'دستیار زنده سازنده', value: 'masnavi_ai', description: 'دستیار اختصاصی و محرمانه برای گزارش وضعیت پنل سازنده' },
   { label: 'UC پابجی', value: 'uc_manager', description: 'مدیریت خدمات UC' },
@@ -111,7 +109,7 @@ const TAB_CATEGORIES = [
   { label: 'مالی و پلن‌ها', value: 'finance', icon: Wallet, tabs: ['plans', 'pricing', 'payments', 'withdrawals', 'trial'] },
   { label: 'ارتباطات', value: 'communication', icon: MessageSquare, tabs: ['notif', 'chat', 'masnavi_ai'] },
   { label: 'خدمات و فروش', value: 'services', icon: Store, tabs: ['uc_manager', 'recharge', 'afghan5', 'sellers', 'sandbox'] },
-  { label: 'ابزار و نگهداری', value: 'tools', icon: Database, tabs: ['maintenance', 'version', 'layout_preview', 'computer_layout_preview', 'creator_preview', 'layout_studio', 'backup', 'backup_v2', 'triple_backup', 'supabase_audit', 'db_explorer'] },
+  { label: 'ابزار و نگهداری', value: 'tools', icon: Database, tabs: ['maintenance', 'version', 'layout_preview', 'computer_layout_preview', 'layout_studio', 'backup', 'backup_v2', 'triple_backup', 'supabase_audit', 'db_explorer'] },
 ];
 
 // شماره‌های ثابتِ نمایشی برای ارجاع آسان؛ مستقل از داده‌ها و پایگاه داده.
@@ -135,7 +133,7 @@ export default function BuilderPanel() {
 
   // مجوزها روی شناسه تک‌تک تب‌ها اعمال می‌شوند، نه شناسه گروه‌های نمایشی.
   const visibleTabGroups = useMemo(() => TAB_GROUPS.filter((group) => {
-    const creatorOnlyTabs = ['co_creators', 'creator_preview', 'layout_preview', 'computer_layout_preview', 'layout_studio', 'sandbox', 'supabase_audit', 'db_explorer', 'masnavi_ai'];
+    const creatorOnlyTabs = ['co_creators', 'layout_preview', 'computer_layout_preview', 'layout_studio', 'sandbox', 'supabase_audit', 'db_explorer', 'masnavi_ai'];
     if (group.value === 'masnavi_ai' && user?.role !== 'creator') return false;
     if (group.value === 'maintenance' && user?.role !== 'creator') return false;
     if (creatorOnlyTabs.includes(group.value) && !isFullCreator) return false;
@@ -567,9 +565,6 @@ export default function BuilderPanel() {
 
         {/* آزمایشگاه توسعه — فقط پنل سازنده اصلی و کاملاً جدا از دیتابیس زنده */}
         {isFullCreator && (
-          <TabsContent value="creator_preview">
-            <CreatorPreviewLab />
-          </TabsContent>
         )}
 
         {/* دستیار زنده سازنده — مستقل از دستیار عمومی برنامه و فقط برای نقش creator */}
