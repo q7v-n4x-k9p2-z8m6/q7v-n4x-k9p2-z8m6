@@ -329,11 +329,12 @@ export async function loadVersion21Database() {
     const linkedDocument = row.document_id ? documentsById.get(String(row.document_id)) : null;
     const accountType = String(row.account_type || '').toLowerCase();
     const isCustomer = accountType === 'customer';
+    const isBranch = linkedDocument?.related_type === 'branch' || accountType === 'origin' || accountType === 'branch';
     const isCash = accountType === 'cash';
     const currency = row.currency || linkedDocument?.currency || 'AFN';
     const debit = num(row.debit);
     const credit = num(row.credit);
-    const amount = isCustomer ? credit - debit : debit - credit;
+    const amount = (isCustomer || isBranch) ? credit - debit : debit - credit;
     const safe = isCash ? safeById.get(String(row.account_id || '')) : null;
     const documentLines = linkedDocument
       ? activeLedgerEntries.filter(line => String(line.document_id || '') === String(linkedDocument.id))
