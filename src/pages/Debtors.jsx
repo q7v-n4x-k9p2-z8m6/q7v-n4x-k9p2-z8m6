@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useCustomers, useCustomerBalances } from '@/lib/useSarraaf';
-import { PageHeader, StatCard, EmptyState, LoadingState, StatusBadge } from '@/components/sarraaf/Pieces';
+import { useCustomers, useCustomerLedgerBalances } from '@/lib/useSarraaf';
+import { PageHeader, EmptyState, LoadingState, StatusBadge } from '@/components/sarraaf/Pieces';
 import { Input } from '@/components/ui/input';
 import { formatNumber, formatAmount } from '@/lib/sarraaf';
 import { Search, Handshake, Wallet, TrendingDown, TrendingUp } from 'lucide-react';
@@ -19,28 +19,32 @@ export default function Debtors() {
   const [tab, setTab] = useState('all');
 
   const { data: customers, isLoading: customersLoading } = useCustomers();
-  const { data: customerBalancesData, isLoading: txsLoading } = useCustomerBalances();
+  const { data: customerBalancesData, isLoading: txsLoading } = useCustomerLedgerBalances();
 
   const loading = customersLoading || txsLoading;
 
   const allRows = useMemo(() => {
     if (!customers || !customerBalancesData) return [];
-    return customers
-      .map(c => {
-        const balRow = customerBalancesData.find(b => String(b.customer_id) === String(c.id));
-        const balances = {};
-        if (balRow) balances[balRow.balance_currency || 'AFN'] = balRow.net_balance || 0;
-        const net = Object.values(balances).reduce((sum, value) => sum + (value || 0), 0);
-        const hasBalance = Object.values(balances).some(value => Math.abs(value) > 0.0001);
-        return { customer: c, balances, net, hasBalance };
-      })
-      .filter(row => row.hasBalance)
-      .sort((a, b) => Math.abs(b.net) - Math.abs(a.net));
+    return customers.map(customer => {
+      const balances = {};
+      for (const item of customerBalancesData) {
+        if (String(item.customer_id) === String(customer.id)) {
+          balances[item.currency || 'AFN'] = (balances[item.currency || 'AFN'] || 0) + (Number(item.net_balance) || 0);
+        }
+      }
+      const openingCurrency = customer.balance_currency || 'AFN';
+      if (Number(customer.opening_balance)) {
+        balances[openingCurrency] = (balances[openingCurrency] || 0) + Number(customer.opening_balance);
+      }
+      const hasBalance = Object.values(balances).some(value => Math.abs(value) > 0.0001);
+      return { customer, balances, hasBalance };
+    }).filter(row => row.hasBalance);
   }, [customers, customerBalancesData]);
 
   const rows = useMemo(() => allRows.filter(row => {
-    if (tab === 'debtors' && row.net <= 0) return false;
-    if (tab === 'creditors' && row.net >= 0) return false;
+    const values = Object.values(row.balances);
+    if (tab === 'debtors' && !values.some(value => value > 0.0001)) return false;
+    if (tab === 'creditors' && !values.some(value => value < -0.0001)) return false;
     if (search) {
       const value = search.toLowerCase();
       const customer = row.customer;
@@ -53,41 +57,28 @@ export default function Debtors() {
     return true;
   }), [allRows, tab, search]);
 
-  const totals = useMemo(() => {
-    const debt = allRows.filter(row => row.net > 0).reduce((sum, row) => sum + row.net, 0);
-    const credit = allRows.filter(row => row.net < 0).reduce((sum, row) => sum + Math.abs(row.net), 0);
-    return { debt, credit, count: allRows.length };
-  }, [allRows]);
+  const totalsByCurrency = useMemo(() => {
+    const totals = {};
+    for (const row of rows) {
+      for (const [currency, balance] of Object.entries(row.balances)) {
+        const item = totals[currency] || { debit: 0, credit: 0, net: 0 };
+        if (balance > 0) item.debit += balance;
+        if (balance < 0) item.credit += Math.abs(balance);
+        item.net += balance;
+        totals[currency] = item;
+      }
+    }
+    return totals;
+  }, [rows]);
+  const totalCount = rows.length;
 
   return (
     <>
       <PageHeader
         title="بدهکاران و بستانکاران"
-        subtitle={`${formatNumber(totals.count)} نفر`}
+        subtitle={`${formatNumber(totalCount)} نفر`}
         icon={Handshake}
       />
-
-      {/* Summary */}
-      <div className="grid grid-cols-3 gap-2 mb-4">
-        <StatCard
-          label="بدهکار"
-          value={formatNumber(totals.debt)}
-          icon={TrendingUp}
-          gradient="from-rose-600 to-rose-500"
-        />
-        <StatCard
-          label="بستانکار"
-          value={formatNumber(totals.credit)}
-          icon={TrendingDown}
-          gradient="from-emerald-600 to-teal-600"
-        />
-        <StatCard
-          label="خالص"
-          value={formatNumber(totals.debt - totals.credit)}
-          icon={Wallet}
-          gradient="from-primary/90 to-primary/70"
-        />
-      </div>
 
       {/* Search */}
       <div className="relative mb-3">
@@ -135,7 +126,9 @@ export default function Debtors() {
             </thead>
             <tbody>
               {rows.map(({ customer, balances, net }, index) => {
-                const isDebtor = net > 0;
+                const currencyValues = Object.values(balances);
+                const isDebtor = currencyValues.some(value => value > 0.0001);
+                const isCreditor = currencyValues.some(value => value < -0.0001);
                 return (
                   <tr
                     key={customer.id}
@@ -158,9 +151,9 @@ export default function Debtors() {
                     <td className="whitespace-nowrap border-b px-4 py-3" dir="ltr">{customer.phone || '—'}</td>
                     <td className="whitespace-nowrap border-b px-4 py-3">
                       <StatusBadge
-                        status={isDebtor ? 'active' : 'inactive'}
-                        labels={{ active: 'بدهکار', inactive: 'بستانکار' }}
-                        variant={isDebtor ? 'destructive' : 'success'}
+                        status={isDebtor && isCreditor ? 'pending' : isDebtor ? 'active' : 'inactive'}
+                        labels={{ active: 'بدهکار', inactive: 'بستانکار', pending: 'چندارزی' }}
+                        variant={isDebtor && isCreditor ? 'warning' : isDebtor ? 'destructive' : 'success'}
                       />
                     </td>
                     <td className={cn(
