@@ -4,6 +4,7 @@ import { saveVersion21Record, editVersion21Record, deleteVersion21Record, deacti
 import { loadVersion21LocalState, saveVersion21LocalState } from './Version21LocalStore';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import LanguageSettings from './LanguageSettings';
+import FeatureGate from '@/components/FeatureGate';
 import { hasPermission } from '@/lib/permissions';
 import {
   Home, Users, Wallet, BookOpen, BookText, Search, Printer, Plus, Pencil, Trash2,
@@ -57,6 +58,16 @@ const SCHEMAS = {
  remittance:{title:'حواله',fields:[['date','تاریخ','date'],['direction','نوع حواله','select',['ارسالی','دریافتی']],['sender','فرستنده','text'],['receiver','گیرنده','text'],['branch','نمایندگی','text'],['currency','ارز','select',CURRENCIES],['amount','مبلغ','number'],['fee','کمیشن','number'],['note','یادداشت','text']]},
  exchange:{title:'معامله اسعار',fields:[['date','تاریخ','date'],['fromCurrency','ارز مبدا','select',CURRENCIES],['fromAmount','مبلغ مبدا','number'],['toCurrency','ارز مقصد','select',CURRENCIES],['toAmount','مبلغ مقصد','number'],['rate','نرخ معامله','number'],['party','طرف حساب','text'],['cashFrom','صندوق پرداخت ارز مبدا','select',[]],['cashTo','صندوق دریافت ارز مقصد','select',[]],['note','یادداشت','text']]},
  journal:{title:'سند روزنامچه',fields:[['date','تاریخ','date'],['description','شرح سند','text'],['debitAccount','حساب بدهکار','text'],['creditAccount','حساب بستانکار','text'],['currency','ارز','select',CURRENCIES],['amount','مبلغ','number']]}
+};
+const MODULE_FEATURE_KEYS = {
+ home: 'dashboard', customers: 'customers', customerLedger: 'accounts_receivable',
+ debtors: 'debtors', branches: 'agents', branchLedger: 'agents',
+ cash: 'cash', banks: 'bank', exchange: 'trade', remittance: 'transfers',
+ expenses: 'cash', journal: 'journal', ledger: 'general_ledger',
+ accounts: 'chart_of_accounts', currencies: 'currencies', reports: 'reports',
+ profit: 'profit_loss', activity: 'audit_log', errors: 'audit_log',
+ balance: 'balance_sheet', sarraafGroups: 'chat_groups', assistant: 'assistant',
+ products: 'online_products', language: 'settings',
 };
 const emptyInitial = () => ({ role: '', permissions: [], customers: [], branches: [], cash: [], banks: [], currencies: [], accounts: [], expenses: [], remittance: [], exchange: [], journal: [], ledger: [], transactions: [], reports: [], activity: [], errors: [], profitByCurrency: [], profitAccounts: [], profitEntries: [], unclassifiedProfitLines: [] });
 const today = () => new Date().toLocaleDateString('en-CA');
@@ -513,6 +524,7 @@ export default function Version21Workspace(){
        {['assistant','language','products','home'].filter(canViewModule).map(id=>{const m=MODULES.find(x=>x.id===id);if(!m)return null;const I=m.icon;return <button key={id} type="button" onClick={()=>{setActive(id);setSelected(null);setCustomerDetail(null);setBranchDetail(null);setQuery('');}} className={'flex min-w-0 flex-col items-center justify-center gap-1 rounded-xl border px-1 py-2 text-center '+(active===id?'border-blue-300 bg-blue-50 font-bold text-blue-900 shadow-sm':'border-transparent text-[#29465e] hover:border-blue-200 hover:bg-white')}><I className="h-5 w-5"/><span>{m.label}</span></button>;})}
       </nav>    </div>
     <main className="min-h-0 min-w-0 flex-1 overflow-y-auto bg-[#f9fafb] p-3">
+     <FeatureGate featureKey={MODULE_FEATURE_KEYS[active] || 'dashboard'}>
      {active==='home'?<>
 <div className="v21-lt-home hidden lg:block">
       <div className="v21-lt-band"><div className="v21-lt-band-date"><CalendarDays/><span>{ltDate}</span></div><h2 className="v21-lt-band-title">مرکز عملیات صرافی</h2><Home className="v21-lt-band-home" aria-hidden="true"/></div>
@@ -593,6 +605,7 @@ export default function Version21Workspace(){
       <DataTable columns={active==='reports'?columnsFor('transactions'):columnsFor(active)} rows={rows} selected={selected} onSelect={r=>{if(active==='customerLedger'&&!customerDetail){setCustomerDetail(r);setSelected(null);}else if(active==='branchLedger'&&!branchDetail){setBranchDetail(r);setSelected(null);}else setSelected(r);}}/>
       {!readOnly&&SCHEMAS[active]&&canModuleAction(active,'create')&&<button onClick={()=>openNew()} className="mt-2 border border-blue-300 bg-blue-50 px-3 py-2 text-xs font-bold text-blue-900"><Plus className="ml-1 inline h-4 w-4"/>ثبت {SCHEMAS[active].title} جدید</button>}
      </>}
+     </FeatureGate>
     </main>
    </div>
    {showBookSummary&&<div className="shrink-0 border-t border-slate-400 bg-[#e9edf1] p-2">
