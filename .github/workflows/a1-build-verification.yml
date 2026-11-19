@@ -37,7 +37,7 @@ jobs:
           const adapter = fs.readFileSync('src/components/sarraaf/Version21WriteAdapter.js', 'utf8');
           const data = fs.readFileSync('src/components/sarraaf/Version21DataAdapter.js', 'utf8');
           const demo = fs.readFileSync('src/components/sarraaf/Version21DemoAdapter.js', 'utf8');
-        const demoRules = fs.readFileSync('src/components/sarraaf/Version21DemoRules.js', 'utf8');
+          const demoRules = fs.readFileSync('src/components/sarraaf/Version21DemoRules.js', 'utf8');
           const accountingRules = fs.readFileSync('src/components/sarraaf/Version21AccountingRules.js', 'utf8');
           const checks = [
             [!workspace.includes('\\${'), 'Workspace contains a literal escaped JSX expression'],
