@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { number, validateBalancedLines } from '../Version21AccountingRules.js';
+import { number, validateBalancedLines } from './Version21AccountingRules.js';
 
 const line = (account_type, account_name, debit, credit, extra = {}) => ({
   account_type, account_name, debit, credit, currency: 'AFN', ...extra,
