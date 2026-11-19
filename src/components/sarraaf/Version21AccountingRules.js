@@ -52,6 +52,13 @@ export function validateCashTransactionPartyIdentity(document, partyType, party,
   return true;
 }
 
+export function isChartAccountLedgerLine(line, account) {
+  if (!line || !account) return false;
+  return String(line.account_type || '').toLowerCase() === 'suspense' &&
+    String(line.account_id || '') === String(account.id || '') &&
+    String(line.account_name || '').trim() === String(account.account_name || '').trim();
+}
+
 export function sumCashLedgerMovement(transactions, currency) {
   if (!Array.isArray(transactions)) return 0;
   return transactions
