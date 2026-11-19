@@ -164,3 +164,11 @@ test('cash transaction edit cannot change its linked party or document relation'
     'other', 'حساب متفرقه'
   ), /طرف حساب یک گردش ثبت‌شده قابل تعویض نیست/);
 });
+test('bank ledger mapping uses the exact bank account identity', async () => {
+  const { bankLedgerRef } = await import('./Version21AccountingRules.js');
+  assert.deepEqual(bankLedgerRef({ id: 42, bank_name: 'بانک نمونه' }), {
+    account_type: 'bank', account_id: '42', account_name: 'بانک نمونه',
+  });
+  assert.throws(() => bankLedgerRef({ id: 0, bank_name: 'بانک نمونه' }), /حساب بانکی/);
+  assert.throws(() => bankLedgerRef({ id: 42, bank_name: '' }), /حساب بانکی/);
+});
