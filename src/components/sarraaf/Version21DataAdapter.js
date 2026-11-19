@@ -115,6 +115,7 @@ export async function loadVersion21Database() {
 
   const documentsById = new Map(documents.map(row => [String(row.id), row]));
   const safeById = new Map(safes.map(row => [String(row.id), row]));
+  const bankById = new Map(bankAccounts.map(row => [String(row.id), row]));
   const chartAccountById = new Map(chartAccounts.map(row => [String(row.id), row]));
   const activeLedgerEntries = ledgerEntries.filter(row => !row.deleted);
   const documentBalanceCache = new Map();
@@ -222,7 +223,7 @@ export async function loadVersion21Database() {
         .forEach(line => addAccountBalance(line.currency, line.debit, line.credit));
     } else if (row.account_code === '1020') {
       bankAccounts.forEach(bank => addAccountBalance(bank.currency, Math.max(0, num(bank.balance)), Math.max(0, -num(bank.balance)), 0));
-      activeLedgerEntries.filter(line => line.account_type === 'bank')
+      activeLedgerEntries.filter(line => line.account_type === 'bank' && bankById.has(String(line.account_id || '')))
         .forEach(line => addAccountBalance(line.currency, line.debit, line.credit));
     } else if (row.account_code === '1030') {
       customers.forEach(customer => addAccountBalance(customer.balance_currency || 'AFN', Math.max(0, num(customer.opening_balance)), Math.max(0, -num(customer.opening_balance)), 0));
