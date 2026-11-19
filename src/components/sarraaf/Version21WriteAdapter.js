@@ -385,6 +385,9 @@ export async function saveVersion21Record(module, draft) {
   }
 
   if (module === 'remittance') {
+    if (!['ارسالی', 'دریافتی'].includes(String(draft.direction || '').trim())) {
+      throw new Error('نوع حواله باید صریحاً «ارسالی» یا «دریافتی» انتخاب شود؛ حواله نامشخص نباید به‌صورت خودکار ارسالی ثبت شود.');
+    }
     const transferAmount = number(draft.amount);
     const transferFee = number(draft.fee);
     const transferRate = number(draft.rate);
