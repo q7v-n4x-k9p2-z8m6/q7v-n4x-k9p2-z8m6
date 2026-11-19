@@ -94,17 +94,24 @@ function validateBalancedLines(lines, label = 'سند') {
   }
 }
 
+const DEMO_IDENTITIES = new Map([
+  [107, { username: '22222222', exchangeCode: 'EX-261019-9B2573C5' }],
+  [114, { username: '33333333', exchangeCode: 'EX-261028-27497E95' }],
+]);
+
 async function assertNotDemoCoreWrite(ctx) {
-  const isDemoIdentity = ctx.userId === 107 || ctx.exchangeCode === 'EX-261019-9B2573C5';
+  const expected = DEMO_IDENTITIES.get(ctx.userId);
+  const isDemoIdentity = DEMO_IDENTITIES.has(ctx.userId) ||
+    [...DEMO_IDENTITIES.values()].some(item => item.exchangeCode === ctx.exchangeCode);
   if (!isDemoIdentity) return;
 
-  if (ctx.userId !== 107 || ctx.exchangeCode !== 'EX-261019-9B2573C5') {
+  if (!expected || ctx.exchangeCode !== expected.exchangeCode) {
     throw new Error('نشست حساب نمایشی نامعتبر است؛ عملیات متوقف شد.');
   }
   const { data, error } = await supabase.from('users')
-    .select('username,role,status').eq('id', 107).maybeSingle();
+    .select('username,role,status').eq('id', ctx.userId).maybeSingle();
   if (error) throw new Error('اعتبارسنجی حساب نمایشی ناموفق بود: ' + error.message);
-  if (!data || data.username !== '22222222' || data.status !== 'active' || !['exchange','sarraaf'].includes(String(data.role).toLowerCase())) {
+  if (!data || data.username !== expected.username || data.status !== 'active' || !['exchange','sarraaf'].includes(String(data.role).toLowerCase())) {
     throw new Error('حساب نمایشی فعال و معتبر نیست؛ عملیات متوقف شد.');
   }
   throw new Error('در حساب نمایشی، ثبت و ویرایش اطلاعات فقط در فضای موقت یک‌ساعته انجام می‌شود.');
