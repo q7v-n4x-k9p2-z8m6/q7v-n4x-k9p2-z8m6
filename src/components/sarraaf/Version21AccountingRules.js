@@ -7,7 +7,7 @@ export const number = value => {
 export function documentDateTimestamp(value) {
   if (value === null || value === undefined || String(value).trim() === '') return null;
   const date = String(value).trim();
-  const match = /^(\\d{4})-(\\d{2})-(\\d{2})$/.exec(date);
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(date);
   if (!match) throw new Error('تاریخ سند معتبر نیست؛ تاریخ را به قالب سال-ماه-روز وارد کنید.');
   const year = Number(match[1]), month = Number(match[2]), day = Number(match[3]);
   const check = new Date(Date.UTC(year, month - 1, day));
