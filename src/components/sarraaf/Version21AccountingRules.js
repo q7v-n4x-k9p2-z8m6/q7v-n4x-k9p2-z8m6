@@ -17,6 +17,22 @@ export function documentDateTimestamp(value) {
   return date + 'T12:00:00.000Z';
 }
 
+export function validateCashTransactionParty(partyType, party, resolvedParty = null) {
+  const type = String(partyType || '').trim();
+  const name = String(party || '').trim();
+  if (!name) throw new Error('طرف حساب گردش صندوق الزامی است.');
+  if (type === 'customer' || type === 'branch') {
+    if (!resolvedParty || !(Number(resolvedParty.id) > 0)) {
+      throw new Error(type === 'customer'
+        ? 'مشتری انتخاب‌شده در فهرست همین صراف پیدا نشد؛ گردش به حساب واسط منتقل نشد.'
+        : 'نمایندگی انتخاب‌شده در فهرست همین صراف پیدا نشد؛ گردش به حساب واسط منتقل نشد.');
+    }
+    return type;
+  }
+  if (type === 'other') return type;
+  throw new Error('نوع طرف حساب گردش صندوق معتبر نیست؛ مشتری، نمایندگی یا سایر را انتخاب کنید.');
+}
+
 export function validateBalancedLines(lines, label = 'سند') {
   if (!Array.isArray(lines) || lines.length < 2) {
     throw new Error(`${label}: حداقل دو سطر حسابداری لازم است.`);
