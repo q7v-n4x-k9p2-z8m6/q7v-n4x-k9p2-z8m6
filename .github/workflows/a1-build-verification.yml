@@ -27,6 +27,8 @@ jobs:
         run: npm install --no-audit --no-fund
       - name: Build production bundle
         run: npm run build
+      - name: Run accounting rules unit tests
+        run: node --test src/components/sarraaf/Version21AccountingRules.test.js
       - name: Check Version 21 safety invariants
         run: |
           node --input-type=module <<'NODE'
