@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { CurrencySelect, AmountInput } from '@/components/sarraaf/Fields';
-import { TX_TYPE_LABELS } from '@/lib/sarraaf';
+import { TX_TYPE_LABELS, formatDate, formatNumber, formatAmount } from '@/lib/sarraaf';
 import { buildTransferLines, buildOpeningBalanceLines } from '@/lib/ledgerApi';
 import { useTreasuryBalances } from '@/lib/useSarraaf';
 import { toast } from '@/components/ui/use-toast';
@@ -206,8 +206,42 @@ export default function Cash() {
 
       <h3 className="text-sm font-semibold mb-2">گردش صندوق</h3>
       {isLoading ? <LoadingState /> : cashTxs.length === 0 ? <EmptyState title="تراکنشی نیست" /> : (
-        <div className="space-y-1">
-          {cashTxs.map(tx => <TransactionRow key={tx.id} tx={tx} labels={TX_TYPE_LABELS} />)}
+        <div className="w-full overflow-x-auto rounded-xl border bg-card">
+          <table dir="rtl" className="w-full min-w-[760px] border-collapse text-right text-xs">
+            <thead className="bg-muted/80">
+              <tr>
+                <th className="border-b px-3 py-3">تاریخ</th>
+                <th className="border-b px-3 py-3">نوع عملیات</th>
+                <th className="border-b px-3 py-3">شرح</th>
+                <th className="border-b px-3 py-3">مبلغ</th>
+                <th className="border-b px-3 py-3">ارز</th>
+                <th className="border-b px-3 py-3">وضعیت</th>
+              </tr>
+            </thead>
+            <tbody>
+              {cashTxs.map((tx, index) => (
+                <tr key={tx.id} className={index % 2 ? 'bg-muted/20' : ''}>
+                  <td className="border-b px-3 py-3 whitespace-nowrap">{formatDate(tx.date || tx.created_at) || '—'}</td>
+                  <td className="border-b px-3 py-3 whitespace-nowrap font-semibold">{TX_TYPE_LABELS[tx.type] || tx.type || '—'}</td>
+                  <td className="border-b px-3 py-3 min-w-[220px]">{tx.description || '—'}</td>
+                  <td className="border-b px-3 py-3 whitespace-nowrap font-bold">{formatNumber(tx.amount || 0)}</td>
+                  <td className="border-b px-3 py-3 whitespace-nowrap">{tx.currency || '—'}</td>
+                  <td className="border-b px-3 py-3 whitespace-nowrap">{tx.deleted ? 'باطل‌شده' : tx.edited ? 'ویرایش‌شده' : 'ثبت‌شده'}</td>
+                </tr>
+              ))}
+            </tbody>
+            <tfoot className="sticky bottom-0 bg-[#eaf1f9] font-bold">
+              <tr><td colSpan={6} className="border-t-2 border-primary px-3 py-3">
+                <div className="flex flex-wrap gap-x-6 gap-y-2">
+                  <span>جمع مبالغ گردشِ ردیف‌های نمایش‌داده‌شده:</span>
+                  {[...new Set(cashTxs.map(tx => tx.currency || 'AFN'))].map(cur => {
+                    const movement = cashTxs.filter(tx => (tx.currency || 'AFN') === cur && !tx.deleted).reduce((sum, tx) => sum + Math.abs(Number(tx.amount) || 0), 0);
+                    return <span key={cur}>{cur}: {formatAmount(movement, cur)} · موجودی فعلی صندوق: {formatAmount(balances[cur] || 0, cur)}</span>;
+                  })}
+                </div>
+              </td></tr>
+            </tfoot>
+          </table>
         </div>
       )}
 
