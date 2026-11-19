@@ -1,11 +1,6 @@
 import { supabase } from '@/lib/supabaseClient';
 import { getExchangeCode } from '@/lib/supabaseApi';
-import { resolveSessionUserId } from './Version21DemoRules';
-
-const DEMO_USERS = {
-  107: { username: '22222222', exchangeCode: 'EX-261019-9B2573C5' },
-  114: { username: '33333333', exchangeCode: 'EX-261028-27497E95' },
-};
+import { resolveSessionUserId, matchDemoAccount } from './Version21DemoRules';
 
 function sessionUser() {
   try { return JSON.parse(localStorage.getItem('auth_user') || 'null') || {}; }
@@ -16,8 +11,8 @@ async function requireDemoSession() {
   const user = sessionUser();
   const userId = Number(resolveSessionUserId(user, localStorage.getItem('auth_token') || '') || 0);
   const exchangeCode = getExchangeCode();
-  const expected = DEMO_USERS[userId];
-  if (!expected || exchangeCode !== expected.exchangeCode) {
+  const expected = matchDemoAccount(userId, exchangeCode);
+  if (!expected) {
     throw new Error('این عملیات فقط برای یکی از دو حساب نمایشی مجاز است.');
   }
   const { data, error } = await supabase.from('users')
