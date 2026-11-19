@@ -175,6 +175,22 @@ test('balanced journal requires a valid linked bank account ID', () => {
   ]));
 });
 
+test('cash ledger totals match exact safe ID, currency and active ledger rows', async () => {
+  const { sumCashLedgerSide } = await import('./Version21AccountingRules.js');
+  const rows = [
+    { accountType: 'cash', accountId: '7', currency: 'AFN', debit: 80, credit: 0 },
+    { accountType: 'cash', accountId: '7', currency: 'AFN', debit: 0, credit: 20 },
+    { accountType: 'cash', accountId: '70', currency: 'AFN', debit: 700, credit: 0 },
+    { accountType: 'cash', accountId: '7', currency: 'USD', debit: 500, credit: 0 },
+    { accountType: 'customer', accountId: '7', currency: 'AFN', debit: 400, credit: 0 },
+    { accountType: 'cash', accountId: '7', currency: 'AFN', debit: 200, credit: 0, deleted: true },
+  ];
+  assert.equal(sumCashLedgerSide(rows, 7, 'AFN', 'debit'), 80);
+  assert.equal(sumCashLedgerSide(rows, 7, 'AFN', 'credit'), 20);
+  assert.equal(sumCashLedgerSide(rows, 7, 'USD', 'debit'), 500);
+  assert.equal(sumCashLedgerSide(rows, 999, 'AFN', 'debit'), 0);
+});
+
 test('bank ledger totals match exact bank ID, currency and active ledger rows', async () => {
   const { sumBankLedgerMovement } = await import('./Version21AccountingRules.js');
   const rows = [
