@@ -1,6 +1,6 @@
 import { supabase } from '@/lib/supabaseClient';
 import { getExchangeCode } from '@/lib/supabaseApi';
-import { number, validateBalancedLines, documentDateTimestamp, validateCashTransactionParty, validateCashTransactionPartyIdentity } from './Version21AccountingRules';
+import { number, validateBalancedLines, documentDateTimestamp, validateCashTransactionParty, validateCashTransactionPartyIdentity, bankLedgerRef } from './Version21AccountingRules';
 
 const TABLES = {
   customers: 'customers',
@@ -190,6 +190,20 @@ async function getSafe(ctx, name, currency) {
   return data;
 }
 
+async function getBankById(ctx, id, currency) {
+  const numericId = Number(id);
+  if (!Number.isSafeInteger(numericId) || numericId <= 0) throw new Error('شناسه حساب بانکی معتبر نیست.');
+  const { data, error } = await supabase.from('bank_accounts')
+    .select('id,bank_name,holder,currency,active')
+    .eq('exchange_code', ctx.exchangeCode).eq('id', numericId).eq('active', true).maybeSingle();
+  if (error) throw error;
+  if (!data) throw new Error('حساب بانکی فعال در همین صرافی پیدا نشد.');
+  if (String(data.currency || 'AFN') !== String(currency || 'AFN')) {
+    throw new Error('ارز حساب بانکی با ارز سند یکسان نیست.');
+  }
+  return data;
+}
+
 async function getBranch(ctx, name) {
   if (!name) return null;
   const { data, error } = await supabase.from('origins').select('id,name')
@@ -247,6 +261,11 @@ async function resolveLedgerAccount(ctx, label, currency) {
   if (value.startsWith('صندوق: ')) {
     const safe = await getSafe(ctx, value.slice(7), currency);
     return { account_type: 'cash', account_id: String(safe.id), account_name: safe.name };
+  }
+  if (value.startsWith('بانک: ')) {
+    const bankId = value.slice('بانک: '.length).trim();
+    const bank = await getBankById(ctx, bankId, currency);
+    return bankLedgerRef(bank);
   }
   const accountCode = value.includes(' — ') ? value.split(' — ')[0] : '';
   let query = supabase.from('chart_of_accounts')
