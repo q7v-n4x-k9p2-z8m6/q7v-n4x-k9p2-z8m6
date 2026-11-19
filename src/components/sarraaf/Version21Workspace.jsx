@@ -364,7 +364,7 @@ export default function Version21Workspace(){
   } else if(active==='journal'){
    selectedRows.filter(x=>x.status==='قطعی'||!x.status).forEach(row=>{const currency=row.currency||'AFN';totals[currency]??={debit:0,credit:0};totals[currency].debit+=n(row.debitTotal);totals[currency].credit+=n(row.creditTotal);});
   } else if(active==='ledger'){
-   selectedRows.filter(row=>!row._demoPreview).forEach(row=>{const currency=row.currency||'AFN';totals[currency]??={debit:0,credit:0};totals[currency].debit+=n(row.debit);totals[currency].credit+=n(row.credit);});
+   selectedRows.forEach(row=>{const currency=row.currency||'AFN';totals[currency]??={debit:0,credit:0};totals[currency].debit+=n(row.debit);totals[currency].credit+=n(row.credit);});
   }
   return Object.entries(totals).map(([currency,x])=>({currency,...x,net:x.debit-x.credit}));
  };
