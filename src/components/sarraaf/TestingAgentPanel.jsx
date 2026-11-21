@@ -5,6 +5,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { getSupabaseConfig } from '@/lib/supabaseConfig';
+import { TEST_SCENARIO_GROUPS, TEST_SCENARIO_COUNT } from '@/components/sarraaf/testingScenarios';
 
 const FUNCTION_PATH = '/functions/v1/builder-ai-assistant';
 
@@ -113,7 +114,7 @@ export default function TestingAgentPanel({ projectSnapshot = [], role }) {
             </div>
             <div className="min-w-0 flex-1">
               <h2 className="text-base font-bold">عامل هوشمند آزمایش</h2>
-              <p className="text-xs text-muted-foreground">محیط مستقل آزمایش در پنل سازنده · متصل به همان هوش مصنوعی موجود</p>
+              <p className="text-xs text-muted-foreground">کتابخانه سناریوهای پایه آماده است · اتصال هوش مصنوعی در مرحله بعد</p>
             </div>
             <Badge variant="outline" className="gap-1"><Bot className="h-3.5 w-3.5" /> برنامه‌ریز هوشمند</Badge>
           </div>
@@ -140,9 +141,57 @@ export default function TestingAgentPanel({ projectSnapshot = [], role }) {
 
       <Card>
         <CardContent className="p-4 sm:p-5 space-y-3">
+          <div className="flex flex-wrap items-center gap-2">
+            <ClipboardList className="h-5 w-5 text-primary" />
+            <h3 className="text-sm font-bold">کتابخانه سناریوهای استاندارد</h3>
+            <Badge variant="secondary" className="mr-auto">{TEST_SCENARIO_COUNT} سناریو · {TEST_SCENARIO_GROUPS.length} گروه</Badge>
+          </div>
+          <p className="text-xs leading-6 text-muted-foreground">
+            سناریوها بدون نیاز به کلید هوش مصنوعی آماده‌اند. هر مورد شامل شناسه، اولویت، نوع اجرا، مراحل و نتیجه مورد انتظار است.
+            موارد «نیازمند محیط آزمایشی» تا فراهم‌شدن محیط جداگانه فقط بررسی و طراحی می‌شوند.
+          </p>
+          <div className="space-y-2">
+            {TEST_SCENARIO_GROUPS.map(group => (
+              <details key={group.id} className="rounded-lg border bg-background">
+                <summary className="flex cursor-pointer list-none flex-wrap items-center gap-2 p-3">
+                  <span className="text-sm font-semibold">{group.title}</span>
+                  <Badge variant="outline" className="mr-auto">{group.cases.length} سناریو</Badge>
+                </summary>
+                <div className="space-y-2 border-t p-3">
+                  {group.cases.map(([id, title, priority, mode, steps, expected]) => (
+                    <article key={id} className="rounded-md bg-muted/30 p-3 space-y-2">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="font-mono text-[11px] font-bold text-primary" dir="ltr">{id}</span>
+                        <span className="text-xs font-semibold">{title}</span>
+                        <Badge variant={priority === 'P1' ? 'default' : 'secondary'}>{priority}</Badge>
+                        <Badge variant="outline">{mode}</Badge>
+                      </div>
+                      <div className="grid gap-2 sm:grid-cols-2">
+                        <div>
+                          <p className="text-[11px] font-semibold text-muted-foreground">مراحل بررسی</p>
+                          <ol className="mt-1 list-decimal space-y-1 pr-4 text-xs leading-5">
+                            {steps.map((step, index) => <li key={index}>{step}</li>)}
+                          </ol>
+                        </div>
+                        <div>
+                          <p className="text-[11px] font-semibold text-muted-foreground">نتیجه مورد انتظار</p>
+                          <p className="mt-1 text-xs leading-5">{expected.join('؛ ')}</p>
+                        </div>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              </details>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardContent className="p-4 sm:p-5 space-y-3">
           <div>
-            <h3 className="text-sm font-bold">دستور آزمایش را بنویسید</h3>
-            <p className="mt-1 text-xs text-muted-foreground">مثلاً بنویسید: «تمام بخش‌های صندوق را آزمایش کن». ابتدا فقط برنامه و سناریوها تهیه می‌شوند.</p>
+            <h3 className="text-sm font-bold">دستور تکمیلی برای هوش مصنوعی (پس از اتصال کلید)</h3>
+            <p className="mt-1 text-xs text-muted-foreground">این قسمت پس از پیکربندی اتصال هوش مصنوعی فعال می‌شود؛ کتابخانه سناریوهای بالا هم‌اکنون قابل مشاهده است.</p>
           </div>
           <form onSubmit={createPlan} className="space-y-3">
             <Textarea
