@@ -8520,7 +8520,7 @@
       "source_path": "src/core/reports/balanceSheet.js",
       "target_path": "independent-panel/source/src/core/reports/balanceSheet.js",
       "size_bytes": 4098,
-      "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+      "sha256": "e828a0010a584014116f20416c575b614d33e89e682e22a8b68e994d85abfb7f",
       "storage": "utf8-inline"
     },
     {
@@ -8541,7 +8541,7 @@
       "source_path": "src/core/reports/trialBalance.js",
       "target_path": "independent-panel/source/src/core/reports/trialBalance.js",
       "size_bytes": 5777,
-      "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+      "sha256": "0abfd72e0d2e4a1b5e27ded10162445dd7b144e428d5f9acc35c3892eefc9813",
       "storage": "utf8-inline"
     },
     {
