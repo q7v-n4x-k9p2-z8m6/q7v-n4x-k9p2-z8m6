@@ -29,7 +29,7 @@
     "text_files": 1299,
     "native_binary_files": 3,
     "chunked_binary_files": 2,
-    "total_bytes": 17767702
+    "total_bytes": 17767708
   },
   "files": [
     {
@@ -8519,8 +8519,8 @@
     {
       "source_path": "src/core/reports/balanceSheet.js",
       "target_path": "independent-panel/source/src/core/reports/balanceSheet.js",
-      "size_bytes": 4095,
-      "sha256": "6c571fc9b8e98caf24f5e9b283e087e8dc95c90a6475df2b940b7ffda7076612",
+      "size_bytes": 4098,
+      "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
       "storage": "utf8-inline"
     },
     {
@@ -8540,8 +8540,8 @@
     {
       "source_path": "src/core/reports/trialBalance.js",
       "target_path": "independent-panel/source/src/core/reports/trialBalance.js",
-      "size_bytes": 5774,
-      "sha256": "cda64adc92d8b86ec4927054812f584201915b2d8ace81baf67b74b561a67438",
+      "size_bytes": 5777,
+      "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
       "storage": "utf8-inline"
     },
     {
