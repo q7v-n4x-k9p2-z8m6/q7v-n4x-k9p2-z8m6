@@ -29,7 +29,7 @@
     "text_files": 1299,
     "native_binary_files": 3,
     "chunked_binary_files": 2,
-    "total_bytes": 17778526
+    "total_bytes": 17778928
   },
   "files": [
     {
@@ -8512,7 +8512,7 @@
     {
       "source_path": "src/core/reports/approvedPolicies.test.js",
       "target_path": "independent-panel/source/src/core/reports/approvedPolicies.test.js",
-      "size_bytes": 6302,
+      "size_bytes": 6642,
       "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
       "storage": "utf8-inline"
     },
@@ -8540,8 +8540,8 @@
     {
       "source_path": "src/core/reports/trialBalance.js",
       "target_path": "independent-panel/source/src/core/reports/trialBalance.js",
-      "size_bytes": 5777,
-      "sha256": "0abfd72e0d2e4a1b5e27ded10162445dd7b144e428d5f9acc35c3892eefc9813",
+      "size_bytes": 5839,
+      "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
       "storage": "utf8-inline"
     },
     {
@@ -8583,7 +8583,7 @@
       "source_path": "src/core/transfer/financialContracts.js",
       "target_path": "independent-panel/source/src/core/transfer/financialContracts.js",
       "size_bytes": 8177,
-      "sha256": "6958480dca569d199764e7ae3557933a7d274bd4992a69cb949b3a13a5d79071",
+      "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
       "storage": "utf8-inline"
     },
     {
