@@ -1,5 +1,4 @@
-// src/core/reports/trialBalance.js — تراز آزمایشی مشروط به سیاست تأییدشده
-// تا وقتی سیاست (ستون‌ها، سطح، ارز، بستن حساب‌های موقت) انتخاب نشود، هیچ ردیفی تولید نمی‌شود.
+// src/core/reports/trialBalance.js — تراز آزمایشی چهارستونی و چندارزی
 import { classOf, groupOf, normalizeLine, missingPolicy, rateFor, round2, sum, isBalanced } from './ledgerBasis';
 
 export const TRIAL_BALANCE_POLICY = {
@@ -12,12 +11,28 @@ export const TRIAL_BALANCE_POLICY = {
 const TEMPORARY = ['revenue', 'expense'];
 const blocked = (missing) => ({ status: 'blocked', rows: [], missing, totals: null });
 
+function groupedTotals(rows, pickDebit, pickCredit) {
+  const grouped = new Map();
+  rows.forEach((row) => {
+    const currency = String(row.currency || 'AFN');
+    const item = grouped.get(currency) || { currency, debit: 0, credit: 0 };
+    item.debit += Number(pickDebit(row) || 0);
+    item.credit += Number(pickCredit(row) || 0);
+    grouped.set(currency, item);
+  });
+  return [...grouped.values()].map((item) => ({
+    currency: item.currency,
+    debit: round2(item.debit),
+    credit: round2(item.credit),
+    balanced: Math.abs(item.debit - item.credit) < 0.011,
+  }));
+}
+
 export function buildTrialBalance(rawLines = [], policy = null) {
   const missing = missingPolicy(policy, Object.keys(TRIAL_BALANCE_POLICY));
   if (missing.length) return blocked(missing.map((key) => TRIAL_BALANCE_POLICY[key]));
 
   const lines = rawLines.map(normalizeLine);
-
   if (policy.currency === 'base') {
     if (!policy.baseCurrency || !policy.rates) return blocked(['ارز پایه و نرخ‌های تبدیل']);
     const lacking = [...new Set(lines.map((line) => line.currency))].filter((code) => rateFor(policy, code) === null);
@@ -53,43 +68,73 @@ export function buildTrialBalance(rawLines = [], policy = null) {
     };
   });
 
-  let profit = 0;
+  const profitByCurrency = {};
   if (policy.closing === 'close') {
     const temporary = rows.filter((row) => TEMPORARY.includes(classOf(row.code)));
-    profit = round2(sum(temporary, (row) => row.creditBalance) - sum(temporary, (row) => row.debitBalance));
+    const byCurrency = groupedTotals(temporary, (row) => row.creditBalance, (row) => row.debitBalance);
+    byCurrency.forEach((item) => {
+      // groupedTotals در اینجا debit=درآمد بستانکار و credit=مصرف بدهکار است.
+      const profit = round2(item.debit - item.credit);
+      profitByCurrency[item.currency] = profit;
+      if (profit !== 0) {
+        rows.push({
+          code: '3999',
+          account: 'سود دورهٔ جاری',
+          currency: item.currency,
+          debitTurnover: 0,
+          creditTurnover: 0,
+          debitBalance: profit < 0 ? -profit : 0,
+          creditBalance: profit > 0 ? profit : 0,
+        });
+      }
+    });
     rows = rows.filter((row) => !TEMPORARY.includes(classOf(row.code)));
-    if (profit !== 0) {
-      const currency = policy.currency === 'base' ? policy.baseCurrency : (rows[0]?.currency || 'AFN');
-      rows.push({
-        code: '3999',
-        account: 'سود دورهٔ جاری',
-        currency,
-        debitTurnover: 0,
-        creditTurnover: 0,
-        debitBalance: profit < 0 ? -profit : 0,
-        creditBalance: profit > 0 ? profit : 0,
-      });
-    }
   }
 
+  const balanceByCurrency = groupedTotals(rows, (row) => row.debitBalance, (row) => row.creditBalance);
+  const turnoverByCurrency = groupedTotals(rows, (row) => row.debitTurnover, (row) => row.creditTurnover);
+  const singleCurrency = balanceByCurrency.length <= 1;
   const totals = {
-    debit: sum(rows, (row) => row.debitBalance),
-    credit: sum(rows, (row) => row.creditBalance),
+    ...(singleCurrency ? {
+      debit: balanceByCurrency[0]?.debit || 0,
+      credit: balanceByCurrency[0]?.credit || 0,
+    } : {}),
+    byCurrency: balanceByCurrency,
     currency: policy.currency === 'base' ? policy.baseCurrency : 'تفکیک ارز',
+    balanced: balanceByCurrency.every((item) => item.balanced),
   };
-  totals.balanced = Math.abs(totals.debit - totals.credit) < 0.011;
+  const turnover = {
+    byCurrency: turnoverByCurrency,
+    ledgerBalanced: isBalanced(lines),
+    balanced: turnoverByCurrency.every((item) => item.balanced),
+  };
+  if (singleCurrency) {
+    turnover.debit = turnoverByCurrency[0]?.debit || 0;
+    turnover.credit = turnoverByCurrency[0]?.credit || 0;
+  }
 
+  const profitValues = Object.values(profitByCurrency);
+  const profit = profitValues.length <= 1 ? (profitValues[0] || 0) : profitByCurrency;
   return {
     status: 'ready',
     rows,
     totals,
-    profit: policy.closing === 'close' ? profit : 0,
+    profit,
+    profitByCurrency,
     columns: policy.columns,
-    turnover: {
-      debit: sum(rows, (row) => row.debitTurnover),
-      credit: sum(rows, (row) => row.creditTurnover),
-      ledgerBalanced: isBalanced(lines),
-    },
+    turnover,
     policy,
   };
+}
+
+// دو نمای هم‌زمان: گردش و ماندهٔ مستقل هر ارز + تجمیع بر ارز پایه با نرخ ثبت‌شده.
+export function buildTrialBalanceViews(rawLines = [], policy = {}, rates = {}) {
+  const split = buildTrialBalance(rawLines, { ...policy, currency: 'split' });
+  const base = buildTrialBalance(rawLines, {
+    ...policy,
+    currency: 'base',
+    baseCurrency: policy.baseCurrency || 'AFN',
+    rates,
+  });
+  return { split, base };
 }
