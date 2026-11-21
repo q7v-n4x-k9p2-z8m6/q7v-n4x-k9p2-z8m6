@@ -47,30 +47,17 @@ export const LAPTOP_MENU_MODULE_IDS = [
   'rates', 'sarraafGroups', 'assistant', 'products',
 ];
 
-// ردیف میان‌برهای ماژول (یک ردیف). سه امکان «هوش مصنوعی»، «محصولات آنلاین» و «گروه و چت»
-// عمداً در این ردیف نیستند؛ جایگاه آن‌ها مرکز عملیات صرافی (گروه «امکانات مرکزی صرافی») است
-// و دسترسی‌شان از همان مرکز و منوی «امکانات تکمیلی» انجام می‌شود تا نمایش تکراری نباشد.
-// ترتیب این ردیف عیناً همان ترتیب تصویر مرجع است (از راست به چپ).
-// ترتیب ردیف از راست به چپ: میزکار، دفاتر، نمایندگی، بقیهٔ بخش‌ها.
-// آیکون «زبان برنامه» از این ردیف برداشته شده و از منوی «تنظیمات» باز می‌شود؛
-// جای آن «دفتر کل» آمده تا تعداد آیکون‌های ردیف همان ۱۲ عدد قبلی بماند.
-// ترتیب نمایش حفظ شده است؛ نام و آیکون هر میان‌بر از همان ماژول مرجع می‌آید
+// نوار ابزار لپ‌تاپ: ۱۴ میان‌بر از راست به چپ، مطابق سند مرجع میزکار.
+// مقصد، برچسب و آیکون از رجیستری فعلی گرفته می‌شود؛ هیچ مسیر تازه‌ای ساخته نمی‌شود.
 export const LAPTOP_SHORTCUTS = [
-  'home',
-  // دفاتر: بلافاصله بعد از میزکار
-  'customerLedger',
-  'branchLedger',
-  'journal',
-  'remittance',
-  'ledger',
-  // نمایندگی، سپس بقیهٔ بخش‌ها
-  'branches',
-  'customers',
-  'cash',
-  'exchange',
-  'expenses',
-  'banks',
-].map((id) => ({ id, label: labelOf(id), icon: moduleIcon(id) }));
+  'home', 'language', 'products', 'assistant', 'sarraafGroups',
+  'journal', 'expenses', 'exchange', 'cash', 'remittance',
+  'banks', 'branchLedger', 'customers', 'customerLedger',
+].map((id) => ({
+  id,
+  label: id === 'home' ? 'میزکار' : labelOf(id),
+  icon: moduleIcon(id),
+}));
 
 // شش گروه در دو ردیف و سه ستون
 const RAW_LAPTOP_GROUPS = [
@@ -107,12 +94,12 @@ const RAW_LAPTOP_GROUPS = [
     tiles: [
       { module: 'journal' },
       { module: 'ledger' },
-      { module: 'rates' },
+      { label: 'دفتر ریگال', icon: moduleIcon('ledger'), unavailable: 'مقصد مستقل این دفتر هنوز در رجیستری ماژول‌ها تعریف نشده است' },
     ],
   },
   {
     key: 'extras',
-    title: 'امکانات مرکزی صرافی',
+    title: 'امکانات تکمیلی · اسکلت اولیه',
     tiles: [
       { module: 'products' },
       { module: 'sarraafGroups' },
