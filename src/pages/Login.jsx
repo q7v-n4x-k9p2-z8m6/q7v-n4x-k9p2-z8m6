@@ -331,10 +331,9 @@ export default function Login() {
     // حساب آزمایشی 33333333 باید همیشه به پنل جدید آزمایشگاهی برود؛
     // نشست عمومی صراف نباید آن را به داشبورد قدیمی هدایت کند.
     const sandboxSession = readSandboxSession();
-    const normalizedIdentifier = String(identifier || '').trim()
-      .replace(/[۰-۹]/g, digit => String(digit.charCodeAt(0) - 1776))
-      .replace(/[٠-٩]/g, digit => String(digit.charCodeAt(0) - 1632));
-    if (sandboxSession?.username === '33333333' || normalizedIdentifier === '33333333') {
+    // Only an already-authenticated sandbox session may auto-open the second panel.
+    // Typing the username alone must never redirect before password verification.
+    if (sandboxSession?.username === '33333333' && sandboxSession?.token) {
       navigate('/lab/sarraf', { replace: true });
       return;
     }
@@ -353,7 +352,7 @@ export default function Login() {
       return;
     }
     window.location.replace(HOME_BY_ROLE[user.role] || '/');
-  }, [identifier, isAuthenticated, user, isLoadingAuth, maintenanceStatusLoaded, maintenanceInfo, navigate]);
+  }, [isAuthenticated, user, isLoadingAuth, maintenanceStatusLoaded, maintenanceInfo, navigate]);
 
   const handleLogin = async (e) => {
     e.preventDefault();
