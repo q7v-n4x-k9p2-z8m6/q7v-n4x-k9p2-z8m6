@@ -9,7 +9,8 @@
     "lint": "eslint . --quiet",
     "lint:fix": "eslint . --fix",
     "typecheck": "tsc -p ./jsconfig.json",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test:unit": "node --test src/a1/lib/v21PostingGuards.test.js"
   },
   "dependencies": {
     "@hello-pangea/dnd": "^17.0.0",
