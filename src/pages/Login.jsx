@@ -19,7 +19,6 @@ import { loginWithProvider, handleGoogleCallback } from '@/lib/googleAuth';
 import { getMaintenanceStatus, getUserLoginRestrictionStatus } from '@/lib/maintenance';
 import { supabase } from '@/lib/supabaseClient';
 import { syncDefaultPasswordAlert } from '@/lib/passwordAlert';
-import { authenticateSandboxCredentials, readSandboxSession } from '@/components/sarraaf/Version21SandboxAuth';
 
 const LOGIN_TIMEOUT = 12000;
 const MIGRATION_TIMEOUT = 8000;
@@ -328,16 +327,6 @@ export default function Login() {
   useEffect(() => {
     if (isLoadingAuth || !maintenanceStatusLoaded) return;
 
-    // حساب آزمایشی 33333333 باید همیشه به پنل جدید آزمایشگاهی برود؛
-    // نشست عمومی صراف نباید آن را به داشبورد قدیمی هدایت کند.
-    const sandboxSession = readSandboxSession();
-    // Only an already-authenticated sandbox session may auto-open the second panel.
-    // Typing the username alone must never redirect before password verification.
-    if (sandboxSession?.username === '33333333' && sandboxSession?.token) {
-      navigate('/lab/sarraf', { replace: true });
-      return;
-    }
-
     if (!isAuthenticated || !user) return;
     if (user.role === 'creator') {
       navigate('/builder', { replace: true });
@@ -366,20 +355,6 @@ export default function Login() {
       const normalizedIdentifier = identifier.trim()
         .replace(/[۰-۹]/g, digit => String(digit.charCodeAt(0) - 1776))
         .replace(/[٠-٩]/g, digit => String(digit.charCodeAt(0) - 1632));
-      if (normalizedIdentifier === '33333333') {
-        if (tab !== 'sarraaf') {
-          setError('این حساب صرافی است. لطفاً از تب صراف وارد شوید.');
-          return;
-        }
-        if (maintenanceInfo?.enabled) {
-          setMaintenanceBlocked(true);
-          return;
-        }
-        await authenticateSandboxCredentials(normalizedIdentifier, password);
-        navigate('/lab/sarraf', { replace: true });
-        return;
-      }
-
       let result = await waitForLoginResult(
         directLogin(identifier, password),
         LOGIN_TIMEOUT,
