@@ -25,11 +25,11 @@
     "existing_destination_readme_preserved": true
   },
   "summary": {
-    "source_files": 1303,
-    "text_files": 1298,
+    "source_files": 1302,
+    "text_files": 1297,
     "native_binary_files": 3,
     "chunked_binary_files": 2,
-    "total_bytes": 17763078
+    "total_bytes": 17762606
   },
   "files": [
     {
@@ -7219,13 +7219,6 @@
       "target_path": "independent-panel/source/src/a1/lib/v21DomainTests.js",
       "size_bytes": 10154,
       "sha256": "603ae751b9f96fc0ef7c85eb62fa9baff0d9e9c2ea12df596179a742a72af6b7",
-      "storage": "utf8-inline"
-    },
-    {
-      "source_path": "src/a1/lib/v21DomainTests.test.js",
-      "target_path": "independent-panel/source/src/a1/lib/v21DomainTests.test.js",
-      "size_bytes": 472,
-      "sha256": "fd11c081d2cf79ed903a881c59e7d8784f288a18a59a513084528965869011fe",
       "storage": "utf8-inline"
     },
     {
