@@ -120,3 +120,29 @@ test('trial balance mapping blocks account codes inconsistent with account class
   assert.equal(mapped.status, 'blocked');
   assert.equal(mapped.lines.length, 0);
 });
+
+
+test('revenue preview never adds different currencies into one total', () => {
+  const result = buildRevenueForm([
+    { date: '2026-11-01', kind: 'commission', amount: 100, currency: 'AFN', account: '4010' },
+    { date: '2026-11-02', kind: 'other', amount: 2, currency: 'USD', account: '4090' },
+  ], APPROVED_REVENUE_POLICY);
+  assert.equal(result.status, 'ready');
+  assert.equal(result.totals.amount, null);
+  assert.deepEqual(result.totals.byCurrency, [
+    { currency: 'AFN', amount: 100 },
+    { currency: 'USD', amount: 2 },
+  ]);
+  assert.equal(result.postingStatus, 'not-posted');
+  assert.ok(result.rows.every((row) => row.documentStatus === 'preview-only'));
+});
+
+test('revenue preview blocks invalid amounts, dates, currencies and account codes', () => {
+  const result = buildRevenueForm([
+    { date: '2026-02-30', kind: 'other', amount: -5, currency: 'US', account: 'cash' },
+  ], APPROVED_REVENUE_POLICY);
+  assert.equal(result.status, 'blocked');
+  assert.equal(result.rows.length, 0);
+  assert.equal(result.totals, null);
+  assert.equal(result.errors.length, 4);
+});
