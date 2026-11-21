@@ -291,13 +291,15 @@ async function remittanceSettlement(ctx, draft, currency) {
 
 // ماندهٔ در دسترس یک صندوق یا بانک: ماندهٔ افتتاحیه + حرکت دفتر کل همان حساب در همان ارز.
 // پیش از ثبت معامله استفاده می‌شود تا فروش بیش از موجودی رد شود، نه اینکه فقط هشدار بگیرد.
-async function accountBalance(ctx, account) {
+async function accountBalanceInTx(handles, ctx, account) {
+  // خواندن موجودی در همان تراکنش read-write ثبت سند انجام می‌شود؛
+  // تراکنش‌های هم‌زمانی که دفترکل/حساب مشترک دارند به‌صورت ترتیبی اجرا می‌شوند.
   const table = account.account_type === 'bank' ? 'bank_accounts' : 'safes';
-  const rows = await all(table);
+  const rows = await handles[table].getAll();
   const row = rows.find(item => String(item.id) === String(account.account_id)
     && (!item.exchange_code || item.exchange_code === ctx.exchangeCode));
   const opening = number(row?.opening_balance ?? row?.balance ?? 0);
-  const lines = await all('ledger_entries');
+  const lines = await handles.ledger_entries.getAll();
   const movement = lines
     .filter(line => !line.deleted
       && String(line.account_type || '') === account.account_type
@@ -493,14 +495,15 @@ export async function saveVersion21Record(module, draft) {
     if (String(from.account_type) === String(to.account_type) && String(from.account_id) === String(to.account_id)) {
       throw new Error('حساب مبدأ و مقصد انتقال نباید یکی باشند.');
     }
-    const available = await accountBalance(ctx, from);
-    if (available + 0.005 < amount) {
-      throw new Error(`موجودی ${from.account_name} برای این انتقال کافی نیست؛ ماندهٔ در دسترس ${available} ${currency} است.`);
-    }
+    const sourceAccountTable = from.account_type === 'bank' ? 'bank_accounts' : 'safes';
     const settlementId = String(draft.settlementId || '').trim() || makeSettlementNumber(draft.date);
 
-    return runVersion21Tx([], async handles => {
+    return runVersion21Tx([sourceAccountTable], async handles => {
       await assertNoDuplicateOperation(handles, operationId);
+      const available = await accountBalanceInTx(handles, ctx, from);
+      if (available + 0.005 < amount) {
+        throw new Error(`موجودی ${from.account_name} برای این انتقال کافی نیست؛ ماندهٔ در دسترس ${available} ${currency} است.`);
+      }
       const repeated = (await handles.documents.getAll())
         .find(row => !row.deleted && String(row.settlement_id || '') === settlementId);
       if (repeated) throw new Error(`شناسهٔ تسویهٔ ${settlementId} قبلاً روی سند ${repeated.doc_number} ثبت شده است.`);
@@ -587,17 +590,18 @@ export async function saveVersion21Record(module, draft) {
     const payout = kind === 'buy'
       ? { account: baseAccount, currency: baseCurrency, amount: baseAmount }
       : { account: foreignAccount, currency: foreignCurrency, amount: foreignAmount };
-    const available = await accountBalance(ctx, payout.account);
-    if (payout.amount > available + 0.000001) {
-      throw new Error(
-        `موجودی ${payout.account.account_name} برای این معامله کافی نیست؛ `
-        + `ماندهٔ در دسترس ${new Intl.NumberFormat('fa-IR', { maximumFractionDigits: 2 }).format(available)} ${payout.currency} `
-        + `و مبلغ لازم ${new Intl.NumberFormat('fa-IR', { maximumFractionDigits: 2 }).format(payout.amount)} ${payout.currency} است.`
-      );
-    }
+    const payoutTable = payout.account.account_type === 'bank' ? 'bank_accounts' : 'safes';
 
-    return runVersion21Tx(['conversions'], async handles => {
+    return runVersion21Tx(['conversions', payoutTable], async handles => {
       await assertNoDuplicateOperation(handles, operationId);
+      const available = await accountBalanceInTx(handles, ctx, payout.account);
+      if (payout.amount > available + 0.000001) {
+        throw new Error(
+          `موجودی ${payout.account.account_name} برای این معامله کافی نیست؛ `
+          + `ماندهٔ در دسترس ${new Intl.NumberFormat('fa-IR', { maximumFractionDigits: 2 }).format(available)} ${payout.currency} `
+          + `و مبلغ لازم ${new Intl.NumberFormat('fa-IR', { maximumFractionDigits: 2 }).format(payout.amount)} ${payout.currency} است.`
+        );
+      }
       const conversionId = await handles.conversions.add({
         exchange_code: ctx.exchangeCode,
         kind,
