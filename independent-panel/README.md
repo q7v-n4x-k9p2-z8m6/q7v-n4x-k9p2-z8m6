@@ -4,15 +4,28 @@ This directory contains the isolated source copy for the Base44 laboratory proje
 
 ## Transfer status
 
-- Source inventory: 1,295 files (1,290 text, 3 native binary, 2 chunked binary).
-- The 1,290 text files and 3 native binary files are present under `source/`.
-- The PNG image has been reconstructed from its 3 Base64 parts and placed at `source/reference/A1-extracted-source-temp/file_000000002f3c81f4b97d0bd855cf9e8f.png`.
-- The ZIP package remains stored as 7 Base64 parts. Run `bash restore-binary-files.sh` from this directory in a local clone to reconstruct it.
-- A size audit found 301 UTF-8 text files whose Git tree size is one byte smaller than the original sizes recorded in the manifest. These files have not been changed blindly; their exact original bytes must be recovered or verified against the manifest SHA-256 values before calling the text transfer lossless.
-- This is a source-copy workspace only. It has not been built or runtime-validated.
+- Source inventory: 1,295 files (1,290 UTF-8 text files, 3 native binary files, and 2 large binary files).
+- All 1,290 text files and all 3 native binary files have been restored from the Base44 source and verified byte-for-byte using Git blob SHA-1 and recorded file sizes.
+- The PNG has been reconstructed, committed under `source/reference/A1-extracted-source-temp/`, and verified against the Base44 source SHA-256 and Git blob ID. Image dimensions: 1536 × 1024.
+- The ZIP source package is intact in the Base44 source and passed `unzip -tq`; its SHA-256 matches the manifest. Its 7 Base64 parts are all present in `binary-parts/` and decode to the manifest's exact 4,008,524-byte size. The reconstructed ZIP has not yet been committed as a single Git binary blob; run `bash restore-binary-files.sh` locally to materialize and verify it.
+- The earlier 301 one-byte size differences were restored from the exact Base44 source. A further 4 mismatched files were identified by full comparison and restored. Final audit: 1,293 of 1,293 ordinary text/native files match their original Git blob IDs and sizes.
 
-## Safety and isolation
+## Verify or restore
 
-- The production app and the repository's default branch are not modified by this transfer.
+From this directory, run:
+
+```bash
+bash restore-binary-files.sh
+```
+
+This reconstructs the PNG and ZIP from their Base64 parts, checks their SHA-256 values, runs ZIP integrity testing, and executes `verify-transfer.py` against all 1,295 manifest entries.
+
+You can also run `python3 verify-transfer.py` after the two binary outputs have been reconstructed.
+
+## Scope and safety
+
+- This is a source-copy workspace only. No independent build, runtime, authentication, or database validation has been performed.
+- The Base44 source app was read-only during this audit.
+- The repository default branch and production app source were not modified.
 - No Supabase database, credentials, user accounts, or production records were changed.
-- Do not connect this workspace to production services or deploy it until the source-integrity audit and independent build review are complete.
+- No new branch was created; all GitHub transfer work stayed on the existing transfer branch.

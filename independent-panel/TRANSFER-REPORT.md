@@ -1,33 +1,48 @@
-# Base44 source copy — transfer report
+# Base44 source copy — final transfer audit
+
+## Source identity
 
 - Source app: حساب صراف — آزمایشگاه جامع مستقل
 - Source app ID: 6ae50b652a0702c48d9e0b9c
-- Source files inventoried: 1,295
-- Text files inventoried: 1,290
-- Native binary files inventoried: 3
-- Large binary files stored as Base64 parts: 2
-- Total original bytes: 17,594,396
-- Original SHA-256 values: recorded for all 1,295 source files in TRANSFER-MANIFEST.json
+- Destination repository: q7v-n4x-k9p2-z8m6/q7v-n4x-k9p2-z8m6
+- Destination branch: m8x-q2v-n7k4-z9p6-حساب-صراف
+- Destination root: independent-panel/
+- Manifest inventory: 1,295 files
+- Original total bytes: 17,594,396
+- Original SHA-256 values: recorded in TRANSFER-MANIFEST.json
 
-## Completed in this continuation
+## Verified transfer results
 
-- Re-read the manifest, transfer report, restore script, branch tree, and all 10 Base64 parts.
-- Confirmed all 3 PNG Base64 parts and all 7 ZIP Base64 parts are present.
-- Reconstructed the PNG binary blob from its three parts and added it at:
-  `source/reference/A1-extracted-source-temp/file_000000002f3c81f4b97d0bd855cf9e8f.png`
-- Confirmed the PNG payload has a valid Base64 alphabet/length, the PNG signature, dimensions 1536 × 1024, and PNG IEND trailer.
-- Confirmed the ZIP Base64 payload has a valid Base64 alphabet/length and decodes to the manifest's expected 4,008,524 bytes. The ZIP has not yet been committed as a reconstructed binary file.
+| Category | Count | Result |
+|---|---:|---|
+| UTF-8 text files | 1,290 | Exact Git blob ID and byte-size match against Base44 source |
+| Native binary files | 3 | Exact Git blob ID and byte-size match against Base44 source |
+| PNG from Base64 parts | 1 | Reconstructed and committed; SHA-256 and Git blob ID match Base44 source |
+| ZIP from Base64 parts | 1 | All 7 parts present; Base64 valid; decoded size matches; original Base44 ZIP passes ZIP integrity test and SHA-256 matches manifest |
 
-## Remaining integrity work
+The 1,293 text/native files were checked in batches against the actual Base44 sandbox using `git hash-object` and byte sizes. No missing files or mismatches remained.
 
-- 301 of the 1,290 UTF-8 text files have a Git tree byte-size exactly one byte below the original size recorded in the manifest; the other 989 match their recorded byte sizes. The three native binary files match their recorded sizes.
-- The one-byte differences must not be repaired by blindly appending a newline. The exact original final byte and SHA-256 must be checked against the original source/export. Until that comparison is available, these 301 files remain unverified.
-- Reconstruct the ZIP package from the seven parts, then run ZIP integrity testing and compare its SHA-256 with the manifest.
-- Run a complete per-file SHA-256 verification for all 1,295 entries when the original source/export or a local verification environment is available.
+## Repairs performed
+
+1. Restored 301 text files whose Git destination blobs were one byte shorter than the manifest. The exact bytes were read from Base44 and their resulting Git blob IDs were verified.
+2. Identified and restored four additional mismatched files:
+   - `reference/A1-extracted-source-temp/public/runtime-config.js`
+   - `reference/A1-extracted-source-temp/src/pages/OAuthConsent.jsx`
+   - `reference/A1-extracted-source-temp/src_pages_OAuthConsent.jsx`
+   - `src/pages/OAuthConsent.jsx`
+3. Reconstructed the PNG from all 3 Base64 parts and committed it at:
+   `source/reference/A1-extracted-source-temp/file_000000002f3c81f4b97d0bd855cf9e8f.png`
+4. Kept the ZIP's 7 Base64 parts intact. The original ZIP in Base44 is 4,008,524 bytes, has SHA-256 `ecc32b0da09370c398dcca54e15df5c67cff2f71c3cadd7e41d973025e0d06c4`, and passes `unzip -tq`. The final reconstructed ZIP is to be materialized locally by the restore script; the single binary ZIP blob has not been uploaded to GitHub in this session.
+
+## Verification scripts
+
+- `restore-binary-files.sh`: reconstructs PNG and ZIP, checks their SHA-256, tests ZIP integrity, then runs the manifest verifier.
+- `verify-transfer.py`: checks all 1,295 target paths, sizes, and SHA-256 values after reconstruction.
 
 ## Scope and safety
 
-- This is a source copy only; no independent build, runtime, authentication, or database validation has been performed.
+- Base44 source app was accessed read-only; no app files, entities, records, or deployment settings were changed.
 - No Supabase operation was performed.
-- No production app files were changed.
-- No branch was created; work is confined to the existing transfer branch.
+- No production A1 application files or deployment configuration were changed.
+- No new branch was created; only the existing transfer branch was updated.
+- No independent build, runtime, authentication, or database validation has been performed. This report certifies source-file transfer integrity, not application readiness.
