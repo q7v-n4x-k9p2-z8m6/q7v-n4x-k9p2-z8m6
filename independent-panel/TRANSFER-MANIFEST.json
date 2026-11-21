@@ -29,7 +29,7 @@
     "text_files": 1291,
     "native_binary_files": 3,
     "chunked_binary_files": 2,
-    "total_bytes": 17580663
+    "total_bytes": 17581553
   },
   "files": [
     {
@@ -7084,8 +7084,8 @@
     {
       "source_path": "src/a1/lib/demoAuth.jsx",
       "target_path": "independent-panel/source/src/a1/lib/demoAuth.jsx",
-      "size_bytes": 5554,
-      "sha256": "169a46259717dd1801fb2234e961c658e869f4e541a5762380085a9bbd5deb20",
+      "size_bytes": 6279,
+      "sha256": "532257b5fa73c30885b585826b8aaaec13bc9bd5d3d6f76718a7a2676497f11d",
       "storage": "utf8-inline"
     },
     {
@@ -7147,8 +7147,8 @@
     {
       "source_path": "src/a1/lib/sandboxAuth.js",
       "target_path": "independent-panel/source/src/a1/lib/sandboxAuth.js",
-      "size_bytes": 2493,
-      "sha256": "af283e0d39c1b376beb1232613ed5dfac4b990fd0033c9e0175d3dc3154ed485",
+      "size_bytes": 2710,
+      "sha256": "d0562b9d53e0eeddef4fd27b7f282b190229e53265b36b0507b6966dd7cd9a11",
       "storage": "utf8-inline"
     },
     {
@@ -7560,8 +7560,8 @@
     {
       "source_path": "src/a1/pages/LoginOriginal.jsx",
       "target_path": "independent-panel/source/src/a1/pages/LoginOriginal.jsx",
-      "size_bytes": 16806,
-      "sha256": "e2f39128f4062e3668c0ef241fd7d45e898d4e3cf6e1369b7747d57c7d2de1c8",
+      "size_bytes": 16754,
+      "sha256": "9935250f8ef4584f2d800305d54c6ffdd3bc12e66b9db7c01ed1130318cade18",
       "storage": "utf8-inline"
     },
     {
