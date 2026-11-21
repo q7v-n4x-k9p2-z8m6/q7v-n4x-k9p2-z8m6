@@ -1,7 +1,7 @@
-// a1/lib/v21Session.js — نشست نمایشی نسخه ۲۱
-// قرارداد sessionContext سورس A1 حفظ شده است، اما هویت از نشست محلی همین مرورگر خوانده می‌شود.
+// نشست محلی محیط مستقل نسخهٔ ۲۲؛ مستقل از نشست نسخهٔ ۲۱
+// فقط برای پیش‌نمایش محلی است و احراز هویت واقعی را فعال نمی‌کند.
 export const DEMO_EXCHANGE_CODE = 'DEMO-EX';
-const SESSION_KEY = 'a1_demo_session';
+const SESSION_KEY = 'hisab_sarraf_v22_session';
 
 export function currentUser() {
   try {
