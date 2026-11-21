@@ -1,8 +1,11 @@
 name: Deploy production web app
-# Production publishing is manual only during and after main consolidation.
-# A push to main must never publish the live public domain.
+# The only production source is this repository's main branch.
+# No other branch is checked out or published by this workflow.
 
 on:
+  push:
+    branches:
+      - main
   workflow_dispatch:
     inputs:
       confirm_production:
@@ -25,13 +28,13 @@ concurrency:
 
 jobs:
   build-and-deploy:
-    if: ${{ inputs.confirm_production == 'yes' }}
+    if: github.event_name == 'push' || inputs.confirm_production == 'yes'
     runs-on: ubuntu-latest
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - name: Check out the canonical main branch
+      - name: Check out the canonical main branch only
         uses: actions/checkout@v4
         with:
           ref: main
