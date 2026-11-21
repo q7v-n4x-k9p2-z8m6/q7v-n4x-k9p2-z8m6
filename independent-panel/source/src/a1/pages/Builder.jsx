@@ -324,7 +324,7 @@ export default function Builder() {
         <div className="flex items-center gap-1.5">
           <button type="button" onClick={() => navigate('/dashboard')} className="inline-flex items-center gap-1 rounded-lg border border-[#c9d7e3] bg-white px-2.5 py-1.5 text-[11px]">میز کار</button>
           <button type="button" onClick={load} className="inline-flex items-center gap-1 rounded-lg border border-[#c9d7e3] bg-white px-2.5 py-1.5 text-[11px]"><RefreshCw className="h-3.5 w-3.5" /> تازه‌سازی</button>
-          <button type="button" onClick={() => logout()} className="inline-flex items-center gap-1 rounded-lg border border-rose-200 bg-rose-50 px-2.5 py-1.5 text-[11px] text-rose-800"><X className="h-3.5 w-3.5" /> خروج</button>
+          <button type="button" onClick={() => logout(true)} aria-label="خروج از پنل سازنده" title="خروج از پنل سازنده" className="inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-rose-300 bg-rose-600 px-3 py-2 text-[11px] font-extrabold text-white shadow-sm transition-colors hover:bg-rose-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400 focus-visible:ring-offset-2"><X className="h-4 w-4" /> خروج از پنل سازنده</button>
         </div>
       </header>
 
