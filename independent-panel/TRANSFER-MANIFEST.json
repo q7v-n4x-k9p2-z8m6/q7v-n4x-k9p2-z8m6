@@ -7092,7 +7092,7 @@
       "source_path": "src/a1/lib/db.js",
       "target_path": "independent-panel/source/src/a1/lib/db.js",
       "size_bytes": 14089,
-      "sha256": "9cde53a27ae69c0708bc82caf1b3278917c7ba407c22c0f5620ce06785fd2026",
+      "sha256": "6b2fe6b860f52ba9a3d9c9ba2ff46f6b56eaccf2437bcf6c4746c974e9537e91",
       "storage": "utf8-inline"
     },
     {
@@ -7162,7 +7162,7 @@
       "source_path": "src/a1/lib/sandboxAuth.js",
       "target_path": "independent-panel/source/src/a1/lib/sandboxAuth.js",
       "size_bytes": 903,
-      "sha256": "360a4c3ec151b84291339289e04a7a7567a636e696a1f6b7db2837b127a39987",
+      "sha256": "79134e9fd59e38d978dfb9345e39e5ca51935c03db532fdfbd631a1ac9166de9",
       "storage": "utf8-inline"
     },
     {
