@@ -7,6 +7,7 @@ import {
   APPROVED_TRIAL_BALANCE_POLICY,
   APPROVED_BALANCE_SHEET_POLICY,
   APPROVED_REVENUE_POLICY,
+  ratesFromCurrencyRecords,
 } from './approvedPolicies.js';
 
 const multiCurrencyLedger = [
@@ -78,4 +79,14 @@ test('approved revenue policy includes all revenue and keeps cash collection in 
   assert.equal(result.rows.length, 2);
   assert.equal(result.totals.amount, 150);
   assert.deepEqual(result.rows.map((row) => row.docNumber), ['RV-001', 'RV-002']);
+});
+
+test('currency records map their actual currency, buy_rate and sell_rate fields', () => {
+  const rates = ratesFromCurrencyRecords([
+    { currency: 'USD', buy_rate: 70, sell_rate: 72, is_active: true },
+    { currency: 'EUR', buy_rate: 75, sell_rate: 0, is_active: true },
+    { currency: 'IRR', accounting_rate: 0.0012, buy_rate: 0.001, sell_rate: 0.0014, is_active: true },
+    { currency: 'GBP', buy_rate: 90, sell_rate: 92, is_active: false },
+  ]);
+  assert.deepEqual(rates, { USD: 71, IRR: 0.0012 });
 });
