@@ -44,6 +44,7 @@ import LayoutPreviewStudio from '@/components/sarraaf/LayoutPreviewStudio';
 import LayoutHexLibrary from '@/components/sarraaf/LayoutHexLibrary';
 import { lazy } from 'react';
 const BuilderLiveAssistant = lazy(() => import('@/pages/BuilderLiveAssistant'));
+const TestingAgentPanel = lazy(() => import('@/components/sarraaf/TestingAgentPanel'));
 import UCManager from '@/components/sarraaf/UCManager';
 import RechargeManager from '@/components/sarraaf/RechargeManager';
 import Afghan5Manager from '@/components/sarraaf/Afghan5Manager';
@@ -93,6 +94,7 @@ const TAB_GROUPS = [
   { label: 'چیدمان کامپیوتر', value: 'computer_layout_preview', description: 'پیش‌نمایش مستقل چیدمان کامپیوتر' },
   { label: 'آزمایشگاه چیدمان', value: 'layout_studio', description: 'نمای موبایل و لپ‌تاپ در یک محیط آزمایشی مستقل' },
   { label: 'دستیار زنده سازنده', value: 'masnavi_ai', description: 'دستیار اختصاصی و محرمانه برای گزارش وضعیت پنل سازنده' },
+  { label: 'عامل هوشمند آزمایش', value: 'testing_agent', description: 'تهیه برنامه و سناریوهای کنترل کیفیت با هوش مصنوعی موجود؛ اجرای خودکار هنوز غیرفعال است' },
   { label: 'UC پابجی', value: 'uc_manager', description: 'مدیریت خدمات UC' },
   { label: 'شارژ و بسته', value: 'recharge', description: 'مدیریت شارژ و بسته اینترنت' },
   { label: 'افغان۵', value: 'afghan5', description: 'مدیریت خدمات افغان۵' },
@@ -107,6 +109,7 @@ const TAB_CATEGORIES = [
   { label: 'کاربران و دسترسی', value: 'access', icon: Users, tabs: ['users', 'perms', 'co_creators', 'email_verify'] },
   { label: 'مالی و پلن‌ها', value: 'finance', icon: Wallet, tabs: ['plans', 'pricing', 'payments', 'withdrawals', 'trial'] },
   { label: 'ارتباطات', value: 'communication', icon: MessageSquare, tabs: ['notif', 'chat', 'masnavi_ai'] },
+  { label: 'آزمایش و کنترل کیفیت', value: 'testing', icon: FlaskConical, tabs: ['testing_agent'] },
   { label: 'خدمات و فروش', value: 'services', icon: Store, tabs: ['uc_manager', 'recharge', 'afghan5', 'sellers'] },
   { label: 'ابزار و نگهداری', value: 'tools', icon: Database, tabs: ['maintenance', 'version', 'layout_preview', 'computer_layout_preview', 'layout_studio', 'backup', 'backup_v2', 'triple_backup', 'project_transfer', 'supabase_audit', 'db_explorer'] },
 ];
@@ -132,8 +135,9 @@ export default function BuilderPanel() {
 
   // مجوزها روی شناسه تک‌تک تب‌ها اعمال می‌شوند، نه شناسه گروه‌های نمایشی.
   const visibleTabGroups = useMemo(() => TAB_GROUPS.filter((group) => {
-    const creatorOnlyTabs = ['co_creators', 'layout_preview', 'computer_layout_preview', 'layout_studio', 'supabase_audit', 'db_explorer', 'masnavi_ai'];
+    const creatorOnlyTabs = ['co_creators', 'layout_preview', 'computer_layout_preview', 'layout_studio', 'supabase_audit', 'db_explorer', 'masnavi_ai', 'testing_agent'];
     if (group.value === 'masnavi_ai' && user?.role !== 'creator') return false;
+    if (group.value === 'testing_agent' && user?.role !== 'creator') return false;
     if (group.value === 'maintenance' && user?.role !== 'creator') return false;
     if (creatorOnlyTabs.includes(group.value) && !isFullCreator) return false;
     if (isFullCreator) return true;
@@ -283,26 +287,30 @@ export default function BuilderPanel() {
             <span className="text-xs text-muted-foreground">{visibleTabCount} بخش مدیریتی</span>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            <Select
-              value={activeCategory}
-              onValueChange={(value) => {
-                const category = visibleCategories.find((item) => item.value === value);
-                setActiveCategory(value);
-                if (category?.tabs?.length) setActiveTab(category.tabs[0].value);
-              }}
-            >
-              <SelectTrigger className="h-9 w-full text-xs">
-                <SelectValue placeholder="انتخاب گروه مدیریتی" />
-              </SelectTrigger>
-              <SelectContent>
-                {visibleCategories.map((category) => (
-                  <SelectItem key={category.value} value={category.value}>
-                    {getPanelNumber(TAB_CATEGORIES.findIndex((item) => item.value === category.value))} · {category.label} ({category.tabs.length})
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          <div className="space-y-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
+              {visibleCategories.map((category) => {
+                const CategoryIcon = category.icon;
+                const selected = activeCategory === category.value;
+                return (
+                  <Button
+                    key={category.value}
+                    type="button"
+                    variant={selected ? "default" : "outline"}
+                    onClick={() => {
+                      setActiveCategory(category.value);
+                      if (category.tabs?.length) setActiveTab(category.tabs[0].value);
+                    }}
+                    className="h-auto min-h-20 flex-col items-center justify-center gap-2 whitespace-normal px-2 py-3 text-center"
+                    aria-pressed={selected}
+                  >
+                    <CategoryIcon className="h-5 w-5 shrink-0" />
+                    <span className="text-xs leading-5">{category.label}</span>
+                    <span className="text-[10px] opacity-75">{category.tabs.length} بخش</span>
+                  </Button>
+                );
+              })}
+            </div>
 
             <Select value={activeTab} onValueChange={setActiveTab}>
               <SelectTrigger className="h-9 w-full text-xs">
@@ -592,6 +600,24 @@ export default function BuilderPanel() {
                   status: getFeatureStatus(features || [], item.feature_key),
                 }))}
                 requestSnapshot={null}
+              />
+            </React.Suspense>
+          </TabsContent>
+        )}
+
+        {/* عامل هوشمند آزمایش — برنامه‌ریزی سناریو با هوش مصنوعی موجود؛ بدون اجرای خودکار یا تغییر داده‌های مالی */}
+        {user?.role === 'creator' && (
+          <TabsContent value="testing_agent">
+            <React.Suspense fallback={<div className="flex items-center justify-center min-h-[30vh]"><div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" /></div>}>
+              <TestingAgentPanel
+                role={user?.role}
+                projectSnapshot={FEATURE_CATALOG.map(item => ({
+                  name: item.name,
+                  key: item.feature_key,
+                  location: item.location,
+                  critical: !!item.critical,
+                  status: getFeatureStatus(features || [], item.feature_key),
+                }))}
               />
             </React.Suspense>
           </TabsContent>
