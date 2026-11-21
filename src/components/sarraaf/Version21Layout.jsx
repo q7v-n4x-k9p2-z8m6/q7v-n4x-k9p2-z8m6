@@ -213,7 +213,7 @@ export default function Version21Layout() {
 
   return (
     <div dir="rtl" className="v21-app-shell min-h-screen bg-[#f3f7fc] text-slate-900 flex">
-      {location.pathname !== '/dashboard' && <aside className={`${desktopSiteMode ? "flex" : "hidden lg:flex"} w-64 shrink-0 h-screen sticky top-0 flex-col bg-gradient-to-b from-[#102b4c] via-[#12385f] to-[#0e2745] text-white print:hidden`}>
+      {location.pathname !== '/dashboard' && <aside className={`${desktopSiteMode ? "flex" : "hidden md:flex"} w-64 shrink-0 h-screen sticky top-0 flex-col bg-gradient-to-b from-[#102b4c] via-[#12385f] to-[#0e2745] text-white print:hidden`}>
         <div className="px-5 py-5 border-b border-white/10 bg-gradient-to-br from-[#12365f] to-[#174f86]">
           <div className="text-lg font-extrabold">حساب صراف</div>
           <div className="mt-1 text-xs text-slate-400">مدیریت حساب صراف</div>
@@ -247,7 +247,7 @@ export default function Version21Layout() {
               <button onClick={() => navigate('/support')} className="hidden sm:flex items-center gap-2 rounded-lg border px-3 py-2 text-xs hover:bg-slate-50">
                 <Headphones className="h-4 w-4" /> پشتیبانی
               </button>
-              <button onClick={() => logout()} className="lg:hidden rounded-lg border p-2" aria-label="خروج">
+              <button onClick={() => logout()} className="md:hidden rounded-lg border p-2" aria-label="خروج">
                 <LogOut className="h-4 w-4" />
               </button>
             </div>
@@ -273,7 +273,7 @@ export default function Version21Layout() {
             </div>
           </section>
         )}
-        <main className="flex-1 min-w-0 px-2 py-3 pb-24 sm:p-3 md:p-5 xl:p-7 lg:pb-5">
+        <main className="flex-1 min-w-0 px-2 py-3 pb-24 sm:p-3 md:p-5 xl:p-7 md:pb-5">
           <div className="mx-auto w-full max-w-[1600px]">
             <Outlet />
           </div>
@@ -283,7 +283,7 @@ export default function Version21Layout() {
         </footer>
         {location.pathname !== '/dashboard' && !desktopSiteMode && (
           <>
-            <nav className="v21-route-mobile-dock fixed inset-x-0 bottom-0 z-40 grid grid-cols-4 gap-2 border-t border-[#d5e2f0] bg-white/95 px-3 pt-2 pb-[calc(env(safe-area-inset-bottom)+8px)] shadow-[0_-6px_24px_rgba(16,43,76,0.10)] backdrop-blur lg:hidden" aria-label="ناوبری سریع برنامه">
+            <nav className="v21-route-mobile-dock fixed inset-x-0 bottom-0 z-40 grid grid-cols-4 gap-2 border-t border-[#d5e2f0] bg-white/95 px-3 pt-2 pb-[calc(env(safe-area-inset-bottom)+8px)] shadow-[0_-6px_24px_rgba(16,43,76,0.10)] backdrop-blur md:hidden" aria-label="ناوبری سریع برنامه">
               {['home','customers','cash'].map(id => {
                 const item = modules.find(entry => entry.id === id);
                 return item ? <ModuleLink key={id} item={item} compact features={features} profile={accessProfile} profileLoading={profileLoading} paidSystemEnabled={paidSystemEnabled} paidSystemLoading={paidSystemLoading} openUpgrade={openUpgrade} /> : null;
