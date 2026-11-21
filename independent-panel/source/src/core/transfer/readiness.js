@@ -22,7 +22,7 @@ import { ENTERPRISE_MODULES } from '@/core/transfer/enterpriseModules';
 import {
   ACTION_MODES, actionOf, evaluateEnterpriseModule, enterprisePageModel, sectionFor, definedActionCount,
 } from '@/core/transfer/enterpriseActions';
-import { ROLE_MIGRATION, AUTH_ENFORCEMENT_POINTS, AUTH_OPEN_DECISIONS, isRoleMapped } from '@/core/transfer/authMigration';
+import { ROLE_MIGRATION, AUTH_ENFORCEMENT_POINTS, AUTH_OPEN_DECISIONS, AUTH_DEFAULT_POLICY, isRoleMapped } from '@/core/transfer/authMigration';
 import { RULE_CONTRACTS } from '@/core/transfer/ruleContracts';
 import { resolveSession, shellFor, runSessionTests } from '@/core/session/sessionContract';
 import { runPersistenceTests, createMemoryStorage as createStateStorage, tenantStateKey } from '@/core/persistence/durableState';
@@ -506,8 +506,9 @@ export async function buildReadinessReport() {
     unmapped.length ? 'بدون نگاشت: ' + unmapped.join(', ') : ROLE_MIGRATION.length + ' نقش با نقش پلتفرم و سطح تخصص نگاشت شده است.', { kind: 'code' });
   add(auth, 'enforcement', 'نقاط اجرای مجوز', AUTH_ENFORCEMENT_POINTS.length >= 4 ? STATUS.PASS : STATUS.FAIL,
     AUTH_ENFORCEMENT_POINTS.map((item) => item.title).join('، '), { kind: 'code' });
-  add(auth, 'decisions', 'تصمیم‌های باز مهاجرت ثبت شده‌اند', AUTH_OPEN_DECISIONS.length ? STATUS.PASS : STATUS.FAIL,
-    AUTH_OPEN_DECISIONS.length + ' تصمیم باز (دامنهٔ صرافی، محل مجوز، منبع نشست، سیاست دعوت)', { kind: 'code' });
+  add(auth, 'decisions', 'سیاست‌های هویت و دسترسی نسخهٔ ۲۲ تعیین شده‌اند', AUTH_OPEN_DECISIONS.length === 0 ? STATUS.PASS : STATUS.BLOCKED,
+    'جداسازی: ' + AUTH_DEFAULT_POLICY.tenantIsolation + ' · مجوز: ' + AUTH_DEFAULT_POLICY.permissionStore
+      + ' · ورود: نام کاربری/رمز · دعوت کارمند: فقط مالک صرافی', { kind: 'code', dependency: AUTH_OPEN_DECISIONS.length ? 'تکمیل سیاست هویت' : '' });
 
   try {
     const suite = runSessionTests();
