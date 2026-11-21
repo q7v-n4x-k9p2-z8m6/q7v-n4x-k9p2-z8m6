@@ -29,7 +29,7 @@
     "text_files": 1291,
     "native_binary_files": 3,
     "chunked_binary_files": 2,
-    "total_bytes": 17600136
+    "total_bytes": 17580663
   },
   "files": [
     {
@@ -7084,8 +7084,8 @@
     {
       "source_path": "src/a1/lib/demoAuth.jsx",
       "target_path": "independent-panel/source/src/a1/lib/demoAuth.jsx",
-      "size_bytes": 5175,
-      "sha256": "564e10442586424742019fa5bedf416446b6f83a4d67c91236fbf88c56fa491f",
+      "size_bytes": 5554,
+      "sha256": "169a46259717dd1801fb2234e961c658e869f4e541a5762380085a9bbd5deb20",
       "storage": "utf8-inline"
     },
     {
@@ -7560,8 +7560,8 @@
     {
       "source_path": "src/a1/pages/LoginOriginal.jsx",
       "target_path": "independent-panel/source/src/a1/pages/LoginOriginal.jsx",
-      "size_bytes": 16835,
-      "sha256": "56a5426d5534c3cd9c3870ad55e45fc8ff205f609e1cf15b2f7034758eb8acf9",
+      "size_bytes": 16806,
+      "sha256": "e2f39128f4062e3668c0ef241fd7d45e898d4e3cf6e1369b7747d57c7d2de1c8",
       "storage": "utf8-inline"
     },
     {
