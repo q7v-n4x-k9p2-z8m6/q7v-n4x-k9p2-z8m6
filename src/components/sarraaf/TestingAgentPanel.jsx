@@ -6,6 +6,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { getSupabaseConfig } from '@/lib/supabaseConfig';
 import { TEST_SCENARIO_GROUPS, TEST_SCENARIO_COUNT } from '@/components/sarraaf/testingScenarios';
+import appInventory from '@/generated/testing-app-inventory.json';
 import CodeComparisonPanel from '@/components/sarraaf/CodeComparisonPanel';
 
 const FUNCTION_PATH = '/functions/v1/builder-ai-assistant';
@@ -71,6 +72,14 @@ export default function TestingAgentPanel({ projectSnapshot = [], role }) {
           ].join('\n'),
           context: [],
           projectSnapshot: snapshot,
+          appInventory: {
+            generatedAt: appInventory.generatedAt,
+            routeCount: appInventory.routeCount,
+            sourceFileCount: appInventory.sourceFileCount,
+            areas: appInventory.areas,
+            routes: appInventory.routes,
+            sourceFiles: appInventory.sourceFiles,
+          },
           requestSnapshot: {
             feature: 'testing_agent',
             purpose: 'test_planning_only',
