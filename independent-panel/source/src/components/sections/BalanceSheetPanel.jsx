@@ -5,26 +5,22 @@
 import React, { useMemo, useState } from 'react';
 import { Scale, Lock, ShieldCheck, AlertTriangle } from 'lucide-react';
 import { buildBalanceSheet, BALANCE_SHEET_POLICY } from '@/core/reports/balanceSheet';
+import { APPROVED_BALANCE_SHEET_POLICY } from '@/core/reports/approvedPolicies';
 import { FINANCIAL_FIXTURE } from '@/core/transfer/financialContracts';
 
-const STORAGE_KEY = 'a1-balance-sheet-policy';
+const STORAGE_KEY = 'hisab-sarraf-v22-balance-sheet-policy';
 
-// سیاست پیش‌فرض همان قرارداد مستند است: طبقه‌بندی با کدینگ، سود دوره جدا، ارزیابی بهای ثبت‌شده
-export const DEFAULT_BALANCE_POLICY = {
-  classification: 'code',
-  periodResult: 'separate',
-  valuation: 'book',
-  baseCurrency: 'AFN',
-};
+// سیاست پیش‌فرض همان قرارداد مستند است: طبقه‌بندی با کدینگ، سود دوره جدا، تسعیر با نرخ ثبت‌شدهٔ صراف
+export const DEFAULT_BALANCE_POLICY = APPROVED_BALANCE_SHEET_POLICY;
 
 const readPolicy = () => {
   try {
     const saved = window.localStorage.getItem(STORAGE_KEY);
-    if (!saved) return null;
+    if (!saved) return { ...DEFAULT_BALANCE_POLICY };
     const parsed = JSON.parse(saved);
     return parsed && typeof parsed === 'object' ? parsed : null;
   } catch {
-    return null;
+    return { ...DEFAULT_BALANCE_POLICY };
   }
 };
 
@@ -198,7 +194,7 @@ export default function BalanceSheetPanel({ data }) {
 
         {excluded.length ? (
           <p className="mt-1 text-[9px] leading-5 text-muted-foreground">
-            در مبنای بهای ثبت‌شده فقط ارز پایه جمع می‌شود؛ مانده‌های {excluded.join('، ')} در این مبنا کنار گذاشته شده‌اند. برای دیدن همهٔ ارزها «ارزیابی به نرخ روز» را انتخاب کنید.
+            در مبنای فعلی، مانده‌های {excluded.join('، ')} در این مبنا کنار گذاشته شده‌اند. برای دیدن همهٔ ارزها «ارزیابی به نرخ روز» را انتخاب کنید.
           </p>
         ) : null}
 
