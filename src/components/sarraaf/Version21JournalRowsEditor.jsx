@@ -5,7 +5,7 @@ const emptyRows = () => [
   { account: '', debit: 0, credit: '' },
 ];
 
-export default function Version21JournalRowsEditor({ draft, setDraft, data }) {
+export default function Version21JournalRowsEditor({ draft, setDraft, data, bankOptions = [] }) {
   const [rows, setRows] = useState(Array.isArray(draft.rows) && draft.rows.length >= 2 ? draft.rows : emptyRows());
   const currency = draft.currency || 'AFN';
   const mode = draft.journalMode === 'multi' || rows.length > 2 ? 'multi' : 'simple';
@@ -30,10 +30,10 @@ export default function Version21JournalRowsEditor({ draft, setDraft, data }) {
       value: 'صندوق: ' + account.name,
       label: 'صندوق: ' + account.name + ' (' + account.currency + ')',
     })),
-    ...data.banks.filter(account => account.status !== 'غیرفعال' && account.currency === currency).map(account => ({
+    ...(bankOptions.length ? bankOptions : data.banks.filter(account => account.status !== 'غیرفعال' && account.currency === currency).map(account => ({
       value: 'بانک: ' + account.id,
       label: 'بانک: ' + account.name + ' (' + account.currency + ')',
-    })),
+    }))),
   ], [data.accounts, data.cash, data.banks, currency]);
 
   const update = next => {
