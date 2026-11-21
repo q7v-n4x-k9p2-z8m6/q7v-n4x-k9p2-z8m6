@@ -93,6 +93,17 @@ export const DemoAuthProvider = ({ children }) => {
     return session;
   }, []);
 
+  const signInSandbox = useCallback((session, token) => {
+    try {
+      localStorage.setItem(SANDBOX_TOKEN_KEY, token);
+      localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+    } catch {
+      throw new Error('ذخیرهٔ نشست ورود در این مرورگر ممکن نشد.');
+    }
+    setUser(session);
+    return session;
+  }, []);
+
   const logout = useCallback((shouldRedirect = true) => {
     try { localStorage.removeItem(SESSION_KEY); localStorage.removeItem(SANDBOX_TOKEN_KEY); } catch { /* storage optional */ }
     setUser(null);
@@ -106,6 +117,7 @@ export const DemoAuthProvider = ({ children }) => {
     seedError,
     accounts: DEMO_ACCOUNTS,
     signIn,
+    signInSandbox,
     logout,
     navigateToLogin: () => window.location.replace('/login'),
   };
