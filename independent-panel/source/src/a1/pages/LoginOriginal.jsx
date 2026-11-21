@@ -5,14 +5,13 @@
 // حذف شده‌اند و هیچ ورود یا اتصال دیتابیسی انجام نمی‌شود.
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { sandboxLogin, SANDBOX_TOKEN_KEY } from '@/a1/lib/sandboxAuth';
+import { sandboxLogin, SANDBOX_TOKEN_KEY as TOKEN_KEY } from '@/a1/lib/sandboxAuth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import GoogleIcon from '@/components/GoogleIcon';
 import SarraafLogo from '@/a1/components/SarraafLogo';
-import { SANDBOX_TOKEN_KEY as TOKEN_KEY } from '@/a1/lib/sandboxAuth';
 import { ArrowLeft, Lock, Loader2, UserCircle, Store, Bot } from 'lucide-react';
 
 const goldStyles = `
