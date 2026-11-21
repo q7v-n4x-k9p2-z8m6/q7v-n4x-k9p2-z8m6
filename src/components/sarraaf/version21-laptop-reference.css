@@ -146,7 +146,7 @@
     overflow: visible !important;
     background: transparent !important;
   }
-  html body .v21-workspace-shell .v21-laptop-toolbar > nav.v21-laptop-menu-bar:not([class~="lg:hidden"]) {
+  html body .v21-workspace-shell .v21-laptop-toolbar > nav.v21-laptop-menu-bar:not([class~="md:hidden"]) {
     display: flex !important;
     flex: 0 0 37px !important;
     flex-direction: row !important;
@@ -167,7 +167,7 @@
     direction: rtl !important;
     white-space: nowrap !important;
   }
-  html body .v21-workspace-shell .v21-laptop-toolbar > nav.v21-laptop-menu-bar[class~="lg:hidden"] {
+  html body .v21-workspace-shell .v21-laptop-toolbar > nav.v21-laptop-menu-bar[class~="md:hidden"] {
     display: none !important;
   }
   html body .v21-workspace-shell .v21-laptop-menu-bar > div {
@@ -794,7 +794,7 @@
    The existing proportional rows/cards/panels below adapt within this canvas. */
 
 /* Prevent the mobile dashboard from appearing beside the PDF desktop layout.
-   The PDF layout starts at 768px, while Tailwind's lg:hidden starts at 1024px.
+   The PDF layout starts at 768px, while Tailwind's lg:hidden starts at 1024px. This app now uses md:hidden at the 768px boundary.
    This only hides the duplicate home composition at desktop/tablet widths; all
    mobile content and every existing module handler remain unchanged. */
 @media (min-width: 768px) {
@@ -804,7 +804,7 @@
 }
 
 /* A1 responsive PDF-proportional layout.
-   Preserve the PDF's 14-item toolbar, 4 stats, 2x3 panel grid,
+   Preserve the PDF's 11-item toolbar, 4 stats, 2x3 panel grid,
    5 quick actions and status bar. Expand the complete composition,
    not isolated tiles, to use the available laptop workspace. */
 @media (min-width: 768px) {
@@ -819,7 +819,7 @@
     margin: 12px 0 0 !important;
   }
 
-  /* Keep all 14 toolbar items on one full-width row. */
+  /* Keep all 11 toolbar items on one full-width row. */
   html body .v21-workspace-shell .v21-laptop-toolbar > aside.v21-module-icon-row {
     flex: 0 0 92px !important;
     height: 92px !important;
@@ -982,7 +982,7 @@
   }
 }
 
-/* Narrow desktop-site viewports: preserve all 14 toolbar items in one
+/* Narrow desktop-site viewports: preserve all 11 toolbar items in one
    proportional row. The previous fixed 64px basis overrode the full-row
    distribution above and caused overflow/misalignment on compact viewports. */
 @media (min-width: 768px) and (max-width: 1023px) {
