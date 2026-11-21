@@ -4,13 +4,15 @@
 // تنها تغییر: وابستگی‌های احراز هویت واقعی (Supabase، ورود محلی، گوگل، وضعیت تعمیرات)
 // حذف شده‌اند و هیچ ورود یا اتصال دیتابیسی انجام نمی‌شود.
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { sandboxLogin, SANDBOX_TOKEN_KEY } from '@/a1/lib/sandboxAuth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import GoogleIcon from '@/components/GoogleIcon';
 import SarraafLogo from '@/a1/components/SarraafLogo';
+import { SANDBOX_TOKEN_KEY as TOKEN_KEY } from '@/a1/lib/sandboxAuth';
 import { ArrowLeft, Lock, Loader2, UserCircle, Store, Bot } from 'lucide-react';
 
 const goldStyles = `
@@ -184,19 +186,47 @@ export default function LoginOriginal() {
   const [tab, setTab] = useState('sarraaf');
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
-  const [loading] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [googleLoading] = useState(false);
   const [error, setError] = useState('');
   const [googleError, setGoogleError] = useState('');
+  const navigate = useNavigate();
 
-  // پیش‌نمایش ظاهری: هیچ درخواست ورود، هیچ اتصال دیتابیس و هیچ مسیری تغییر نمی‌کند
-  const handleLogin = (event) => {
+  // ورود واقعی فقط برای حساب صراف مجازِ پیش‌نمایش؛ سایر نقش‌ها همچنان از این مسیر وارد نمی‌شوند.
+  const handleLogin = async (event) => {
     event.preventDefault();
-    if (!identifier || !password) {
+    setError('');
+    if (tab !== 'sarraaf') {
+      setError('ورود مشتری در این پیش‌نمایش هنوز فعال نشده است.');
+      return;
+    }
+    if (!identifier.trim() || !password) {
       setError('نام کاربری و رمز عبور را وارد کنید');
       return;
     }
-    setError('این صفحه فقط پیش‌نمایش ظاهری است؛ ورود واقعی در این نسخه فعال نیست.');
+    setLoading(true);
+    try {
+      const result = await sandboxLogin(identifier, password);
+      if (result.user?.username !== '33333333' || result.user?.role !== 'sarraaf') {
+        throw new Error('این حساب برای ورود به پنل صراف مجاز نیست.');
+      }
+      const session = {
+        id: String(result.user.id),
+        username: result.user.username,
+        full_name: result.user.full_name || result.user.username,
+        role: 'sarraaf',
+        status: result.user.status,
+        exchange_code: result.exchange?.exchange_code || `SANDBOX-${result.user.id}`,
+        is_sandbox_session: true,
+      };
+      localStorage.setItem(TOKEN_KEY, result.token);
+      localStorage.setItem('a1_demo_session', JSON.stringify(session));
+      navigate('/exchanger', { replace: true });
+    } catch (loginError) {
+      setError(loginError?.message || 'ورود انجام نشد؛ دوباره تلاش کنید.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleGoogle = () => {
