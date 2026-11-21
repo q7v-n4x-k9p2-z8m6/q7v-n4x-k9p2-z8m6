@@ -137,6 +137,7 @@ export default function BuilderPanel() {
   const visibleTabGroups = useMemo(() => TAB_GROUPS.filter((group) => {
     const creatorOnlyTabs = ['co_creators', 'layout_preview', 'computer_layout_preview', 'layout_studio', 'supabase_audit', 'db_explorer', 'masnavi_ai', 'testing_agent'];
     if (group.value === 'masnavi_ai' && user?.role !== 'creator') return false;
+    if (group.value === 'testing_agent' && user?.role !== 'creator') return false;
     if (group.value === 'maintenance' && user?.role !== 'creator') return false;
     if (creatorOnlyTabs.includes(group.value) && !isFullCreator) return false;
     if (isFullCreator) return true;
