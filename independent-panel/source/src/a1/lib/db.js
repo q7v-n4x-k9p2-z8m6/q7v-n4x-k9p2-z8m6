@@ -56,8 +56,8 @@ export function openDB() {
 }
 
 // نسخهٔ ۳: سری «سند تجاری» از سری معاملات اسعار جدا شد؛ دادهٔ موجود یک‌بار دوباره شماره می‌گیرد.
-const SERIES_FLAG = 'a1-doc-series-v3';
-const SAFE_VALUE_FLAG = 'a1-safe-opening-value-v2';
+const SERIES_FLAG = 'hisab_sarraf_v22-doc-series-v3';
+const SAFE_VALUE_FLAG = 'hisab_sarraf_v22-safe-opening-value-v2';
 
 // شمارهٔ سند و سطرهای دفتر آن با هم بازنویسی می‌شوند تا ارجاع‌ها یک عدد بدهند.
 async function repairDocumentSeries(db) {
