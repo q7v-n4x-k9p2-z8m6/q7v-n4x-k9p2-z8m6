@@ -7,7 +7,7 @@ This directory contains the isolated source copy for the Base44 laboratory proje
 - Source inventory: 1,295 files (1,290 UTF-8 text files, 3 native binary files, and 2 large binary files).
 - All 1,290 text files and all 3 native binary files have been restored from the Base44 source and verified byte-for-byte using Git blob SHA-1 and recorded file sizes.
 - The PNG has been reconstructed, committed under `source/reference/A1-extracted-source-temp/`, and verified against the Base44 source SHA-256 and Git blob ID. Image dimensions: 1536 × 1024.
-- The ZIP source package is intact in the Base44 source and passed `unzip -tq`; its SHA-256 matches the manifest. Its 7 Base64 parts are all present in `binary-parts/` and decode to the manifest's exact 4,008,524-byte size. The reconstructed ZIP has not yet been committed as a single Git binary blob; run `bash restore-binary-files.sh` locally to materialize and verify it.
+- The ZIP's 7 Base64 parts are all present. Their concatenated payload is valid Base64, decodes to exactly 4,008,524 bytes, and its SHA-256 exactly matches the Base44 source and manifest. Its ZIP central directory is valid and lists 866 entries. The reconstructed ZIP is not stored as one Git binary blob; run `bash restore-binary-files.sh` locally to materialize it.
 - The earlier 301 one-byte size differences were restored from the exact Base44 source. A further 4 mismatched files were identified by full comparison and restored. Final audit: 1,293 of 1,293 ordinary text/native files match their original Git blob IDs and sizes.
 
 ## Verify or restore

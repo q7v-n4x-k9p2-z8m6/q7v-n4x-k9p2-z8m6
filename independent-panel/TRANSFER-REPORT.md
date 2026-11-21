@@ -18,9 +18,11 @@
 | UTF-8 text files | 1,290 | Exact Git blob ID and byte-size match against Base44 source |
 | Native binary files | 3 | Exact Git blob ID and byte-size match against Base44 source |
 | PNG from Base64 parts | 1 | Reconstructed and committed; SHA-256 and Git blob ID match Base44 source |
-| ZIP from Base64 parts | 1 | All 7 parts present; Base64 valid; decoded size matches; original Base44 ZIP passes ZIP integrity test and SHA-256 matches manifest |
+| ZIP from Base64 parts | 1 | All 7 parts present; decoded size and SHA-256 match Base44 source; ZIP central directory validates with 866 entries |
 
 The 1,293 text/native files were checked in batches against the actual Base44 sandbox using `git hash-object` and byte sizes. No missing files or mismatches remained.
+
+The ZIP Base64 parts were concatenated and decoded in the audit environment. The resulting 4,008,524-byte payload has SHA-256 `ecc32b0da09370c398dcca54e15df5c67cff2f71c3cadd7e41d973025e0d06c4`, exactly matching the original Base44 ZIP and manifest. The ZIP end-of-central-directory record is valid, its directory bounds are consistent, and it reports 866 entries. The single ZIP binary blob could not be uploaded as one GitHub object in this session due to the connector upload payload limit; the complete lossless Base64 parts remain in the repository and the restore script materializes it locally.
 
 ## Repairs performed
 
@@ -32,7 +34,7 @@ The 1,293 text/native files were checked in batches against the actual Base44 sa
    - `src/pages/OAuthConsent.jsx`
 3. Reconstructed the PNG from all 3 Base64 parts and committed it at:
    `source/reference/A1-extracted-source-temp/file_000000002f3c81f4b97d0bd855cf9e8f.png`
-4. Kept the ZIP's 7 Base64 parts intact. The original ZIP in Base44 is 4,008,524 bytes, has SHA-256 `ecc32b0da09370c398dcca54e15df5c67cff2f71c3cadd7e41d973025e0d06c4`, and passes `unzip -tq`. The final reconstructed ZIP is to be materialized locally by the restore script; the single binary ZIP blob has not been uploaded to GitHub in this session.
+4. Verified all 7 ZIP parts by Base64 decoding, expected byte count, SHA-256, and ZIP central-directory structure.
 
 ## Verification scripts
 
