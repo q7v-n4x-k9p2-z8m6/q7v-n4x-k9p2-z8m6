@@ -6833,28 +6833,28 @@
       "source_path": "src/a1/components/v21/laptop-home.css",
       "target_path": "independent-panel/source/src/a1/components/v21/laptop-home.css",
       "size_bytes": 20551,
-      "sha256": "f5b5f85212eb1a4b8e877b58e8860dfa08f95768f3c41bf8fa15d1f0664c6f18",
+      "sha256": "74a721ad8d31c2544e497cc3faa2c2f1fedbd8c25e2248c6c9d962cc1ca6742e",
       "storage": "utf8-inline"
     },
     {
       "source_path": "src/a1/components/v21/LaptopHome.jsx",
       "target_path": "independent-panel/source/src/a1/components/v21/LaptopHome.jsx",
       "size_bytes": 8445,
-      "sha256": "9626bfb0c6e590a8cebb00a31a32b69cf44e6c739d371a4352e3f57afc2fdf3b",
+      "sha256": "cdb1fe52994ba9afec64788e531a4b3ec469befb9599625e87f10c7974d7c2e3",
       "storage": "utf8-inline"
     },
     {
       "source_path": "src/a1/components/v21/laptopHomeConfig.js",
       "target_path": "independent-panel/source/src/a1/components/v21/laptopHomeConfig.js",
       "size_bytes": 6982,
-      "sha256": "e9839c39c912172cc3f5aba858b7c3aeac9736de433025d549d5c46375c8a5aa",
+      "sha256": "cdee8f906eb4398675f070ea975578f1889d9d3f70bd809dbfcedafe67bbdfeb",
       "storage": "utf8-inline"
     },
     {
       "source_path": "src/a1/components/v21/LaptopTopChrome.jsx",
       "target_path": "independent-panel/source/src/a1/components/v21/LaptopTopChrome.jsx",
       "size_bytes": 8068,
-      "sha256": "8035a7dbf9156e6b8b3d0ac813faa156ba9ff8365dcf0bbf90edede056d41300",
+      "sha256": "a60fd7165f98b52f55dee5d2ba45808ee2ea9ecec9a5796e0c8e79e1de3d9b7b",
       "storage": "utf8-inline"
     },
     {
@@ -6875,14 +6875,14 @@
       "source_path": "src/a1/components/v21/legacy-laptop-reference.css",
       "target_path": "independent-panel/source/src/a1/components/v21/legacy-laptop-reference.css",
       "size_bytes": 48023,
-      "sha256": "3b5f27bf6353b0194d1500d43c8958086438f3b59027015862c89a2f603af63c",
+      "sha256": "5878adc239d49a6a4a2a02c2db604b5b0cb77d49a1131d223c1419c4ac43a492",
       "storage": "utf8-inline"
     },
     {
       "source_path": "src/a1/components/v21/legacy-responsive-layout.css",
       "target_path": "independent-panel/source/src/a1/components/v21/legacy-responsive-layout.css",
       "size_bytes": 123512,
-      "sha256": "1a28baa850bdd8efac13df1eb5f3056c00dde01cc0438184585c176c69330db6",
+      "sha256": "0ee1ace006b55f263c32a9c18dc4b972f6857231b62a632d52176efc5e9f16b5",
       "storage": "utf8-inline"
     },
     {
@@ -7449,7 +7449,7 @@
       "source_path": "src/a1/pages/A1Workspace.jsx",
       "target_path": "independent-panel/source/src/a1/pages/A1Workspace.jsx",
       "size_bytes": 171680,
-      "sha256": "b4a7f8c78331d37a50e678b6058325b8a07998c7ef42b55ff1cabc3b69dbd43c",
+      "sha256": "8116d0503bbb7856480351649b3fbdf781d35e1a7b5ef4de69f3ac5d6e1eb915",
       "storage": "utf8-inline"
     },
     {
