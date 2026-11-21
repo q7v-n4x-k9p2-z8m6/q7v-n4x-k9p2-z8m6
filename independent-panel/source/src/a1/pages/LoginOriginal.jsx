@@ -217,7 +217,7 @@ export default function LoginOriginal() {
         full_name: result.user.full_name || result.user.username,
         role: 'sarraaf',
         status: result.user.status,
-        exchange_code: result.exchange?.exchange_code || `SANDBOX-${result.user.id}`,
+        exchange_code: 'DEMO-EX',
         is_sandbox_session: true,
       };
       signInSandbox(session, result.token);
