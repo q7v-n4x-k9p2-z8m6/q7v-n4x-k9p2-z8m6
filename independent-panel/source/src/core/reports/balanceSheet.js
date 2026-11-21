@@ -49,8 +49,6 @@ export function buildBalanceSheet(rawLines = [], policy = null) {
       : classOf(code);
     if (!cls || cls === 'unknown') { unmatched.push(code); return; }
     // مانده با جهت طبیعی هر طبقه نمایش داده می‌شود: دارایی و مصرف بدهکار، بدهی و سرمایه و درآمد بستانکار
-    if (!cls || cls === 'unknown') { unmatched.push(code); return; }
-    // مانده با جهت طبیعی هر طبقه نمایش داده می‌شود: دارایی و مصرف بدهکار، بدهی و سرمایه و درآمد بستانکار
     const value = ['asset', 'expense'].includes(cls) ? round2(balance) : round2(-balance);
     const bucket = SECTION_OF_CLASS[cls];
     if (!bucket) { unmatched.push(code); return; }
