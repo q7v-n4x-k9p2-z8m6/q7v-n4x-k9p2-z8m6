@@ -25,11 +25,11 @@
     "existing_destination_readme_preserved": true
   },
   "summary": {
-    "source_files": 1301,
-    "text_files": 1296,
+    "source_files": 1303,
+    "text_files": 1298,
     "native_binary_files": 3,
     "chunked_binary_files": 2,
-    "total_bytes": 17592657
+    "total_bytes": 17763078
   },
   "files": [
     {
@@ -6832,29 +6832,29 @@
     {
       "source_path": "src/a1/components/v21/laptop-home.css",
       "target_path": "independent-panel/source/src/a1/components/v21/laptop-home.css",
-      "size_bytes": 20214,
-      "sha256": "b0dbb91a22a559298bfbf5a4a724f0978a36578eb0e45e2fd0d4e2528fc8554b",
+      "size_bytes": 20551,
+      "sha256": "f5b5f85212eb1a4b8e877b58e8860dfa08f95768f3c41bf8fa15d1f0664c6f18",
       "storage": "utf8-inline"
     },
     {
       "source_path": "src/a1/components/v21/LaptopHome.jsx",
       "target_path": "independent-panel/source/src/a1/components/v21/LaptopHome.jsx",
-      "size_bytes": 9213,
-      "sha256": "90ec04746e571c2fed6f557af3b4f6c3f25f7f0a3dce96a47bcb2628f66b1e84",
+      "size_bytes": 8445,
+      "sha256": "9626bfb0c6e590a8cebb00a31a32b69cf44e6c739d371a4352e3f57afc2fdf3b",
       "storage": "utf8-inline"
     },
     {
       "source_path": "src/a1/components/v21/laptopHomeConfig.js",
       "target_path": "independent-panel/source/src/a1/components/v21/laptopHomeConfig.js",
-      "size_bytes": 7743,
-      "sha256": "c123342456843f3e6b5b287b768df22d5176d71996d508c2b474c4248c0b0e85",
+      "size_bytes": 6982,
+      "sha256": "e9839c39c912172cc3f5aba858b7c3aeac9736de433025d549d5c46375c8a5aa",
       "storage": "utf8-inline"
     },
     {
       "source_path": "src/a1/components/v21/LaptopTopChrome.jsx",
       "target_path": "independent-panel/source/src/a1/components/v21/LaptopTopChrome.jsx",
-      "size_bytes": 7924,
-      "sha256": "f0aaea2131600f302847d44a1c72365bed82ea6716f62fc1da09d486cf50fb59",
+      "size_bytes": 8068,
+      "sha256": "8035a7dbf9156e6b8b3d0ac813faa156ba9ff8365dcf0bbf90edede056d41300",
       "storage": "utf8-inline"
     },
     {
@@ -6869,6 +6869,20 @@
       "target_path": "independent-panel/source/src/a1/components/v21/LedgerSummaryDock.jsx",
       "size_bytes": 5858,
       "sha256": "d479b127f4d91efd47606ef81203aea1a009dabd8d4ed4cf73049fd4d72977b9",
+      "storage": "utf8-inline"
+    },
+    {
+      "source_path": "src/a1/components/v21/legacy-laptop-reference.css",
+      "target_path": "independent-panel/source/src/a1/components/v21/legacy-laptop-reference.css",
+      "size_bytes": 48023,
+      "sha256": "3b5f27bf6353b0194d1500d43c8958086438f3b59027015862c89a2f603af63c",
+      "storage": "utf8-inline"
+    },
+    {
+      "source_path": "src/a1/components/v21/legacy-responsive-layout.css",
+      "target_path": "independent-panel/source/src/a1/components/v21/legacy-responsive-layout.css",
+      "size_bytes": 123512,
+      "sha256": "1a28baa850bdd8efac13df1eb5f3056c00dde01cc0438184585c176c69330db6",
       "storage": "utf8-inline"
     },
     {
@@ -7434,8 +7448,8 @@
     {
       "source_path": "src/a1/pages/A1Workspace.jsx",
       "target_path": "independent-panel/source/src/a1/pages/A1Workspace.jsx",
-      "size_bytes": 171746,
-      "sha256": "7e8699cab7c9d2c12e21e7d87f56afc4dd63bc4142440132b0f6afe61f616256",
+      "size_bytes": 171680,
+      "sha256": "b4a7f8c78331d37a50e678b6058325b8a07998c7ef42b55ff1cabc3b69dbd43c",
       "storage": "utf8-inline"
     },
     {
