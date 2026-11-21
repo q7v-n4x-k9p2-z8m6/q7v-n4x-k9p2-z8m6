@@ -255,7 +255,7 @@ export default function BalanceSheetPanel({ data }) {
 
         {excluded.length ? (
           <p className="mt-1 text-[9px] leading-5 text-muted-foreground">
-            در مبنای فعلی، مانده‌های {excluded.join('، ')} در این مبنا کنار گذاشته شده‌اند. برای دیدن همهٔ ارزها «ارزیابی به نرخ روز» را انتخاب کنید.
+            در مبنای فعلی، مانده‌های {excluded.join('، ')} در این مبنا کنار گذاشته شده‌اند. برای تسعیر، نرخ حسابداری معتبر برای همهٔ ارزها لازم است.
           </p>
         ) : null}
 
