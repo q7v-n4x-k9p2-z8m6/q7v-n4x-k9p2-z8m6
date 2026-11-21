@@ -7,7 +7,9 @@
     "dev": "vite --host 0.0.0.0",
     "build": "vite build",
     "preview": "vite preview --host 0.0.0.0",
-    "check": "vite build"
+    "check": "vite build",
+    "predev": "node scripts/generate-testing-inventory.js",
+    "prebuild": "node scripts/generate-testing-inventory.js"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
