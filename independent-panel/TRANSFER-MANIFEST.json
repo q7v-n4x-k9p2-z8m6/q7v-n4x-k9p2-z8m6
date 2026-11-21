@@ -29,7 +29,7 @@
     "text_files": 1299,
     "native_binary_files": 3,
     "chunked_binary_files": 2,
-    "total_bytes": 17768828
+    "total_bytes": 17769115
   },
   "files": [
     {
@@ -8589,8 +8589,8 @@
     {
       "source_path": "src/core/transfer/readiness.js",
       "target_path": "independent-panel/source/src/core/transfer/readiness.js",
-      "size_bytes": 40084,
-      "sha256": "da9f8c5b346c3070160f8a21093a8c79563d4346f1afe3ff9e5a3ab87d3be026",
+      "size_bytes": 40371,
+      "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
       "storage": "utf8-inline"
     },
     {
