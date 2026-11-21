@@ -74,6 +74,8 @@ function App() {
                   <Route element={<A1Layout />}>
                     <Route path="/v21" element={<Navigate to="/dashboard" replace />} />
                     <Route path="/dashboard" element={<A1Workspace />} />
+                    {/* مسیر مستقل جدید صرافان؛ میز کار نسخه ۲۱ با همان پوسته و گیت نقش */}
+                    <Route path="/exchanger" element={<A1Workspace />} />
                     <Route path="/cash" element={<A1Cash />} />
                     <Route path="/customers" element={<Customers />} />
                     <Route path="/customers/:id" element={<CustomerDetail />} />
