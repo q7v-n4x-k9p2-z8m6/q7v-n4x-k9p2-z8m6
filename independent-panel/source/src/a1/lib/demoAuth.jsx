@@ -12,9 +12,13 @@ export const DemoAuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [isLoadingAuth, setIsLoadingAuth] = useState(true);
   const [seedError, setSeedError] = useState('');
+  const authRevisionRef = React.useRef(0);
 
   useEffect(() => {
     let active = true;
+    const authRevision = authRevisionRef.current;
+
+    // آماده‌سازی داده‌های محلی در پس‌زمینه انجام می‌شود و نباید ورود/مسیر پنل را متوقف کند.
     (async () => {
       try {
         await seedIfEmpty();
@@ -22,6 +26,11 @@ export const DemoAuthProvider = ({ children }) => {
       } catch (error) {
         if (active) setSeedError(error?.message || 'بارگذاری دادهٔ آزمایشی ناموفق بود.');
       }
+    })();
+
+    // ابتدا فقط نشست را بازیابی و اعتبارسنجی می‌کنیم؛ آماده‌سازی داده‌های نمایشی مستقل است.
+    (async () => {
+      const revisionAtStart = authRevision;
       try {
         const raw = localStorage.getItem(SESSION_KEY);
         if (raw && active) {
@@ -33,6 +42,7 @@ export const DemoAuthProvider = ({ children }) => {
             } else {
               try {
                 const verified = await sandboxVerify(token);
+                if (authRevisionRef.current !== revisionAtStart) return;
                 if (verified.user?.username !== '33333333' || verified.user?.role !== 'sarraaf' || verified.user?.status !== 'active') {
                   session = null;
                 } else {
@@ -42,11 +52,12 @@ export const DemoAuthProvider = ({ children }) => {
                     full_name: verified.user.full_name || session.full_name,
                     role: 'sarraaf',
                     status: 'active',
-                    exchange_code: verified.exchange?.exchange_code || session.exchange_code,
+                    // نشست پیش‌نمایش عمداً به داده‌های محلی DEMO-EX متصل است؛
+                    // کد صرافی واقعی فقط در سمت سرور برای احراز هویت بررسی می‌شود.
+                    exchange_code: 'DEMO-EX',
                   };
                 }
               } catch (verifyError) {
-                // هنگام قطعی شبکه، نشست محلیِ همین پیش‌نمایش حفظ می‌شود؛ پاسخ رد/انقضا نشست را پاک می‌کند.
                 if (verifyError?.code !== 'network_error') session = null;
               }
             }
@@ -57,7 +68,6 @@ export const DemoAuthProvider = ({ children }) => {
               localStorage.setItem(SESSION_KEY, JSON.stringify(session));
             }
           } else {
-            // نشست‌های قدیمی مشتری فاقد اتصال پرونده بودند؛ اتصال از حساب نمایشی تکمیل می‌شود.
             const account = DEMO_ACCOUNTS.find(item => item.username === session?.username);
             if (session?.role === 'customer' && account?.customer_mobile) {
               session = {
@@ -68,16 +78,20 @@ export const DemoAuthProvider = ({ children }) => {
               localStorage.setItem(SESSION_KEY, JSON.stringify(session));
             }
           }
-          if (session) setUser(session);
+          if (active && authRevisionRef.current === revisionAtStart && session) setUser(session);
         }
       } catch { /* نشست محلی نامعتبر است */ }
-      if (active) setIsLoadingAuth(false);
+      finally {
+        if (active && authRevisionRef.current === revisionAtStart) setIsLoadingAuth(false);
+      }
     })();
+
     return () => { active = false; };
   }, []);
 
   const signIn = useCallback((account) => {
     try { localStorage.removeItem(SANDBOX_TOKEN_KEY); } catch { /* storage optional */ }
+    authRevisionRef.current += 1;
     const session = {
       id: account.username,
       username: account.username,
@@ -94,6 +108,7 @@ export const DemoAuthProvider = ({ children }) => {
   }, []);
 
   const signInSandbox = useCallback((session, token) => {
+    authRevisionRef.current += 1;
     try {
       localStorage.setItem(SANDBOX_TOKEN_KEY, token);
       localStorage.setItem(SESSION_KEY, JSON.stringify(session));
@@ -105,6 +120,7 @@ export const DemoAuthProvider = ({ children }) => {
   }, []);
 
   const logout = useCallback((shouldRedirect = true) => {
+    authRevisionRef.current += 1;
     try { localStorage.removeItem(SESSION_KEY); localStorage.removeItem(SANDBOX_TOKEN_KEY); } catch { /* storage optional */ }
     setUser(null);
     if (shouldRedirect) window.location.replace('/login');
