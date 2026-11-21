@@ -8576,14 +8576,14 @@
       "source_path": "src/core/transfer/authMigration.js",
       "target_path": "independent-panel/source/src/core/transfer/authMigration.js",
       "size_bytes": 3701,
-      "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+      "sha256": "b2b984b6129cb7bd843bffe85e2bea4d06f79040d05fd4cf0749ce67237a27b6",
       "storage": "utf8-inline"
     },
     {
       "source_path": "src/core/transfer/authMigration.test.js",
       "target_path": "independent-panel/source/src/core/transfer/authMigration.test.js",
       "size_bytes": 1561,
-      "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+      "sha256": "ab4ca56d8ca0746cfd2aaef7f0250b1b4b643e4dd8196f4a7475a0ada0b69744",
       "storage": "utf8-inline"
     },
     {
