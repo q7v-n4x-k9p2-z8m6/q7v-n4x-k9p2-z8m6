@@ -104,6 +104,7 @@ export const DemoAuthProvider = ({ children }) => {
     };
     try { localStorage.setItem(SESSION_KEY, JSON.stringify(session)); } catch { /* storage optional */ }
     setUser(session);
+    setIsLoadingAuth(false);
     return session;
   }, []);
 
@@ -116,6 +117,7 @@ export const DemoAuthProvider = ({ children }) => {
       throw new Error('ذخیرهٔ نشست ورود در این مرورگر ممکن نشد.');
     }
     setUser(session);
+    setIsLoadingAuth(false);
     return session;
   }, []);
 
