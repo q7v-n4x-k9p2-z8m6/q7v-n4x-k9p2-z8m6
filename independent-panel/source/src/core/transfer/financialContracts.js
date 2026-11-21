@@ -51,7 +51,7 @@ export function checkTrialBalance() {
   expect('گردش دفتر متوازن است', two.turnover.ledgerBalanced === true);
 
   const four = buildTrialBalance(FINANCIAL_FIXTURE, { columns: 'four', level: 'group', currency: 'base', baseCurrency: 'AFN', rates: TARIFF, closing: 'close' });
-  expect('چهارستونی با بستن موقت: ۴ ردیف (۳ گروه + سود دوره)', four.status === 'ready' && four.rows.length === 4, four.rows.length + ' ردیف');
+  expect('چهارستونی با بستن موقت: ۶ ردیف (۵ گروه + سود دوره)', four.status === 'ready' && four.rows.length === 6, four.rows.length + ' ردیف');
   expect('چهارستونی: سود دوره ۲۰٬۰۰۰', same(four.profit, 20000), String(four.profit));
   expect('چهارستونی: تراز پس از بستن', four.totals.balanced === true);
 
