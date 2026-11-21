@@ -531,7 +531,6 @@ export default function Version21Workspace(){
   {key:'exchange-ops',title:'عملیات صرافی',items:[
    ['خرید و فروش اسعار',ArrowLeftRight,()=>openNew('exchange')],
    ['مصارف و پرداخت‌ها',CreditCard,()=>goModule('expenses')],
-   ['معاملات',ArrowLeftRight,()=>navigate('/transactions')]
   ]},
   {key:'accounting-reports',title:'حسابداری و گزارشات',items:[
    ['دفتر روزنامچه',ScrollText,()=>goModule('journal')],
