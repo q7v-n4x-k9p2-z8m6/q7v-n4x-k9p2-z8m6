@@ -24,7 +24,7 @@ export const AUTH_ENFORCEMENT_POINTS = [
 
 export const ROLE_MIGRATION = [
   {
-    local: 'creator', level: 100, platformRole: 'admin', sarraafLevel: 'owner',
+    local: 'creator', level: 100, platformRole: 'creator', sarraafLevel: 'owner',
     target: 'V22 users.role = creator با سطح مالک صرافی',
     notes: 'دسترسی کامل؛ مدیریت کاربران و تنظیمات سطح بالا.',
   },
@@ -34,17 +34,17 @@ export const ROLE_MIGRATION = [
     notes: 'همان سطح مدیر صرافی؛ دسترسی کامل به داده و کاربران.',
   },
   {
-    local: 'sarraaf', level: 50, platformRole: 'user', sarraafLevel: 'owner',
+    local: 'sarraaf', level: 50, platformRole: 'sarraaf', sarraafLevel: 'owner',
     target: 'V22 users.role = sarraaf با سطح مالک صرافی',
     notes: 'نقش صراف؛ نقش پلتفرم تغییر نمی‌کند و تخصص با فیلد جدا نگه داشته می‌شود.',
   },
   {
-    local: 'employee', level: 30, platformRole: 'user', sarraafLevel: 'staff',
+    local: 'employee', level: 30, platformRole: 'employee', sarraafLevel: 'staff',
     target: 'V22 users.role = employee با مجوزهای user_permissions',
     notes: 'دسترسی بخش‌ها از جدول مجوز کارمند می‌آید، نه از نقش پلتفرم.',
   },
   {
-    local: 'customer', level: 10, platformRole: 'user', sarraafLevel: 'customer',
+    local: 'customer', level: 10, platformRole: 'customer', sarraafLevel: 'customer',
     target: 'V22 users.role = customer با پوستهٔ محدود مشتری',
     notes: 'فقط پوستهٔ مشتری؛ هیچ مسیر پنل صراف باز نیست.',
   },
