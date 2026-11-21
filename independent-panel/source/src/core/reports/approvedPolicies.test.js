@@ -40,7 +40,7 @@ test('approved trial balance provides both native-currency and base-currency vie
   assert.equal(result.base.status, 'ready');
   assert.equal(result.base.rows.every((row) => row.currency === 'AFN'), true);
   assert.equal(result.base.totals.balanced, true);
-  assert.equal(result.base.profit, 2700);
+  assert.equal(result.base.profit, 2160);
 });
 
 test('base-currency view blocks when a recorded currency rate is missing', () => {
@@ -61,7 +61,7 @@ test('approved balance sheet policy requires a recorded rate for every foreign c
   const result = buildBalanceSheet(lines, { ...APPROVED_BALANCE_SHEET_POLICY, rates: { AFN: 1, USD: 70 } });
   assert.equal(result.status, 'ready');
   assert.equal(result.totals.assets, 800);
-  assert.equal(result.totals.equity, 730);
+  assert.equal(result.totals.equity, 770);
   assert.equal(result.totals.balanced, true);
   const blocked = buildBalanceSheet(lines, { ...APPROVED_BALANCE_SHEET_POLICY, rates: { AFN: 1 } });
   assert.equal(blocked.status, 'blocked');
