@@ -2,7 +2,7 @@ import { supabase } from '@/lib/supabaseClient';
 import { getExchangeCode } from '@/lib/supabaseApi';
 import { loadDemoPreviewRecords } from './Version21DemoAdapter';
 import { resolveSessionUserId } from './Version21DemoRules';
-import { isChartAccountLedgerLine } from './Version21AccountingRules';
+import { isChartAccountLedgerLine, isBranchLedgerLine } from './Version21AccountingRules';
 
 const num = value => Number(value ?? 0) || 0;
 const dateOnly = value => value ? String(value).slice(0, 10) : '';
@@ -350,7 +350,7 @@ export async function loadVersion21Database() {
     const accountType = String(row.account_type || '').toLowerCase();
     const isCustomer = accountType === 'customer';
     const isCash = accountType === 'cash';
-    const isBranch = !isCash && (linkedDocument?.related_type === 'branch' || accountType === 'origin' || accountType === 'branch');
+    const isBranch = isBranchLedgerLine(accountType, linkedDocument?.related_type);
     const currency = row.currency || linkedDocument?.currency || 'AFN';
     const debit = num(row.debit);
     const credit = num(row.credit);
@@ -367,7 +367,7 @@ export async function loadVersion21Database() {
       created_at: row.created_at,
       type: documentTypeLabel(linkedDocument?.doc_type || row.type || accountType, linkedDocument?.description || row.description),
       party: (linkedDocument?.related_name && linkedDocument.related_type === 'branch' ? linkedDocument.related_name : row.account_name) || linkedDocument?.related_name || '',
-      partyType: isCustomer ? 'customer' : (linkedDocument?.related_type === 'branch' || accountType === 'origin' || accountType === 'branch' ? 'branch' : 'other'),
+      partyType: isCustomer ? 'customer' : isBranch ? 'branch' : 'other',
       currency,
       amount,
       cash: isCash ? (safe?.name || row.account_name || 'صندوق') : '',
