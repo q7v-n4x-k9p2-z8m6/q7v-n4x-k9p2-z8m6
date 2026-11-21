@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { FlaskConical, ShieldCheck, ClipboardList, AlertTriangle, Bot, Send, Clock3, CheckCircle2, LockKeyhole, MonitorPlay } from 'lucide-react';
+import { FlaskConical, ShieldCheck, ClipboardList, AlertTriangle, Bot, Send, Clock3, CheckCircle2, MonitorPlay } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent } from '@/components/ui/card';
