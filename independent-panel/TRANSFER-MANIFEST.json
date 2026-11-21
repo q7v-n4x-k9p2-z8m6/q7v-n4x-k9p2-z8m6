@@ -29,7 +29,7 @@
     "text_files": 1299,
     "native_binary_files": 3,
     "chunked_binary_files": 2,
-    "total_bytes": 17769115
+    "total_bytes": 17769403
   },
   "files": [
     {
@@ -8505,15 +8505,15 @@
     {
       "source_path": "src/core/reports/approvedPolicies.js",
       "target_path": "independent-panel/source/src/core/reports/approvedPolicies.js",
-      "size_bytes": 1740,
-      "sha256": "9cce0829cb277f2011c43901c50e82999f2f4865c5802ccfb124747fc59b89d3",
+      "size_bytes": 1913,
+      "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
       "storage": "utf8-inline"
     },
     {
       "source_path": "src/core/reports/approvedPolicies.test.js",
       "target_path": "independent-panel/source/src/core/reports/approvedPolicies.test.js",
-      "size_bytes": 4478,
-      "sha256": "e85c0f41dc4db227824db87a32675251f9d46f2520d7ed7560acb41cf3d57530",
+      "size_bytes": 4593,
+      "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
       "storage": "utf8-inline"
     },
     {
