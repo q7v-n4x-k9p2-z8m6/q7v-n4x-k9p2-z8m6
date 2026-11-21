@@ -21,6 +21,6 @@ test('tenant isolation and staff permissions are enforced on the server', () => 
 
 test('all five application roles have an explicit V22 mapping and no auth decisions remain open', () => {
   assert.deepEqual(ROLE_MIGRATION.map((row) => row.local), ['creator', 'admin', 'sarraaf', 'employee', 'customer']);
-  assert.ok(ROLE_MIGRATION.every((row) => row.target.startsWith('V22 users.role')));
+  assert.ok(ROLE_MIGRATION.every((row) => row.target.startsWith('V22 users.role') && row.platformRole === row.local));
   assert.deepEqual(AUTH_OPEN_DECISIONS, []);
 });
