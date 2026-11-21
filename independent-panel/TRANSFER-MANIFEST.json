@@ -729,7 +729,7 @@
       "source_path": "package.json",
       "target_path": "independent-panel/source/package.json",
       "size_bytes": 3551,
-      "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+      "sha256": "45a06a9daf936609b0df245d4d4ab90e621c4d8692938e397c1d5a1fb1d497b6",
       "storage": "utf8-inline"
     },
     {
@@ -7883,7 +7883,7 @@
       "source_path": "src/components/sections/BalanceSheetPanel.jsx",
       "target_path": "independent-panel/source/src/components/sections/BalanceSheetPanel.jsx",
       "size_bytes": 13148,
-      "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+      "sha256": "7a7b9306437f15b66950d0f0f9c09578bac7bb5c7b9e0141b969f2e979f82190",
       "storage": "utf8-inline"
     },
     {
@@ -8506,14 +8506,14 @@
       "source_path": "src/core/reports/approvedPolicies.js",
       "target_path": "independent-panel/source/src/core/reports/approvedPolicies.js",
       "size_bytes": 838,
-      "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+      "sha256": "ca12b9d84ed47e32de5c15f3a3f27a5c6550df04b0ea109f3659ccd6ee801860",
       "storage": "utf8-inline"
     },
     {
       "source_path": "src/core/reports/approvedPolicies.test.js",
       "target_path": "independent-panel/source/src/core/reports/approvedPolicies.test.js",
       "size_bytes": 3937,
-      "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+      "sha256": "6b33cf7722e1822deecce06704914b3398989e0731dec97d4a5e714f940fe681",
       "storage": "utf8-inline"
     },
     {
@@ -8541,7 +8541,7 @@
       "source_path": "src/core/reports/trialBalance.js",
       "target_path": "independent-panel/source/src/core/reports/trialBalance.js",
       "size_bytes": 5774,
-      "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+      "sha256": "cda64adc92d8b86ec4927054812f584201915b2d8ace81baf67b74b561a67438",
       "storage": "utf8-inline"
     },
     {
@@ -8597,7 +8597,7 @@
       "source_path": "src/core/transfer/ruleContracts.js",
       "target_path": "independent-panel/source/src/core/transfer/ruleContracts.js",
       "size_bytes": 5636,
-      "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+      "sha256": "95731e22e092d97e83c81f0be5c73f581423d32d5798604a2d5437d5d136767b",
       "storage": "utf8-inline"
     },
     {
