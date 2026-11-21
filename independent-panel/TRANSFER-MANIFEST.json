@@ -29,7 +29,7 @@
     "text_files": 1299,
     "native_binary_files": 3,
     "chunked_binary_files": 2,
-    "total_bytes": 17778527
+    "total_bytes": 17778526
   },
   "files": [
     {
@@ -7882,7 +7882,7 @@
     {
       "source_path": "src/components/sections/BalanceSheetPanel.jsx",
       "target_path": "independent-panel/source/src/components/sections/BalanceSheetPanel.jsx",
-      "size_bytes": 17840,
+      "size_bytes": 17839,
       "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
       "storage": "utf8-inline"
     },
