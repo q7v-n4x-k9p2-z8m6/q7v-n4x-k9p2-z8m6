@@ -56,6 +56,7 @@ const Register = lazyWithRetry(() => import('@/pages/Register'));
 const ForgotPassword = lazyWithRetry(() => import('@/pages/ForgotPassword'));
 const ResetPassword = lazyWithRetry(() => import('@/pages/ResetPassword'));
 const Version21Home = lazyWithRetry(() => import('@/components/sarraaf/Version21Home'));
+const TransactionsCenter = lazyWithRetry(() => import('@/pages/TransactionsCenter'));
 
 // The PDF-based Version 21 workspace is the single dashboard surface.
 // Module selection is handled inside Version21Workspace from the URL query;
@@ -258,6 +259,7 @@ const AppRoutes = () => {
             <Route path="/bank" element={<FeatureGate featureKey="bank"><Bank /></FeatureGate>} />
             <Route path="/currencies" element={<FeatureGate featureKey="currencies"><Currencies /></FeatureGate>} />
             <Route path="/reports" element={<FeatureGate featureKey="reports"><Reports /></FeatureGate>} />
+            <Route path="/transactions" element={<FeatureGate featureKey="accounts_receivable"><TransactionsCenter /></FeatureGate>} />
             <Route path="/profit-loss" element={<FeatureGate featureKey="profit_loss"><ProfitLoss /></FeatureGate>} />
             <Route path="/settings" element={<FeatureGate featureKey="settings"><Settings /></FeatureGate>} />
             <Route path="/transfer-book" element={<FeatureGate featureKey="transfer_book"><TransferBook /></FeatureGate>} />
