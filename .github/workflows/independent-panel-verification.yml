@@ -48,6 +48,10 @@ jobs:
         working-directory: independent-panel/source
         run: npm ci --no-audit --no-fund
 
+      - name: Run isolated financial guard tests
+        working-directory: independent-panel/source
+        run: npm run test:unit
+
       - name: Build independent-panel source
         working-directory: independent-panel/source
         run: npm run build
