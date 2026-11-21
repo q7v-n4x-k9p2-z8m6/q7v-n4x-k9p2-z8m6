@@ -25,11 +25,11 @@
     "existing_destination_readme_preserved": true
   },
   "summary": {
-    "source_files": 1302,
-    "text_files": 1297,
+    "source_files": 1304,
+    "text_files": 1299,
     "native_binary_files": 3,
     "chunked_binary_files": 2,
-    "total_bytes": 17760867
+    "total_bytes": 17767702
   },
   "files": [
     {
@@ -728,8 +728,8 @@
     {
       "source_path": "package.json",
       "target_path": "independent-panel/source/package.json",
-      "size_bytes": 3509,
-      "sha256": "fdac78ab21f8c2fda2866fbf10d426e35aaad76e4c32e60eb44e88bbc90101dc",
+      "size_bytes": 3551,
+      "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
       "storage": "utf8-inline"
     },
     {
@@ -7882,8 +7882,8 @@
     {
       "source_path": "src/components/sections/BalanceSheetPanel.jsx",
       "target_path": "independent-panel/source/src/components/sections/BalanceSheetPanel.jsx",
-      "size_bytes": 13125,
-      "sha256": "5df9b1644fd7b92c0e1afb78ddcb2ba43a7aa7672ce7fb334ffa136dc056b2e4",
+      "size_bytes": 13148,
+      "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
       "storage": "utf8-inline"
     },
     {
@@ -8503,6 +8503,20 @@
       "storage": "utf8-inline"
     },
     {
+      "source_path": "src/core/reports/approvedPolicies.js",
+      "target_path": "independent-panel/source/src/core/reports/approvedPolicies.js",
+      "size_bytes": 838,
+      "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+      "storage": "utf8-inline"
+    },
+    {
+      "source_path": "src/core/reports/approvedPolicies.test.js",
+      "target_path": "independent-panel/source/src/core/reports/approvedPolicies.test.js",
+      "size_bytes": 3937,
+      "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+      "storage": "utf8-inline"
+    },
+    {
       "source_path": "src/core/reports/balanceSheet.js",
       "target_path": "independent-panel/source/src/core/reports/balanceSheet.js",
       "size_bytes": 4095,
@@ -8526,8 +8540,8 @@
     {
       "source_path": "src/core/reports/trialBalance.js",
       "target_path": "independent-panel/source/src/core/reports/trialBalance.js",
-      "size_bytes": 4032,
-      "sha256": "2f54c6bb28b1e3922fc15dc3112af708f47c951c3c64ba8e01845d1c06a69568",
+      "size_bytes": 5774,
+      "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
       "storage": "utf8-inline"
     },
     {
@@ -8582,8 +8596,8 @@
     {
       "source_path": "src/core/transfer/ruleContracts.js",
       "target_path": "independent-panel/source/src/core/transfer/ruleContracts.js",
-      "size_bytes": 5383,
-      "sha256": "10027166bbf2dcdf1f7aecfdac862be755ca047ebfcf77daac0ce9e0431805ed",
+      "size_bytes": 5636,
+      "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
       "storage": "utf8-inline"
     },
     {
