@@ -19,7 +19,7 @@ import { loginWithProvider, handleGoogleCallback } from '@/lib/googleAuth';
 import { getMaintenanceStatus, getUserLoginRestrictionStatus } from '@/lib/maintenance';
 import { supabase } from '@/lib/supabaseClient';
 import { syncDefaultPasswordAlert } from '@/lib/passwordAlert';
-import { authenticateSandboxCredentials } from '@/components/sarraaf/Version21SandboxAuth';
+import { authenticateSandboxCredentials, readSandboxSession } from '@/components/sarraaf/Version21SandboxAuth';
 
 const LOGIN_TIMEOUT = 12000;
 const MIGRATION_TIMEOUT = 8000;
@@ -326,7 +326,20 @@ export default function Login() {
   }, [identifier]);
 
   useEffect(() => {
-    if (isLoadingAuth || !isAuthenticated || !user || !maintenanceStatusLoaded) return;
+    if (isLoadingAuth || !maintenanceStatusLoaded) return;
+
+    // حساب آزمایشی 33333333 باید همیشه به پنل جدید آزمایشگاهی برود؛
+    // نشست عمومی صراف نباید آن را به داشبورد قدیمی هدایت کند.
+    const sandboxSession = readSandboxSession();
+    const normalizedIdentifier = String(identifier || '').trim()
+      .replace(/[۰-۹]/g, digit => String(digit.charCodeAt(0) - 1776))
+      .replace(/[٠-٩]/g, digit => String(digit.charCodeAt(0) - 1632));
+    if (sandboxSession?.username === '33333333' || normalizedIdentifier === '33333333') {
+      navigate('/lab/sarraf', { replace: true });
+      return;
+    }
+
+    if (!isAuthenticated || !user) return;
     if (user.role === 'creator') {
       navigate('/builder', { replace: true });
       return;
@@ -340,7 +353,7 @@ export default function Login() {
       return;
     }
     window.location.replace(HOME_BY_ROLE[user.role] || '/');
-  }, [isAuthenticated, user, isLoadingAuth, maintenanceStatusLoaded, maintenanceInfo, navigate]);
+  }, [identifier, isAuthenticated, user, isLoadingAuth, maintenanceStatusLoaded, maintenanceInfo, navigate]);
 
   const handleLogin = async (e) => {
     e.preventDefault();
