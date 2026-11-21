@@ -174,6 +174,7 @@ async function writeAudit(ctx, action, entityType, entityId, description, oldVal
 }
 
 const tenantRows = async (table, ctx) => (await all(table)).filter(row => !row.exchange_code || row.exchange_code === ctx.exchangeCode);
+const belongsToActiveExchange = (row, ctx) => Boolean(row && (!row.exchange_code || String(row.exchange_code) === String(ctx.exchangeCode)));
 
 async function getSafe(ctx, name, currency) {
   const row = (await tenantRows('safes', ctx)).find(item => item.name === name && item.currency === currency);
@@ -954,6 +955,7 @@ export async function editVersion21Record(module, draft) {
         currency,
         user: ctx.userName,
         note: 'ویرایش مصرف',
+        exchangeCode: ctx.exchangeCode,
       });
       await auditInTx(handles, ctx, 'update', 'expense', draft.id, 'ویرایش مصرف و جایگزینی سطرهای دفتر کل', null, draft);
       return { id: String(draft.id), documentId: Number(draft.id) };
@@ -982,6 +984,7 @@ export async function editVersion21Record(module, draft) {
         currency,
         user: ctx.userName,
         note: 'ویرایش سند روزنامچه',
+        exchangeCode: ctx.exchangeCode,
       });
       await auditInTx(handles, ctx, 'update', 'journal', draft.id, 'ویرایش سند روزنامچه و جایگزینی سطرها', null, draft);
       return { id: String(draft.id), documentId: Number(draft.id) };
@@ -989,10 +992,10 @@ export async function editVersion21Record(module, draft) {
   }
 
   if (module === 'exchange') {
-    const conversion = (await all('conversions')).find(row => Number(row.id) === Number(draft.id));
-    if (!conversion) throw new Error('معامله برای ویرایش پیدا نشد.');
+    const conversion = (await all('conversions')).find(row => Number(row.id) === Number(draft.id) && belongsToActiveExchange(row, ctx));
+    if (!conversion) throw new Error('معامله در صرافی فعال پیدا نشد؛ ویرایش متوقف شد.');
     const documents = await all('documents');
-    const document = documents.find(doc => doc.related_type === 'conversion' && Number(doc.related_id) === Number(draft.id) && doc.doc_type !== 'exchange_fee' && !doc.reversed);
+    const document = documents.find(doc => belongsToActiveExchange(doc, ctx) && doc.related_type === 'conversion' && Number(doc.related_id) === Number(draft.id) && doc.doc_type !== 'exchange_fee' && !doc.reversed);
     if (!document) throw new Error('سند دفتر کل این معامله پیدا نشد یا ابطال شده است؛ ویرایش متوقف شد.');
     const kind = ['convert', 'buy', 'sell'].includes(draft.kind) ? draft.kind : (conversion.kind || 'convert');
     const foreignCurrency = draft.foreignCurrency || 'USD';
@@ -1017,7 +1020,7 @@ export async function editVersion21Record(module, draft) {
       amountB: baseAmount,
       accountB: baseAccount,
     });
-    const feeDoc = documents.find(doc => doc.doc_type === 'exchange_fee' && doc.related_type === 'conversion' && Number(doc.related_id) === Number(draft.id) && !doc.reversed);
+    const feeDoc = documents.find(doc => belongsToActiveExchange(doc, ctx) && doc.doc_type === 'exchange_fee' && doc.related_type === 'conversion' && Number(doc.related_id) === Number(draft.id) && !doc.reversed);
 
     const payout = kind === 'buy'
       ? { account: baseAccount, amount: baseAmount, currency: baseCurrency }
@@ -1039,6 +1042,8 @@ export async function editVersion21Record(module, draft) {
         currency: foreignCurrency,
         user: ctx.userName,
         note: 'ویرایش معاملهٔ اسعار',
+        exchangeCode: ctx.exchangeCode,
+        date: draft.date,
       });
       if (fee > 0 && feeRevenue) {
         const feeLines = buildFeeLines({
@@ -1048,7 +1053,7 @@ export async function editVersion21Record(module, draft) {
           revenue: feeRevenue,
         });
         if (feeDoc) {
-          await replaceDocumentLinesInTx(handles, feeDoc.id, { lines: feeLines, description: 'کمیشن معاملهٔ اسعار', amount: fee, currency: baseCurrency, user: ctx.userName, note: 'ویرایش کمیشن معامله' });
+          await replaceDocumentLinesInTx(handles, feeDoc.id, { lines: feeLines, description: 'کمیشن معاملهٔ اسعار', amount: fee, currency: baseCurrency, user: ctx.userName, note: 'ویرایش کمیشن معامله', exchangeCode: ctx.exchangeCode, date: draft.date });
         } else {
           await postDocumentInTx(handles, {
             doc_type: 'exchange_fee', currency: baseCurrency, amount: fee,
@@ -1069,6 +1074,7 @@ export async function editVersion21Record(module, draft) {
         from_currency: foreignCurrency,
         from_amount: foreignAmount,
         rate: baseAmount / foreignAmount,
+        date: draft.date || conversion.date || document.date,
         to_currency: baseCurrency,
         to_amount: baseAmount,
         cash_from: foreignAccount.account_name,
@@ -1082,8 +1088,8 @@ export async function editVersion21Record(module, draft) {
   }
 
   if (module === 'remittance') {
-    const transfer = (await all('transfers')).find(row => Number(row.id) === Number(draft.id));
-    if (!transfer) throw new Error('حواله برای ویرایش پیدا نشد.');
+    const transfer = (await all('transfers')).find(row => Number(row.id) === Number(draft.id) && belongsToActiveExchange(row, ctx));
+    if (!transfer) throw new Error('حواله در صرافی فعال پیدا نشد؛ ویرایش متوقف شد.');
     const direction = String(draft.direction || '').trim();
     if (!['ارسالی', 'دریافتی'].includes(direction)) throw new Error('نوع حواله باید صریحاً «ارسالی» یا «دریافتی» باشد.');
     if (!draft.sender || !draft.receiver) throw new Error('فرستنده و گیرنده الزامی است.');
@@ -1110,6 +1116,7 @@ export async function editVersion21Record(module, draft) {
         currency,
         user: ctx.userName,
         note: 'ویرایش حواله',
+        exchangeCode: ctx.exchangeCode,
       });
 
       if (fee > 0 && revenue) {
@@ -1122,6 +1129,7 @@ export async function editVersion21Record(module, draft) {
             currency,
             user: ctx.userName,
             note: 'ویرایش کمیشن حواله',
+            exchangeCode: ctx.exchangeCode,
           });
         } else {
           await postDocumentInTx(handles, {
@@ -1191,6 +1199,7 @@ export async function editVersion21Record(module, draft) {
         currency,
         user: ctx.userName,
         note: 'ویرایش گردش',
+        exchangeCode: ctx.exchangeCode,
       });
       await auditInTx(handles, ctx, 'update', 'cash_transaction', documentId, 'ویرایش گردش و جایگزینی سطرهای دفتر کل', null, draft);
       return { id: String(documentId), documentId };
@@ -1218,7 +1227,12 @@ export async function reverseVersion21Record(module, record, reason) {
   await requireModulePermission(ctx, module, 'delete');
   const reasonText = assertReason(reason);
   const documents = await all('documents');
-  const linked = linkedDocuments(module, record, documents);
+  if (module === 'exchange' || module === 'remittance') {
+    const table = module === 'exchange' ? 'conversions' : 'transfers';
+    const parent = (await all(table)).find(row => Number(row.id) === Number(record.id) && belongsToActiveExchange(row, ctx));
+    if (!parent) throw new Error('رکورد انتخاب‌شده متعلق به صرافی فعال نیست؛ ابطال متوقف شد.');
+  }
+  const linked = linkedDocuments(module, record, documents).filter(doc => belongsToActiveExchange(doc, ctx));
   if (!linked.length) throw new Error('سند مالی مرتبط پیدا نشد؛ هیچ تغییری ثبت نشد.');
   const active = linked.filter(doc => !doc.reversed);
   if (!active.length) throw new Error('همهٔ اسناد مرتبط قبلاً ابطال شده‌اند؛ عملیات تکرار نشد.');
