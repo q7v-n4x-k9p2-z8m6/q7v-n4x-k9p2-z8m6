@@ -42,8 +42,8 @@
     {
       "source_path": ".npmrc",
       "target_path": "independent-panel/source/.npmrc",
-      "size_bytes": 719,
-      "sha256": "08478c8b81520503d3a3e34e430f88ebc0a4e4cc93078f94ae3ea96d348210cb",
+      "size_bytes": 88,
+      "sha256": "1315387550844ad9cca543c81820fc52be69c47eedba2904598f1b08b1638f1f",
       "storage": "utf8-inline"
     },
     {
@@ -63,8 +63,8 @@
     {
       "source_path": "README.md",
       "target_path": "independent-panel/source/README.md",
-      "size_bytes": 3238,
-      "sha256": "5c6fe0381c205771a272950c6c2b1742affb307d6d634160e7677448b23ae60d",
+      "size_bytes": 1564,
+      "sha256": "15e68d8749dc65bd3bab2f0cd871e6982bce3300aae24533dc3125577ad4d787",
       "storage": "utf8-inline"
     },
     {
@@ -728,15 +728,15 @@
     {
       "source_path": "package-lock.json",
       "target_path": "independent-panel/source/package-lock.json",
-      "size_bytes": 361094,
-      "sha256": "07be094ff2f06c47adf9bc71fde0c3a3c05c8f8a6aa6c4ba4ad032b9485669e8",
+      "size_bytes": 346363,
+      "sha256": "dd35490914fb7e9c271ef5e53895d3f59715e1552964d99e64d39ebd1d20c5a7",
       "storage": "utf8-inline"
     },
     {
       "source_path": "package.json",
       "target_path": "independent-panel/source/package.json",
-      "size_bytes": 3272,
-      "sha256": "31f9c451d9ac3efc033f835e7b0ad40006de7aae1b1db855fa65747f78284016",
+      "size_bytes": 3224,
+      "sha256": "c05ea3538d354ecdbfdba849f2d37513fe7d96b8c5754d153ba11ec89a0671da",
       "storage": "utf8-inline"
     },
     {
@@ -7686,8 +7686,8 @@
     {
       "source_path": "src/api/base44Client.js",
       "target_path": "independent-panel/source/src/api/base44Client.js",
-      "size_bytes": 267,
-      "sha256": "ac90e3b11d391f5ed5d365053acd2d2d30f1f43c06f81d9cfd235c15548a88d9",
+      "size_bytes": 1171,
+      "sha256": "00941565ab7085c050b3496a7e3258ec020bbaeec086f9f0087cfd449f010ae0",
       "storage": "utf8-inline"
     },
     {
@@ -8596,15 +8596,15 @@
     {
       "source_path": "src/lib/AuthContext.jsx",
       "target_path": "independent-panel/source/src/lib/AuthContext.jsx",
-      "size_bytes": 4393,
-      "sha256": "2ac2133bc9448d8e8c0f12d3ccef7287f20efddfe0f4c90d0b517bbdc25c0fc0",
+      "size_bytes": 1095,
+      "sha256": "d0724de7a45360002ce82917f4b7d8d41cf209796370e71d8fd0f238538c60a1",
       "storage": "utf8-inline"
     },
     {
       "source_path": "src/lib/PageNotFound.jsx",
       "target_path": "independent-panel/source/src/lib/PageNotFound.jsx",
-      "size_bytes": 4214,
-      "sha256": "afa26615d9f5f487614cb917425e4cdc0a083d357a0880b99f19f80d6c0bf57b",
+      "size_bytes": 1721,
+      "sha256": "1383afb5d60ada6b7dc1fa680c0147457c13dff8e1e4ce3588427d6032269ad6",
       "storage": "utf8-inline"
     },
     {
@@ -8638,8 +8638,8 @@
     {
       "source_path": "src/lib/app-params.js",
       "target_path": "independent-panel/source/src/lib/app-params.js",
-      "size_bytes": 822,
-      "sha256": "e2969325001b9b38a87facca370532aa195123477262eb79897f38390e41b6af",
+      "size_bytes": 201,
+      "sha256": "514d6cef7dc3c39f7d71dc25c37c7d5bb7dc1bae9d963736fadcb27714bb4f38",
       "storage": "utf8-inline"
     },
     {
@@ -9107,8 +9107,8 @@
     {
       "source_path": "vite.config.js",
       "target_path": "independent-panel/source/vite.config.js",
-      "size_bytes": 617,
-      "sha256": "d92e1eb3037080aa2a643aa3e7fd23b26ba946db9b78ce17e31e2dfc0bb1a586",
+      "size_bytes": 133,
+      "sha256": "7c3566d9467f52ec6736741d73e6259606200fffecdbc63aebee82d97a4ed157",
       "storage": "utf8-inline"
     }
   ]
