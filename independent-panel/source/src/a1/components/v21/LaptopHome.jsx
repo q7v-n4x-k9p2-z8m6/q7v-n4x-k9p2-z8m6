@@ -2,7 +2,6 @@
 // ترکیب تمام‌پنجره: نوار عنوان و منو و میان‌برها (LaptopTopChrome)، عنوان داشبورد، چهار کارت خلاصه،
 // شش گروه امکانات، عملیات سریع و نوار تماس/دستورات — همان ساختار تصویر مرجع.
 // فقط در عرض لپ‌تاپ نمایش داده می‌شود؛ نمای موبایل دست‌نخورده می‌ماند.
-import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Home, CalendarDays, Check, Pencil, Trash2, Printer,
