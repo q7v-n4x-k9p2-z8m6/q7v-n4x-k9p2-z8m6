@@ -23,8 +23,8 @@ export const A1_TABLES = [
   'demo_preview_records', 'layout_hex_references',
 ];
 
-// نسخهٔ داده با انتقال کدینگ پایهٔ A1 بازنشانی می‌شود تا دیتابیس نمایشی با ساختار واقعی هم‌تراز شود.
-const DB_NAME = 'a1_local_preview_v21';
+// پایگاه محلی مستقل نسخهٔ ۲۲؛ دیتابیس محلی نسخهٔ ۲۱ با نام قبلی دست‌نخورده باقی می‌ماند.
+const DB_NAME = 'hisab_sarraf_v22_local';
 const DB_VERSION = 1;
 
 let dbPromise = null;
