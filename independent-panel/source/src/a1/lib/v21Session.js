@@ -14,8 +14,10 @@ export function currentUser() {
 export function sessionContext() {
   const user = currentUser();
   if (!user?.id) throw new Error('نشست معتبر صراف پیدا نشد. دوباره وارد حساب شوید.');
+  const exchangeCode = String(user.exchange_code || '').trim();
+  if (!exchangeCode) throw new Error('شناسهٔ صرافی در نشست ثبت نشده است؛ دسترسی به داده‌ها متوقف شد.');
   return {
-    exchangeCode: user.exchange_code || DEMO_EXCHANGE_CODE,
+    exchangeCode,
     userId: String(user.id),
     role: String(user.role || '').toLowerCase(),
     userName: user.full_name || user.name || user.username || 'کاربر',
