@@ -2,7 +2,7 @@ import React, { lazy, Suspense, useEffect, useState } from 'react';
 import { Toaster } from "@/components/ui/toaster"
 import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClientInstance } from '@/lib/query-client'
-import { BrowserRouter as Router, Route, Routes, Navigate, useParams } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes, Navigate, useParams, useNavigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import { LayoutVersionProvider } from '@/lib/LayoutVersionContext';
 import { LanguageProvider } from '@/lib/i18n';
@@ -334,6 +334,22 @@ const AppRoutes = () => {
   );
 };
 
+function SpaPathRestorer() {
+  const navigate = useNavigate();
+  useEffect(() => {
+    const requested = new URLSearchParams(window.location.search).get('__spa_path');
+    if (!requested) return;
+    try {
+      const target = new URL(requested, window.location.origin);
+      if (target.origin !== window.location.origin) return;
+      navigate(target.pathname + target.search + target.hash, { replace: true });
+    } catch {
+      // Ignore malformed fallback paths and leave the normal router in control.
+    }
+  }, [navigate]);
+  return null;
+}
+
 function App() {
   return (
     <ErrorBoundary>
@@ -344,6 +360,7 @@ function App() {
             <QueryClientProvider client={queryClientInstance}>
               <UpgradeProvider>
                 <Router>
+                  <SpaPathRestorer />
                   <ScrollToTop />
                   <ErrorBoundary>
                     <AppGate>
