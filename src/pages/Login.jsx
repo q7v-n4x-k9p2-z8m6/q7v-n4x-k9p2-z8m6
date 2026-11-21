@@ -468,7 +468,7 @@ export default function Login() {
             setLoading(false);
             return;
           }
-          window.location.replace(HOME_BY_ROLE[userRole] || '/');
+          window.location.replace(postLoginPath(localResult.user, userRole, normalizedIdentifier));
           return;
         }
       }
