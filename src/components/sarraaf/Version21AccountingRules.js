@@ -137,3 +137,122 @@ export function validateBalancedLines(lines, label = 'سند') {
     }
   }
 }
+
+
+export function buildRemittanceLines({ direction, amount, currency, party, counter }) {
+  const value = number(amount);
+  if (!Number.isFinite(value) || value <= 0) throw new Error('مبلغ حواله باید عدد معتبر و بزرگ‌تر از صفر باشد.');
+  if (!party || !counter) throw new Error('طرف حساب و حساب مقابل حواله باید مشخص باشند.');
+  const partyLine = { ...party, currency };
+  const counterLine = { ...counter, currency };
+  const lines = direction === 'دریافتی'
+    ? [{ ...counterLine, debit: value, credit: 0 }, { ...partyLine, debit: 0, credit: value }]
+    : [{ ...partyLine, debit: value, credit: 0 }, { ...counterLine, debit: 0, credit: value }];
+  validateBalancedLines(lines, 'حواله');
+  return lines;
+}
+
+export function buildFeeLines({ amount, currency, party, revenue }) {
+  const value = number(amount);
+  if (!Number.isFinite(value) || value <= 0) throw new Error('مبلغ کمیشن باید عدد معتبر و بزرگ‌تر از صفر باشد.');
+  if (!party || !revenue) throw new Error('حساب طرف معامله و حساب درآمد کمیشن باید مشخص باشند.');
+  const lines = [
+    { ...party, currency, debit: value, credit: 0 },
+    { ...revenue, currency, debit: 0, credit: value },
+  ];
+  validateBalancedLines(lines, 'کمیشن');
+  return lines;
+}
+
+export function buildExpenseLines({ amount, currency, expense, payer }) {
+  const value = number(amount);
+  if (!Number.isFinite(value) || value <= 0) throw new Error('مبلغ مصرف باید عدد معتبر و بزرگ‌تر از صفر باشد.');
+  if (!expense || !payer) throw new Error('حساب مصرف و حساب پرداخت‌کننده باید مشخص باشند.');
+  const lines = [
+    { ...expense, currency, debit: value, credit: 0 },
+    { ...payer, currency, debit: 0, credit: value },
+  ];
+  validateBalancedLines(lines, 'مصرف');
+  return lines;
+}
+
+export function buildSettlementLines({ amount, currency, from, to }) {
+  const value = number(amount);
+  if (!Number.isFinite(value) || value <= 0) throw new Error('مبلغ انتقال باید معتبر و بزرگ‌تر از صفر باشد.');
+  if (!from || !to) throw new Error('حساب مبدأ و مقصد انتقال باید مشخص باشند.');
+  if (String(from.account_type) === String(to.account_type) && String(from.account_id) === String(to.account_id)) {
+    throw new Error('حساب مبدأ و مقصد نباید یکی باشند.');
+  }
+  const lines = [
+    { ...to, currency, debit: value, credit: 0 },
+    { ...from, currency, debit: 0, credit: value },
+  ];
+  validateBalancedLines(lines, 'انتقال بین حساب‌ها');
+  return lines;
+}
+
+export function makeSettlementNumber(date) {
+  const day = String(date || new Date().toISOString().slice(0, 10)).replace(/\\D/g, '');
+  return 'ST-' + day + '-' + Math.random().toString(36).slice(2, 6).toUpperCase();
+}
+
+export function buildConversionLines({ kind, party, currencyA, amountA, accountA, currencyB, amountB, accountB }) {
+  const a = number(amountA), b = number(amountB);
+  if (!Number.isFinite(a) || a <= 0 || !Number.isFinite(b) || b <= 0) {
+    throw new Error('مبالغ هر دو طرف معامله باید معتبر و مثبت باشند.');
+  }
+  if (!accountA || !accountB || !party) throw new Error('حساب‌های دو طرف و طرف حساب معامله باید مشخص باشند.');
+  if (String(currencyA) === String(currencyB)) throw new Error('ارز دو طرف معامله باید متفاوت باشد.');
+  const sideA = { ...accountA, currency: currencyA };
+  const sideB = { ...accountB, currency: currencyB };
+  const counterA = { ...party, currency: currencyA };
+  const counterB = { ...party, currency: currencyB };
+  const lines = kind === 'buy'
+    ? [
+        { ...sideA, debit: a, credit: 0 },
+        { ...counterA, debit: 0, credit: a },
+        { ...counterB, debit: b, credit: 0 },
+        { ...sideB, debit: 0, credit: b },
+      ]
+    : kind === 'sell'
+      ? [
+          { ...sideA, debit: 0, credit: a },
+          { ...counterA, debit: a, credit: 0 },
+          { ...counterB, debit: 0, credit: b },
+          { ...sideB, debit: b, credit: 0 },
+        ]
+      : [
+          { ...counterA, debit: a, credit: 0 },
+          { ...sideA, debit: 0, credit: a },
+          { ...sideB, debit: b, credit: 0 },
+          { ...counterB, debit: 0, credit: b },
+        ];
+  validateBalancedLines(lines, 'معاملهٔ اسعار');
+  return lines;
+}
+
+export function buildJournalLines({ rows, currency }) {
+  if (!Array.isArray(rows) || rows.length < 2) throw new Error('سند روزنامچه باید حداقل دو سطر داشته باشد.');
+  const lines = [];
+  let debitRows = 0, creditRows = 0;
+  for (const row of rows) {
+    const debit = number(row.debit) || 0;
+    const credit = number(row.credit) || 0;
+    if (debit === 0 && credit === 0) throw new Error('هر سطر سند باید مبلغ بدهکار یا بستانکار داشته باشد.');
+    if (debit < 0 || credit < 0) throw new Error('مبلغ سطر نمی‌تواند منفی باشد.');
+    if (debit > 0 && credit > 0) throw new Error('در هر سطر فقط یکی از بدهکار یا بستانکار مجاز است.');
+    if (!row.account_name) throw new Error('حساب هر سطر باید انتخاب شود.');
+    if (debit > 0) debitRows += 1; else creditRows += 1;
+    lines.push({
+      account_type: row.account_type,
+      account_id: row.account_id,
+      account_name: row.account_name,
+      currency: row.currency || currency || 'AFN',
+      debit,
+      credit,
+    });
+  }
+  if (!debitRows || !creditRows) throw new Error('سند باید حداقل یک سطر بدهکار و یک سطر بستانکار داشته باشد.');
+  validateBalancedLines(lines, 'سند روزنامچه');
+  return lines;
+}

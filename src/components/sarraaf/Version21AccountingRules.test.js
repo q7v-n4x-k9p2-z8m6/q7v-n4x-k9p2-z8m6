@@ -232,3 +232,58 @@ test('party ledger running balances continue row by row and remain separate by c
     ['3', 1200, 'بدهکار'],
   ]);
 });
+
+
+test('remittance settlement lines balance against the selected cash or bank account', async () => {
+  const { buildRemittanceLines } = await import('./Version21AccountingRules.js');
+  const party = { account_type: 'customer', account_id: '8', account_name: 'مشتری' };
+  const cash = { account_type: 'cash', account_id: '2', account_name: 'صندوق' };
+  const send = buildRemittanceLines({ direction: 'ارسالی', amount: 100, currency: 'AFN', party, counter: cash });
+  const receive = buildRemittanceLines({ direction: 'دریافتی', amount: 100, currency: 'AFN', party, counter: cash });
+  assert.equal(send[0].debit, 100);
+  assert.equal(send[1].credit, 100);
+  assert.equal(receive[0].debit, 100);
+  assert.equal(receive[1].credit, 100);
+});
+
+test('expense posting supports a bank as the paying account', async () => {
+  const { buildExpenseLines } = await import('./Version21AccountingRules.js');
+  const lines = buildExpenseLines({
+    amount: 300, currency: 'USD',
+    expense: { account_type: 'suspense', account_id: '17', account_name: 'مصارف دفتر' },
+    payer: { account_type: 'bank', account_id: '4', account_name: 'بانک دالری' },
+  });
+  assert.equal(lines[0].debit, 300);
+  assert.equal(lines[1].account_type, 'bank');
+  assert.equal(lines[1].credit, 300);
+});
+
+test('buy and sell exchange posting balances each currency independently', async () => {
+  const { buildConversionLines } = await import('./Version21AccountingRules.js');
+  const party = { account_type: 'customer', account_id: '9', account_name: 'مشتری' };
+  const usd = { account_type: 'cash', account_id: '1', account_name: 'صندوق USD' };
+  const afn = { account_type: 'cash', account_id: '2', account_name: 'صندوق AFN' };
+  const buy = buildConversionLines({ kind: 'buy', party, currencyA: 'USD', amountA: 20, accountA: usd, currencyB: 'AFN', amountB: 1400, accountB: afn });
+  const sell = buildConversionLines({ kind: 'sell', party, currencyA: 'USD', amountA: 20, accountA: usd, currencyB: 'AFN', amountB: 1400, accountB: afn });
+  assert.equal(buy[0].debit, 20);
+  assert.equal(buy[3].credit, 1400);
+  assert.equal(sell[0].credit, 20);
+  assert.equal(sell[3].debit, 1400);
+});
+
+test('multi-line journal and inter-account settlement remain balanced', async () => {
+  const { buildJournalLines, buildSettlementLines, makeSettlementNumber } = await import('./Version21AccountingRules.js');
+  const journal = buildJournalLines({ currency: 'AFN', rows: [
+    { account_type: 'suspense', account_id: '10', account_name: 'مصارف', debit: 100, credit: 0 },
+    { account_type: 'cash', account_id: '2', account_name: 'صندوق', debit: 50, credit: 0 },
+    { account_type: 'suspense', account_id: '11', account_name: 'درآمد', debit: 0, credit: 150 },
+  ] });
+  const settlement = buildSettlementLines({
+    amount: 50, currency: 'AFN',
+    from: { account_type: 'cash', account_id: '2', account_name: 'صندوق مبدأ' },
+    to: { account_type: 'bank', account_id: '4', account_name: 'بانک مقصد' },
+  });
+  assert.equal(journal.length, 3);
+  assert.equal(settlement[0].account_type, 'bank');
+  assert.match(makeSettlementNumber('2026-11-21'), /^ST-20261121-/);
+});
