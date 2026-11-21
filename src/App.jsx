@@ -247,6 +247,8 @@ const AppRoutes = () => {
           <Route element={<Layout />}>
             <Route path="/v21" element={<Navigate to="/dashboard" replace />} />
             <Route path="/dashboard" element={<FeatureGate featureKey="dashboard"><DashboardRoute /></FeatureGate>} />
+            {/* Dedicated third exchanger entry to the same Version 21 workspace. */}
+            <Route path="/exchanger" element={<FeatureGate featureKey="dashboard"><DashboardRoute /></FeatureGate>} />
             <Route path="/customers" element={<FeatureGate featureKey="customers"><Customers /></FeatureGate>} />
             <Route path="/customers/:id" element={<FeatureGate featureKey="customers"><CustomerDetail /></FeatureGate>} />
             <Route path="/dadogereft" element={<FeatureGate featureKey="dadogereft"><Dadogereft /></FeatureGate>} />
