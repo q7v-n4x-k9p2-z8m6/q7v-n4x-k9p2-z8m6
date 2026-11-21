@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { ArrowLeftRight, RefreshCw, Search } from 'lucide-react';
 import { loadVersion21Database } from '@/components/sarraaf/Version21DataAdapter';
+import { hasPermission } from '@/lib/permissions';
 
 const fmt = value => new Intl.NumberFormat('fa-IR', { maximumFractionDigits: 2 }).format(Number(value || 0));
 const dateLabel = value => {
@@ -25,7 +26,7 @@ export default function TransactionsCenter() {
       const result = await loadVersion21Database();
       const role = String(result?.data?.role || '').toLowerCase();
       const permissions = result?.permissions || result?.data?.permissions || [];
-      if (role === 'employee' && !permissions.some(item => item.section === 'accounts_receivable' && item.can_view === true)) {
+      if (role === 'employee' && !hasPermission(permissions, 'accounts_receivable', 'view')) {
         throw new Error('مجوز مشاهدهٔ مرکز معاملات برای حساب شما فعال نیست.');
       }
       setRows(Array.isArray(result?.data?.transactions) ? result.data.transactions.filter(row => !row.deleted) : []);
