@@ -1,6 +1,6 @@
 // src/core/reports/balanceSheet.js — بیلانس عمومی (ترازنامه) مشروط به سیاست تأییدشده
 // طبقه‌بندی، نمایش سود دوره و مبنای ارزیابی هر سه از سیاست خوانده می‌شوند؛ بدون آن‌ها ردیفی ساخته نمی‌شود.
-import { classOf, normalizeLine, missingPolicy, rateFor, round2, sum } from './ledgerBasis';
+import { classOf, normalizeLine, missingPolicy, rateFor, round2, sum } from './ledgerBasis.js';
 
 export const BALANCE_SHEET_POLICY = {
   classification: 'مبنای طبقه‌بندی اقلام',
