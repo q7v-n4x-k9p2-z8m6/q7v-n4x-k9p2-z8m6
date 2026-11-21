@@ -49,6 +49,7 @@ function lazyWithRetry(importFn) {
 }
 
 // ── Lazy-loaded page imports for code-splitting & mobile performance ──
+const SandboxSarrafLabRoute = lazyWithRetry(() => import('@/components/sarraaf/SandboxSarrafLabRoute'));
 const Welcome = lazyWithRetry(() => import('@/pages/Welcome'));
 const Login = lazyWithRetry(() => import('@/pages/Login'));
 const Register = lazyWithRetry(() => import('@/pages/Register'));
@@ -237,6 +238,9 @@ const AppRoutes = () => {
 
         {/* Public AI assistant route; homepage opens the same chat in a modal */}
         <Route path="/assistant" element={<Assistant />} />
+
+        {/* Server-verified isolated lab session; separate from live A1 authentication */}
+        <Route path="/lab/sarraf" element={<SandboxSarrafLabRoute />} />
 
         {/* Sarraaf Panel — gated by auth + role */}
         <Route element={<ProtectedRoute unauthenticatedElement={<Navigate to="/login" replace />} allowedRoles={['creator', 'admin', 'sarraaf', 'employee']} />}>
