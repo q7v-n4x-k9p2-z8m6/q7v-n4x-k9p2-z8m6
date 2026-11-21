@@ -85,7 +85,7 @@ jobs:
             [data.includes("row.direction === 'send' ? 'ارسالی' : 'نامعلوم'"), 'Unknown remittance direction must never be displayed as outgoing'],
             [adapter.includes('حواله نامشخص نباید به‌صورت خودکار ارسالی اصلاح شود'), 'Unknown remittance direction must be rejected during edits'],
             [workspace.includes("label:'مبدأ'") && workspace.includes("label:'مقصد'"), 'Remittance lists must show origin and destination separately'],
-            [data.includes("const isBranch = !isCash &&") && data.includes("(isCustomer || isBranch) ? credit - debit"), 'Customer and branch ledger signs must match debit-credit sides without reversing cash balances'],
+            [accountingRules.includes('export function isBranchLedgerLine') && data.includes('isBranchLedgerLine(accountType, linkedDocument?.related_type)') && data.includes("(isCustomer || isBranch) ? credit - debit"), 'Customer and branch ledger signs must match debit-credit sides without reversing cash balances'],
             [workspace.includes("{fmt(n(r.debit))}") && workspace.includes("{fmt(n(r.credit))}"), 'Customer and branch ledger detail rows must display raw debit and credit values'],
             [accountingRules.includes('export function withRunningPartyBalances') && workspace.includes('مانده پس از گردش') && workspace.includes('preparedSource=withRunningPartyBalances(source'), 'Customer and branch detail ledgers must show chronological running balances per currency'],
             [workspace.includes('const saveRecord=async(keepOpen=false)') && workspace.includes('saveRecord(true)') && workspace.includes('ثبت و جدید'), 'Accounting forms must support saving the current record and immediately opening a fresh form'],
