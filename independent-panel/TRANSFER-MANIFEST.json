@@ -25,11 +25,11 @@
     "existing_destination_readme_preserved": true
   },
   "summary": {
-    "source_files": 1299,
-    "text_files": 1294,
+    "source_files": 1301,
+    "text_files": 1296,
     "native_binary_files": 3,
     "chunked_binary_files": 2,
-    "total_bytes": 17590906
+    "total_bytes": 17592526
   },
   "files": [
     {
@@ -7259,15 +7259,29 @@
     {
       "source_path": "src/a1/lib/v21Session.js",
       "target_path": "independent-panel/source/src/a1/lib/v21Session.js",
-      "size_bytes": 922,
-      "sha256": "2181f1b76db90e0148a0d0265e8cda2eee10865b15f896cb400ca3d2e2973efd",
+      "size_bytes": 1099,
+      "sha256": "522fb7344824f1e8908248c45554397f028b298e4b93a4feb612602e116fcf28",
       "storage": "utf8-inline"
     },
     {
       "source_path": "src/a1/lib/v21Write.js",
       "target_path": "independent-panel/source/src/a1/lib/v21Write.js",
-      "size_bytes": 74143,
-      "sha256": "9956480182fd1ca2b45e015afa566c2162be4024cd66da6959ff3f4a9376c7db",
+      "size_bytes": 74125,
+      "sha256": "fe86b3fb5b491f38e0174a68264d10768e130f5d7bcf9cac403badb3dc404bc8",
+      "storage": "utf8-inline"
+    },
+    {
+      "source_path": "src/a1/lib/v22TenantRules.js",
+      "target_path": "independent-panel/source/src/a1/lib/v22TenantRules.js",
+      "size_bytes": 402,
+      "sha256": "1aa53ac9458b6b0b85b912d6816ae461e8e1de8d6870ac4e8332960018b8bf8e",
+      "storage": "utf8-inline"
+    },
+    {
+      "source_path": "src/a1/lib/v22TenantRules.test.js",
+      "target_path": "independent-panel/source/src/a1/lib/v22TenantRules.test.js",
+      "size_bytes": 1059,
+      "sha256": "6c28b66ffa52e85b5987bfabe56c25e7d7c7a0d128549593fd1e8e919b2827b0",
       "storage": "utf8-inline"
     },
     {
