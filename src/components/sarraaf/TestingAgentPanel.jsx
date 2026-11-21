@@ -6,6 +6,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { getSupabaseConfig } from '@/lib/supabaseConfig';
 import { TEST_SCENARIO_GROUPS, TEST_SCENARIO_COUNT } from '@/components/sarraaf/testingScenarios';
+import CodeComparisonPanel from '@/components/sarraaf/CodeComparisonPanel';
 
 const FUNCTION_PATH = '/functions/v1/builder-ai-assistant';
 
@@ -271,6 +272,8 @@ export default function TestingAgentPanel({ projectSnapshot = [], role }) {
           )}
         </CardContent>
       </Card>
+
+      <CodeComparisonPanel />
 
       <div className="flex items-start gap-2 rounded-lg border border-amber-500/30 bg-amber-500/5 p-3 text-xs leading-6">
         <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
