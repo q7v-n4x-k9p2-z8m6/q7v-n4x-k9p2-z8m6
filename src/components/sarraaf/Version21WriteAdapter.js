@@ -1,6 +1,6 @@
 import { supabase } from '@/lib/supabaseClient';
 import { getExchangeCode } from '@/lib/supabaseApi';
-import { number, validateBalancedLines, documentDateTimestamp, validateCashTransactionParty, validateCashTransactionPartyIdentity, bankLedgerRef } from './Version21AccountingRules';
+import { number, validateBalancedLines, documentDateTimestamp, validateCashTransactionParty, validateCashTransactionPartyIdentity, bankLedgerRef, buildExpenseLines, buildConversionLines, buildFeeLines, buildJournalLines, buildSettlementLines, makeSettlementNumber } from './Version21AccountingRules';
 
 const TABLES = {
   customers: 'customers',
@@ -24,6 +24,7 @@ const PERMISSION_SECTION_BY_MODULE = {
   exchange: 'trade',
   journal: 'journal',
   transactions: 'accounts_receivable',
+  settlement: 'cash',
 };
 
 async function requireModulePermission(ctx, module, action) {
@@ -202,6 +203,29 @@ async function getBankById(ctx, id, currency) {
     throw new Error('ارز حساب بانکی با ارز سند یکسان نیست.');
   }
   return data;
+}
+
+async function getAccountBalance(ctx, account) {
+  const isBank = String(account?.account_type || '') === 'bank';
+  const table = isBank ? 'bank_accounts' : 'safes';
+  const columns = isBank ? 'id,balance,currency' : 'id,opening_balance,currency';
+  const { data: master, error: masterError } = await supabase.from(table).select(columns)
+    .eq('exchange_code', ctx.exchangeCode).eq('id', Number(account?.account_id)).maybeSingle();
+  if (masterError) throw masterError;
+  if (!master) throw new Error('حساب مبدأ برای کنترل موجودی در همین صراف پیدا نشد.');
+  if (String(master.currency || 'AFN') !== String(account.currency || 'AFN')) {
+    throw new Error('ارز حساب مبدأ با ارز عملیات یکسان نیست.');
+  }
+  const opening = number(isBank ? master.balance : master.opening_balance);
+  const { data: lines, error: linesError } = await supabase.from('ledger_entries')
+    .select('debit,credit')
+    .eq('exchange_code', ctx.exchangeCode)
+    .eq('account_type', account.account_type)
+    .eq('account_id', String(account.account_id))
+    .eq('currency', String(account.currency || 'AFN'))
+    .eq('deleted', false);
+  if (linesError) throw linesError;
+  return opening + (lines || []).reduce((sum, line) => sum + number(line.debit) - number(line.credit), 0);
 }
 
 async function getBranch(ctx, name) {
@@ -472,40 +496,42 @@ export async function saveVersion21Record(module, draft) {
 
   if (module === 'cashAction' || module === 'expenses') {
     const currency = draft.currency || 'AFN';
-    const safe = await getSafe(ctx, draft.cash, currency);
     const amount = number(draft.amount);
-    if (amount <= 0) throw new Error('مبلغ باید بیشتر از صفر باشد.');
-    if (module === 'cashAction' && draft.kind === 'خرج' && draft.partyType === 'customer') {
-      // Customer/cash posting is a paired journal, not a local balance adjustment.
+    if (!Number.isFinite(amount) || amount <= 0) throw new Error('مبلغ باید عدد معتبر و بزرگ‌تر از صفر باشد.');
+    const isCashIn = module === 'cashAction' && draft.kind === 'دخل';
+    const isExpense = module === 'expenses';
+    let payer;
+    if (isExpense && draft.payerType === 'bank') {
+      payer = bankLedgerRef(await getBankById(ctx, draft.bank, currency));
+    } else {
+      const safe = await getSafe(ctx, draft.cash, currency);
+      payer = { account_type: 'cash', account_id: String(safe.id), account_name: safe.name };
     }
     const customer = module === 'cashAction' && draft.partyType === 'customer' ? await getCustomer(ctx, draft.party) : null;
     const branch = module === 'cashAction' && draft.partyType === 'branch' ? await getBranch(ctx, draft.party) : null;
     if (module === 'cashAction' && draft.partyType === 'customer' && !customer) throw new Error('مشتری انتخاب‌شده در فهرست همین صراف پیدا نشد؛ ابتدا مشتری را ثبت کنید.');
     if (module === 'cashAction' && draft.partyType === 'branch' && !branch) throw new Error('نمایندگی انتخاب‌شده در فهرست همین صراف پیدا نشد؛ ابتدا نمایندگی را ثبت کنید.');
-    const isCashIn = module === 'cashAction' && draft.kind === 'دخل';
-    const isExpense = module === 'expenses';
-    let expenseCounter = null;
+    let lines;
     if (isExpense) {
-      if (draft.expenseAccount) {
-        expenseCounter = await resolveLedgerAccount(ctx, draft.expenseAccount, currency);
-      } else {
+      let expense = draft.expenseAccount ? await resolveLedgerAccount(ctx, draft.expenseAccount, currency) : null;
+      if (!expense) {
         const defaultExpense = await findChartAccountByType(ctx, 'expense');
         if (!defaultExpense) throw new Error('برای ثبت مصرف، ابتدا در کدینگ حساب‌ها یک حساب از نوع «مصرف» ایجاد کنید.');
-        expenseCounter = chartAccountLedgerRef(defaultExpense);
+        expense = chartAccountLedgerRef(defaultExpense);
       }
-    }
-    const counter = isExpense
-      ? expenseCounter
-      : customer
+      lines = buildExpenseLines({ amount, currency, expense, payer });
+    } else {
+      const counter = customer
         ? { account_type: 'customer', account_id: String(customer.id), account_name: customer.name }
         : branch
           ? { account_type: 'suspense', account_id: String(branch.id), account_name: branch.name }
-          : { account_type: 'suspense', account_id: '', account_name: draft.party || (isExpense ? 'مصارف' : 'حساب مقابل') };
-    const cashLine = { account_type: 'cash', account_id: String(safe.id), account_name: safe.name, currency };
-    const counterLine = { ...counter, currency };
-    const lines = isCashIn
-      ? [{ ...cashLine, debit: amount, credit: 0 }, { ...counterLine, debit: 0, credit: amount }]
-      : [{ ...counterLine, debit: amount, credit: 0 }, { ...cashLine, debit: 0, credit: amount }];
+          : { account_type: 'suspense', account_id: '', account_name: draft.party || 'حساب مقابل' };
+      const counterLine = { ...counter, currency };
+      lines = isCashIn
+        ? [{ ...payer, currency, debit: amount, credit: 0 }, { ...counterLine, debit: 0, credit: amount }]
+        : [{ ...counterLine, debit: amount, credit: 0 }, { ...payer, currency, debit: 0, credit: amount }];
+      validateBalancedLines(lines, 'گردش صندوق');
+    }
     const doc = await postDocument(ctx, {
       docType: isExpense ? 'expense' : (isCashIn ? 'cash_in' : 'cash'),
       currency, amount, relatedType: customer ? 'customer' : (branch ? 'branch' : 'none'),
@@ -515,82 +541,187 @@ export async function saveVersion21Record(module, draft) {
     });
     const dateWarning = await applyDocumentDate(ctx, doc?.document_id, draft.date);
     const auditWarning = await writeAudit(ctx, 'create', isExpense ? 'expense' : 'cash', doc?.document_id,
-      isExpense ? 'ثبت مصرف و سند حسابداری' : 'ثبت گردش صندوق و سند حسابداری', null, draft);
+      isExpense ? 'ثبت مصرف از ' + (draft.payerType === 'bank' ? 'بانک' : 'صندوق') + ' و سند حسابداری' : 'ثبت گردش صندوق و سند حسابداری', null, draft);
     return { id: String(doc?.document_id || ''), auditWarning, warning: dateWarning };
   }
 
   if (module === 'exchange') {
-    if (draft.id) throw new Error('برای اصلاح معامله ارزی، از عملیات اصلاح سند مالی استفاده کنید؛ ایجاد معامله تکراری مجاز نیست.');
-    if (draft.fromCurrency === draft.toCurrency) throw new Error('ارز مبدا و مقصد باید متفاوت باشند.');
-    const fromAmount = number(draft.fromAmount);
-    const toAmount = number(draft.toAmount);
-    const exchangeRate = number(draft.rate);
-    if (!Number.isFinite(fromAmount) || !Number.isFinite(toAmount) || fromAmount <= 0 || toAmount <= 0) throw new Error('مبالغ هر دو طرف معامله باید معتبر و مثبت باشند.');
-    if (draft.rate && (!Number.isFinite(exchangeRate) || exchangeRate <= 0)) throw new Error('نرخ تبدیل باید عدد معتبر و مثبت باشد.');
-    const fromSafe = await getSafe(ctx, draft.cashFrom || draft.cash, draft.fromCurrency);
-    const toSafe = await getSafe(ctx, draft.cashTo || draft.cash, draft.toCurrency);
-    const customer = await getCustomer(ctx, draft.party);
+    if (draft.id) throw new Error('برای اصلاح معامله ثبت‌شده، ابتدا سند اصلی را از مسیر ابطال بررسی کنید؛ ثبت تکراری مجاز نیست.');
+    const kind = ['convert', 'buy', 'sell'].includes(draft.kind) ? draft.kind : 'convert';
+    const kindLabel = kind === 'buy' ? 'خرید اسعار' : kind === 'sell' ? 'فروش اسعار' : 'تبدیل ارز';
+    const currencyA = draft.fromCurrency || 'USD';
+    const currencyB = draft.toCurrency || 'AFN';
+    if (currencyA === currencyB) throw new Error('ارز دو طرف معامله باید متفاوت باشد.');
+    const amountA = number(draft.fromAmount);
+    const amountB = number(draft.toAmount);
+    if (!Number.isFinite(amountA) || !Number.isFinite(amountB) || amountA <= 0 || amountB <= 0) {
+      throw new Error('مبالغ هر دو طرف معامله باید معتبر و بزرگ‌تر از صفر باشند.');
+    }
+    const customer = draft.party ? await getCustomer(ctx, draft.party) : null;
+    if (kind !== 'convert' && !customer) throw new Error('برای خرید یا فروش اسعار، طرف حساب باید از مشتریان ثبت‌شدهٔ همین صراف انتخاب شود.');
+    const fromSafe = await getSafe(ctx, draft.cashFrom || draft.cash, currencyA);
+    const toSafe = await getSafe(ctx, draft.cashTo || draft.cash, currencyB);
+    const fromAccount = { account_type: 'cash', account_id: String(fromSafe.id), account_name: fromSafe.name };
+    const toAccount = { account_type: 'cash', account_id: String(toSafe.id), account_name: toSafe.name };
+    const party = customer
+      ? { account_type: 'customer', account_id: String(customer.id), account_name: customer.name }
+      : { account_type: 'suspense', account_id: '', account_name: 'حساب واسط تبدیل ارز' };
+    const fee = number(draft.fee || 0);
+    if (!Number.isFinite(fee) || fee < 0) throw new Error('کمیشن معامله باید صفر یا عدد مثبت باشد.');
+    const rate = amountB / amountA;
+    const payout = kind === 'buy'
+      ? { account: toAccount, currency: currencyB, amount: amountB }
+      : { account: fromAccount, currency: currencyA, amount: amountA };
+    const available = await getAccountBalance(ctx, { ...payout.account, currency: payout.currency });
+    if (available + 0.000001 < payout.amount) {
+      throw new Error('موجودی ' + payout.account.account_name + ' برای این معامله کافی نیست؛ ماندهٔ در دسترس ' +
+        new Intl.NumberFormat('fa-IR', { maximumFractionDigits: 2 }).format(available) + ' ' + payout.currency + ' است.');
+    }
+    const operationId = draft.clientOperationId || makeOperationId();
+    const description = [kindLabel, String(draft.note || '').trim()].filter(Boolean).join(' · ');
     const { data: conversion, error: conversionError } = await supabase.from('conversions').insert({
       exchange_code: ctx.exchangeCode,
-      customer_id: customer?.id || null, customer_name: draft.party || 'مشتری نقدی', customer_mobile: customer?.mobile || null,
-      from_currency: draft.fromCurrency, from_amount: fromAmount,
-      rate: exchangeRate || toAmount / fromAmount,
-      to_currency: draft.toCurrency, to_amount: toAmount,
-      description: draft.note || 'معامله تبدیل ارز',
-      registered_by: ctx.userName, registered_by_user_id: ctx.userId,
+      customer_id: customer?.id || null,
+      customer_name: customer?.name || 'مشتری نقدی',
+      customer_mobile: customer?.mobile || null,
+      from_currency: currencyA,
+      from_amount: amountA,
+      rate,
+      to_currency: currencyB,
+      to_amount: amountB,
+      description: String(draft.note || '').trim() || kindLabel,
+      registered_by: ctx.userName,
+      registered_by_user_id: ctx.userId,
     }).select('id').single();
     if (conversionError) throw conversionError;
     try {
-      const fromCounter = customer
-        ? { account_type: 'customer', account_id: String(customer.id), account_name: customer.name }
-        : { account_type: 'suspense', account_id: '', account_name: 'حساب واسط تبدیل ارز' };
-      const toCounter = customer
-        ? { account_type: 'customer', account_id: String(customer.id), account_name: customer.name }
-        : { account_type: 'suspense', account_id: '', account_name: 'حساب واسط تبدیل ارز' };
-      const lines = [
-        // The source-currency safe pays out; the destination-currency safe receives funds.
-        { ...fromCounter, currency: draft.fromCurrency, debit: fromAmount, credit: 0 },
-        { account_type: 'cash', account_id: String(fromSafe.id), account_name: fromSafe.name, currency: draft.fromCurrency, debit: 0, credit: fromAmount },
-        { account_type: 'cash', account_id: String(toSafe.id), account_name: toSafe.name, currency: draft.toCurrency, debit: toAmount, credit: 0 },
-        { ...toCounter, currency: draft.toCurrency, debit: 0, credit: toAmount },
-      ];
-      const doc = await postDocument(ctx, {
-        docType: 'convert', currency: draft.fromCurrency, amount: fromAmount,
-        relatedType: 'conversion', relatedId: conversion.id, relatedName: draft.party || '',
-        description: draft.note || `تبدیل ${draft.fromCurrency} به ${draft.toCurrency}`, lines, clientOperationId: draft.clientOperationId,
+      const lines = buildConversionLines({
+        kind, party, currencyA, amountA, accountA: fromAccount,
+        currencyB, amountB, accountB: toAccount,
       });
-      const dateWarning = await applyDocumentDate(ctx, doc?.document_id, draft.date, 'conversions', conversion.id);
-      const auditWarning = await writeAudit(ctx, 'create', 'conversion', conversion.id, 'ثبت معامله تبدیل ارز و سندهای دفتر کل', null, draft);
-      return { id: String(conversion.id), documentId: doc?.document_id, auditWarning, warning: dateWarning };
+      const doc = await postDocument(ctx, {
+        docType: kind === 'convert' ? 'convert' : 'exchange',
+        currency: currencyA,
+        amount: amountA,
+        relatedType: 'conversion',
+        relatedId: conversion.id,
+        relatedName: customer?.name || '',
+        description,
+        lines,
+        clientOperationId: operationId,
+      });
+      let warning = await applyDocumentDate(ctx, doc?.document_id, draft.date, 'conversions', conversion.id);
+      if (fee > 0) {
+        try {
+          const revenue = await requiredChartAccountLedgerRefByType(ctx, 'revenue', 'درآمد معاملات اسعار');
+          const feeParty = customer ? { account_type: 'customer', account_id: String(customer.id), account_name: customer.name } : party;
+          const feeDoc = await postDocument(ctx, {
+            docType: 'exchange_fee',
+            currency: currencyB,
+            amount: fee,
+            relatedType: 'conversion',
+            relatedId: conversion.id,
+            relatedName: customer?.name || '',
+            description: 'کمیشن ' + kindLabel,
+            clientOperationId: operationId + '-fee',
+            lines: buildFeeLines({ amount: fee, currency: currencyB, party: feeParty, revenue }),
+          });
+          const feeDateWarning = await applyDocumentDate(ctx, feeDoc?.document_id, draft.date);
+          if (feeDateWarning) warning = [warning, feeDateWarning].filter(Boolean).join(' | ');
+        } catch (feeError) {
+          warning = [warning, 'معامله ثبت شد، اما سند کمیشن نیازمند بررسی است: ' + (feeError?.message || 'خطای نامشخص')].filter(Boolean).join(' | ');
+          await captureVersion21Error(feeError, 'exchange-fee');
+        }
+      }
+      const auditWarning = await writeAudit(ctx, 'create', 'conversion', conversion.id, 'ثبت ' + kindLabel + ' و سندهای دفتر کل', null, draft);
+      return { id: String(conversion.id), documentId: doc?.document_id, auditWarning, warning };
     } catch (error) {
-      // Preserve the source conversion record if ledger posting fails.
-      // Return a visible warning so the user does not unknowingly retry and duplicate it.
       await captureVersion21Error(error, 'conversion-posting');
       const auditWarning = await writeAudit(ctx, 'create', 'conversion', conversion.id,
-        'رکورد تبدیل ذخیره شد اما سند حسابداری نیازمند بررسی است.', null, draft);
+        'رکورد معامله ذخیره شد اما سند حسابداری نیازمند بررسی است.', null, draft);
       return {
         id: String(conversion.id),
-        warning: 'ردیف تبدیل ذخیره شد، اما سند حسابداری ثبت نشد. دوباره ثبت نکنید؛ این ردیف با وضعیت «سند ندارد» برای تطبیق نمایش داده می‌شود.',
+        warning: 'ردیف معامله ذخیره شد، اما سند حسابداری ثبت نشد. دوباره ثبت نکنید؛ این ردیف با وضعیت «سند ندارد» برای تطبیق نمایش داده می‌شود.',
         auditWarning,
       };
     }
   }
 
-  if (module === 'journal') {
+  if (module === 'settlement') {
+    if (draft.id) throw new Error('انتقال ثبت‌شده ویرایش نمی‌شود؛ برای اصلاح، سند را معکوس و انتقال تازه ثبت کنید.');
+    const currency = draft.currency || 'AFN';
     const amount = number(draft.amount);
-    if (amount <= 0) throw new Error('مبلغ سند باید مثبت باشد.');
-    const debit = await resolveLedgerAccount(ctx, draft.debitAccount, draft.currency || 'AFN');
-    const credit = await resolveLedgerAccount(ctx, draft.creditAccount, draft.currency || 'AFN');
-    if (debit.account_id === credit.account_id && debit.account_type === credit.account_type) throw new Error('حساب بدهکار و بستانکار یکسان است.');
+    if (!Number.isFinite(amount) || amount <= 0) throw new Error('مبلغ انتقال باید معتبر و بزرگ‌تر از صفر باشد.');
+    const fromKind = draft.fromKind === 'bank' ? 'bank' : 'cash';
+    const toKind = draft.toKind === 'bank' ? 'bank' : 'cash';
+    let fromAccount;
+    if (fromKind === 'bank') fromAccount = bankLedgerRef(await getBankById(ctx, draft.fromAccount, currency));
+    else {
+      const safe = await getSafe(ctx, draft.fromAccount, currency);
+      fromAccount = { account_type: 'cash', account_id: String(safe.id), account_name: safe.name };
+    }
+    let toAccount;
+    if (toKind === 'bank') toAccount = bankLedgerRef(await getBankById(ctx, draft.toAccount, currency));
+    else {
+      const safe = await getSafe(ctx, draft.toAccount, currency);
+      toAccount = { account_type: 'cash', account_id: String(safe.id), account_name: safe.name };
+    }
+    const available = await getAccountBalance(ctx, { ...fromAccount, currency });
+    if (available + 0.000001 < amount) {
+      throw new Error('موجودی حساب مبدأ برای انتقال کافی نیست؛ ماندهٔ در دسترس ' +
+        new Intl.NumberFormat('fa-IR', { maximumFractionDigits: 2 }).format(available) + ' ' + currency + ' است.');
+    }
+    const settlementId = String(draft.settlementId || '').trim() || makeSettlementNumber(draft.date);
+    const { data: repeated, error: duplicateError } = await supabase.from('documents')
+      .select('id,doc_number')
+      .eq('exchange_code', ctx.exchangeCode)
+      .eq('doc_type', 'settlement')
+      .eq('deleted', false)
+      .ilike('description', '%' + settlementId + '%')
+      .limit(1)
+      .maybeSingle();
+    if (duplicateError) throw duplicateError;
+    if (repeated) throw new Error('شناسهٔ تسویهٔ ' + settlementId + ' قبلاً در سند ' + repeated.doc_number + ' استفاده شده است.');
+    const lines = buildSettlementLines({ amount, currency, from: fromAccount, to: toAccount }).map(line => ({
+      ...line,
+      description: 'شناسهٔ تسویه ' + settlementId,
+    }));
+    const description = 'انتقال از ' + fromAccount.account_name + ' به ' + toAccount.account_name +
+      ' · شناسهٔ تسویه ' + settlementId + (draft.note ? ' · ' + draft.note : '');
     const doc = await postDocument(ctx, {
-      docType: 'journal', currency: draft.currency || 'AFN', amount,
-      description: draft.description, clientOperationId: draft.clientOperationId, lines: [
-        { ...debit, debit: amount, credit: 0 },
-        { ...credit, debit: 0, credit: amount },
-      ],
+      docType: 'settlement', currency, amount,
+      relatedType: 'none', relatedName: settlementId,
+      description, lines, clientOperationId: draft.clientOperationId,
     });
     const dateWarning = await applyDocumentDate(ctx, doc?.document_id, draft.date);
-    const auditWarning = await writeAudit(ctx, 'create', 'journal', doc?.document_id, 'ثبت سند روزنامچه و سطرهای دفتر کل', null, draft);
+    const auditWarning = await writeAudit(ctx, 'create', 'settlement', doc?.document_id,
+      'ثبت انتقال بین حساب‌ها با شناسهٔ تسویه ' + settlementId, null, { ...draft, settlementId });
+    return { id: String(doc?.document_id || ''), documentId: doc?.document_id, settlementId, auditWarning, warning: dateWarning };
+  }
+
+  if (module === 'journal') {
+    const currency = draft.currency || 'AFN';
+    const sourceRows = Array.isArray(draft.rows) && draft.rows.length ? draft.rows : [
+      { account: draft.debitAccount, debit: draft.amount, credit: 0 },
+      { account: draft.creditAccount, debit: 0, credit: draft.amount },
+    ];
+    const resolved = [];
+    for (const row of sourceRows) {
+      const debit = number(row.debit), credit = number(row.credit);
+      if ((!debit || debit === 0) && (!credit || credit === 0)) continue;
+      const account = await resolveLedgerAccount(ctx, row.account, currency);
+      resolved.push({ ...account, currency, debit, credit });
+    }
+    const lines = buildJournalLines({ rows: resolved, currency });
+    const amount = lines.reduce((sum, line) => sum + number(line.debit), 0);
+    const doc = await postDocument(ctx, {
+      docType: 'journal', currency, amount,
+      description: draft.description || 'سند روزنامچه',
+      clientOperationId: draft.clientOperationId,
+      lines,
+    });
+    const dateWarning = await applyDocumentDate(ctx, doc?.document_id, draft.date);
+    const auditWarning = await writeAudit(ctx, 'create', 'journal', doc?.document_id, 'ثبت سند روزنامچهٔ چندسطری و سطرهای دفتر کل', null, draft);
     return { id: String(doc?.document_id || ''), auditWarning, warning: dateWarning };
   }
 
@@ -683,48 +814,60 @@ export async function editVersion21Record(module, draft) {
   if (TABLES[module]) return saveVersion21Record(module, draft);
 
   if (module === 'expenses') {
-    let safe;
-    if (draft.cash) safe = await getSafe(ctx, draft.cash, draft.currency || 'AFN');
-    else {
-      const { data: lines, error: linesError } = await supabase.from('ledger_entries').select('account_id')
-        .eq('exchange_code', ctx.exchangeCode).eq('document_id', Number(draft.id)).eq('account_type', 'cash').eq('deleted', false).limit(1);
-      if (linesError) throw linesError;
-      if (!lines?.[0]?.account_id) throw new Error('صندوق مرتبط با مصرف پیدا نشد.');
-      safe = await getSafeById(ctx, lines[0].account_id);
-    }
+    const currency = draft.currency || 'AFN';
     const amount = number(draft.amount);
-    if (amount <= 0) throw new Error('مبلغ مصرف باید مثبت باشد.');
-    let expenseAccount;
-    if (draft.expenseAccount) expenseAccount = await resolveLedgerAccount(ctx, draft.expenseAccount, draft.currency || 'AFN');
-    else {
+    if (!Number.isFinite(amount) || amount <= 0) throw new Error('مبلغ مصرف باید مثبت باشد.');
+    let payer;
+    if (draft.payerType === 'bank' && draft.bank) {
+      payer = bankLedgerRef(await getBankById(ctx, draft.bank, currency));
+    } else if (draft.cash) {
+      const safe = await getSafe(ctx, draft.cash, currency);
+      payer = { account_type: 'cash', account_id: String(safe.id), account_name: safe.name };
+    } else {
+      const { data: oldLines, error: linesError } = await supabase.from('ledger_entries')
+        .select('account_type,account_id,account_name')
+        .eq('exchange_code', ctx.exchangeCode).eq('document_id', Number(draft.id))
+        .in('account_type', ['cash', 'bank']).eq('deleted', false).limit(1);
+      if (linesError) throw linesError;
+      const old = oldLines?.[0];
+      if (!old?.account_id) throw new Error('حساب پرداخت‌کنندهٔ مصرف پیدا نشد.');
+      if (old.account_type === 'bank') payer = bankLedgerRef(await getBankById(ctx, old.account_id, currency));
+      else {
+        const safe = await getSafeById(ctx, old.account_id);
+        payer = { account_type: 'cash', account_id: String(safe.id), account_name: safe.name };
+      }
+    }
+    let expenseAccount = draft.expenseAccount ? await resolveLedgerAccount(ctx, draft.expenseAccount, currency) : null;
+    if (!expenseAccount) {
       const defaultExpense = await findChartAccountByType(ctx, 'expense');
       if (!defaultExpense) throw new Error('برای ویرایش این مصرف، ابتدا یک حساب از نوع «مصرف» در کدینگ ایجاد کنید.');
       expenseAccount = chartAccountLedgerRef(defaultExpense);
     }
-    const lines = [
-      { ...expenseAccount, currency: draft.currency || 'AFN', debit: amount, credit: 0 },
-      { account_type: 'cash', account_id: String(safe.id), account_name: safe.name, currency: draft.currency || 'AFN', debit: 0, credit: amount },
-    ];
-    const result = await editDocument(ctx, draft.id, draft.title, amount, draft.currency, lines);
+    const lines = buildExpenseLines({ amount, currency, expense: expenseAccount, payer });
+    const result = await editDocument(ctx, draft.id, draft.title, amount, currency, lines);
     const dateWarning = await applyDocumentDate(ctx, draft.id, draft.date);
-    const auditWarning = await writeAudit(ctx, 'update', 'expense', draft.id, 'ویرایش مصرف و سطرهای دفتر کل', null, draft);
+    const auditWarning = await writeAudit(ctx, 'update', 'expense', draft.id, 'ویرایش مصرف و حساب پرداخت‌کننده در سند دفتر کل', null, draft);
     return { id: String(draft.id), result, auditWarning, warning: dateWarning };
   }
 
   if (module === 'journal') {
-    const amount = number(draft.amount);
-    if (amount <= 0) throw new Error('مبلغ سند باید مثبت باشد.');
-    const debit = await resolveLedgerAccount(ctx, draft.debitAccount, draft.currency || 'AFN');
-    const credit = await resolveLedgerAccount(ctx, draft.creditAccount, draft.currency || 'AFN');
-    if (debit.account_type === credit.account_type && debit.account_id === credit.account_id) {
-      throw new Error('حساب بدهکار و بستانکار یکسان است.');
+    const currency = draft.currency || 'AFN';
+    const sourceRows = Array.isArray(draft.rows) && draft.rows.length ? draft.rows : [
+      { account: draft.debitAccount, debit: draft.amount, credit: 0 },
+      { account: draft.creditAccount, debit: 0, credit: draft.amount },
+    ];
+    const resolved = [];
+    for (const row of sourceRows) {
+      const debit = number(row.debit), credit = number(row.credit);
+      if ((!debit || debit === 0) && (!credit || credit === 0)) continue;
+      const account = await resolveLedgerAccount(ctx, row.account, currency);
+      resolved.push({ ...account, currency, debit, credit });
     }
-    const result = await editDocument(ctx, draft.id, draft.description, amount, draft.currency, [
-      { ...debit, debit: amount, credit: 0 },
-      { ...credit, debit: 0, credit: amount },
-    ]);
+    const lines = buildJournalLines({ rows: resolved, currency });
+    const amount = lines.reduce((sum, line) => sum + number(line.debit), 0);
+    const result = await editDocument(ctx, draft.id, draft.description, amount, currency, lines);
     const dateWarning = await applyDocumentDate(ctx, draft.id, draft.date);
-    const auditWarning = await writeAudit(ctx, 'update', 'journal', draft.id, 'ویرایش سند روزنامچه', null, draft);
+    const auditWarning = await writeAudit(ctx, 'update', 'journal', draft.id, 'ویرایش سند روزنامچهٔ چندسطری', null, draft);
     return { id: String(draft.id), result, auditWarning, warning: dateWarning };
   }
 
