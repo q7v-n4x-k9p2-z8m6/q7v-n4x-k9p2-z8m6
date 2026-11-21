@@ -1045,7 +1045,7 @@
     overflow: hidden !important;
   }
 
-  /* Menu bar and 14-item toolbar. */
+  /* Menu bar and 11-item toolbar. */
   html body .v21-workspace-shell .v21-laptop-toolbar {
     display: flex !important;
     flex: 0 0 auto !important;
@@ -1375,7 +1375,7 @@
   }
 }
 
-/* The live toolbar contains 11 shortcuts (not the obsolete 14-item layout). */
+/* The live toolbar contains 11 shortcuts; all desktop breakpoint rules use the 768px desktop threshold. */
 @media (min-width: 768px) {
   html body .v21-workspace-shell .v21-laptop-toolbar > aside.v21-module-icon-row {
     display: flex !important;
