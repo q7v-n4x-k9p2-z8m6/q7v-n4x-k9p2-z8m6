@@ -84,9 +84,10 @@ test('approved revenue policy includes all revenue and keeps cash collection in 
 test('currency records map their actual currency, buy_rate and sell_rate fields', () => {
   const rates = ratesFromCurrencyRecords([
     { currency: 'USD', buy_rate: 70, sell_rate: 72, is_active: true },
-    { currency: 'EUR', buy_rate: 75, sell_rate: 0, is_active: true },
+    { currency: 'EUR', buy_rate: 75, sell_rate: 0, rate: 75, is_active: true },
     { currency: 'IRR', accounting_rate: 0.0012, buy_rate: 0.001, sell_rate: 0.0014, is_active: true },
     { currency: 'GBP', buy_rate: 90, sell_rate: 92, is_active: false },
   ]);
   assert.deepEqual(rates, { USD: 71, IRR: 0.0012 });
+  assert.equal(Object.hasOwn(rates, 'EUR'), false, 'one-sided rate must not be accepted as a mid-rate');
 });
