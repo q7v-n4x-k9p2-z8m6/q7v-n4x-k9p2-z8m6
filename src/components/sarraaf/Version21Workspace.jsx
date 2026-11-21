@@ -16,7 +16,7 @@ import {
   CircleDollarSign, Eye, FilePlus2, ArrowDownCircle, ArrowUpCircle, Scale, Settings2,
   Archive, RotateCcw, ListChecks, CreditCard, CircleHelp, PrinterCheck,
   Languages, ShoppingBag, Smartphone, Wifi, Gamepad2, MessagesSquare, Headphones,
-  Settings, Vault, ArrowDown, ArrowUp, Info, User, Globe, ShoppingCart, Minus, Square, LifeBuoy, TrendingUp
+  Settings, Vault, ArrowDown, ArrowUp, Info, User, Globe, ShoppingCart, Minus, Square, LifeBuoy, TrendingUp, LogOut
 } from 'lucide-react';
 import SarraafLogo from '@/components/SarraafLogo';
 import { useAuth } from '@/lib/AuthContext';
@@ -517,7 +517,7 @@ export default function Version21Workspace(){
  const dailyTransactions=data.transactions.filter(t=>t.date===today());
  const profit=data.exchange.reduce((s,x)=>s+n(x.profit),0);
  const currencies=[...new Set([...data.cash.map(x=>x.currency),...data.transactions.map(x=>x.currency),'AFN'])];
- const {user:authUser}=useAuth();
+ const {user:authUser,logout}=useAuth();
  const ltDateParts=new Intl.DateTimeFormat('fa-IR-u-ca-persian',{weekday:'long',day:'numeric',month:'long',year:'numeric'}).formatToParts(new Date()).reduce((a,x)=>{a[x.type]=x.value;return a;},{});
  const ltDate=(ltDateParts.weekday||'')+'، '+(ltDateParts.day||'')+' '+(ltDateParts.month||'')+' '+(ltDateParts.year||'');
  const ltUserName=authUser?.full_name||authUser?.username||exchangeProfile?.name||'کاربر';
@@ -559,10 +559,10 @@ export default function Version21Workspace(){
 
   <header className="v21-lt-titlebar hidden lg:flex" dir="ltr" aria-label="نوار عنوان برنامه">
    <div className="v21-lt-titlebar-brand"><SarraafLogo size={22}/><span>چیدمان لپ‌تاپ حساب صراف — نسخه ۲۱</span></div>
-   <div className="v21-lt-window-controls" aria-hidden="true"><Minus/><Square/><X/></div>
+   <div className="flex items-center gap-3"><button type="button" onClick={()=>logout()} className="inline-flex items-center gap-2 rounded-md border border-rose-300 bg-rose-50 px-3 py-1.5 text-xs font-bold text-rose-800 hover:bg-rose-100" aria-label="خروج از حساب صراف"><LogOut className="h-4 w-4"/>خروج از حساب</button><div className="v21-lt-window-controls" aria-hidden="true"><Minus/><Square/><X/></div></div>
   </header>
   <section className="v21-workspace-shell flex max-h-[78vh] min-h-[640px] lg:max-h-none flex-col overflow-hidden border border-[#65798b] bg-[#eef1f4] shadow-md">
-   <header className="v21-mobile-appbar flex min-h-9 items-center justify-between px-4 py-3 text-white lg:hidden"><div className="flex min-w-0 flex-col gap-1"><b className="text-sm tracking-tight">حساب صراف</b><span className="max-w-[58vw] truncate text-[10px] text-white/75">{exchangeProfile?.name||'مدیریت مالی و حسابداری صرافی'}</span></div><div className="flex shrink-0 items-center gap-2"><span className={'v21-mobile-connection '+(dbStatus==='connected'?'is-connected':'')}>{dbStatus==='connected'?'متصل':dbStatus==='error'?'خطا':'در حال اتصال'}</span><button type="button" aria-label="تنظیمات برنامه" onClick={()=>setModal('settings')} className="grid h-10 w-10 place-items-center rounded-xl border border-white/20 bg-white/10"><Settings className="h-5 w-5"/></button></div></header>
+   <header className="v21-mobile-appbar flex min-h-9 items-center justify-between px-4 py-3 text-white lg:hidden"><div className="flex min-w-0 flex-col gap-1"><b className="text-sm tracking-tight">حساب صراف</b><span className="max-w-[58vw] truncate text-[10px] text-white/75">{exchangeProfile?.name||'مدیریت مالی و حسابداری صرافی'}</span></div><div className="flex shrink-0 items-center gap-2"><span className={'v21-mobile-connection '+(dbStatus==='connected'?'is-connected':'')}>{dbStatus==='connected'?'متصل':dbStatus==='error'?'خطا':'در حال اتصال'}</span><button type="button" onClick={()=>logout()} className="inline-flex min-h-10 items-center gap-1.5 rounded-xl border border-rose-200/50 bg-rose-500/20 px-3 text-xs font-bold text-white hover:bg-rose-500/35" aria-label="خروج از حساب صراف"><LogOut className="h-4 w-4"/>خروج</button><button type="button" aria-label="تنظیمات برنامه" onClick={()=>setModal('settings')} className="grid h-10 w-10 place-items-center rounded-xl border border-white/20 bg-white/10"><Settings className="h-5 w-5"/></button></div></header>
    {dbStatus==='error'&&<div className="mx-3 mt-2 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-800 lg:hidden">{dbError}</div>}
    {localPreview&&<div className="mx-3 mt-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900 lg:hidden">پیش‌نمایش محلی پشتیبان/نمای پاک‌شده فعال است؛ ثبت، ویرایش و ابطال تا تازه‌سازی اطلاعات واقعی غیرفعال می‌ماند.</div>}
    {/* ردیف اول: عملیات روی رکورد انتخاب‌شده */}
