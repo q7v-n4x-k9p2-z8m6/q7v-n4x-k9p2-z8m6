@@ -29,7 +29,7 @@
     "text_files": 1293,
     "native_binary_files": 3,
     "chunked_binary_files": 2,
-    "total_bytes": 17590572
+    "total_bytes": 17590449
   },
   "files": [
     {
@@ -7077,15 +7077,15 @@
     {
       "source_path": "src/a1/lib/db.js",
       "target_path": "independent-panel/source/src/a1/lib/db.js",
-      "size_bytes": 14079,
-      "sha256": "2c353a44ef475e098a94f0d48b8a768c352bf3314a88a68492e403084dd8b62c",
+      "size_bytes": 14061,
+      "sha256": "9cde53a27ae69c0708bc82caf1b3278917c7ba407c22c0f5620ce06785fd2026",
       "storage": "utf8-inline"
     },
     {
       "source_path": "src/a1/lib/demoAuth.jsx",
       "target_path": "independent-panel/source/src/a1/lib/demoAuth.jsx",
-      "size_bytes": 6279,
-      "sha256": "fac2248a4a338e4868744407aef7ef8706af8e4c5af304b4224dc8dbbedddf18",
+      "size_bytes": 6173,
+      "sha256": "0229a171c9c1dce6e7497f383cca1388ff2fcd128c4d38afd9893c03245a302c",
       "storage": "utf8-inline"
     },
     {
@@ -7147,8 +7147,8 @@
     {
       "source_path": "src/a1/lib/sandboxAuth.js",
       "target_path": "independent-panel/source/src/a1/lib/sandboxAuth.js",
-      "size_bytes": 2710,
-      "sha256": "6016f723fb99a7037cd987064c0c1ec1af4b767b20d516b9e00e1d476dd8a4fc",
+      "size_bytes": 2719,
+      "sha256": "360a4c3ec151b84291339289e04a7a7567a636e696a1f6b7db2837b127a39987",
       "storage": "utf8-inline"
     },
     {
@@ -7210,8 +7210,8 @@
     {
       "source_path": "src/a1/lib/v21LocalStore.js",
       "target_path": "independent-panel/source/src/a1/lib/v21LocalStore.js",
-      "size_bytes": 2609,
-      "sha256": "1b0be00a47a7f243d150ae2cb4b251450b416cdb6d9b73ea3838cd7c26b04c2c",
+      "size_bytes": 2593,
+      "sha256": "9a0c02ceb3dcab7d46e93d8b14a0695e507ab88e0c6a67c03dab6f2dc021a6e9",
       "storage": "utf8-inline"
     },
     {
@@ -7252,8 +7252,8 @@
     {
       "source_path": "src/a1/lib/v21Session.js",
       "target_path": "independent-panel/source/src/a1/lib/v21Session.js",
-      "size_bytes": 914,
-      "sha256": "19c002196b92725a2cc7ed95a88828c56fd18b57c5ab92a7a13d17e5132071e6",
+      "size_bytes": 922,
+      "sha256": "2181f1b76db90e0148a0d0265e8cda2eee10865b15f896cb400ca3d2e2973efd",
       "storage": "utf8-inline"
     },
     {
