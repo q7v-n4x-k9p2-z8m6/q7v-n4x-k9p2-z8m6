@@ -192,7 +192,7 @@ export function buildSettlementLines({ amount, currency, from, to }) {
 }
 
 export function makeSettlementNumber(date) {
-  const day = String(date || new Date().toISOString().slice(0, 10)).replace(/\\D/g, '');
+  const day = String(date || new Date().toISOString().slice(0, 10)).replace(/\D/g, '');
   return 'ST-' + day + '-' + Math.random().toString(36).slice(2, 6).toUpperCase();
 }
 
