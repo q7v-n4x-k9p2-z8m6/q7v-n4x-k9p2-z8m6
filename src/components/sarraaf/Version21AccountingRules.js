@@ -4,6 +4,14 @@ export const number = value => {
   return Number.isFinite(parsed) ? parsed : Number.NaN;
 };
 
+export function isBranchLedgerLine(accountType, relatedType) {
+  const type = String(accountType || '').toLowerCase();
+  // A branch document also contains its cash/bank counter-entry. Only the
+  // branch-side ledger line belongs in the branch subledger.
+  return !['cash', 'bank'].includes(type) &&
+    (String(relatedType || '').toLowerCase() === 'branch' || type === 'origin' || type === 'branch');
+}
+
 export function withRunningPartyBalances(rows, openingByCurrency = {}) {
   if (!Array.isArray(rows)) return [];
   const balances = new Map();
