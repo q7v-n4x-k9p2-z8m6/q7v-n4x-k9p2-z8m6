@@ -14,6 +14,7 @@ import {
   buildConversionLines, buildJournalLines, buildSettlementLines, makeSettlementNumber,
   positive, nonNegative, customerRef, suspenseRef,
 } from './v21Domain';
+import { isReversalDocument, cashBankOutflows, assertAvailableBalance } from './v21PostingGuards.js';
 
 const TABLES = {
   customers: 'customers',
@@ -42,7 +43,7 @@ const PERMISSION_SECTION_BY_MODULE = {
 };
 
 // اسناد مالی تاریخ‌دار: هر ثبت یا ویرایشی که تاریخش داخل دورهٔ بسته بیفتد متوقف می‌شود.
-const FINANCIAL_DATED_MODULES = ['remittance', 'expenses', 'exchange', 'journal', 'settlement', 'cashAction'];
+const FINANCIAL_DATED_MODULES = ['remittance', 'expenses', 'exchange', 'journal', 'settlement', 'cashAction', 'transactions'];
 
 async function assertFinancialDateOpen(ctx, date, module) {
   if (!FINANCIAL_DATED_MODULES.includes(module)) return;
@@ -312,6 +313,23 @@ async function accountBalanceInTx(handles, ctx, account, excludeDocumentId = nul
   return opening + movement;
 }
 
+// فقط حساب‌های نقدیِ خروجی (صندوق/بانک) باید پیش از ثبت یا ویرایش موجودی کافی داشته باشند.
+function accountTablesForLines(lines) {
+  return [...new Set(cashBankOutflows(lines).map(account => account.account_type === 'bank' ? 'bank_accounts' : 'safes'))];
+}
+
+async function assertCashBankOutflowsInTx(handles, ctx, lines, excludeDocumentId = null) {
+  for (const account of cashBankOutflows(lines)) {
+    const available = await accountBalanceInTx(handles, ctx, account, excludeDocumentId);
+    assertAvailableBalance({
+      available,
+      required: account.required,
+      accountName: account.account_name,
+      currency: account.currency,
+    });
+  }
+}
+
 function assertReason(reason) {
   const text = String(reason || '').trim();
   if (text.length < 3) throw new Error('علت ابطال الزامی است و باید حداقل سه نویسه باشد.');
@@ -379,8 +397,9 @@ export async function saveVersion21Record(module, draft) {
     const branch = await getBranch(ctx, draft.branch);
     const { settlement, settleType, counter } = await remittanceSettlement(ctx, draft, currency);
     const revenue = fee > 0 ? await revenueRef(ctx, '4010', 'درآمد کمیشن حواله') : null;
+    const settlementTables = counter ? accountTablesForLines([{ ...counter, debit: 0, credit: amount }]) : [];
 
-    return runVersion21Tx(['transfers'], async handles => {
+    return runVersion21Tx(['transfers', ...settlementTables], async handles => {
       await assertNoDuplicateOperation(handles, operationId);
       const transferNumber = await nextTransferNumberInTx(handles);
       const meta = settlementMeta(settlement, settleType, counter);
@@ -394,6 +413,7 @@ export async function saveVersion21Record(module, draft) {
         origin: draft.branch || '',
         amount,
         currency,
+        date: draft.date || null,
         rate: number(draft.rate) || null,
         fee,
         fee_currency: currency,
@@ -410,6 +430,7 @@ export async function saveVersion21Record(module, draft) {
       const party = customerRef(customer, currency);
       const counterLine = counter ? counter : suspenseRef(String(transferId), 'حواله در جریان', currency);
       const lines = buildRemittanceLines({ direction, amount, currency, party, counter: counterLine });
+      await assertCashBankOutflowsInTx(handles, ctx, lines);
       const document = await postDocumentInTx(handles, {
         doc_type: 'transfer',
         currency,
@@ -462,15 +483,17 @@ export async function saveVersion21Record(module, draft) {
     const payerType = draft.payerType === 'bank' ? 'bank' : 'cash';
     const payer = payerType === 'bank' ? await bankRef(ctx, draft.bank, currency) : await safeRef(ctx, draft.cash, currency);
     const description = String(draft.title || draft.note || '').trim() || 'مصرف';
+    const lines = buildExpenseLines({ amount, currency, expense, payer });
 
-    return runVersion21Tx([], async handles => {
+    return runVersion21Tx(accountTablesForLines(lines), async handles => {
       await assertNoDuplicateOperation(handles, operationId);
+      await assertCashBankOutflowsInTx(handles, ctx, lines);
       const document = await postDocumentInTx(handles, {
         doc_type: 'expense',
         currency,
         amount,
         description,
-        lines: buildExpenseLines({ amount, currency, expense, payer }),
+        lines,
         exchange_code: ctx.exchangeCode,
         registered_by: ctx.userName,
         registered_by_user_id: ctx.userId,
@@ -545,9 +568,11 @@ export async function saveVersion21Record(module, draft) {
       : branch
         ? suspenseRef(String(branch.id), branch.name, currency)
         : suspenseRef('', String(draft.party || 'حساب مقابل'), currency);
+    const lines = buildCashMovementLines({ kind, amount, currency, cash, counter });
 
-    return runVersion21Tx([], async handles => {
+    return runVersion21Tx(accountTablesForLines(lines), async handles => {
       await assertNoDuplicateOperation(handles, operationId);
+      await assertCashBankOutflowsInTx(handles, ctx, lines);
       const document = await postDocumentInTx(handles, {
         doc_type: kind === 'دخل' ? 'cash_in' : 'cash',
         currency,
@@ -556,7 +581,7 @@ export async function saveVersion21Record(module, draft) {
         related_type: customer ? 'customer' : branch ? 'branch' : 'none',
         related_id: customer?.id || branch?.id || null,
         related_name: draft.party || '',
-        lines: buildCashMovementLines({ kind, amount, currency, cash, counter }),
+        lines,
         exchange_code: ctx.exchangeCode,
         registered_by: ctx.userName,
         registered_by_user_id: ctx.userId,
@@ -612,6 +637,7 @@ export async function saveVersion21Record(module, draft) {
         customer_mobile: customer?.mobile || null,
         from_currency: foreignCurrency,
         from_amount: foreignAmount,
+        date: draft.date || null,
         rate,
         to_currency: baseCurrency,
         to_amount: baseAmount,
@@ -703,8 +729,9 @@ export async function saveVersion21Record(module, draft) {
     const totalDebit = resolved.reduce((sum, row) => sum + (number(row.debit) || 0), 0);
     const description = String(draft.description || '').trim() || 'سند روزنامچه';
 
-    return runVersion21Tx([], async handles => {
+    return runVersion21Tx(accountTablesForLines(lines), async handles => {
       await assertNoDuplicateOperation(handles, operationId);
+      await assertCashBankOutflowsInTx(handles, ctx, lines);
       const document = await postDocumentInTx(handles, {
         doc_type: 'journal',
         currency,
@@ -844,7 +871,7 @@ export async function loadVersion21RecordForEdit(module, record) {
     const feeDoc = documents.find(doc => doc.doc_type === 'transfer_fee' && doc.related_type === 'transfer' && Number(doc.related_id) === Number(transfer.id) && !doc.reversed);
     return {
       id: String(transfer.id),
-      date: dayOf(transfer.created_at || main.created_at),
+      date: dayOf(transfer.date || main.date || transfer.created_at || main.created_at),
       direction: transfer.direction === 'receive' ? 'دریافتی' : 'ارسالی',
       sender: transfer.sender_name || '',
       receiver: transfer.receiver_name || '',
@@ -871,7 +898,7 @@ export async function loadVersion21RecordForEdit(module, record) {
     const expenseLine = lines.find(line => line.account_type === 'suspense');
     return {
       id: String(document.id),
-      date: dayOf(document.created_at),
+      date: dayOf(document.date || document.created_at),
       title: document.description || '',
       currency: document.currency || 'AFN',
       amount: number(document.amount),
@@ -891,7 +918,7 @@ export async function loadVersion21RecordForEdit(module, record) {
     const lines = ledger.filter(line => Number(line.document_id) === documentId && !line.deleted);
     return {
       id: String(document.id),
-      date: dayOf(document.created_at),
+      date: dayOf(document.date || document.created_at),
       description: document.description || '',
       currency: document.currency || 'AFN',
       journalMode: lines.length > 2 ? 'multi' : 'simple',
@@ -902,7 +929,7 @@ export async function loadVersion21RecordForEdit(module, record) {
   if (module === 'exchange') {
     const conversion = conversions.find(row => Number(row.id) === Number(record.id));
     if (!conversion) throw new Error('معامله برای ویرایش پیدا نشد.');
-    const document = documents.find(doc => doc.related_type === 'conversion' && Number(doc.related_id) === Number(conversion.id) && !doc.reversed && doc.doc_type !== 'exchange_fee');
+    const document = documents.find(doc => doc.related_type === 'conversion' && Number(doc.related_id) === Number(conversion.id) && !isReversalDocument(doc) && !doc.reversed && doc.doc_type !== 'exchange_fee');
     if (!document) throw new Error('سند دفتر کل این معامله پیدا نشد؛ ویرایش امن ممکن نیست.');
     const lines = ledger.filter(line => Number(line.document_id) === Number(document.id) && !line.deleted);
     const cashLines = lines.filter(line => line.account_type === 'cash');
@@ -911,7 +938,7 @@ export async function loadVersion21RecordForEdit(module, record) {
     const feeDoc = documents.find(doc => doc.doc_type === 'exchange_fee' && doc.related_type === 'conversion' && Number(doc.related_id) === Number(conversion.id) && !doc.reversed);
     return {
       id: String(conversion.id),
-      date: dayOf(conversion.created_at || document.created_at),
+      date: dayOf(conversion.date || document.date || conversion.created_at || document.created_at),
       kind: conversion.kind || 'convert',
       party: conversion.customer_name && conversion.customer_id ? conversion.customer_name : '',
       foreignCurrency: conversion.from_currency || 'USD',
@@ -947,7 +974,8 @@ export async function editVersion21Record(module, draft) {
     const payer = payerType === 'bank' ? await bankRef(ctx, draft.bank, currency) : await safeRef(ctx, draft.cash, currency);
     const lines = buildExpenseLines({ amount, currency, expense, payer });
 
-    return runVersion21Tx([], async handles => {
+    return runVersion21Tx(accountTablesForLines(lines), async handles => {
+      await assertCashBankOutflowsInTx(handles, ctx, lines, Number(draft.id));
       await replaceDocumentLinesInTx(handles, Number(draft.id), {
         lines,
         description: String(draft.title || draft.note || '').trim() || 'مصرف',
@@ -956,6 +984,7 @@ export async function editVersion21Record(module, draft) {
         user: ctx.userName,
         note: 'ویرایش مصرف',
         exchangeCode: ctx.exchangeCode,
+        date: draft.date,
       });
       await auditInTx(handles, ctx, 'update', 'expense', draft.id, 'ویرایش مصرف و جایگزینی سطرهای دفتر کل', null, draft);
       return { id: String(draft.id), documentId: Number(draft.id) };
@@ -976,7 +1005,8 @@ export async function editVersion21Record(module, draft) {
     const lines = buildJournalLines({ rows: resolved, currency });
     const totalDebit = resolved.reduce((sum, row) => sum + (number(row.debit) || 0), 0);
 
-    return runVersion21Tx([], async handles => {
+    return runVersion21Tx(accountTablesForLines(lines), async handles => {
+      await assertCashBankOutflowsInTx(handles, ctx, lines, Number(draft.id));
       await replaceDocumentLinesInTx(handles, Number(draft.id), {
         lines,
         description: String(draft.description || '').trim() || 'سند روزنامچه',
@@ -985,6 +1015,7 @@ export async function editVersion21Record(module, draft) {
         user: ctx.userName,
         note: 'ویرایش سند روزنامچه',
         exchangeCode: ctx.exchangeCode,
+        date: draft.date,
       });
       await auditInTx(handles, ctx, 'update', 'journal', draft.id, 'ویرایش سند روزنامچه و جایگزینی سطرها', null, draft);
       return { id: String(draft.id), documentId: Number(draft.id) };
@@ -995,7 +1026,7 @@ export async function editVersion21Record(module, draft) {
     const conversion = (await all('conversions')).find(row => Number(row.id) === Number(draft.id) && belongsToActiveExchange(row, ctx));
     if (!conversion) throw new Error('معامله در صرافی فعال پیدا نشد؛ ویرایش متوقف شد.');
     const documents = await all('documents');
-    const document = documents.find(doc => belongsToActiveExchange(doc, ctx) && doc.related_type === 'conversion' && Number(doc.related_id) === Number(draft.id) && doc.doc_type !== 'exchange_fee' && !doc.reversed);
+    const document = documents.find(doc => belongsToActiveExchange(doc, ctx) && doc.related_type === 'conversion' && Number(doc.related_id) === Number(draft.id) && doc.doc_type !== 'exchange_fee' && !isReversalDocument(doc) && !doc.reversed);
     if (!document) throw new Error('سند دفتر کل این معامله پیدا نشد یا ابطال شده است؛ ویرایش متوقف شد.');
     const kind = ['convert', 'buy', 'sell'].includes(draft.kind) ? draft.kind : (conversion.kind || 'convert');
     const foreignCurrency = draft.foreignCurrency || 'USD';
@@ -1108,7 +1139,8 @@ export async function editVersion21Record(module, draft) {
     const counterLine = counter ? counter : suspenseRef(String(draft.id), 'حواله در جریان', currency);
     const lines = buildRemittanceLines({ direction, amount, currency, party: customerRef(customer, currency), counter: counterLine });
 
-    return runVersion21Tx(['transfers'], async handles => {
+    return runVersion21Tx(['transfers', ...accountTablesForLines(lines)], async handles => {
+      await assertCashBankOutflowsInTx(handles, ctx, lines, main.id);
       await replaceDocumentLinesInTx(handles, main.id, {
         lines,
         description: draft.note || `حواله ${direction}`,
@@ -1117,6 +1149,7 @@ export async function editVersion21Record(module, draft) {
         user: ctx.userName,
         note: 'ویرایش حواله',
         exchangeCode: ctx.exchangeCode,
+        date: draft.date,
       });
 
       if (fee > 0 && revenue) {
@@ -1130,6 +1163,7 @@ export async function editVersion21Record(module, draft) {
             user: ctx.userName,
             note: 'ویرایش کمیشن حواله',
             exchangeCode: ctx.exchangeCode,
+            date: draft.date,
           });
         } else {
           await postDocumentInTx(handles, {
@@ -1155,6 +1189,7 @@ export async function editVersion21Record(module, draft) {
         fee_currency: currency,
         total: amount + fee,
         direction: direction === 'دریافتی' ? 'receive' : 'send',
+        date: draft.date || main.date || transfer.date || null,
         origin: draft.branch || '',
         destination: draft.note || draft.branch || '',
         ...settlementMeta(settlement, settleType, counter),
@@ -1191,7 +1226,8 @@ export async function editVersion21Record(module, draft) {
       ? [{ ...cash, debit: amount, credit: 0 }, { ...other, debit: 0, credit: amount }]
       : [{ ...other, debit: Math.abs(amount), credit: 0 }, { ...cash, debit: 0, credit: Math.abs(amount) }];
 
-    return runVersion21Tx([], async handles => {
+    return runVersion21Tx(accountTablesForLines(lines), async handles => {
+      await assertCashBankOutflowsInTx(handles, ctx, lines, documentId);
       await replaceDocumentLinesInTx(handles, documentId, {
         lines,
         description: draft.description || source.description,
@@ -1200,6 +1236,7 @@ export async function editVersion21Record(module, draft) {
         user: ctx.userName,
         note: 'ویرایش گردش',
         exchangeCode: ctx.exchangeCode,
+        date: draft.date,
       });
       await auditInTx(handles, ctx, 'update', 'cash_transaction', documentId, 'ویرایش گردش و جایگزینی سطرهای دفتر کل', null, draft);
       return { id: String(documentId), documentId };
@@ -1212,10 +1249,10 @@ export async function editVersion21Record(module, draft) {
 // ── ابطال: سند معکوس برای سند اصلی و همهٔ اسناد وابسته در یک تراکنش ──
 function linkedDocuments(module, record, documents) {
   if (module === 'remittance') {
-    return documents.filter(doc => !doc.deleted && Number(doc.transfer_id) === Number(record.id));
+    return documents.filter(doc => !doc.deleted && !isReversalDocument(doc) && Number(doc.transfer_id) === Number(record.id));
   }
   if (module === 'exchange') {
-    return documents.filter(doc => !doc.deleted && doc.related_type === 'conversion' && Number(doc.related_id) === Number(record.id));
+    return documents.filter(doc => !doc.deleted && !isReversalDocument(doc) && doc.related_type === 'conversion' && Number(doc.related_id) === Number(record.id));
   }
   const documentId = Number(record.documentId || record.id);
   return documents.filter(doc => !doc.deleted && Number(doc.id) === documentId);
