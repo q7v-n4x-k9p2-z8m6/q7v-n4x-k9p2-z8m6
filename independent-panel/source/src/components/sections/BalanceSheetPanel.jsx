@@ -26,7 +26,7 @@ const readPolicy = () => {
 };
 
 // ارقام این پنل با رقم لاتین خوانده می‌شوند تا معادلهٔ ترازنامه بی‌ابهام باشد
-const money = (value) => Number(value || 0).toLocaleString('en-US', { maximumFractionDigits: 0 });
+const money = (value) => Number(value || 0).toLocaleString('en-US', { maximumFractionDigits: 2 });
 
 const SECTION_TITLES = { asset: 'دارایی', liability: 'بدهی', equity: 'سرمایه' };
 
