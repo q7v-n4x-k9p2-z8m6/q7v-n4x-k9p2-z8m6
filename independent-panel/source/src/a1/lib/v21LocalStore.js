@@ -1,15 +1,15 @@
-// a1/lib/v21LocalStore.js — وضعیت نمایشی میز کار (ماژول فعال، فیلترها)
-// انتقال مستقیم از Version21LocalStore.js سورس A1؛ کلید با نشست نمایشی همین مرورگر ساخته می‌شود.
+// وضعیت محلی میزکار نسخهٔ ۲۲ — فضای جدا از نسخهٔ ۲۱
+// داده‌های قبلی نسخهٔ ۲۱ در فضای قبلی باقی می‌مانند و این نسخه کلید جدا دارد.
 // قالب کلید از قرارداد مشترک ذخیره‌سازی (core/persistence) می‌آید تا موبایل و لپ‌تاپ یک کلید داشته باشند.
 import { tenantStateKey } from '@/core/persistence/durableState';
 
-const DB_NAME = 'hisab-sarraf-v21-local';
+const DB_NAME = 'hisab_sarraf_v22_workspace';
 const STORE = 'workspace';
 const VERSION = 1;
 
 function localKey() {
   try {
-    const user = JSON.parse(localStorage.getItem('a1_demo_session') || '{}') || {};
+    const user = JSON.parse(localStorage.getItem('hisab_sarraf_v22_session') || '{}') || {};
     return tenantStateKey(user);
   } catch {
     return tenantStateKey(null);
