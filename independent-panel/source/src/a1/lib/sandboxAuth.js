@@ -3,7 +3,7 @@
 const SUPABASE_URL = 'https://tcivyztftnoodobsdxev.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRjaXZ5enRmdG5vb2RvYnNkeGV2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU4NjIxMzgsImV4cCI6MjEwMTQzODEzOH0.eRpGnZpXil0IwyO8R7g9Dzu7aJp6AN5yKaOU-5gV34s';
 const FUNCTION_URL = `${SUPABASE_URL}/functions/v1/sarraf-sandbox-auth`;
-export const SANDBOX_TOKEN_KEY = 'a1_sandbox_auth_token';
+export const SANDBOX_TOKEN_KEY = 'hisab_sarraf_v22_sandbox_token';
 
 const messages = {
   invalid_credentials: 'نام کاربری یا رمز عبور نادرست است.',
