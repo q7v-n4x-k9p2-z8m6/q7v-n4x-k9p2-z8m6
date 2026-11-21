@@ -10,19 +10,16 @@ import {
 } from 'lucide-react';
 import LaptopTopChrome from './LaptopTopChrome';
 import { LAPTOP_GROUPS, LAPTOP_STATS } from './laptopHomeConfig';
-import { useContactSettings, visibleContacts } from '@/a1/lib/contactSettings';
 import './laptop-home.css';
 
 export default function LaptopHome({
-  data, fmt, ltDate, dbStatus,
+  data, fmt, ltDate, ltUserName, dbStatus,
   canViewModule, canModuleAction, goModule, openNew, cashAction, menuAction, printPage,
   exchangeName, exchangeCode, tradeProfit,
 }) {
   const navigate = useNavigate();
   const connected = dbStatus === 'connected';
   const todayKey = new Date().toLocaleDateString('en-CA');
-  const [contactSettings] = useContactSettings();
-  const contacts = visibleContacts(contactSettings);
 
   // «عملیات امروز» سندهای امروز است، نه سطرهای دفتر؛ هر سند چند سطر دارد.
   const todayDocuments = new Set();
@@ -40,11 +37,6 @@ export default function LaptopHome({
     return '-';
   };
 
-  // توضیح کارت با مقدار نمایش‌داده‌شده یکی است؛ متن ثابت «محاسبه‌نشده» در کنار عدد محاسبه‌شده نمی‌ماند.
-  const statNote = stat => (stat.key === 'profit' && tradeProfit && tradeProfit.computed
-    ? 'محاسبه‌شده از معاملات اسعار'
-    : stat.note);
-
   const runTile = tile => {
     if (tile.unavailable) return;
     if (tile.path) { navigate(tile.path); return; }
@@ -60,6 +52,7 @@ export default function LaptopHome({
     <div dir="rtl" lang="fa" className="a1-lap" role="region" aria-label="داشبورد حساب صراف — چیدمان لپ‌تاپ">
       {/* ردیف شناسهٔ مستقل حذف شد؛ نام، کد و تاریخ در نوار عنوان آبی هستند */}
       <LaptopTopChrome
+        homeMode
         ltDate={ltDate}
         canViewModule={canViewModule}
         canModuleAction={canModuleAction}
@@ -82,10 +75,9 @@ export default function LaptopHome({
           {LAPTOP_STATS.map(stat => {
             const Icon = stat.icon;
             return (
-              <div key={stat.key} className="a1-lap__stat" title={statNote(stat)}>
+              <div key={stat.key} className="a1-lap__stat">
                 <div className="a1-lap__stat-head"><Icon /><span>{stat.label}</span></div>
                 <b className={stat.unknown ? 'a1-lap__stat-unknown' : undefined}>{statValue(stat.key)}</b>
-                {statNote(stat) && <small className="a1-lap__stat-note">{statNote(stat)}</small>}
               </div>
             );
           })}
@@ -123,7 +115,6 @@ export default function LaptopHome({
                     >
                       <Icon />
                       <span>{tile.label}</span>
-                      {tile.unavailable && <em>غیرفعال</em>}
                     </button>
                   );
                 })}
@@ -169,15 +160,12 @@ export default function LaptopHome({
             <Printer color="#14213d" /><span>چاپ</span>
           </button>
         </div>
-        <div className="a1-lap__contacts">
-          {contacts.map((item, index) => (
-            <React.Fragment key={item.id}>
-              {index > 0 && <i aria-hidden="true" />}
-              {item.href
-                ? <a href={item.href} target="_blank" rel="noreferrer">{item.label}</a>
-                : <span>{item.label}</span>}
-            </React.Fragment>
-          ))}
+        <div className="a1-lap__status-info" dir="rtl">
+          <span id="sb-info-user">کاربر: <b>{ltUserName || 'کاربر'}</b></span>
+          <i aria-hidden="true" />
+          <span id="sb-info-date">تاریخ: <b>{ltDate}</b></span>
+          <i aria-hidden="true" />
+          <span id="sb-info-version">نسخه: <b>۲۲</b></span>
         </div>
       </footer>
     </div>
