@@ -280,7 +280,15 @@
     display: none !important;
   }
 
-  /* Main pane — the measured vertical positions from the PDF are preserved. */
+  /* Explicit desktop guard for the fixed four-item mobile dock.
+   Keep the mobile dock available below the md breakpoint only. */
+@media (min-width: 768px) {
+  html body .v21-route-mobile-dock {
+    display: none !important;
+  }
+}
+
+/* Main pane — the measured vertical positions from the PDF are preserved. */
   html body .v21-workspace-shell main {
     display: block !important;
     flex: 1 1 auto !important;
