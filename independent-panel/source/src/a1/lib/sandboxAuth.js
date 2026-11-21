@@ -16,6 +16,8 @@ const messages = {
 
 async function request(action, values = {}) {
   let response;
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 12000);
   try {
     response = await fetch(FUNCTION_URL, {
       method: 'POST',
@@ -24,11 +26,14 @@ async function request(action, values = {}) {
         apikey: SUPABASE_ANON_KEY,
       },
       body: JSON.stringify({ action, ...values }),
+      signal: controller.signal,
     });
   } catch {
-    const error = new Error('ارتباط با سرویس ورود برقرار نشد. اتصال اینترنت را بررسی کنید.');
+    const error = new Error('پاسخی از سرویس ورود دریافت نشد. اتصال اینترنت را بررسی کنید و دوباره تلاش کنید.');
     error.code = 'network_error';
     throw error;
+  } finally {
+    clearTimeout(timeoutId);
   }
 
   let result = {};
