@@ -22,6 +22,9 @@ const documentTypeLabel = (value, description = '') => {
     cash_in: 'دخل صندوق',
     journal: 'سند روزنامچه',
     transfer_fee: 'کمیشن حواله',
+    transfer_settlement: 'تسویه حواله',
+    settlement: 'انتقال بین حساب‌ها',
+    exchange_fee: 'کمیشن معامله اسعار',
     reversal: 'سند معکوس',
   }[String(value || '').toLowerCase()] || String(value || 'سند'));
 };

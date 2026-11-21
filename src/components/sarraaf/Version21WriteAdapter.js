@@ -196,7 +196,7 @@ async function getBankById(ctx, id, currency) {
   if (!Number.isSafeInteger(numericId) || numericId <= 0) throw new Error('شناسه حساب بانکی معتبر نیست.');
   const { data, error } = await supabase.from('bank_accounts')
     .select('id,bank_name,holder,currency,active')
-    .eq('exchange_code', ctx.exchangeCode).eq('id', numericId).eq('active', true).maybeSingle();
+    .eq('exchange_code', ctx.exchangeCode).eq('id', numericId).or('active.eq.true,active.is.null').maybeSingle();
   if (error) throw error;
   if (!data) throw new Error('حساب بانکی فعال در همین صرافی پیدا نشد.');
   if (String(data.currency || 'AFN') !== String(currency || 'AFN')) {
