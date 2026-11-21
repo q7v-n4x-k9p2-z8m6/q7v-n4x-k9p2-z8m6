@@ -1,0 +1,61 @@
+name: Independent panel verification
+
+on:
+  push:
+    branches:
+      - "m8x-q2v-n7k4-z9p6-حساب-صراف"
+    paths:
+      - "independent-panel/**"
+      - ".github/workflows/independent-panel-verification.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: independent-panel-verification
+  cancel-in-progress: true
+
+jobs:
+  transfer-and-build:
+    name: Verify transfer and build isolated panel
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: independent-panel
+    steps:
+      - name: Check out selected transfer branch
+        uses: actions/checkout@v4
+        with:
+          ref: "m8x-q2v-n7k4-z9p6-حساب-صراف"
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Restore binary files and verify all 1,295 manifest entries
+        run: bash restore-binary-files.sh
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: independent-panel/source/package-lock.json
+
+      - name: Install locked dependencies
+        working-directory: independent-panel/source
+        run: npm ci --no-audit --no-fund
+
+      - name: Build independent-panel source
+        working-directory: independent-panel/source
+        run: npm run build
+
+      - name: Upload build output for review
+        uses: actions/upload-artifact@v4
+        with:
+          name: independent-panel-dist-${{ github.sha }}
+          path: independent-panel/source/dist/
+          if-no-files-found: error
+          retention-days: 7
