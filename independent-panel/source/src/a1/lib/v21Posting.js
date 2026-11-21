@@ -2,6 +2,7 @@
 // این ماژول هیچ اتصال مستقیمی به base44 یا Supabase ندارد و فقط روی handleهای writeTx کار می‌کند.
 import { validateBalancedLines, number, documentDateTimestamp } from './v21Rules';
 import { seriesPrefix, seriesNumber } from './documentSeries';
+import { isReversalDocument } from './v21PostingGuards.js';
 
 const nowIso = () => new Date().toISOString();
 
@@ -118,6 +119,7 @@ export async function postDocumentInTx(handles, payload) {
 export async function reverseDocumentInTx(handles, documentId, { reason = '', registeredBy = '', exchangeCode = '', registeredByUserId = null } = {}) {
   const document = await handles.documents.get(Number(documentId));
   if (!document) throw new Error('سند برای ابطال پیدا نشد.');
+  if (isReversalDocument(document)) throw new Error('سند معکوس خودش قابل ابطال نیست؛ عملیات تکراری متوقف شد.');
   if (String(document.exchange_code || '') !== String(exchangeCode || '')) throw new Error('این سند متعلق به صرافی فعال نیست؛ ابطال متوقف شد.');
   if (document.deleted) throw new Error('سند حذف‌شده قابل ابطال نیست.');
   if (document.reversed) throw new Error(`سند ${document.doc_number} قبلاً ابطال شده است.`);
