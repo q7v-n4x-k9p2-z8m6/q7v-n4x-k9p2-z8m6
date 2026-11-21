@@ -263,8 +263,8 @@
 .a1-lap__rail {
   flex: 0 0 clamp(60px, 8.4vh, 84px);
   display: grid;
-  /* تعداد ستون‌ها برابر تعداد میان‌برهای موجود است تا آیکون‌ها دقیقاً یک ردیف کامل را پر کنند */
-  grid-template-columns: repeat(11, minmax(0, 1fr));
+  /* تعداد ستون‌ها با فهرست ۱۴ میان‌بر هماهنگ است؛ JSX مقدار دقیق را هم تنظیم می‌کند */
+  grid-template-columns: repeat(14, minmax(0, 1fr));
   gap: clamp(2px, 0.36vw, 7px);
   padding: clamp(4px, 0.6vh, 9px) clamp(5px, 0.6vw, 10px);
   border-bottom: 1px solid #b3cdec;
@@ -736,7 +736,7 @@
   cursor: not-allowed;
 }
 
-/* ۸. نوار پایین: تماس و دستورات */
+/* ۸. نوار پایین: دستورات و اطلاعات کاربر */
 .a1-lap__status {
   flex: 0 0 clamp(38px, 6.4vh, 62px);
   display: flex;
@@ -790,10 +790,10 @@
   cursor: not-allowed;
 }
 
-.a1-lap__contacts {
+.a1-lap__status-info {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: flex-start;
   gap: clamp(6px, 1vw, 18px);
   min-width: 0;
   overflow: hidden;
@@ -802,23 +802,34 @@
   white-space: nowrap;
 }
 
-.a1-lap__contacts a {
-  color: #1b4e83;
-  text-decoration: none;
-  overflow: hidden;
-  text-overflow: ellipsis;
+.a1-lap__status-info b {
+  color: #14213d;
+  font-weight: 800;
 }
 
-.a1-lap__contacts a:hover {
-  text-decoration: underline;
-}
-
-.a1-lap__contacts i {
+.a1-lap__status-info i {
   display: block;
   flex: 0 0 1px;
   width: 1px;
   height: clamp(9px, 1.4vh, 14px);
   background: #9aa8c0;
+}
+
+
+/* در لپ‌تاپ‌های باریک، همان ۱۴ میان‌بر در یک ردیف با اسکرول افقی باقی می‌مانند. */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .a1-lap__rail {
+    display: flex;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: thin;
+    -webkit-overflow-scrolling: touch;
+  }
+  .a1-lap__rail-btn {
+    flex: 1 0 64px;
+    width: 64px;
+    min-width: 64px;
+  }
 }
 
 /* ابعاد کوچک‌تر لپ‌تاپ: حفظ همان ترکیب با فشرده‌سازی نسبی
