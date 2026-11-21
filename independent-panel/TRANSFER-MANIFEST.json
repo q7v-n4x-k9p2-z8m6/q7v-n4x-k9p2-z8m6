@@ -25,11 +25,11 @@
     "existing_destination_readme_preserved": true
   },
   "summary": {
-    "source_files": 1296,
-    "text_files": 1291,
+    "source_files": 1298,
+    "text_files": 1293,
     "native_binary_files": 3,
     "chunked_binary_files": 2,
-    "total_bytes": 17581836
+    "total_bytes": 17590572
   },
   "files": [
     {
@@ -728,8 +728,8 @@
     {
       "source_path": "package.json",
       "target_path": "independent-panel/source/package.json",
-      "size_bytes": 3224,
-      "sha256": "c05ea3538d354ecdbfdba849f2d37513fe7d96b8c5754d153ba11ec89a0671da",
+      "size_bytes": 3292,
+      "sha256": "3f2180a51535f2be1600d44e20c3f87552f46bf25c4300bc239becde7448da0a",
       "storage": "utf8-inline"
     },
     {
@@ -7224,8 +7224,22 @@
     {
       "source_path": "src/a1/lib/v21Posting.js",
       "target_path": "independent-panel/source/src/a1/lib/v21Posting.js",
-      "size_bytes": 11158,
-      "sha256": "500783157161667f14bcaf07f639ae73e535bdf78469dc35174c8093a2536958",
+      "size_bytes": 11375,
+      "sha256": "66de401b4e0bc9802fba65ee864c89c84070f4cf8b6c083b9dc4327f4217aa74",
+      "storage": "utf8-inline"
+    },
+    {
+      "source_path": "src/a1/lib/v21PostingGuards.js",
+      "target_path": "independent-panel/source/src/a1/lib/v21PostingGuards.js",
+      "size_bytes": 2879,
+      "sha256": "ccae24fc045d4cc0364fd29927abfee4aac82b8a69c626478b7070fef472ed44",
+      "storage": "utf8-inline"
+    },
+    {
+      "source_path": "src/a1/lib/v21PostingGuards.test.js",
+      "target_path": "independent-panel/source/src/a1/lib/v21PostingGuards.test.js",
+      "size_bytes": 3338,
+      "sha256": "e953819919e13f1c6c2fcf8937383cc8719a843a0cfbba3a98b5d967ea1f3f6f",
       "storage": "utf8-inline"
     },
     {
@@ -7245,8 +7259,8 @@
     {
       "source_path": "src/a1/lib/v21Write.js",
       "target_path": "independent-panel/source/src/a1/lib/v21Write.js",
-      "size_bytes": 71909,
-      "sha256": "3a8e38e793890111c0e53ce46e327b00464acfbc1b98a96d2c42143a109d7e7b",
+      "size_bytes": 74143,
+      "sha256": "9956480182fd1ca2b45e015afa566c2162be4024cd66da6959ff3f4a9376c7db",
       "storage": "utf8-inline"
     },
     {
