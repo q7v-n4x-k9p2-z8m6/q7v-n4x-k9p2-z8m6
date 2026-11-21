@@ -88,7 +88,7 @@ export const useAuth = () => {
 export const HOME_BY_ROLE = {
   creator: '/builder',
   admin: '/dashboard',
-  sarraaf: '/dashboard',
+  sarraaf: '/exchanger',
   employee: '/dashboard',
   customer: '/customer',
   user: '/',
