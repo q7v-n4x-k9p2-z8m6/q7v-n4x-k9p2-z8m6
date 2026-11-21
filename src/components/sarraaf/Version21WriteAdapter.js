@@ -498,6 +498,13 @@ export async function saveVersion21Record(module, draft) {
           const safe = await getSafe(ctx, draft.cash, currency);
           settlementAccount = { account_type: 'cash', account_id: String(safe.id), account_name: safe.name };
         }
+        if (draft.direction === 'ارسالی') {
+          const available = await getAccountBalance(ctx, { ...settlementAccount, currency });
+          if (available + 0.000001 < transferAmount) {
+            throw new Error('موجودی حساب تسویه برای حوالهٔ ارسالی کافی نیست؛ ماندهٔ در دسترس ' +
+              new Intl.NumberFormat('fa-IR', { maximumFractionDigits: 2 }).format(available) + ' ' + currency + ' است.');
+          }
+        }
         const transit = {
           account_type: 'suspense',
           account_id: String(data.transfer_id),
@@ -555,6 +562,13 @@ export async function saveVersion21Record(module, draft) {
     if (module === 'cashAction' && draft.partyType === 'customer' && !customer) throw new Error('مشتری انتخاب‌شده در فهرست همین صراف پیدا نشد؛ ابتدا مشتری را ثبت کنید.');
     if (module === 'cashAction' && draft.partyType === 'branch' && !branch) throw new Error('نمایندگی انتخاب‌شده در فهرست همین صراف پیدا نشد؛ ابتدا نمایندگی را ثبت کنید.');
     let lines;
+    if (isExpense || !isCashIn) {
+      const available = await getAccountBalance(ctx, { ...payer, currency });
+      if (available + 0.000001 < amount) {
+        throw new Error('موجودی ' + payer.account_name + ' برای پرداخت کافی نیست؛ ماندهٔ در دسترس ' +
+          new Intl.NumberFormat('fa-IR', { maximumFractionDigits: 2 }).format(available) + ' ' + currency + ' است.');
+      }
+    }
     if (isExpense) {
       let expense = draft.expenseAccount ? await resolveLedgerAccount(ctx, draft.expenseAccount, currency) : null;
       if (!expense) {

@@ -337,7 +337,7 @@ export async function loadVersion21Database() {
       creditAccount: [...new Set(documentLines.filter(line => num(line.credit) > 0).map(line => line.account_name).filter(Boolean))].join(' / '),
       accountingStatus: !linkedDocument ? 'سند ندارد' : (linkedDocument.reversed ? 'ابطال شده' : isDocumentBalanced(linkedDocument.id) ? 'متوازن' : 'نیازمند بررسی'),
       party: row.customer_name && row.customer_name !== 'مشتری نقدی' ? row.customer_name : '',
-      note: row.description || '',
+      note: row.description && row.description !== kindLabel ? row.description : '',
       _sourceTable: 'conversions',
     };
   });
@@ -395,15 +395,16 @@ export async function loadVersion21Database() {
     journalGroups.get(key).push(row);
   });
   const mappedJournal = [...journalGroups.entries()].map(([key, lines]) => {
-    const first = lines[0] || {};
+    const orderedLines = [...lines].sort((a, b) => Number(a.doc_line_no || 0) - Number(b.doc_line_no || 0));
+    const first = orderedLines[0] || {};
     const documentKey = String(first.document_id);
     const linkedDocument = documentsById.get(documentKey);
     const currency = first.currency || linkedDocument?.currency || 'AFN';
-    const debitTotal = lines.reduce((sum, row) => sum + num(row.debit), 0);
-    const creditTotal = lines.reduce((sum, row) => sum + num(row.credit), 0);
-    const debitNames = [...new Set(lines.filter(row => num(row.debit) > 0).map(row => row.account_name).filter(Boolean))];
-    const creditNames = [...new Set(lines.filter(row => num(row.credit) > 0).map(row => row.account_name).filter(Boolean))];
-    const journalRows = lines.map(line => {
+    const debitTotal = orderedLines.reduce((sum, row) => sum + num(row.debit), 0);
+    const creditTotal = orderedLines.reduce((sum, row) => sum + num(row.credit), 0);
+    const debitNames = [...new Set(orderedLines.filter(row => num(row.debit) > 0).map(row => row.account_name).filter(Boolean))];
+    const creditNames = [...new Set(orderedLines.filter(row => num(row.credit) > 0).map(row => row.account_name).filter(Boolean))];
+    const journalRows = orderedLines.map(line => {
       let account = line.account_name || '';
       if (line.account_type === 'cash') account = 'صندوق: ' + (safeById.get(String(line.account_id || ''))?.name || account);
       else if (line.account_type === 'bank') account = 'بانک: ' + String(line.account_id || '');

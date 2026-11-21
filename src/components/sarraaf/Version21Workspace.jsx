@@ -692,6 +692,7 @@ export default function Version21Workspace(){
   {modal&&<div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/45 p-3"><div className="max-h-[90vh] w-full max-w-2xl overflow-auto border-2 border-slate-600 bg-[#f7f9fb] shadow-2xl"><div className="sticky top-0 flex items-center justify-between bg-gradient-to-b from-[#386b91] to-[#17466c] px-3 py-2 text-white"><b className="text-xs">{SCHEMAS[modal]?((draft.id?'ویرایش ':'ثبت ')+SCHEMAS[modal].title):modal==='cashAction'?'ثبت گردش صندوق':modal==='restore'?'بازیابی پشتیبان':modal==='settings'?'تنظیمات محلی':'راهنمای حساب صراف'}</b><button onClick={()=>setModal('')}><X className="h-4 w-4"/></button></div>
    {SCHEMAS[modal]&&<><div className="grid gap-3 p-4 sm:grid-cols-2">{SCHEMAS[modal].fields.filter(f=>{
     if(['exchange','sarraaf'].includes(data.role)&&['status','active'].includes(f[0]))return false;
+    if(modal==='exchange'&&draft.id&&f[0]==='kind')return false;
     if(modal==='expenses'&&['cash','bank'].includes(f[0]))return f[0]===(draft.payerType==='bank'?'bank':'cash');
     if(modal==='remittance'&&['settleType','cash','bank'].includes(f[0])){
       if(draft.settlement!=='instant')return false;
