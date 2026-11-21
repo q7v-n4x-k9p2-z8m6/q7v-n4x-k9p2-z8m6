@@ -1,8 +1,7 @@
 // a1/components/v21/laptopHomeConfig.js
 // فهرست منو، میان‌برها و کاشی‌های داشبورد لپ‌تاپ — عیناً بر پایهٔ ساختار تصویر مرجع.
 import {
-  Home, Users, User, Vault, RefreshCw, BarChart3, Landmark,
-  Settings, Globe, LifeBuoy,
+  Users, Vault, RefreshCw, BarChart3, Settings, LifeBuoy,
 } from 'lucide-react';
 import { CORE_MODULES, CENTERS } from '@/core/registry/modules';
 import { moduleIcon } from './moduleIcons';
