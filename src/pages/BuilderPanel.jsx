@@ -44,6 +44,7 @@ import LayoutPreviewStudio from '@/components/sarraaf/LayoutPreviewStudio';
 import LayoutHexLibrary from '@/components/sarraaf/LayoutHexLibrary';
 import { lazy } from 'react';
 const BuilderLiveAssistant = lazy(() => import('@/pages/BuilderLiveAssistant'));
+const TestingAgentPanel = lazy(() => import('@/components/sarraaf/TestingAgentPanel'));
 import UCManager from '@/components/sarraaf/UCManager';
 import RechargeManager from '@/components/sarraaf/RechargeManager';
 import Afghan5Manager from '@/components/sarraaf/Afghan5Manager';
@@ -93,6 +94,7 @@ const TAB_GROUPS = [
   { label: 'چیدمان کامپیوتر', value: 'computer_layout_preview', description: 'پیش‌نمایش مستقل چیدمان کامپیوتر' },
   { label: 'آزمایشگاه چیدمان', value: 'layout_studio', description: 'نمای موبایل و لپ‌تاپ در یک محیط آزمایشی مستقل' },
   { label: 'دستیار زنده سازنده', value: 'masnavi_ai', description: 'دستیار اختصاصی و محرمانه برای گزارش وضعیت پنل سازنده' },
+  { label: 'عامل هوشمند آزمایش', value: 'testing_agent', description: 'تهیه برنامه آزمایش با هوش مصنوعی موجود و گزارش وضعیت اجرای تست' },
   { label: 'UC پابجی', value: 'uc_manager', description: 'مدیریت خدمات UC' },
   { label: 'شارژ و بسته', value: 'recharge', description: 'مدیریت شارژ و بسته اینترنت' },
   { label: 'افغان۵', value: 'afghan5', description: 'مدیریت خدمات افغان۵' },
@@ -107,6 +109,7 @@ const TAB_CATEGORIES = [
   { label: 'کاربران و دسترسی', value: 'access', icon: Users, tabs: ['users', 'perms', 'co_creators', 'email_verify'] },
   { label: 'مالی و پلن‌ها', value: 'finance', icon: Wallet, tabs: ['plans', 'pricing', 'payments', 'withdrawals', 'trial'] },
   { label: 'ارتباطات', value: 'communication', icon: MessageSquare, tabs: ['notif', 'chat', 'masnavi_ai'] },
+  { label: 'آزمایش و کنترل کیفیت', value: 'testing', icon: FlaskConical, tabs: ['testing_agent'] },
   { label: 'خدمات و فروش', value: 'services', icon: Store, tabs: ['uc_manager', 'recharge', 'afghan5', 'sellers'] },
   { label: 'ابزار و نگهداری', value: 'tools', icon: Database, tabs: ['maintenance', 'version', 'layout_preview', 'computer_layout_preview', 'layout_studio', 'backup', 'backup_v2', 'triple_backup', 'project_transfer', 'supabase_audit', 'db_explorer'] },
 ];
@@ -132,7 +135,7 @@ export default function BuilderPanel() {
 
   // مجوزها روی شناسه تک‌تک تب‌ها اعمال می‌شوند، نه شناسه گروه‌های نمایشی.
   const visibleTabGroups = useMemo(() => TAB_GROUPS.filter((group) => {
-    const creatorOnlyTabs = ['co_creators', 'layout_preview', 'computer_layout_preview', 'layout_studio', 'supabase_audit', 'db_explorer', 'masnavi_ai'];
+    const creatorOnlyTabs = ['co_creators', 'layout_preview', 'computer_layout_preview', 'layout_studio', 'supabase_audit', 'db_explorer', 'masnavi_ai', 'testing_agent'];
     if (group.value === 'masnavi_ai' && user?.role !== 'creator') return false;
     if (group.value === 'maintenance' && user?.role !== 'creator') return false;
     if (creatorOnlyTabs.includes(group.value) && !isFullCreator) return false;
@@ -592,6 +595,24 @@ export default function BuilderPanel() {
                   status: getFeatureStatus(features || [], item.feature_key),
                 }))}
                 requestSnapshot={null}
+              />
+            </React.Suspense>
+          </TabsContent>
+        )}
+
+        {/* عامل هوشمند آزمایش — از همان هوش مصنوعی سازنده برای برنامه‌ریزی استفاده می‌کند؛ اجرای مرورگر تا اتصال runner غیرفعال است */}
+        {user?.role === 'creator' && (
+          <TabsContent value="testing_agent">
+            <React.Suspense fallback={<div className="flex items-center justify-center min-h-[30vh]"><div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" /></div>}>
+              <TestingAgentPanel
+                role={user?.role}
+                projectSnapshot={FEATURE_CATALOG.map(item => ({
+                  name: item.name,
+                  key: item.feature_key,
+                  location: item.location,
+                  critical: !!item.critical,
+                  status: getFeatureStatus(features || [], item.feature_key),
+                }))}
               />
             </React.Suspense>
           </TabsContent>
