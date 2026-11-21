@@ -1,11 +1,10 @@
-// a1/lib/demoAuth.jsx — نشست نمایشی A1
-// قرارداد AuthContext سورس A1 حفظ شده است (user, isAuthenticated, isLoadingAuth, logout)
-// اما هویت و نشست فقط محلی است: هیچ رمز، OTP، JWT یا درخواست احراز هویت ارسال نمی‌شود.
+// ورود نمایشی محیط مستقل نسخهٔ ۲۲
+// قرارداد AuthContext برای رابط حفظ شده؛ نشست و دادهٔ ورود واقعی هنوز فعال نیست.
 import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import { seedIfEmpty, ensureDemoTransactions, DEMO_ACCOUNTS } from '@/a1/lib/seed';
 import { SANDBOX_TOKEN_KEY, sandboxVerify } from '@/a1/lib/sandboxAuth';
 
-const SESSION_KEY = 'a1_demo_session';
+const SESSION_KEY = 'hisab_sarraf_v22_session';
 const AuthContext = createContext(null);
 
 export const DemoAuthProvider = ({ children }) => {
