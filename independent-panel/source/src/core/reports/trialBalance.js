@@ -89,7 +89,9 @@ export function buildTrialBalance(rawLines = [], policy = null) {
         });
       }
     });
-    rows = rows.filter((row) => !TEMPORARY.includes(classOf(row.code)));
+    rows = rows.map((row) => TEMPORARY.includes(classOf(row.code))
+      ? { ...row, debitBalance: 0, creditBalance: 0 }
+      : row);
   }
 
   const balanceByCurrency = groupedTotals(rows, (row) => row.debitBalance, (row) => row.creditBalance);
