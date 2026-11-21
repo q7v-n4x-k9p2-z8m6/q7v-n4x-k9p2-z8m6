@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { ArrowLeftRight, RefreshCw, Search } from 'lucide-react';
+import { ArrowRightLeft, RefreshCw, Search } from 'lucide-react';
 import { loadVersion21Database } from '@/components/sarraaf/Version21DataAdapter';
 import { hasPermission } from '@/lib/permissions';
 
@@ -52,7 +52,7 @@ export default function TransactionsCenter() {
       <header className="flex flex-wrap items-center justify-between gap-3 border-b-2 border-[#315e80] pb-3">
         <div className="flex items-center gap-3">
           <span className="grid h-11 w-11 place-items-center rounded-xl border border-[#b6c4cf] bg-[#edf3f7] text-[#315e80]">
-            <ArrowLeftRight className="h-5 w-5" aria-hidden="true" />
+            <ArrowRightLeft className="h-5 w-5" aria-hidden="true" />
           </span>
           <div>
             <p className="text-[10px] text-slate-500">مرکزهای مکمل / نمای فقط‌خواندنی</p>

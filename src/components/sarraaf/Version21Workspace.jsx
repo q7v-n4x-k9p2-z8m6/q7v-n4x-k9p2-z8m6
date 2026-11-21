@@ -9,7 +9,7 @@ import DailyRates from './DailyRates';
 import Version21JournalRowsEditor from './Version21JournalRowsEditor';
 import { hasPermission } from '@/lib/permissions';
 import {
-  Home, Users, Wallet, BookOpen, BookText, Search, Printer, Plus, Pencil, Trash2,
+  Home, Users, Wallet, BookOpen, BookText, Search, Printer, Plus, Pencil, Trash2, ArrowRightLeft,
   RefreshCw, Receipt, Landmark, Building2, Send, BarChart3, X, Check, ArrowLeftRight,
   ScrollText, Lock, MoreHorizontal, ChevronDown, Save, ClipboardList, FileSpreadsheet,
   Calculator, Download, Upload, Filter, Coins, Banknote, FileText, CalendarDays, MessageSquare, Bot,
@@ -42,7 +42,7 @@ const MODULES = [
   {id:'currencies',label:'تعریف اسعار',icon:Coins,group:'بخش‌های تکمیلی (بیشتر)'},
   {id:'reports',label:'گزارش عملیات',icon:FileSpreadsheet,group:'گزارشات و مطالبات'},
   {id:'profit',label:'مفاد و زیان',icon:BarChart3,group:'گزارشات و مطالبات'},
-  {id:'activity',label:'سوابق فعالیت',icon:ClipboardList,group:'بخش‌های تکمیلی (بیشتر)'},
+  {id:'activity',label:'سوابق فعالیت',icon:CalendarDays,group:'بخش‌های تکمیلی (بیشتر)'},
   {id:'errors',label:'گزارش خطاها و فیلدها',icon:CircleHelp,group:'بخش‌های تکمیلی (بیشتر)'},
   {id:'balance',label:'بیلانس عمومی',icon:Scale,group:'بخش‌های تکمیلی (بیشتر)'},
   {id:'sarraafGroups',label:'گروه و چت',icon:MessagesSquare,group:'امکانات تکمیلی',linkedModule:true,children:['گروه صرافان','ایجاد گروه','گفت‌وگوی گروهی','گفت‌وگوی خصوصی']},
@@ -536,7 +536,7 @@ export default function Version21Workspace(){
   {key:'exchange-ops',title:'عملیات صرافی',items:[
    ['خرید و فروش اسعار',ArrowLeftRight,()=>openNew('exchange')],
    ['مصارف و پرداخت‌ها',CreditCard,()=>goModule('expenses')],
-   ['مرکز معاملات',ArrowLeftRight,()=>navigate('/transactions')]
+   ['مرکز معاملات',ArrowRightLeft,()=>navigate('/transactions')]
   ]},
   {key:'accounting-reports',title:'حسابداری و گزارشات',items:[
    ['دفتر روزنامچه',ScrollText,()=>goModule('journal')],
