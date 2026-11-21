@@ -7,6 +7,16 @@ const line = (account_type, account_name, debit, credit, extra = {}) => ({
   account_type, account_name, debit, credit, currency: 'AFN', ...extra,
 });
 
+test('branch subledger excludes cash and bank counter-entries from branch documents', async () => {
+  const { isBranchLedgerLine } = await import('./Version21AccountingRules.js');
+  assert.equal(isBranchLedgerLine('suspense', 'branch'), true);
+  assert.equal(isBranchLedgerLine('origin', 'none'), true);
+  assert.equal(isBranchLedgerLine('branch', 'none'), true);
+  assert.equal(isBranchLedgerLine('cash', 'branch'), false);
+  assert.equal(isBranchLedgerLine('bank', 'branch'), false);
+  assert.equal(isBranchLedgerLine('suspense', 'customer'), false);
+});
+
 test('number treats blank values as zero but rejects malformed numeric input', () => {
   assert.equal(number(null), 0);
   assert.equal(number('  '), 0);
