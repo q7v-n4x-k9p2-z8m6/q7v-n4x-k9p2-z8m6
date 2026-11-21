@@ -1,0 +1,65 @@
+{
+  "name": "RechargeOrder",
+  "description": "A1 table: recharge_orders \u2014 \u0633\u0641\u0627\u0631\u0634 \u0634\u0627\u0631\u0698 \u0645\u0648\u0628\u0627\u06cc\u0644/\u0628\u0633\u062a\u0647",
+  "type": "object",
+  "properties": {
+    "exchange_code": {
+      "type": "string"
+    },
+    "operator_key": {
+      "type": "string"
+    },
+    "operator_name": {
+      "type": "string"
+    },
+    "operator_country": {
+      "type": "string"
+    },
+    "phone_number": {
+      "type": "string"
+    },
+    "package_type": {
+      "type": "string",
+      "default": "credit"
+    },
+    "package_name": {
+      "type": "string"
+    },
+    "amount": {
+      "type": "number",
+      "default": 0
+    },
+    "currency": {
+      "type": "string",
+      "default": "AFN"
+    },
+    "status": {
+      "type": "string",
+      "default": "pending"
+    },
+    "supplier_status": {
+      "type": "string",
+      "default": "not_submitted"
+    },
+    "tracking_number": {
+      "type": "string"
+    },
+    "receipt_data": {
+      "type": "object"
+    }
+  },
+  "required": [
+    "phone_number",
+    "package_type",
+    "amount",
+    "currency",
+    "status",
+    "supplier_status"
+  ],
+  "rls": {
+    "read": {},
+    "create": {},
+    "update": {},
+    "delete": {}
+  }
+}

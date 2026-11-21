@@ -1,0 +1,144 @@
+@import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 214 44% 96%;
+    --foreground: 216 36% 15%;
+    --card: 0 0% 100%;
+    --card-foreground: 216 36% 15%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 216 36% 15%;
+    --primary: 215 74% 28%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 213 38% 93%;
+    --secondary-foreground: 215 48% 24%;
+    --muted: 213 30% 94%;
+    --muted-foreground: 215 14% 44%;
+    --accent: 41 70% 90%;
+    --accent-foreground: 32 45% 22%;
+    --destructive: 0 62% 47%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 214 30% 87%;
+    --input: 214 30% 84%;
+    --ring: 215 74% 40%;
+    --chart-1: 215 74% 34%;
+    --chart-2: 41 72% 52%;
+    --chart-3: 200 30% 32%;
+    --chart-4: 12 55% 58%;
+    --chart-5: 150 25% 48%;
+    --radius: 0.85rem;
+    --font-heading: 'Vazirmatn', ui-sans-serif, system-ui, sans-serif;
+    --font-body: 'Vazirmatn', ui-sans-serif, system-ui, sans-serif;
+    --font-display: 'Vazirmatn', ui-sans-serif, system-ui, sans-serif;
+    --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    --sidebar-background: 216 58% 15%;
+    --sidebar-foreground: 213 30% 88%;
+    --sidebar-primary: 41 72% 56%;
+    --sidebar-primary-foreground: 216 60% 12%;
+    --sidebar-accent: 216 44% 22%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 216 36% 26%;
+    --sidebar-ring: 41 72% 56%;
+  }
+
+  .dark {
+    --background: 216 34% 10%;
+    --foreground: 213 30% 94%;
+    --card: 216 30% 14%;
+    --card-foreground: 213 30% 94%;
+    --popover: 216 30% 14%;
+    --popover-foreground: 213 30% 94%;
+    --primary: 213 62% 58%;
+    --primary-foreground: 216 44% 10%;
+    --secondary: 216 26% 19%;
+    --secondary-foreground: 213 30% 94%;
+    --muted: 216 26% 19%;
+    --muted-foreground: 213 14% 66%;
+    --accent: 216 28% 22%;
+    --accent-foreground: 41 72% 70%;
+    --destructive: 0 58% 48%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 216 24% 24%;
+    --input: 216 24% 26%;
+    --ring: 213 62% 58%;
+    --sidebar-background: 216 40% 8%;
+    --sidebar-foreground: 213 30% 88%;
+    --sidebar-primary: 41 72% 56%;
+    --sidebar-primary-foreground: 216 60% 10%;
+    --sidebar-accent: 216 34% 16%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 216 30% 18%;
+    --sidebar-ring: 41 72% 56%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  /* حلقهٔ فوکوس کنترل‌های فرم درون خود کادر رسم می‌شود؛
+     حلقهٔ پیش‌فرض مرورگر با آفست بیرونی روی کادرهای باریک بریده و جابه‌جا دیده می‌شد. */
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible {
+    outline: 2px solid hsl(var(--ring) / 0.45);
+    outline-offset: -2px;
+  }
+
+  html {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    @apply bg-background text-foreground font-body antialiased;
+    font-feature-settings: "ss01";
+  }
+
+  ::selection {
+    background: hsl(var(--primary) / 0.16);
+  }
+}
+
+@layer components {
+  .card-flat {
+    @apply rounded-2xl border border-border/70 bg-card;
+    box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04), 0 12px 28px -24px rgba(16, 24, 40, 0.45);
+  }
+
+  .num {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum";
+  }
+
+  .chip {
+    @apply inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-medium;
+  }
+
+  .divider {
+    @apply border-t border-border/60;
+  }
+}
+
+@layer utilities {
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .safe-top {
+    padding-top: env(safe-area-inset-top);
+  }
+}

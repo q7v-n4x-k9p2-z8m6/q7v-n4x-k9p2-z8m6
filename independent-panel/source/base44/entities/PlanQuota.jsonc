@@ -1,0 +1,44 @@
+{
+  "name": "PlanQuota",
+  "description": "A1 table: plan_quotas \u2014 \u0633\u0647\u0645\u06cc\u0647 \u0647\u0631 \u067e\u0644\u0646 \u0628\u0631\u0627\u06cc \u0647\u0631 \u0642\u0627\u0628\u0644\u06cc\u062a",
+  "type": "object",
+  "properties": {
+    "plan": {
+      "type": "string",
+      "default": "free"
+    },
+    "feature_key": {
+      "type": "string"
+    },
+    "max_transactions": {
+      "type": "number",
+      "default": -1
+    },
+    "max_customers": {
+      "type": "number",
+      "default": -1
+    },
+    "max_messages": {
+      "type": "number",
+      "default": -1
+    },
+    "max_prints": {
+      "type": "number",
+      "default": -1
+    },
+    "max_custom": {
+      "type": "number",
+      "default": -1
+    }
+  },
+  "required": [
+    "plan",
+    "feature_key"
+  ],
+  "rls": {
+    "read": {},
+    "create": {},
+    "update": {},
+    "delete": {}
+  }
+}

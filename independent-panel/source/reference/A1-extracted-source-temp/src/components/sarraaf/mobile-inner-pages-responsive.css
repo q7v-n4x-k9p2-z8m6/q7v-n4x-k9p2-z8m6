@@ -1,0 +1,84 @@
+/* A1 inner-page mobile presentation. CSS only; no data, permissions or financial logic. */
+@media (max-width: 1023px) {
+  html, body, #root { min-width: 0; max-width: 100%; overflow-x: clip; }
+  .v21-app-shell { width: 100%; min-width: 0; overflow-x: clip; }
+  .v21-app-shell > div.min-w-0.flex-1 { min-width: 0; width: 100%; }
+  .v21-app-shell > div.min-w-0.flex-1 > main {
+    width: 100%; min-width: 0; box-sizing: border-box;
+    padding: 10px 10px calc(88px + env(safe-area-inset-bottom)) !important;
+    overflow-x: clip;
+  }
+  .v21-app-shell > div.min-w-0.flex-1 > main > .mx-auto {
+    width: 100%; max-width: 100%; min-width: 0;
+  }
+  .workspace-page-header {
+    align-items: flex-start !important; flex-wrap: wrap !important;
+    gap: 9px !important; margin-bottom: 12px !important;
+    padding: 10px !important; border-radius: 12px !important;
+  }
+  .workspace-page-header > :first-child { min-width: 0; flex: 1 1 170px; }
+  .workspace-page-header h1 { white-space: normal !important; overflow-wrap: anywhere; font-size: 15px !important; }
+  .workspace-page-actions { flex: 1 1 100%; min-width: 0; flex-wrap: wrap !important; }
+  .workspace-page-actions > * { flex: 0 1 auto; max-width: 100%; }
+  .v21-app-shell main .grid { min-width: 0; }
+  .v21-app-shell main [class*="grid-cols-"] { min-width: 0; }
+  .v21-app-shell main [class*="col-span-"] { min-width: 0; }
+  .v21-app-shell main .flex { min-width: 0; }
+  .v21-app-shell main .flex > * { min-width: 0; }
+  .v21-app-shell main input,
+  .v21-app-shell main select,
+  .v21-app-shell main textarea,
+  [role="dialog"] input,
+  [role="dialog"] select,
+  [role="dialog"] textarea {
+    box-sizing: border-box !important; max-width: 100% !important;
+    min-width: 0 !important; min-height: 42px;
+    font-size: 16px !important;
+  }
+  .v21-app-shell main textarea,
+  [role="dialog"] textarea { min-height: 88px; }
+  .v21-app-shell main button,
+  [role="dialog"] button { touch-action: manipulation; }
+  .v21-app-shell main table,
+  [role="dialog"] table { min-width: 620px; }
+  .v21-app-shell main table thead th,
+  .v21-app-shell main table tbody td { white-space: nowrap; }
+  .v21-app-shell main .overflow-x-auto,
+  .v21-app-shell main [class*="overflow-auto"],
+  .v21-app-shell main [class*="overflow-x-scroll"] {
+    max-width: 100%; -webkit-overflow-scrolling: touch;
+  }
+  .v21-app-shell main .rounded-xl,
+  .v21-app-shell main .rounded-2xl { min-width: 0; }
+  .v21-app-shell main .p-6 { padding: 13px !important; }
+  .v21-app-shell main .p-5 { padding: 12px !important; }
+  .v21-app-shell main .gap-6 { gap: 12px !important; }
+  .v21-app-shell main .gap-5 { gap: 10px !important; }
+  .v21-app-shell main .mb-6 { margin-bottom: 13px !important; }
+  .v21-app-shell main .mb-5 { margin-bottom: 11px !important; }
+  .v21-app-shell main .text-2xl { font-size: 1.25rem !important; line-height: 1.55 !important; }
+  .v21-app-shell main .text-xl { font-size: 1.1rem !important; line-height: 1.55 !important; }
+  .v21-route-mobile-dock { min-height: 66px; padding-bottom: max(8px, env(safe-area-inset-bottom)) !important; }
+  .v21-route-mobile-dock > button,
+  .v21-route-mobile-dock > a { min-width: 0; min-height: 48px; }
+  .v21-route-mobile-sheet { width: 100% !important; max-height: 90dvh !important; }
+  .v21-route-mobile-groups { padding: 10px !important; }
+  [data-radix-dialog-overlay] { padding: 0 !important; }
+  [data-radix-dialog-content] {
+    width: calc(100% - 16px) !important; max-width: 620px !important;
+    max-height: 88dvh !important; overflow-x: hidden !important;
+    overflow-y: auto !important; box-sizing: border-box !important;
+    padding: 16px !important; border-radius: 16px !important;
+  }
+  [data-radix-dialog-content] form { min-width: 0; }
+  [data-radix-dialog-content] [class*="grid-cols-"] { grid-template-columns: minmax(0,1fr) !important; }
+}
+@media (max-width: 420px) {
+  .v21-app-shell > div.min-w-0.flex-1 > main { padding-left: 8px !important; padding-right: 8px !important; }
+  .workspace-page-header { padding: 9px !important; }
+  .workspace-page-actions > button { min-height: 40px; }
+  .v21-app-shell main .p-4 { padding: 11px !important; }
+  .v21-app-shell main .gap-4 { gap: 9px !important; }
+  .v21-route-mobile-dock { gap: 5px !important; padding-left: 7px !important; padding-right: 7px !important; }
+  .v21-route-mobile-dock > button { padding-left: 3px !important; padding-right: 3px !important; }
+}

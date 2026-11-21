@@ -1,0 +1,42 @@
+{
+  "name": "EmailOtp",
+  "description": "A1 table: email_otps \u2014 \u06a9\u062f \u06cc\u06a9\u200c\u0628\u0627\u0631\u0645\u0635\u0631\u0641 \u0627\u06cc\u0645\u06cc\u0644 (signup/reset)",
+  "type": "object",
+  "properties": {
+    "email": {
+      "type": "string"
+    },
+    "code": {
+      "type": "string"
+    },
+    "purpose": {
+      "type": "string",
+      "default": "signup"
+    },
+    "expires_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "verified": {
+      "type": "boolean",
+      "default": false
+    },
+    "attempts": {
+      "type": "number",
+      "default": 0
+    }
+  },
+  "required": [
+    "email",
+    "code",
+    "purpose",
+    "expires_at",
+    "verified"
+  ],
+  "rls": {
+    "read": {},
+    "create": {},
+    "update": {},
+    "delete": {}
+  }
+}

@@ -1,0 +1,43 @@
+{
+  "name": "JournalEntry",
+  "description": "A1 table: journal_entries \u2014 \u062b\u0628\u062a \u0633\u0627\u062f\u0647\u0654 \u0631\u0648\u0632\u0646\u0627\u0645\u0647 (\u0645\u0633\u062a\u0642\u0644 \u0627\u0632 documents \u0648 ledger_entries)",
+  "type": "object",
+  "properties": {
+    "exchange_code": {
+      "type": "string"
+    },
+    "type": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "amount": {
+      "type": "number",
+      "default": 0
+    },
+    "currency": {
+      "type": "string"
+    },
+    "related_type": {
+      "type": "string"
+    },
+    "registered_by": {
+      "type": "string"
+    },
+    "registered_by_user_id": {
+      "type": "number"
+    }
+  },
+  "required": [
+    "type",
+    "description",
+    "amount"
+  ],
+  "rls": {
+    "read": {},
+    "create": {},
+    "update": {},
+    "delete": {}
+  }
+}

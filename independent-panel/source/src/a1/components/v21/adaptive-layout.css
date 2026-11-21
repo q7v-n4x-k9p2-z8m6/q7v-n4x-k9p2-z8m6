@@ -1,0 +1,360 @@
+/* a1/components/v21/adaptive-layout.css — تنها منبع تصمیم چیدمان
+   اندازه‌ها از موتور مرکزی (adaptiveLayout.js) به‌صورت متغیرهای CSS روی ریشهٔ سند نوشته می‌شوند
+   و ساختار بر پایهٔ data-a1-* انتخاب می‌شود. این فایل آخرین بارگذاری می‌شود تا قواعد قبلی را یکدست کند. */
+
+:root {
+  --a1-icon: 22px;
+  --a1-label: 11px;
+  --a1-gap: 8px;
+  --a1-rail-cols: 7;
+  --a1-group-cols: 3;
+  --a1-group-rows: 2;
+  --a1-tile-cols: 3;
+  --a1-form-cols: 1;
+  --a1-card-cols: 1;
+}
+
+/* ---------- پوستهٔ فضای کوچک: نوار پایین و عملیات ثابت ---------- */
+html[data-a1-chrome="compact"] .a1-lap,
+html[data-a1-chrome="compact"] .a1-lap-chrome {
+  display: none !important;
+}
+
+html[data-a1-chrome="compact"] .v21-workspace-root {
+  height: auto !important;
+  max-height: none !important;
+  overflow: visible !important;
+  padding-bottom: 0 !important;
+}
+
+html[data-a1-chrome="compact"] .v21-workspace-shell {
+  padding: 0 !important;
+  height: auto !important;
+  max-height: none !important;
+  min-height: 0 !important;
+  overflow: visible !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+html[data-a1-chrome="compact"] .v21-workspace-shell .v21-mobile-bottom {
+  display: grid !important;
+}
+
+html[data-a1-chrome="compact"] .v21-workspace-shell .v21-lt-status,
+html[data-a1-chrome="compact"] .v21-workspace-shell .v21-mobile-print-row {
+  display: none !important;
+}
+
+/* محتوای صفحه فضاى نوار پایین و نوار عملیات را آزاد می‌کند */
+html[data-a1-chrome="compact"] .v21-workspace-shell main {
+  padding-bottom: calc(150px + env(safe-area-inset-bottom)) !important;
+}
+
+/* ---------- پنجرهٔ شناسهٔ صرافی در چیدمان کوچک: بالاتر از میان‌برها، همیشه دیده می‌شود ---------- */
+.a1-mobile-identity {
+  display: none;
+}
+
+html[data-a1-chrome="compact"] .a1-mobile-identity {
+  display: block !important;
+}
+
+html[data-a1-chrome="compact"] .a1-mobile-identity .a1-lap__identity {
+  flex: 0 0 auto !important;
+  padding: 2px 4px !important;
+  border: 1px solid #b7c8e6;
+  border-radius: 9px;
+  background: #eef4fb;
+}
+
+html[data-a1-chrome="compact"] .a1-mobile-identity .a1-lap__identity-window {
+  min-height: 34px;
+  padding: 0 8px !important;
+}
+
+/* ---------- پوستهٔ دسکتاپ: فقط نوار بالای مرجع ---------- */
+html[data-a1-chrome="desktop"] .v21-workspace-shell .v21-mobile-bottom,
+html[data-a1-chrome="desktop"] .v21-workspace-shell .v21-mobile-record-actions,
+html[data-a1-chrome="desktop"] .v21-workspace-shell .v21-mobile-print-row,
+html[data-a1-chrome="desktop"] .v21-workspace-shell .v21-module-icon-row-mobile,
+html[data-a1-chrome="desktop"] .v21-workspace-shell .v21-reference-mobile-shortcuts,
+html[data-a1-chrome="desktop"] .a1-mobile-actionbar {
+  display: none !important;
+}
+
+/* ---------- جدول کامل یا کارت‌های مناسب فضای کوچک ---------- */
+html[data-a1-table="cards"] .v21-workspace-shell .v21-data-table-desktop {
+  display: none !important;
+}
+
+html[data-a1-table="cards"] .v21-workspace-shell .v21-data-table-mobile {
+  display: block !important;
+}
+
+html[data-a1-table="table"] .v21-workspace-shell .v21-data-table-desktop {
+  display: block !important;
+}
+
+html[data-a1-table="table"] .v21-workspace-shell .v21-data-table-mobile {
+  display: none !important;
+}
+
+html[data-a1-table="cards"] .v21-workspace-shell .v21-record-card > .grid {
+  grid-template-columns: repeat(var(--a1-card-cols), minmax(0, 1fr)) !important;
+}
+
+/* ---------- داشبورد مرجع: تعداد ستون و اندازهٔ آیکون از موتور ---------- */
+html body .a1-lap__rail {
+  grid-template-columns: repeat(var(--a1-rail-cols), minmax(0, 1fr)) !important;
+  gap: var(--a1-gap) !important;
+}
+
+html body .a1-lap__groups {
+  grid-template-columns: repeat(var(--a1-group-cols), minmax(0, 1fr)) !important;
+  grid-template-rows: repeat(var(--a1-group-rows), minmax(0, 1fr)) !important;
+  gap: var(--a1-gap) !important;
+}
+
+html body .a1-lap__group-tiles {
+  grid-template-columns: repeat(var(--a1-tile-cols), minmax(0, 1fr)) !important;
+  gap: calc(var(--a1-gap) / 2) !important;
+}
+
+html body .a1-lap__rail-btn svg {
+  width: var(--a1-icon) !important;
+  height: var(--a1-icon) !important;
+}
+
+html body .a1-lap__tile svg {
+  width: calc(var(--a1-icon) * 0.95) !important;
+  height: calc(var(--a1-icon) * 0.95) !important;
+}
+
+html body .a1-lap__rail-btn,
+html body .a1-lap__tile {
+  font-size: var(--a1-label) !important;
+}
+
+/* نوار منوی افقی لپ‌تاپ: بدون پیمایش افقی تا فهرست کشویی منوها بیرون نزند (پایین‌تر هم تأکید شده است) */
+html[data-a1-rail="scroll"] .v21-laptop-menu-bar {
+  overflow: visible !important;
+}
+
+/* ---------- فرم‌ها: ستون‌بندی از عرض واقعی ---------- */
+html body .a1-adaptive-form-grid {
+  display: grid !important;
+  grid-template-columns: repeat(var(--a1-form-cols), minmax(0, 1fr)) !important;
+  gap: 12px !important;
+}
+
+/* ---------- پوستهٔ بیرونی در صفحهٔ میز کار: نوار تکراری پایین حذف می‌شود ---------- */
+html body:has(.v21-workspace-root) .v21-app-shell > div > nav[aria-label="ناوبری سریع برنامه"],
+html body:has(.v21-workspace-root) .v21-app-shell > footer {
+  display: none !important;
+}
+
+/* ---------- گزارش تشخیصی (فقط توسعه‌دهنده) ---------- */
+html body .a1-diag-toggle {
+  position: fixed;
+  bottom: calc(148px + env(safe-area-inset-bottom));
+  left: 8px;
+  z-index: 180;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 9px;
+  border: 1px solid #7c8fa6;
+  border-radius: 9px;
+  background: rgb(20 33 51 / 92%);
+  color: #eef4fb;
+  font-family: 'Vazirmatn', Tahoma, sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  direction: ltr;
+  box-shadow: 0 8px 20px -10px rgb(10 24 40 / 60%);
+}
+
+html[data-a1-chrome="desktop"] .a1-diag-toggle {
+  bottom: calc(72px + env(safe-area-inset-bottom));
+}
+
+html body .a1-diag-panel {
+  position: fixed;
+  bottom: calc(186px + env(safe-area-inset-bottom));
+  left: 8px;
+  z-index: 181;
+  width: min(350px, calc(100vw - 16px));
+  overflow: hidden;
+  border: 1px solid #8ea1b8;
+  border-radius: 12px;
+  background: #fff;
+  color: #1f2937;
+  font-family: 'Vazirmatn', Tahoma, sans-serif;
+  box-shadow: 0 18px 44px -18px rgb(10 26 45 / 55%);
+}
+
+html[data-a1-chrome="desktop"] .a1-diag-panel {
+  bottom: calc(112px + env(safe-area-inset-bottom));
+}
+
+@media print {
+  html body .a1-diag,
+  html body .a1-diag-toggle,
+  html body .a1-diag-panel {
+    display: none !important;
+  }
+}
+
+html[data-a1-density="dense"] .a1-lap__stats {
+  display: none !important;
+}
+
+html[data-a1-density="dense"] .a1-lap__band {
+  min-height: 0 !important;
+  padding-top: 4px !important;
+  padding-bottom: 4px !important;
+}
+
+/* ---------- منوی کشویی «عملیات» و بقیهٔ منوها نباید داخل نوار بریده شود ----------
+   نوار منو در نسخهٔ مرجع overflow-x: auto داشت و همین باعث می‌شد فهرست کشویی
+   زیر آن پنهان بماند؛ اینجا نوار بدون پیمایش افقی نمایش داده می‌شود و فهرست بالای محتوا می‌آید. */
+html body .v21-workspace-shell .v21-laptop-menu-bar {
+  overflow: visible !important;
+  flex-wrap: nowrap !important;
+  gap: clamp(2px, 0.6vw, 12px) !important;
+}
+
+html body .v21-workspace-shell .v21-laptop-menu-trigger {
+  font-size: clamp(10px, 1.15vw, 14px) !important;
+  white-space: nowrap !important;
+}
+
+/* منوی صفحهٔ جاری در چیدمان کوچک: خط زیرین، چون زمینهٔ منو شفاف است */
+html body .v21-workspace-shell .v21-laptop-menu-trigger.is-current {
+  color: #0b2742 !important;
+  font-weight: 800 !important;
+  box-shadow: inset 0 -2px 0 #b58a1e !important;
+}
+
+html body .v21-workspace-shell .v21-laptop-menu-popover {
+  z-index: 130 !important;
+  max-height: 70vh !important;
+  overflow-y: auto !important;
+}
+
+/* ---------- ردیف میان‌برها: یک ردیف، بدون بریدگی و بدون آیکون پنهان ----------
+   قاعدهٔ واحد: تمام میان‌برها در یک پنجره و در یک ردیف، با عرض مساوی و داخل قاب لپ‌تاپ می‌مانند؛
+   آیکون و نوشته یک پله کوچک‌تر شده‌اند تا هیچ آیکونی بیرون نزند و ردیف پیمایش افقی نخواهد. */
+html body .a1-lap__rail,
+html[data-a1-rail="scroll"] .a1-lap__rail {
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  align-items: stretch !important;
+  grid-template-columns: none !important;
+  gap: 3px !important;
+  padding: 3px 6px 3px !important;
+  /* ردیف دقیقاً هم‌عرض پنجرهٔ لپ‌تاپ است؛ هر چه بیشتر از این عرض باشد در همان ردیف کشویی می‌شود */
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  box-sizing: border-box !important;
+  /* ردیف میان‌برها داخل یک پنجرهٔ بسته می‌نشیند تا از قاب لپ‌تاپ بیرون نزند */
+  margin: 2px 0 3px !important;
+  border: 1px solid #9fb8d4 !important;
+  border-radius: 6px !important;
+  background: #f2f7fd !important;
+  /* هیچ آیکونی از این پنجره بیرون نمی‌زند: همهٔ دکمه‌ها داخل همین عرض جا می‌شوند */
+  overflow: hidden !important;
+  scroll-snap-type: none;
+}
+
+html body .a1-lap__rail::-webkit-scrollbar {
+  height: 4px;
+}
+
+html body .a1-lap__rail::-webkit-scrollbar-track {
+  border-radius: 999px;
+  background: #dbe7f5;
+}
+
+html body .a1-lap__rail::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: #8fb3de;
+}
+
+html body .a1-lap__rail-btn,
+html[data-a1-rail="scroll"] .a1-lap__rail-btn {
+  /* grow برای پرکردن عرض، shrink = ۰ تا هرگز زیر حد خوانا فشرده نشود */
+  /* همهٔ آیکون‌ها به یک اندازه در عرض پنجره تقسیم می‌شوند و هیچ‌کدام بیرون نمی‌زند */
+  flex: 1 1 0 !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  padding: 2px 1px !important;
+  gap: 2px !important;
+  overflow: hidden !important;
+}
+
+html body .a1-lap__rail-btn svg {
+  width: clamp(12px, 1.15vw, 17px) !important;
+  height: clamp(12px, 1.15vw, 17px) !important;
+  flex: 0 0 auto !important;
+}
+
+html body .a1-lap__rail-btn span {
+  display: -webkit-box !important;
+  width: 100% !important;
+  overflow: hidden !important;
+  font-size: clamp(7.5px, 0.55vw, 9.5px) !important;
+  line-height: 1.25 !important;
+  -webkit-line-clamp: 2 !important;
+  -webkit-box-orient: vertical !important;
+  overflow-wrap: anywhere !important;
+}
+
+/* در چیدمان کوچک (گوشی/تبلت) نوار شناسه فقط نام صرافی را نگه می‌دارد تا نمای موبایل تغییر نکند */
+html[data-a1-chrome="compact"] .a1-mobile-identity .a1-lap__identity-name span {
+  display: none !important;
+}
+
+/* ---------- پنجرهٔ شناسهٔ صرافی: در هر سه پوسته اولین ردیف است، بالاتر از عنوان و میان‌برها ----------
+   order منفی تضمین می‌کند حتی اگر در نشانه‌گذاری جای دیگری بیفتد، باز هم بالای همه بنشیند. */
+html body .a1-lap > .a1-lap__identity,
+html body .v21-workspace-root > .a1-desktop-identity,
+html body .v21-laptop-toolbar > .a1-mobile-identity {
+  order: -1 !important;
+  align-self: stretch !important;
+  margin-top: 0 !important;
+}
+
+html body .a1-desktop-identity {
+  flex: 0 0 auto !important;
+  display: block !important;
+  position: relative;
+  z-index: 40;
+}
+
+html body .a1-desktop-identity .a1-lap__identity {
+  flex: 0 0 auto !important;
+  padding: 2px clamp(6px, 0.7vw, 12px) !important;
+  border-bottom: 1px solid #b7c8e6 !important;
+  background: #eef4fb !important;
+}
+
+/* نوار عنوان دقیقاً زیر پنجرهٔ شناسه می‌نشیند؛ فاصلهٔ اضافی حذف می‌شود تا ارتفاع کم هدر جبران شود */
+html body .v21-workspace-root > .a1-lap-chrome {
+  margin-top: 0 !important;
+}
+
+/* در چیدمان کوچک، همین نوار در نوار ابزار داخلی نمایش داده می‌شود و این نسخه پنهان می‌ماند */
+html[data-a1-chrome="compact"] .a1-desktop-identity {
+  display: none !important;
+}
+
+/* در نمای کوچک‌تر، پنجرهٔ شناسه هنگام پیمایش هم بالای صفحه می‌ماند */
+html[data-a1-chrome="compact"] .v21-laptop-toolbar > .a1-mobile-identity {
+  position: sticky;
+  top: 0;
+  z-index: 45;
+  background: #eef4fb;
+}

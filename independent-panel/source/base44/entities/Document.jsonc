@@ -1,0 +1,183 @@
+{
+  "name": "Document",
+  "description": "A1 table: documents \u2014 \u0633\u0646\u062f \u0645\u0627\u0644\u06cc\u061b \u0641\u06cc\u0644\u062f\u0647\u0627\u06cc date/status/customer_id \u062f\u0631 \u0627\u06cc\u0646 \u0646\u0633\u062e\u0647 alias \u0645\u0633\u062a\u0646\u062f \u0647\u0633\u062a\u0646\u062f",
+  "type": "object",
+  "properties": {
+    "doc_number": {
+      "type": "string"
+    },
+    "exchange_code": {
+      "type": "string"
+    },
+    "doc_type": {
+      "type": "string"
+    },
+    "amount": {
+      "type": "number",
+      "default": 0
+    },
+    "currency": {
+      "type": "string"
+    },
+    "fee": {
+      "type": "number",
+      "default": 0
+    },
+    "fee_currency": {
+      "type": "string"
+    },
+    "related_type": {
+      "type": "string",
+      "default": "none"
+    },
+    "related_id": {
+      "type": "number"
+    },
+    "related_name": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "registered_by": {
+      "type": "string"
+    },
+    "registered_by_user_id": {
+      "type": "number"
+    },
+    "deleted": {
+      "type": "boolean",
+      "default": false
+    },
+    "deleted_date": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "deleted_by_name": {
+      "type": "string"
+    },
+    "delete_note": {
+      "type": "string"
+    },
+    "edited": {
+      "type": "boolean",
+      "default": false
+    },
+    "edited_date": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "edit_note": {
+      "type": "string"
+    },
+    "edited_by_name": {
+      "type": "string"
+    },
+    "transfer_id": {
+      "type": "number"
+    },
+    "reversed": {
+      "type": "boolean",
+      "default": false
+    },
+    "reversed_date": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "reversed_by": {
+      "type": "string"
+    },
+    "reverse_reason": {
+      "type": "string"
+    },
+    "customer_phone": {
+      "type": "string"
+    },
+    "customer_side": {
+      "type": "string"
+    },
+    "counter_type": {
+      "type": "string"
+    },
+    "counter_id": {
+      "type": "string"
+    },
+    "counter_side": {
+      "type": "string"
+    },
+    "pair_currency": {
+      "type": "string"
+    },
+    "pair_amount": {
+      "type": "number"
+    },
+    "rate": {
+      "type": "number"
+    },
+    "pair_tx_id": {
+      "type": "number"
+    },
+    "client_operation_id": {
+      "type": "string"
+    },
+    "date": {
+      "type": "string",
+      "format": "date",
+      "description": "Base44 alias for A1 created_at (\u0628\u0631\u0627\u06cc \u062a\u0627\u0631\u06cc\u062e \u0633\u0646\u062f \u062f\u0631 UI)"
+    },
+    "status": {
+      "type": "string",
+      "default": "posted",
+      "enum": [
+        "posted",
+        "reversed"
+      ],
+      "enumColors": [
+        "green",
+        "red"
+      ],
+      "description": "Base44 alias for A1 reversed/deleted flags"
+    },
+    "customer_id": {
+      "type": "string",
+      "description": "Base44 alias\u061b A1 \u0627\u0632 related_id/related_type \u0627\u0633\u062a\u0641\u0627\u062f\u0647 \u0645\u06cc\u200c\u06a9\u0646\u062f"
+    },
+    "customer_name": {
+      "type": "string",
+      "description": "Base44 alias for A1 related_name"
+    },
+    "counter_name": {
+      "type": "string",
+      "description": "Base44-only"
+    },
+    "registered_by_name": {
+      "type": "string",
+      "description": "Base44 alias for A1 registered_by"
+    },
+    "base_value": {
+      "type": "number",
+      "default": 0,
+      "description": "Base44-only: \u0627\u0631\u0632\u0634 \u067e\u0627\u06cc\u0647"
+    },
+    "reversed_of": {
+      "type": "string",
+      "description": "Base44-only: \u0634\u0645\u0627\u0631\u0647 \u0633\u0646\u062f \u0645\u0639\u06a9\u0648\u0633"
+    },
+    "is_demo": {
+      "type": "boolean",
+      "default": false,
+      "description": "Base44-only"
+    }
+  },
+  "required": [
+    "doc_type",
+    "currency",
+    "amount"
+  ],
+  "rls": {
+    "read": {},
+    "create": {},
+    "update": {},
+    "delete": {}
+  }
+}

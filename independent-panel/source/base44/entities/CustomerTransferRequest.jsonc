@@ -1,0 +1,72 @@
+{
+  "name": "CustomerTransferRequest",
+  "description": "A1 table: customer_transfer_requests \u2014 \u062f\u0631\u062e\u0648\u0627\u0633\u062a \u062d\u0648\u0627\u0644\u0647 \u0627\u0632 \u067e\u0646\u0644 \u0645\u0634\u062a\u0631\u06cc",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "number"
+    },
+    "exchange_code": {
+      "type": "string"
+    },
+    "direction": {
+      "type": "string"
+    },
+    "sender_name": {
+      "type": "string"
+    },
+    "sender_phone": {
+      "type": "string"
+    },
+    "receiver_name": {
+      "type": "string"
+    },
+    "receiver_phone": {
+      "type": "string"
+    },
+    "destination": {
+      "type": "string"
+    },
+    "currency": {
+      "type": "string"
+    },
+    "amount": {
+      "type": "number"
+    },
+    "rate": {
+      "type": "number"
+    },
+    "fee": {
+      "type": "number",
+      "default": 0
+    },
+    "fee_currency": {
+      "type": "string"
+    },
+    "total": {
+      "type": "number"
+    },
+    "status": {
+      "type": "string",
+      "default": "pending"
+    },
+    "transfer_no": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "direction",
+    "currency",
+    "amount",
+    "status"
+  ],
+  "rls": {
+    "read": {},
+    "create": {},
+    "update": {},
+    "delete": {}
+  }
+}

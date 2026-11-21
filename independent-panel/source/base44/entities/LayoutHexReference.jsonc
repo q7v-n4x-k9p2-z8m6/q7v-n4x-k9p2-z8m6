@@ -1,0 +1,38 @@
+{
+  "name": "LayoutHexReference",
+  "description": "A1 table: layout_hex_references \u2014 \u0645\u0631\u062c\u0639 \u0641\u0627\u06cc\u0644\u200c\u0647\u0627\u06cc \u0637\u0631\u0627\u062d\u06cc/\u062a\u0635\u0648\u06cc\u0631",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "storage_path": {
+      "type": "string"
+    },
+    "original_filename": {
+      "type": "string"
+    },
+    "mime_type": {
+      "type": "string"
+    },
+    "file_size": {
+      "type": "number"
+    },
+    "created_by": {
+      "type": "number"
+    }
+  },
+  "required": [
+    "title",
+    "storage_path"
+  ],
+  "rls": {
+    "read": {},
+    "create": {},
+    "update": {},
+    "delete": {}
+  }
+}

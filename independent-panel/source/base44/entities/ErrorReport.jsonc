@@ -1,0 +1,42 @@
+{
+  "name": "ErrorReport",
+  "description": "A1 table: error_reports",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string"
+    },
+    "exchange_code": {
+      "type": "string"
+    },
+    "error_type": {
+      "type": "string"
+    },
+    "error_message": {
+      "type": "string"
+    },
+    "stack_trace": {
+      "type": "string"
+    },
+    "device": {
+      "type": "string"
+    },
+    "app_version": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "default": "new"
+    }
+  },
+  "required": [
+    "error_type",
+    "status"
+  ],
+  "rls": {
+    "read": {},
+    "create": {},
+    "update": {},
+    "delete": {}
+  }
+}

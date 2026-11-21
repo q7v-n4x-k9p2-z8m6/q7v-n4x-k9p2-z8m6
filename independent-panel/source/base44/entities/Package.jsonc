@@ -1,0 +1,48 @@
+{
+  "name": "Package",
+  "description": "A1 table: packages \u2014 \u0628\u0633\u062a\u0647\u200c\u0647\u0627\u06cc \u0627\u0634\u062a\u0631\u0627\u06a9",
+  "type": "object",
+  "properties": {
+    "exchange_code": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "price": {
+      "type": "number",
+      "default": 0
+    },
+    "currency": {
+      "type": "string",
+      "default": "AFN"
+    },
+    "duration_days": {
+      "type": "number",
+      "default": 30
+    },
+    "features": {
+      "type": "object"
+    },
+    "active": {
+      "type": "boolean",
+      "default": true
+    }
+  },
+  "required": [
+    "name",
+    "price",
+    "currency",
+    "duration_days",
+    "active"
+  ],
+  "rls": {
+    "read": {},
+    "create": {},
+    "update": {},
+    "delete": {}
+  }
+}

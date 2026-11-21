@@ -1,0 +1,52 @@
+/* نوار عملیات ثابت پایین صفحه — نمایش فقط در پوستهٔ فضای کوچک (تصمیم موتور چیدمان) */
+html body .a1-mobile-actionbar {
+  display: none !important;
+  position: fixed !important;
+  right: 8px !important;
+  bottom: calc(76px + env(safe-area-inset-bottom)) !important;
+  left: 8px !important;
+  z-index: 165 !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 8px !important;
+  padding: 8px !important;
+  border: 1px solid #cbd9e8 !important;
+  border-radius: 14px !important;
+  background: rgb(255 255 255 / 97%) !important;
+  box-shadow: 0 10px 26px -12px rgb(16 42 67 / 45%) !important;
+  backdrop-filter: blur(10px);
+}
+
+html body .a1-mobile-actionbar__btn {
+  display: flex !important;
+  min-height: 44px !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 6px !important;
+  padding: 0 8px !important;
+  border: 1px solid #d5e2f0 !important;
+  border-radius: 11px !important;
+  background: #f6f9fc !important;
+  color: #24496d !important;
+  font-size: 12px !important;
+  font-weight: 800 !important;
+}
+
+html body .a1-mobile-actionbar__btn.is-create {
+  border-color: #9fd6ab !important;
+  background: #e8f5e9 !important;
+  color: #1b5e20 !important;
+}
+
+html body .a1-mobile-actionbar__btn.is-delete:not(:disabled) {
+  border-color: #f0b8b8 !important;
+  background: #fdeeee !important;
+  color: #a52a2a !important;
+}
+
+html body .a1-mobile-actionbar__btn:disabled {
+  opacity: 0.45 !important;
+}
+
+html[data-a1-chrome="compact"] .a1-mobile-actionbar {
+  display: grid !important;
+}

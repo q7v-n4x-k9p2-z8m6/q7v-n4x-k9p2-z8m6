@@ -1,0 +1,39 @@
+{
+  "name": "UserFeedback",
+  "description": "A1 table: user_feedback",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string"
+    },
+    "exchange_code": {
+      "type": "string"
+    },
+    "type": {
+      "type": "string",
+      "default": "suggestion"
+    },
+    "message": {
+      "type": "string"
+    },
+    "rating": {
+      "type": "number",
+      "default": 0
+    },
+    "status": {
+      "type": "string",
+      "default": "new"
+    }
+  },
+  "required": [
+    "type",
+    "message",
+    "status"
+  ],
+  "rls": {
+    "read": {},
+    "create": {},
+    "update": {},
+    "delete": {}
+  }
+}

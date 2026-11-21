@@ -1,0 +1,32 @@
+{
+  "name": "SupportMessage",
+  "description": "A1 table: support_messages",
+  "type": "object",
+  "properties": {
+    "ticket_id": {
+      "type": "string"
+    },
+    "sender_id": {
+      "type": "string"
+    },
+    "sender_name": {
+      "type": "string"
+    },
+    "message": {
+      "type": "string"
+    },
+    "attachment_url": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "ticket_id",
+    "message"
+  ],
+  "rls": {
+    "read": {},
+    "create": {},
+    "update": {},
+    "delete": {}
+  }
+}

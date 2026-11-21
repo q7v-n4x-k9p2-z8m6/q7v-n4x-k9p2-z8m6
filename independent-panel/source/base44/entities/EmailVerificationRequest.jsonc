@@ -1,0 +1,40 @@
+{
+  "name": "EmailVerificationRequest",
+  "description": "A1 table: email_verification_requests",
+  "type": "object",
+  "properties": {
+    "email": {
+      "type": "string"
+    },
+    "phone": {
+      "type": "string"
+    },
+    "username": {
+      "type": "string"
+    },
+    "code_hash": {
+      "type": "string"
+    },
+    "expires_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "verified_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "request_ip": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "email",
+    "expires_at"
+  ],
+  "rls": {
+    "read": {},
+    "create": {},
+    "update": {},
+    "delete": {}
+  }
+}

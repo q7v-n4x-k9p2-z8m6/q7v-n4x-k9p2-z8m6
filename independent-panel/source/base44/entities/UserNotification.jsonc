@@ -1,0 +1,56 @@
+{
+  "name": "UserNotification",
+  "description": "A1 table: user_notifications \u2014 \u0627\u0639\u0644\u0627\u0646 \u0627\u0631\u0633\u0627\u0644\u06cc \u0628\u0647 \u06a9\u0627\u0631\u0628\u0631\u0627\u0646/\u0646\u0642\u0634\u200c\u0647\u0627",
+  "type": "object",
+  "properties": {
+    "target_user_id": {
+      "type": "string",
+      "default": ""
+    },
+    "target_user_name": {
+      "type": "string",
+      "default": ""
+    },
+    "target_role": {
+      "type": "string",
+      "default": "all"
+    },
+    "title": {
+      "type": "string"
+    },
+    "message": {
+      "type": "string"
+    },
+    "kind": {
+      "type": "string",
+      "default": "custom"
+    },
+    "action_url": {
+      "type": "string",
+      "default": ""
+    },
+    "action_label": {
+      "type": "string",
+      "default": ""
+    },
+    "read": {
+      "type": "boolean",
+      "default": false
+    },
+    "sent_by_name": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "title",
+    "message",
+    "kind",
+    "read"
+  ],
+  "rls": {
+    "read": {},
+    "create": {},
+    "update": {},
+    "delete": {}
+  }
+}

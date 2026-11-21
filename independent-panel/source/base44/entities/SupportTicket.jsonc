@@ -1,0 +1,48 @@
+{
+  "name": "SupportTicket",
+  "description": "A1 table: support_tickets",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string"
+    },
+    "exchange_code": {
+      "type": "string"
+    },
+    "ticket_number": {
+      "type": "string"
+    },
+    "subject": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "category": {
+      "type": "string",
+      "default": "general"
+    },
+    "priority": {
+      "type": "string",
+      "default": "normal"
+    },
+    "status": {
+      "type": "string",
+      "default": "open"
+    },
+    "assigned_to": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "ticket_number",
+    "subject",
+    "status"
+  ],
+  "rls": {
+    "read": {},
+    "create": {},
+    "update": {},
+    "delete": {}
+  }
+}

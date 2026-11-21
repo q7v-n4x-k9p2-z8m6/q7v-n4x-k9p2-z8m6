@@ -1,0 +1,108 @@
+{
+  "name": "AuditLog",
+  "description": "A1 table: audit_logs \u2014 actor_name/actor_role/title \u062f\u0631 \u0627\u06cc\u0646 \u0646\u0633\u062e\u0647 alias \u0647\u0633\u062a\u0646\u062f",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "number"
+    },
+    "registered_by_user_id": {
+      "type": "number"
+    },
+    "user_name": {
+      "type": "string"
+    },
+    "user_type": {
+      "type": "string"
+    },
+    "action": {
+      "type": "string",
+      "enum": [
+        "create",
+        "update",
+        "delete",
+        "reverse",
+        "login",
+        "settings"
+      ],
+      "enumColors": [
+        "green",
+        "blue",
+        "red",
+        "yellow",
+        "gray",
+        "purple"
+      ]
+    },
+    "entity_type": {
+      "type": "string"
+    },
+    "entity_id": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "ip_address": {
+      "type": "string"
+    },
+    "device": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "default": "success"
+    },
+    "exchange_code": {
+      "type": "string"
+    },
+    "old_values": {
+      "type": "object"
+    },
+    "new_values": {
+      "type": "object"
+    },
+    "user_agent": {
+      "type": "string"
+    },
+    "target_name": {
+      "type": "string"
+    },
+    "before_value": {
+      "type": "string"
+    },
+    "after_value": {
+      "type": "string"
+    },
+    "reason": {
+      "type": "string"
+    },
+    "actor_name": {
+      "type": "string",
+      "description": "Base44 alias for A1 user_name"
+    },
+    "actor_role": {
+      "type": "string",
+      "description": "Base44-only"
+    },
+    "title": {
+      "type": "string",
+      "description": "Base44-only"
+    },
+    "is_demo": {
+      "type": "boolean",
+      "default": false,
+      "description": "Base44-only"
+    }
+  },
+  "required": [
+    "action",
+    "entity_type"
+  ],
+  "rls": {
+    "read": {},
+    "create": {},
+    "update": {},
+    "delete": {}
+  }
+}

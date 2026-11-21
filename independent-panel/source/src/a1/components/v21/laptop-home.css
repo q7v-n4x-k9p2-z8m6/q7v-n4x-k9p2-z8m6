@@ -1,0 +1,875 @@
+/* a1/components/v21/laptop-home.css
+   ترکیب اختصاصی داشبورد لپ‌تاپ: یک قاب تمام‌پنجره که با نسبت‌های یکسان در هر لپ‌تاپ باز می‌شود.
+   همهٔ اندازه‌ها نسبی (clamp بر پایهٔ عرض/ارتفاع دید) هستند تا ساختار در هر اندازه تغییر نکند. */
+
+.a1-lap,
+.a1-lap-chrome {
+  --lap-gap: clamp(5px, 0.75vh, 10px);
+  --lap-radius: clamp(3px, 0.55vh, 7px);
+  --lap-fs-xs: clamp(8px, 0.66vw, 12px);
+  --lap-fs-sm: clamp(9px, 0.8vw, 13.5px);
+  --lap-fs-md: clamp(10.5px, 0.95vw, 16px);
+  --lap-fs-lg: clamp(12px, 1.25vw, 21px);
+  --lap-line: #cfe0f3;
+  --lap-ink: #0b2a50;
+  --lap-navy: #1f5fae;
+  --lap-navy-deep: #0a2a5c;
+  --lap-icon: #1b61b8;
+  --lap-soft: #e9f2fc;
+}
+
+.a1-lap {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .a1-lap {
+    position: fixed;
+    inset: 0;
+    z-index: 60;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    height: 100dvh;
+    max-height: 100vh;
+    max-height: 100dvh;
+    overflow: hidden;
+    background: var(--lap-soft);
+    color: var(--lap-ink);
+    font-family: 'Vazirmatn', Tahoma, Arial, sans-serif;
+    font-size: var(--lap-fs-sm);
+  }
+  .a1-lap-hide {
+    display: none !important;
+  }
+}
+
+/* ۱. نوار عنوان */
+.a1-lap__titlebar {
+  flex: 0 0 clamp(26px, 3.6vh, 40px);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 clamp(10px, 1.2vw, 20px);
+  background: var(--lap-navy-deep);
+  color: #fff;
+  direction: ltr;
+}
+
+.a1-lap__brand {
+  display: flex;
+  align-items: center;
+  gap: clamp(6px, 0.7vw, 12px);
+  min-width: 0;
+  font-size: var(--lap-fs-sm);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.a1-lap__brand svg,
+.a1-lap__brand img {
+  display: block;
+  flex: 0 0 auto;
+  width: clamp(16px, 1.5vw, 22px);
+  height: clamp(16px, 1.5vw, 22px);
+}
+
+.a1-lap__brand-sep {
+  opacity: 0.45;
+}
+
+.a1-lap__brand-title {
+  overflow: hidden;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* کد صرافی در نوار عنوان */
+.a1-lap__brand-code {
+  flex: 0 0 auto;
+  direction: ltr;
+  font-size: clamp(8px, 0.62vw, 11px);
+  font-weight: 700;
+  opacity: 0.82;
+}
+
+/* تاریخ روز در نوار عنوان، کنار شناسهٔ صرافی */
+.a1-lap__brand-date {
+  flex: 0 0 auto;
+  padding-right: clamp(6px, 0.7vw, 12px);
+  border-right: 1px solid rgba(255, 255, 255, 0.3);
+  font-size: clamp(7.5px, 0.6vw, 10.5px);
+  font-weight: 500;
+  opacity: 0.9;
+  direction: rtl;
+  white-space: nowrap;
+}
+
+/* نشان وضعیت اتصال صراف روی نوار عنوان آبی */
+.a1-lap__titlebar .a1-lap__identity-status {
+  flex: 0 0 auto;
+  padding: 1px clamp(5px, 0.5vw, 8px);
+  border-color: rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.12);
+  color: #c8f2dc;
+  font-size: clamp(7.5px, 0.58vw, 10px);
+}
+
+.a1-lap__titlebar .a1-lap__identity-status.is-offline {
+  border-color: rgba(255, 160, 165, 0.6);
+  background: rgba(214, 63, 69, 0.28);
+  color: #ffd7d9;
+}
+
+.a1-lap__titlebar .a1-lap__identity-status.is-connecting {
+  border-color: rgba(255, 216, 150, 0.55);
+  background: rgba(217, 154, 32, 0.24);
+  color: #ffe6b8;
+}
+
+/* پنجرهٔ «حساب صراف | تاریخ»: نام و تاریخ در یک ردیف */
+.a1-lap__identity-name.is-inline {
+  flex-direction: row;
+  align-items: baseline;
+  gap: clamp(6px, 0.6vw, 10px);
+}
+
+.a1-lap__identity-name.is-inline .a1-lap__identity-date {
+  padding-left: clamp(6px, 0.6vw, 10px);
+  border-left: 1px solid #c2d3e6;
+}
+
+.a1-lap__controls {
+  display: flex;
+  align-items: center;
+  gap: clamp(10px, 1.5vw, 24px);
+  color: #fff;
+}
+
+.a1-lap__controls button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: inherit;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.a1-lap__controls button:hover:not(:disabled) {
+  background: rgb(255 255 255 / 18%);
+}
+
+.a1-lap__controls button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.a1-lap__controls svg {
+  display: block;
+  width: clamp(12px, 1.15vw, 16px);
+  height: clamp(12px, 1.15vw, 16px);
+  stroke-width: 1.8;
+}
+
+/* ۲. منوی اصلی */
+.a1-lap__menubar {
+  position: relative;
+  z-index: 30;
+  flex: 0 0 clamp(24px, 3.3vh, 36px);
+  display: flex;
+  align-items: center;
+  gap: clamp(10px, 2.2vw, 38px);
+  padding: 0 clamp(10px, 1.2vw, 20px);
+  background: var(--lap-navy);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.16);
+  color: #fff;
+  overflow: visible;
+}
+
+.a1-lap__menu {
+  position: relative;
+  flex: 0 0 auto;
+}
+
+.a1-lap__menu-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  height: clamp(22px, 3.1vh, 34px);
+  padding: 0 clamp(4px, 0.5vw, 9px);
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: #eaf2ff;
+  font-family: inherit;
+  font-size: var(--lap-fs-sm);
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color 0.16s ease, color 0.16s ease;
+}
+
+.a1-lap__menu-trigger:hover,
+.a1-lap__menu-trigger.is-open {
+  background: rgba(255, 255, 255, 0.14);
+  color: #fff;
+}
+
+.a1-lap__menu-popover {
+  position: absolute;
+  top: calc(100% + 3px);
+  right: 0;
+  z-index: 90;
+  min-width: clamp(150px, 14vw, 220px);
+  max-height: 60vh;
+  overflow-y: auto;
+  padding: 4px;
+  border: 1px solid #9db4cf;
+  border-radius: 6px;
+  background: #fff;
+  box-shadow: 0 10px 26px rgba(12, 36, 64, 0.24);
+}
+
+.a1-lap__menu-popover button {
+  display: block;
+  width: 100%;
+  padding: clamp(5px, 0.9vh, 9px) clamp(8px, 0.8vw, 12px);
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: #223b56;
+  font-family: inherit;
+  font-size: var(--lap-fs-xs);
+  font-weight: 600;
+  text-align: right;
+  cursor: pointer;
+}
+
+.a1-lap__menu-popover button:hover:not(:disabled) {
+  background: #eaf2fb;
+}
+
+.a1-lap__menu-popover button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* ۳. ردیف میان‌برهای ماژول */
+.a1-lap__rail {
+  flex: 0 0 clamp(60px, 8.4vh, 84px);
+  display: grid;
+  /* تعداد ستون‌ها برابر تعداد میان‌برهای موجود است تا آیکون‌ها دقیقاً یک ردیف کامل را پر کنند */
+  grid-template-columns: repeat(11, minmax(0, 1fr));
+  gap: clamp(2px, 0.36vw, 7px);
+  padding: clamp(4px, 0.6vh, 9px) clamp(5px, 0.6vw, 10px);
+  border-bottom: 1px solid #b3cdec;
+  background: linear-gradient(180deg, #e6f1fd 0%, #cfe3fa 100%);
+}
+
+.a1-lap__rail-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(2px, 0.5vh, 6px);
+  min-width: 0;
+  padding: clamp(2px, 0.5vh, 6px) 2px;
+  border: 1px solid #c5d5e9;
+  border-radius: var(--lap-radius);
+  background: #ffffff;
+  color: var(--lap-ink);
+  font-family: inherit;
+  font-size: clamp(7.5px, 0.6vw, 11.5px);
+  font-weight: 700;
+  line-height: 1.25;
+  text-align: center;
+  box-shadow: 0 1px 2px rgba(20, 40, 90, 0.08);
+  cursor: pointer;
+  overflow: hidden;
+  transition: border-color 0.16s ease, background-color 0.16s ease;
+}
+
+.a1-lap__rail-btn svg {
+  display: block;
+  flex: 0 0 auto;
+  width: clamp(16px, 1.7vw, 29px);
+  height: clamp(16px, 1.7vw, 29px);
+  color: var(--lap-icon);
+  stroke-width: 2;
+  shape-rendering: geometricPrecision;
+}
+
+.a1-lap__rail-btn span {
+  display: block;
+  width: 100%;
+  overflow-wrap: anywhere;
+}
+
+.a1-lap__rail-btn:hover:not(:disabled) {
+  border-color: #8fb3de;
+  background: #eaf3ff;
+}
+
+.a1-lap__rail-btn.is-active {
+  border-color: #4a7bc8;
+  background: #dce8fa;
+}
+
+.a1-lap__rail-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* ۳.۱ پنجرهٔ شناسهٔ صرافی: نام و برند و وضعیت آنلاین/آفلاین،
+   بالاتر از همه در ابتدای صفحه قرار می‌گیرد و اندازهٔ خودش را نگه می‌دارد. */
+.a1-lap__identity {
+  flex: 0 0 clamp(28px, 3.8vh, 36px);
+  display: flex;
+  align-items: center;
+  padding: clamp(2px, 0.35vh, 4px) clamp(8px, 0.9vw, 14px);
+  border-bottom: 1px solid #b7c8e6;
+  background: linear-gradient(180deg, #e9f1fb 0%, #dde8f6 100%);
+}
+
+.a1-lap__identity-window {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: clamp(8px, 1vw, 16px);
+  width: 100%;
+  height: 100%;
+  padding: 0 clamp(8px, 0.9vw, 14px);
+  border: 1px solid #9fb8d4;
+  border-radius: var(--lap-radius);
+  background: #ffffff;
+  box-shadow: 0 2px 7px rgba(16, 42, 74, 0.14);
+  overflow: hidden;
+}
+
+.a1-lap__identity-brand {
+  display: flex;
+  align-items: center;
+  gap: clamp(6px, 0.7vw, 10px);
+  min-width: 0;
+}
+
+.a1-lap__identity-brand > svg {
+  display: block;
+  flex: 0 0 auto;
+  width: clamp(14px, 1.25vw, 18px);
+  height: clamp(14px, 1.25vw, 18px);
+}
+
+.a1-lap__identity-name {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.25;
+}
+
+.a1-lap__identity-name b {
+  overflow: hidden;
+  color: var(--lap-ink);
+  font-size: clamp(9.5px, 0.8vw, 12.5px);
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.a1-lap__identity-name span {
+  overflow: hidden;
+  color: #5b7391;
+  font-size: clamp(7.5px, 0.6vw, 11px);
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.a1-lap__identity-status {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: clamp(4px, 0.45vw, 7px);
+  padding: clamp(2px, 0.35vh, 4px) clamp(7px, 0.7vw, 11px);
+  border: 1px solid #a5d9be;
+  border-radius: 999px;
+  background: #e7f7ee;
+  color: #0f7b4a;
+  font-size: clamp(8px, 0.62vw, 10.5px);
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.a1-lap__identity-dot {
+  display: block;
+  flex: 0 0 auto;
+  width: clamp(6px, 0.5vw, 8px);
+  height: clamp(6px, 0.5vw, 8px);
+  border-radius: 999px;
+  background: currentColor;
+}
+
+.a1-lap__identity-status.is-offline {
+  border-color: #f0b4b7;
+  background: #fdeaea;
+  color: #a4262c;
+}
+
+.a1-lap__identity-status.is-connecting {
+  border-color: #f0d3a0;
+  background: #fff5e2;
+  color: #8a5b00;
+}
+
+/* ۴. ناحیهٔ محتوا */
+.a1-lap__main {
+  flex: 1 1 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--lap-gap);
+  padding: clamp(4px, 0.6vh, 9px) clamp(8px, 1vw, 16px);
+  /* در ارتفاع کم، محتوا بریده نمی‌شود؛ فقط اسکرول عمودی داخل همین ناحیه فعال می‌شود */
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: #a9bed6 transparent;
+}
+
+.a1-lap__main::-webkit-scrollbar {
+  width: 6px;
+}
+
+.a1-lap__main::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: #a9bed6;
+}
+
+.a1-lap__band {
+  flex: 0 0 clamp(32px, 5.2vh, 54px);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: clamp(6px, 0.8vw, 14px);
+  padding: 0 clamp(8px, 1.1vw, 18px);
+  border: 1px solid #bcd0e8;
+  border-radius: var(--lap-radius);
+  background: linear-gradient(180deg, #d8e9fd 0%, #bfd9f7 100%);
+  color: #08386c;
+}
+
+.a1-lap__band-date {
+  display: flex;
+  align-items: center;
+  justify-self: start;
+  gap: clamp(4px, 0.6vw, 10px);
+  min-width: 0;
+  font-size: var(--lap-fs-md);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.a1-lap__band-date svg {
+  display: block;
+  flex: 0 0 auto;
+  width: clamp(15px, 1.7vw, 26px);
+  height: clamp(15px, 1.7vw, 26px);
+  color: var(--lap-icon);
+}
+
+.a1-lap__band-title {
+  margin: 0;
+  justify-self: center;
+  font-size: var(--lap-fs-lg);
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.a1-lap__band-home {
+  justify-self: end;
+  width: clamp(16px, 1.8vw, 30px);
+  height: clamp(16px, 1.8vw, 30px);
+  color: var(--lap-icon);
+  stroke-width: 2;
+}
+
+/* ۵. کارت‌های خلاصه */
+.a1-lap__stats {
+  flex: 0 0 clamp(50px, 8.4vh, 82px);
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--lap-gap);
+}
+
+.a1-lap__stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(2px, 0.6vh, 7px);
+  min-width: 0;
+  padding: 2px 6px;
+  border: 1px solid #bfd8f4;
+  border-radius: var(--lap-radius);
+  background: linear-gradient(180deg, #f7fbff 0%, #e4f0fd 100%);
+  box-shadow: 0 1px 3px rgba(20, 60, 120, 0.1);
+}
+
+.a1-lap__stat-head {
+  display: flex;
+  align-items: center;
+  gap: clamp(4px, 0.5vw, 9px);
+  min-width: 0;
+  font-size: var(--lap-fs-sm);
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.a1-lap__stat-head svg {
+  display: block;
+  flex: 0 0 auto;
+  width: clamp(15px, 1.6vw, 25px);
+  height: clamp(15px, 1.6vw, 25px);
+  color: var(--lap-icon);
+  stroke-width: 2;
+  shape-rendering: geometricPrecision;
+}
+
+.a1-lap__stat b {
+  font-size: var(--lap-fs-lg);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+/* مقدار نامشخص (مفاد معاملات) و منبع هر کارت */
+.a1-lap__stat-unknown {
+  color: #8a5b00;
+  font-size: var(--lap-fs-sm) !important;
+  font-weight: 800 !important;
+}
+
+.a1-lap__stat-note {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  color: #587089;
+  font-size: clamp(7px, 0.56vw, 9.5px);
+  font-weight: 600;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ۶. شش گروه امکانات */
+.a1-lap__groups {
+  flex: 1 1 0;
+  /* کف ارتفاع: کاشی‌ها هرگز تا حد ناخوانایی فشرده نمی‌شوند؛ کفایت نبود فضا با اسکرول جبران می‌شود */
+  min-height: clamp(168px, 25vh, 300px);
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-rows: repeat(2, minmax(0, 1fr));
+  gap: var(--lap-gap);
+}
+
+.a1-lap__group {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  border: 1px solid var(--lap-line);
+  border-radius: var(--lap-radius);
+  background: var(--lap-soft);
+  box-shadow: 0 1px 3px rgba(20, 40, 90, 0.08);
+}
+
+.a1-lap__group-title {
+  flex: 0 0 clamp(22px, 3.4vh, 38px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 8px;
+  background: linear-gradient(180deg, #bfd9f7 0%, #d3e6fc 100%);
+  border-bottom: 1px solid #b3cdec;
+  color: #08386c;
+  font-size: var(--lap-fs-md);
+  font-weight: 800;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.a1-lap__group-tiles {
+  flex: 1 1 0;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: clamp(3px, 0.4vw, 7px);
+  padding: clamp(3px, 0.5vh, 7px);
+}
+
+.a1-lap__tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(2px, 0.5vh, 6px);
+  min-width: 0;
+  min-height: 0;
+  padding: 2px 3px;
+  overflow: hidden;
+  border: 1px solid #cbdcf0;
+  border-radius: var(--lap-radius);
+  background: #ffffff;
+  color: var(--lap-ink);
+  font-family: inherit;
+  font-size: clamp(8px, 0.74vw, 13px);
+  font-weight: 700;
+  line-height: 1.25;
+  text-align: center;
+  box-shadow: 0 1px 2px rgba(20, 40, 90, 0.08);
+  cursor: pointer;
+  transition: border-color 0.16s ease, background-color 0.16s ease;
+}
+
+.a1-lap__tile svg {
+  display: block;
+  flex: 0 0 auto;
+  width: clamp(16px, 1.85vw, 32px);
+  height: clamp(16px, 1.85vw, 32px);
+  color: var(--lap-icon);
+  stroke-width: 2;
+  shape-rendering: geometricPrecision;
+}
+
+.a1-lap__tile span {
+  display: block;
+  width: 100%;
+  overflow-wrap: anywhere;
+}
+
+.a1-lap__tile:hover:not(:disabled) {
+  border-color: #8fb3de;
+  background: #eaf3ff;
+}
+
+.a1-lap__tile:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ۷. عملیات سریع */
+.a1-lap__quick {
+  flex: 0 0 clamp(56px, 9.2vh, 100px);
+  display: flex;
+  flex-direction: column;
+  gap: clamp(3px, 0.5vh, 7px);
+  padding: clamp(4px, 0.7vh, 9px) clamp(6px, 0.7vw, 12px);
+  border: 1px solid #b3cdec;
+  border-radius: var(--lap-radius);
+  background: #dae8fa;
+}
+
+.a1-lap__quick-title {
+  flex: 0 0 auto;
+  font-size: var(--lap-fs-md);
+  font-weight: 800;
+  color: var(--lap-ink);
+}
+
+.a1-lap__quick-actions {
+  flex: 1 1 0;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: clamp(4px, 0.55vw, 11px);
+}
+
+.a1-lap__quick-actions > button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(2px, 0.5vh, 6px);
+  min-width: 0;
+  min-height: 0;
+  padding: 2px 4px;
+  overflow: hidden;
+  border: 1px solid #c5d5e9;
+  border-radius: var(--lap-radius);
+  background: #ffffff;
+  color: var(--lap-ink);
+  font-family: inherit;
+  font-size: clamp(8.5px, 0.78vw, 14px);
+  font-weight: 700;
+  line-height: 1.25;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: border-color 0.16s ease, background-color 0.16s ease;
+}
+
+.a1-lap__quick-actions > button svg {
+  display: block;
+  flex: 0 0 auto;
+  width: clamp(15px, 1.55vw, 25px);
+  height: clamp(15px, 1.55vw, 25px);
+  color: var(--lap-icon);
+  stroke-width: 2;
+  shape-rendering: geometricPrecision;
+}
+
+.a1-lap__quick-actions > button:hover:not(:disabled) {
+  border-color: #8fb3de;
+  background: #eaf3ff;
+}
+
+.a1-lap__quick-actions > button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* ۸. نوار پایین: تماس و دستورات */
+.a1-lap__status {
+  flex: 0 0 clamp(38px, 6.4vh, 62px);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: clamp(8px, 1vw, 18px);
+  padding: 0 clamp(8px, 1vw, 16px);
+  border-top: 1px solid #b3cdec;
+  background: #dae8fa;
+}
+
+.a1-lap__status-actions {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: stretch;
+  gap: clamp(6px, 0.7vw, 12px);
+}
+
+.a1-lap__action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(3px, 0.4vw, 7px);
+  min-width: clamp(52px, 5.4vw, 92px);
+  padding: clamp(2px, 0.45vh, 5px) clamp(6px, 0.7vw, 12px);
+  border: 1px solid #9fb2c3;
+  border-radius: var(--lap-radius);
+  background: #fff;
+  color: #29465f;
+  font-family: inherit;
+  font-size: var(--lap-fs-xs);
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.a1-lap__action svg {
+  display: block;
+  flex: 0 0 auto;
+  width: clamp(12px, 1.1vw, 18px);
+  height: clamp(12px, 1.1vw, 18px);
+}
+
+.a1-lap__action:hover:not(:disabled) {
+  border-color: #5b83a6;
+  background: #f4f9fd;
+}
+
+.a1-lap__action:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.a1-lap__contacts {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: clamp(6px, 1vw, 18px);
+  min-width: 0;
+  overflow: hidden;
+  font-size: var(--lap-fs-xs);
+  color: #3c536b;
+  white-space: nowrap;
+}
+
+.a1-lap__contacts a {
+  color: #1b4e83;
+  text-decoration: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.a1-lap__contacts a:hover {
+  text-decoration: underline;
+}
+
+.a1-lap__contacts i {
+  display: block;
+  flex: 0 0 1px;
+  width: 1px;
+  height: clamp(9px, 1.4vh, 14px);
+  background: #9aa8c0;
+}
+
+/* ابعاد کوچک‌تر لپ‌تاپ: حفظ همان ترکیب با فشرده‌سازی نسبی
+   (ارتفاع‌های ۵۰۰ و ۶۰۰ پیکسل هم زیر همین قاعده پوشش داده می‌شوند) */
+@media (min-width: 768px) and (max-height: 700px) {
+  .a1-lap {
+    --lap-gap: 4px;
+  }
+  .a1-lap__rail {
+    flex: 0 0 clamp(62px, 7.8vh, 70px);
+  }
+  .a1-lap__quick {
+    flex: 0 0 clamp(54px, 9vh, 74px);
+  }
+  .a1-lap__band {
+    flex: 0 0 clamp(28px, 4.4vh, 40px);
+  }
+  .a1-lap__stats {
+    flex: 0 0 clamp(46px, 7.4vh, 62px);
+  }
+  .a1-lap__group-title {
+    flex: 0 0 clamp(19px, 3vh, 28px);
+    font-size: clamp(10px, 1.05vw, 14px);
+  }
+  .a1-lap__groups {
+    min-height: 150px;
+  }
+  .a1-lap__tile svg {
+    width: clamp(15px, 1.6vw, 24px);
+    height: clamp(15px, 1.6vw, 24px);
+  }
+  .a1-lap__stat-head {
+    font-size: clamp(8px, 0.72vw, 11px);
+  }
+}
+
+/* کاشی‌های خارج از مرجع نسخهٔ ۲۱: غیرفعال و با برچسب روشن */
+.a1-lap__tile.is-unavailable,
+.a1-lap__tile.is-unavailable:hover {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+  border-color: #c9d3e2;
+  box-shadow: none;
+}
+
+.a1-lap__tile em {
+  display: block;
+  margin-top: 1px;
+  font-size: 8px;
+  font-style: normal;
+  font-weight: 700;
+  color: #9a2f2f;
+}

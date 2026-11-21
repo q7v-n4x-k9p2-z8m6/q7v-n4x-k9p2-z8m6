@@ -1,0 +1,60 @@
+{
+  "name": "Safe",
+  "description": "A1 table: safes",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "currency": {
+      "type": "string"
+    },
+    "opening_balance": {
+      "type": "number",
+      "default": 0
+    },
+    "active": {
+      "type": "boolean",
+      "default": true
+    },
+    "display_order": {
+      "type": "number",
+      "default": 0
+    },
+    "exchange_code": {
+      "type": "string"
+    },
+    "registered_by": {
+      "type": "string"
+    },
+    "registered_by_user_id": {
+      "type": "number"
+    },
+    "opening_value": {
+      "type": "number",
+      "default": 0,
+      "description": "Base44-only: \u0627\u0631\u0632\u0634 \u067e\u0627\u06cc\u0647\u0654 \u0645\u0648\u062c\u0648\u062f\u06cc \u0622\u063a\u0627\u0632\u06cc\u0646"
+    },
+    "note": {
+      "type": "string",
+      "description": "Base44-only"
+    },
+    "is_demo": {
+      "type": "boolean",
+      "default": false,
+      "description": "Base44-only"
+    }
+  },
+  "required": [
+    "name",
+    "currency",
+    "opening_balance",
+    "active"
+  ],
+  "rls": {
+    "read": {},
+    "create": {},
+    "update": {},
+    "delete": {}
+  }
+}

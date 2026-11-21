@@ -1,0 +1,47 @@
+{
+  "name": "ChatMessage",
+  "description": "A1 table: chat_messages",
+  "type": "object",
+  "properties": {
+    "group_id": {
+      "type": "number"
+    },
+    "sender_id": {
+      "type": "string"
+    },
+    "sender_name": {
+      "type": "string"
+    },
+    "sender_role": {
+      "type": "string"
+    },
+    "message": {
+      "type": "string"
+    },
+    "sync_status": {
+      "type": "string",
+      "default": "pending"
+    },
+    "status": {
+      "type": "string",
+      "default": "active"
+    },
+    "expires_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "group_id",
+    "sender_id",
+    "message",
+    "sync_status",
+    "status"
+  ],
+  "rls": {
+    "read": {},
+    "create": {},
+    "update": {},
+    "delete": {}
+  }
+}

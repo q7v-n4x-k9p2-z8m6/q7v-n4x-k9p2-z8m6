@@ -1,0 +1,55 @@
+{
+  "name": "ChatGroup",
+  "description": "A1 table: chat_groups \u2014 \u06af\u0631\u0648\u0647\u200c\u0647\u0627\u06cc \u0686\u062a \u0635\u0631\u0627\u0641\u200c\u0647\u0627",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "type": {
+      "type": "string",
+      "default": "public"
+    },
+    "image": {
+      "type": "string"
+    },
+    "creator_id": {
+      "type": "string"
+    },
+    "creator_name": {
+      "type": "string"
+    },
+    "exchange_code": {
+      "type": "string"
+    },
+    "rules": {
+      "type": "string"
+    },
+    "creator_managed": {
+      "type": "boolean",
+      "default": false
+    },
+    "status": {
+      "type": "string",
+      "default": "active"
+    },
+    "member_count": {
+      "type": "number",
+      "default": 0
+    }
+  },
+  "required": [
+    "name",
+    "type",
+    "status"
+  ],
+  "rls": {
+    "read": {},
+    "create": {},
+    "update": {},
+    "delete": {}
+  }
+}

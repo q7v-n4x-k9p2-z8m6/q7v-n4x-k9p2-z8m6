@@ -1,0 +1,44 @@
+{
+  "name": "Wallet",
+  "description": "A1 table: wallets \u2014 \u06a9\u06cc\u0641 \u067e\u0648\u0644 \u06a9\u0627\u0631\u0628\u0631/\u0645\u0634\u062a\u0631\u06cc",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "number"
+    },
+    "phone": {
+      "type": "string"
+    },
+    "balance": {
+      "type": "number",
+      "default": 0
+    },
+    "currency": {
+      "type": "string",
+      "default": "AFN"
+    },
+    "exchange_code": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "default": "active"
+    },
+    "owner_type": {
+      "type": "string",
+      "default": "customer"
+    }
+  },
+  "required": [
+    "balance",
+    "currency",
+    "status",
+    "owner_type"
+  ],
+  "rls": {
+    "read": {},
+    "create": {},
+    "update": {},
+    "delete": {}
+  }
+}

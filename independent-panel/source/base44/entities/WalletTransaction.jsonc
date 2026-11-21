@@ -1,0 +1,55 @@
+{
+  "name": "WalletTransaction",
+  "description": "A1 table: wallet_transactions \u2014 \u06af\u0631\u062f\u0634 \u06a9\u06cc\u0641 \u067e\u0648\u0644 (debit/credit)",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string"
+    },
+    "user_type": {
+      "type": "string"
+    },
+    "exchange_code": {
+      "type": "string"
+    },
+    "amount": {
+      "type": "number"
+    },
+    "currency": {
+      "type": "string"
+    },
+    "type": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "registered_by": {
+      "type": "string"
+    },
+    "registered_by_user_id": {
+      "type": "number"
+    },
+    "debit": {
+      "type": "number",
+      "default": 0
+    },
+    "credit": {
+      "type": "number",
+      "default": 0
+    }
+  },
+  "required": [
+    "user_id",
+    "user_type",
+    "amount",
+    "currency",
+    "type"
+  ],
+  "rls": {
+    "read": {},
+    "create": {},
+    "update": {},
+    "delete": {}
+  }
+}

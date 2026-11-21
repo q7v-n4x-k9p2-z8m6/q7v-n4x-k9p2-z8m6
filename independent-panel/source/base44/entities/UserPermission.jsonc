@@ -1,0 +1,59 @@
+{
+  "name": "UserPermission",
+  "description": "A1 table: user_permissions \u2014 \u0645\u062c\u0648\u0632 \u0628\u062e\u0634\u200c\u0628\u0647\u200c\u0628\u062e\u0634 \u0647\u0631 \u06a9\u0627\u0631\u0628\u0631",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string"
+    },
+    "user_name": {
+      "type": "string"
+    },
+    "role": {
+      "type": "string",
+      "default": "user"
+    },
+    "section": {
+      "type": "string"
+    },
+    "can_view": {
+      "type": "boolean",
+      "default": true
+    },
+    "can_create": {
+      "type": "boolean",
+      "default": false
+    },
+    "can_edit": {
+      "type": "boolean",
+      "default": false
+    },
+    "can_delete": {
+      "type": "boolean",
+      "default": false
+    },
+    "can_print": {
+      "type": "boolean",
+      "default": false
+    },
+    "can_report": {
+      "type": "boolean",
+      "default": false
+    },
+    "can_settings": {
+      "type": "boolean",
+      "default": false
+    }
+  },
+  "required": [
+    "section",
+    "role",
+    "can_view"
+  ],
+  "rls": {
+    "read": {},
+    "create": {},
+    "update": {},
+    "delete": {}
+  }
+}

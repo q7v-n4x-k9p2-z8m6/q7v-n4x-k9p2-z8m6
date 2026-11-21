@@ -1,0 +1,76 @@
+{
+  "name": "Referral",
+  "description": "A1 table: referrals \u2014 \u0645\u0639\u0631\u0641\u06cc \u0648 \u067e\u0627\u062f\u0627\u0634 \u0633\u0647\u0645\u06cc\u0647",
+  "type": "object",
+  "properties": {
+    "inviter_id": {
+      "type": "string"
+    },
+    "inviter_name": {
+      "type": "string"
+    },
+    "inviter_code": {
+      "type": "string"
+    },
+    "invitee_id": {
+      "type": "string"
+    },
+    "invitee_name": {
+      "type": "string"
+    },
+    "invitee_type": {
+      "type": "string",
+      "default": "sarraaf"
+    },
+    "code": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "default": "pending"
+    },
+    "reward_type": {
+      "type": "string",
+      "default": "quota"
+    },
+    "reward_amount": {
+      "type": "number",
+      "default": 0
+    },
+    "reward_given": {
+      "type": "boolean",
+      "default": false
+    },
+    "reward_date": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "verified_date": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "cancelled_date": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "cancel_reason": {
+      "type": "string"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "inviter_id",
+    "code",
+    "status",
+    "reward_type",
+    "reward_given"
+  ],
+  "rls": {
+    "read": {},
+    "create": {},
+    "update": {},
+    "delete": {}
+  }
+}

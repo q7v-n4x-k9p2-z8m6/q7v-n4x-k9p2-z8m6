@@ -1,0 +1,44 @@
+{
+  "name": "CustomerNotification",
+  "description": "A1 table: customer_notifications",
+  "type": "object",
+  "properties": {
+    "customer_user_id": {
+      "type": "number"
+    },
+    "exchange_code": {
+      "type": "string"
+    },
+    "title": {
+      "type": "string"
+    },
+    "body": {
+      "type": "string"
+    },
+    "type": {
+      "type": "string",
+      "default": "info"
+    },
+    "read": {
+      "type": "boolean",
+      "default": false
+    },
+    "action_url": {
+      "type": "string"
+    },
+    "action_label": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "title",
+    "type",
+    "read"
+  ],
+  "rls": {
+    "read": {},
+    "create": {},
+    "update": {},
+    "delete": {}
+  }
+}

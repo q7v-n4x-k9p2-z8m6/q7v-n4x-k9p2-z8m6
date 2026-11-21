@@ -1,0 +1,71 @@
+{
+  "name": "PaymentTransaction",
+  "description": "A1 table: payment_transactions \u2014 \u062a\u0631\u0627\u06a9\u0646\u0634 \u062f\u0631\u06af\u0627\u0647 \u067e\u0631\u062f\u0627\u062e\u062a",
+  "type": "object",
+  "properties": {
+    "gateway_key": {
+      "type": "string"
+    },
+    "gateway_name": {
+      "type": "string"
+    },
+    "user_id": {
+      "type": "number"
+    },
+    "user_name": {
+      "type": "string"
+    },
+    "order_id": {
+      "type": "string"
+    },
+    "amount": {
+      "type": "number"
+    },
+    "currency": {
+      "type": "string",
+      "default": "AFN"
+    },
+    "fee": {
+      "type": "number",
+      "default": 0
+    },
+    "total": {
+      "type": "number"
+    },
+    "status": {
+      "type": "string",
+      "default": "pending"
+    },
+    "provider_transaction_id": {
+      "type": "string"
+    },
+    "provider_reference": {
+      "type": "string"
+    },
+    "paid_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "failed_reason": {
+      "type": "string"
+    },
+    "metadata": {
+      "type": "object"
+    },
+    "description": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "gateway_key",
+    "amount",
+    "currency",
+    "status"
+  ],
+  "rls": {
+    "read": {},
+    "create": {},
+    "update": {},
+    "delete": {}
+  }
+}

@@ -1,0 +1,50 @@
+{
+  "name": "PaymentRecord",
+  "description": "A1 table: payment_records \u2014 \u0633\u0627\u0628\u0642\u0647\u0654 \u067e\u0631\u062f\u0627\u062e\u062a \u067e\u0644\u0646 \u0635\u0631\u0627\u0641\u06cc",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string"
+    },
+    "user_name": {
+      "type": "string"
+    },
+    "sarraaf_profile_id": {
+      "type": "number"
+    },
+    "plan": {
+      "type": "string"
+    },
+    "payment_status": {
+      "type": "string"
+    },
+    "purchase_date": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "start_date": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "end_date": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    },
+    "confirmed_by_name": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "is_active"
+  ],
+  "rls": {
+    "read": {},
+    "create": {},
+    "update": {},
+    "delete": {}
+  }
+}

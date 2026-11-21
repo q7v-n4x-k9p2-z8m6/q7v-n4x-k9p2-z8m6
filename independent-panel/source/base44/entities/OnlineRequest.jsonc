@@ -1,0 +1,33 @@
+{
+  "name": "OnlineRequest",
+  "description": "A1 table: online_requests",
+  "type": "object",
+  "properties": {
+    "exchange_code": {
+      "type": "string"
+    },
+    "user_name": {
+      "type": "string"
+    },
+    "user_mobile": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "default": "pending"
+    },
+    "description": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "user_name",
+    "status"
+  ],
+  "rls": {
+    "read": {},
+    "create": {},
+    "update": {},
+    "delete": {}
+  }
+}

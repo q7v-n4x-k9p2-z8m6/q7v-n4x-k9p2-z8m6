@@ -1,0 +1,60 @@
+{
+  "name": "BackupRecord",
+  "description": "A1 table: backup_records \u2014 \u0633\u0627\u0628\u0642\u0647\u0654 \u0628\u06a9\u0627\u067e \u0648 \u0628\u0627\u0632\u06cc\u0627\u0628\u06cc",
+  "type": "object",
+  "properties": {
+    "exchange_code": {
+      "type": "string"
+    },
+    "user_id": {
+      "type": "string",
+      "default": ""
+    },
+    "user_name": {
+      "type": "string",
+      "default": ""
+    },
+    "type": {
+      "type": "string",
+      "default": "manual"
+    },
+    "status": {
+      "type": "string",
+      "default": "success"
+    },
+    "file_name": {
+      "type": "string"
+    },
+    "size_bytes": {
+      "type": "number",
+      "default": 0
+    },
+    "record_counts": {
+      "type": "object"
+    },
+    "entity_types": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "notes": {
+      "type": "string"
+    },
+    "restore_date": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "type",
+    "status",
+    "size_bytes"
+  ],
+  "rls": {
+    "read": {},
+    "create": {},
+    "update": {},
+    "delete": {}
+  }
+}

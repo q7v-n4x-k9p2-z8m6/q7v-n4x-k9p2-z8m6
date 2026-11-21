@@ -1,0 +1,42 @@
+{
+  "name": "ChatGroupMember",
+  "description": "A1 table: chat_group_members",
+  "type": "object",
+  "properties": {
+    "group_id": {
+      "type": "number"
+    },
+    "group_name": {
+      "type": "string"
+    },
+    "user_id": {
+      "type": "string"
+    },
+    "user_name": {
+      "type": "string"
+    },
+    "user_role": {
+      "type": "string"
+    },
+    "role": {
+      "type": "string",
+      "default": "member"
+    },
+    "status": {
+      "type": "string",
+      "default": "active"
+    }
+  },
+  "required": [
+    "group_id",
+    "user_id",
+    "role",
+    "status"
+  ],
+  "rls": {
+    "read": {},
+    "create": {},
+    "update": {},
+    "delete": {}
+  }
+}

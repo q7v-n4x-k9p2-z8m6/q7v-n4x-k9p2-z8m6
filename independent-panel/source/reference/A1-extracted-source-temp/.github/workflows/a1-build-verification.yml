@@ -1,0 +1,114 @@
+name: A1 build verification
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+      - name: Build production bundle
+        run: npm run build
+      - name: Run accounting rules unit tests
+        run: node --test src/components/sarraaf/Version21AccountingRules.test.js
+      - name: Check Version 21 safety invariants
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const workspace = fs.readFileSync('src/components/sarraaf/Version21Workspace.jsx', 'utf8');
+          const adapter = fs.readFileSync('src/components/sarraaf/Version21WriteAdapter.js', 'utf8');
+          const data = fs.readFileSync('src/components/sarraaf/Version21DataAdapter.js', 'utf8');
+          const demo = fs.readFileSync('src/components/sarraaf/Version21DemoAdapter.js', 'utf8');
+          const demoRules = fs.readFileSync('src/components/sarraaf/Version21DemoRules.js', 'utf8');
+          const accountingRules = fs.readFileSync('src/components/sarraaf/Version21AccountingRules.js', 'utf8');
+          const checks = [
+            [!workspace.includes('\\${'), 'Workspace contains a literal escaped JSX expression'],
+            [adapter.includes('validateBalancedLines'), 'Financial posting/edit balance validation is missing'],
+            [adapter.includes('documentDateTimestamp(draft.date)') && adapter.includes('documentDateTimestamp(date)'), 'Financial document dates must be validated before posting and before date synchronization'],
+            [adapter.includes('validateCashTransactionParty(draft.partyType, draft.party, customer || branch)') && accountingRules.includes('export function validateCashTransactionParty'), 'Cash transaction edits must reject unresolved selected customers or branches instead of silently posting to suspense'],
+            [adapter.includes('validateCashTransactionPartyIdentity(sourceDocument, partyType, draft.party, customer || branch)') && accountingRules.includes('export function validateCashTransactionPartyIdentity'), 'Cash transaction edits must preserve the original linked party identity and document relation'],
+            [accountingRules.includes('Number.isFinite(parsed) ? parsed : Number.NaN'), 'Malformed numeric input must not be coerced to zero'],
+            [data.includes('Number(line.debit)') && data.includes('Number(line.credit)'), 'Ledger balance checks must parse raw numeric values'],
+            [adapter.includes('fee_currency: draft.currency || \'AFN\', total: amount + feeAmount'), 'Remittance edit must synchronize fee currency and total'],
+            [adapter.includes('requireModulePermission'), 'Server-verified employee permission checks are missing'],
+            [!adapter.includes('.delete()'), 'Physical delete call found in financial write adapter'],
+            [data.includes(".eq('exchange_code', exchangeCode)"), 'Tenant scoping filter is missing'],
+            [data.includes("from('user_permissions')"), 'Current-user permission loading is missing'],
+            [data.includes('isDocumentBalanced'), 'Document balance status detection is missing'],
+            [adapter.includes('assertDocumentBalancedForReversal'), 'Unbalanced-document reversal guard is missing'],
+            [adapter.includes('MASTER_RECORD_DEACTIVATION') && adapter.includes('deactivateVersion21MasterRecord'), 'Master records must use safe deactivation instead of physical deletion'],
+            [adapter.includes(".eq('exchange_code', ctx.exchangeCode).eq('id', Number(record.id))") && adapter.includes('.update(config.patch)'), 'Master record deactivation must be tenant-scoped'],
+            [workspace.includes('deactivateVersion21MasterRecord') && workspace.includes('غیرفعال‌سازی انتخاب‌شده'), 'Workspace must label master record action as deactivation'],
+            [fs.readFileSync('src/components/sarraaf/Version21Layout.jsx', 'utf8').includes('getFeatureStatus') && fs.readFileSync('src/components/sarraaf/Version21Layout.jsx', 'utf8').includes('MODULE_FEATURE_KEYS'), 'Navigation and route feature status must use the shared feature catalog'],
+            [fs.readFileSync('src/components/sarraaf/Version21Layout.jsx', 'utf8').includes("documents: 'document_center'"), 'Document center navigation must use the canonical feature key'],
+            [adapter.includes("&& !['remittance', 'exchange'].includes(module)"), 'Linked transfer and conversion reversals must process all related documents'],
+            [adapter.includes('p_fee: 0'), 'Transfer fee must be posted as a separate balanced document'],
+            [adapter.includes("requiredChartAccountLedgerRefByType(ctx, 'revenue', 'درآمد کمیشن حواله')") && adapter.includes('if (!account) throw new Error'), 'Remittance fee create/edit must require a real revenue chart account, never silently use suspense'],
+            [adapter.includes("select('id,reversed')") && adapter.includes('if (feeDoc && !feeDoc.reversed)'), 'Reversed remittance fee documents must not be edited again'],
+            [adapter.includes('applyDocumentDate(ctx, feeDocumentId, draft.date)'), 'Edited or recreated remittance fee documents must receive the selected document date'],
+            [workspace.includes('accountingStatus'), 'Accounting status is not displayed in workspace tables'],
+            [workspace.includes('const readOnly=false'), 'Version 21 CRUD UI must remain available to real exchange tenants'],
+            [workspace.includes('saveDemoPreviewRecord(mod,payload'), 'Demo workspace writes must use isolated temporary storage'],
+            [adapter.includes('assertNotDemoCoreWrite(ctx'), 'Core Version 21 writes must reject only the shared demo account'],
+            [data.includes('loadDemoPreviewRecords') && data.includes('isDemoAccount'), 'Demo records must load only for the exact demo session'],
+            [demo.includes("record_kind', 'temporary'") && demo.includes('expires_at'), 'Temporary demo records must have a bounded expiry'],
+            [demo.includes("row.record_kind === 'sample'"), 'Fixed demo samples must be distinguished from temporary records'],
+            [workspace.includes('data.isDemoAccount&&!target._demoPreview'), 'Demo delete must never touch existing core accounting records'],
+            [workspace.includes('data.isDemoAccount&&!selected._demoPreview'), 'Demo edit must never touch existing core accounting records'],
+            [demo.includes(".eq('record_kind', 'temporary')") && demo.includes(".eq('owner_user_id', ctx.userId)"), 'Demo mutations must be tenant-scoped and temporary-only'],
+            [demo.includes(".gt('expires_at', now)"), 'Expired temporary demo records must not be editable or deletable'],
+            [demoRules.includes("114: Object.freeze({ username: '33333333', exchangeCode: 'EX-261028-27497E95' })"), 'Second test sarraaf account must use its own isolated demo tenant'],
+            [demoRules.includes("tokenParts[1]") && data.includes("resolveSessionUserId("), 'Session identity must support standard JWT claims and the shared resolver'],
+            [adapter.includes("[114, { username: '33333333', exchangeCode: 'EX-261028-27497E95' }]"), 'Second test sarraaf account must be blocked from core financial writes'],
+            [data.includes("Number(userId) === 114 && exchangeCode === 'EX-261028-27497E95'"), 'Second test sarraaf account must load only its isolated preview records'],
+            [workspace.includes("['status','active','accountingStatus'].includes(column.key)"), 'Regular sarraaf lists must hide internal status flags'],
+            [workspace.includes("label:'حساب بدهکار'") && workspace.includes("label:'حساب بستانکار'"), 'Operation lists must show debit and credit account details'],
+            [workspace.includes("label:'شماره حواله'") && workspace.includes("label:'شماره سند'"), 'Operation lists must show transfer and document numbers'],
+            [data.includes("row.direction === 'send' ? 'ارسالی' : 'نامعلوم'"), 'Unknown remittance direction must never be displayed as outgoing'],
+            [adapter.includes('حواله نامشخص نباید به‌صورت خودکار ارسالی اصلاح شود'), 'Unknown remittance direction must be rejected during edits'],
+            [workspace.includes("label:'مبدأ'") && workspace.includes("label:'مقصد'"), 'Remittance lists must show origin and destination separately'],
+            [data.includes("const isBranch = !isCash &&") && data.includes("(isCustomer || isBranch) ? credit - debit"), 'Customer and branch ledger signs must match debit-credit sides without reversing cash balances'],
+            [workspace.includes("{fmt(n(r.debit))}") && workspace.includes("{fmt(n(r.credit))}"), 'Customer and branch ledger detail rows must display raw debit and credit values'],
+            [accountingRules.includes('export function withRunningPartyBalances') && workspace.includes('مانده پس از گردش') && workspace.includes('preparedSource=withRunningPartyBalances(source'), 'Customer and branch detail ledgers must show chronological running balances per currency'],
+            [workspace.includes('const saveRecord=async(keepOpen=false)') && workspace.includes('saveRecord(true)') && workspace.includes('ثبت و جدید'), 'Accounting forms must support saving the current record and immediately opening a fresh form'],
+            [workspace.includes("event.key==='Escape'") && workspace.includes("window.addEventListener('keydown',closeOnEscape)"), 'Accounting forms must close safely with the Escape key when no save is in progress'],
+            [workspace.includes('sumCashLedgerMovement(data.transactions,currency)') && accountingRules.includes('export function sumCashLedgerMovement') && fs.readFileSync('src/components/sarraaf/Version21AccountingRules.test.js', 'utf8').includes('cash movement totals exclude customer and non-cash ledger rows'), 'Cash balance summary must total only cash ledger rows, excluding customer and other counterpart lines'],
+            [data.includes('isChartAccountLedgerLine(line, row)') && accountingRules.includes('export function isChartAccountLedgerLine') && fs.readFileSync('src/components/sarraaf/Version21AccountingRules.test.js', 'utf8').includes('chart account ledger mapping rejects cash/customer/branch rows'), 'Chart account balances must not absorb cash, customer or branch rows through coincident polymorphic IDs'],
+            [accountingRules.includes('export function sumCashLedgerSide') && workspace.includes("sumCashLedgerSide(data.transactions,account.id,currency,'debit')") && fs.readFileSync('src/components/sarraaf/Version21AccountingRules.test.js', 'utf8').includes('cash ledger totals match exact safe ID'), 'Cash account totals must use exact safe ID, currency and non-deleted ledger rows'],
+            [adapter.includes("if (value.startsWith('بانک: '))") && adapter.includes('getBankById(ctx, bankId, currency)') && adapter.includes('bankLedgerRef(bank)'), 'Bank journal entries must resolve the exact active tenant bank account and currency'],
+            [workspace.includes("value:'بانک: '+x.id") && workspace.includes("accountType||'').toLowerCase()==='bank'") && workspace.includes('واریز به بانک') && workspace.includes('برداشت از بانک'), 'Bank book must offer bank account posting and display bank-identified ledger lines'],
+            [fs.readFileSync('src/components/sarraaf/Version21AccountingRules.test.js', 'utf8').includes('bank ledger mapping uses the exact bank account identity') && accountingRules.includes('export function bankLedgerRef'), 'Bank ledger identity mapping must be covered by unit tests'],
+            [accountingRules.includes("['cash', 'customer', 'bank']") && fs.readFileSync('src/components/sarraaf/Version21AccountingRules.test.js', 'utf8').includes('balanced journal requires a valid linked bank account ID'), 'Bank ledger lines must require a valid bank account ID'],
+            [accountingRules.includes('export function sumBankLedgerMovement') && workspace.includes("sumBankLedgerMovement(data.transactions,account.id,currency,'debit')") && fs.readFileSync('src/components/sarraaf/Version21AccountingRules.test.js', 'utf8').includes('bank ledger totals match exact bank ID'), 'Bank balance totals must use exact tenant bank ID, currency and non-deleted ledger rows'],
+            [data.includes('const bankById = new Map(bankAccounts.map') && data.includes("line.account_type === 'bank' && bankById.has(String(line.account_id || ''))"), 'Bank control-account rollup must exclude orphan or foreign polymorphic bank IDs'],
+          ];
+          for (const [ok, message] of checks) {
+            if (!ok) throw new Error(message);
+            console.log('PASS:', message);
+          }
+          NODE
+      - name: Upload production bundle for review
+        uses: actions/upload-artifact@v4
+        with:
+          name: a1-version21-${{ github.sha }}
+          path: dist/
+          if-no-files-found: error
+          retention-days: 7

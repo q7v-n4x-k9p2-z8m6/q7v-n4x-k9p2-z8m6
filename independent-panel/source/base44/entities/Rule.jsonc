@@ -1,0 +1,64 @@
+{
+  "name": "Rule",
+  "description": "A1 table: rules \u2014 \u0642\u0648\u0627\u0646\u06cc\u0646 \u0648 \u0627\u0637\u0644\u0627\u0639\u06cc\u0647\u200c\u0647\u0627\u06cc \u0646\u0642\u0634\u200c\u0645\u062d\u0648\u0631",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string"
+    },
+    "content": {
+      "type": "string"
+    },
+    "role": {
+      "type": "string",
+      "default": "all"
+    },
+    "sort_order": {
+      "type": "number",
+      "default": 0
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    },
+    "category": {
+      "type": "string"
+    },
+    "link_url": {
+      "type": "string"
+    },
+    "link_label": {
+      "type": "string"
+    },
+    "icon": {
+      "type": "string"
+    },
+    "accent": {
+      "type": "string"
+    },
+    "pinned": {
+      "type": "boolean",
+      "default": false
+    },
+    "start_date": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "end_date": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "title",
+    "content",
+    "role",
+    "is_active"
+  ],
+  "rls": {
+    "read": {},
+    "create": {},
+    "update": {},
+    "delete": {}
+  }
+}

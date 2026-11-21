@@ -1,0 +1,62 @@
+{
+  "name": "ChartOfAccount",
+  "description": "A1 table: chart_of_accounts \u2014 \u06a9\u062f\u06cc\u0646\u06af \u062d\u0633\u0627\u0628\u200c\u0647\u0627 \u0628\u0627 self-reference",
+  "type": "object",
+  "properties": {
+    "exchange_code": {
+      "type": "string"
+    },
+    "account_code": {
+      "type": "string"
+    },
+    "account_name": {
+      "type": "string"
+    },
+    "account_type": {
+      "type": "string"
+    },
+    "normal_balance": {
+      "type": "string",
+      "default": "debit",
+      "enum": [
+        "debit",
+        "credit"
+      ],
+      "enumColors": [
+        "green",
+        "red"
+      ]
+    },
+    "parent_id": {
+      "type": "number"
+    },
+    "currency": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "is_system": {
+      "type": "boolean",
+      "default": false
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    }
+  },
+  "required": [
+    "account_code",
+    "account_name",
+    "account_type",
+    "normal_balance",
+    "is_system",
+    "is_active"
+  ],
+  "rls": {
+    "read": {},
+    "create": {},
+    "update": {},
+    "delete": {}
+  }
+}

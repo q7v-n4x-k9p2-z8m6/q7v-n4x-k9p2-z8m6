@@ -1,0 +1,147 @@
+{
+  "name": "Transfer",
+  "description": "A1 table: transfers \u2014 direction \u062f\u0631 A1 \u0628\u0627 \u0645\u0642\u0627\u062f\u06cc\u0631 send/receive \u0627\u0633\u062a\u0641\u0627\u062f\u0647 \u0645\u06cc\u200c\u0634\u0648\u062f",
+  "type": "object",
+  "properties": {
+    "transfer_number": {
+      "type": "string"
+    },
+    "exchange_code": {
+      "type": "string"
+    },
+    "sender_name": {
+      "type": "string"
+    },
+    "sender_phone": {
+      "type": "string"
+    },
+    "sender_country": {
+      "type": "string"
+    },
+    "receiver_name": {
+      "type": "string"
+    },
+    "receiver_phone": {
+      "type": "string"
+    },
+    "receiver_country": {
+      "type": "string"
+    },
+    "account_owner": {
+      "type": "string"
+    },
+    "amount": {
+      "type": "number"
+    },
+    "currency": {
+      "type": "string"
+    },
+    "origin": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "default": "done",
+      "enum": [
+        "pending",
+        "processing",
+        "done",
+        "cancelled"
+      ],
+      "enumColors": [
+        "yellow",
+        "blue",
+        "green",
+        "gray"
+      ]
+    },
+    "registered_by": {
+      "type": "string"
+    },
+    "registered_by_user_id": {
+      "type": "number"
+    },
+    "fee": {
+      "type": "number",
+      "default": 0
+    },
+    "fee_currency": {
+      "type": "string"
+    },
+    "direction": {
+      "type": "string",
+      "enum": [
+        "send",
+        "receive"
+      ],
+      "enumColors": [
+        "red",
+        "green"
+      ]
+    },
+    "destination": {
+      "type": "string"
+    },
+    "customer_id": {
+      "type": "number"
+    },
+    "rate": {
+      "type": "number"
+    },
+    "total": {
+      "type": "number"
+    },
+    "agent_id": {
+      "type": "number"
+    },
+    "agent_route": {
+      "type": "string"
+    },
+    "executed_date": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "paid_amount": {
+      "type": "number"
+    },
+    "paid_currency": {
+      "type": "string"
+    },
+    "pay_counter": {
+      "type": "string"
+    },
+    "tx_ids": {
+      "type": "string"
+    },
+    "customer_name": {
+      "type": "string",
+      "description": "Base44-only"
+    },
+    "document_id": {
+      "type": "string",
+      "description": "Base44-only\u061b A1 \u0627\u0632 tx_ids \u0648 documents.transfer_id \u0627\u0633\u062a\u0641\u0627\u062f\u0647 \u0645\u06cc\u200c\u06a9\u0646\u062f"
+    },
+    "description": {
+      "type": "string",
+      "description": "Base44-only"
+    },
+    "is_demo": {
+      "type": "boolean",
+      "default": false,
+      "description": "Base44-only"
+    }
+  },
+  "required": [
+    "sender_name",
+    "receiver_name",
+    "currency",
+    "amount",
+    "status"
+  ],
+  "rls": {
+    "read": {},
+    "create": {},
+    "update": {},
+    "delete": {}
+  }
+}

@@ -1,0 +1,44 @@
+{
+  "name": "AppSetting",
+  "description": "A1 table: app_settings \u2014 \u062a\u0646\u0638\u06cc\u0645\u0627\u062a \u06a9\u0644\u06cc\u062f/\u0645\u0642\u062f\u0627\u0631 \u0635\u0631\u0627\u0641\u06cc (\u0645\u062b\u0644\u0627\u064b usd_afn, afn_toman)",
+  "type": "object",
+  "properties": {
+    "setting_key": {
+      "type": "string"
+    },
+    "setting_value": {
+      "type": "string"
+    },
+    "setting_type": {
+      "type": "string",
+      "default": "text"
+    },
+    "description": {
+      "type": "string"
+    },
+    "exchange_code": {
+      "type": "string"
+    },
+    "category": {
+      "type": "string",
+      "default": "general"
+    },
+    "data": {
+      "type": "object"
+    },
+    "updated_by_name": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "setting_key",
+    "setting_value",
+    "setting_type"
+  ],
+  "rls": {
+    "read": {},
+    "create": {},
+    "update": {},
+    "delete": {}
+  }
+}

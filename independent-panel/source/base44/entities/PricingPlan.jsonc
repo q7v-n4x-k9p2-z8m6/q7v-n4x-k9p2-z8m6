@@ -1,0 +1,49 @@
+{
+  "name": "PricingPlan",
+  "description": "A1 table: pricing_plans \u2014 \u067e\u0644\u0646\u200c\u0647\u0627\u06cc \u0642\u06cc\u0645\u062a\u200c\u06af\u0630\u0627\u0631\u06cc \u0633\u0627\u0632\u0646\u062f\u0647",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "price": {
+      "type": "number",
+      "default": 0
+    },
+    "currency": {
+      "type": "string",
+      "default": "AFN"
+    },
+    "duration_days": {
+      "type": "number",
+      "default": 30
+    },
+    "features": {
+      "type": "object"
+    },
+    "active": {
+      "type": "boolean",
+      "default": true
+    },
+    "display_order": {
+      "type": "number",
+      "default": 0
+    }
+  },
+  "required": [
+    "name",
+    "price",
+    "currency",
+    "duration_days",
+    "active"
+  ],
+  "rls": {
+    "read": {},
+    "create": {},
+    "update": {},
+    "delete": {}
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "name": "Employee",
+  "description": "A1 table: employees",
+  "type": "object",
+  "properties": {
+    "exchange_code": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string"
+    },
+    "show_profit_loss": {
+      "type": "boolean",
+      "default": true
+    }
+  },
+  "required": [
+    "name"
+  ],
+  "rls": {
+    "read": {},
+    "create": {},
+    "update": {},
+    "delete": {}
+  }
+}

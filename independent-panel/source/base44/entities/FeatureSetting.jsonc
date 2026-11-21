@@ -1,0 +1,91 @@
+{
+  "name": "FeatureSetting",
+  "description": "A1 table: feature_settings \u2014 \u067e\u0631\u0686\u0645 \u0642\u0627\u0628\u0644\u06cc\u062a\u200c\u0647\u0627 (status: active/updating/disabled) \u0628\u0627 \u06a9\u0644\u06cc\u062f \u06cc\u06a9\u062a\u0627",
+  "type": "object",
+  "properties": {
+    "feature_key": {
+      "type": "string"
+    },
+    "feature_name": {
+      "type": "string"
+    },
+    "category": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "default": "active",
+      "enum": [
+        "active",
+        "updating",
+        "disabled",
+        "hidden"
+      ],
+      "enumColors": [
+        "green",
+        "yellow",
+        "red",
+        "gray"
+      ]
+    },
+    "message": {
+      "type": "string"
+    },
+    "icon_name": {
+      "type": "string"
+    },
+    "sort_order": {
+      "type": "number",
+      "default": 0
+    },
+    "exchange_code": {
+      "type": "string"
+    },
+    "enabled": {
+      "type": "boolean",
+      "default": false
+    },
+    "config": {
+      "type": "object"
+    },
+    "description": {
+      "type": "string"
+    },
+    "is_primary": {
+      "type": "boolean",
+      "default": false
+    },
+    "free_enabled": {
+      "type": "boolean",
+      "default": true
+    },
+    "paid_enabled": {
+      "type": "boolean",
+      "default": true
+    },
+    "level_1_enabled": {
+      "type": "boolean",
+      "default": true
+    },
+    "level_2_enabled": {
+      "type": "boolean",
+      "default": true
+    },
+    "level_3_enabled": {
+      "type": "boolean",
+      "default": true
+    }
+  },
+  "required": [
+    "feature_key",
+    "feature_name",
+    "category",
+    "status"
+  ],
+  "rls": {
+    "read": {},
+    "create": {},
+    "update": {},
+    "delete": {}
+  }
+}

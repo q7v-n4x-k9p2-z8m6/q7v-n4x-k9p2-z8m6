@@ -1,0 +1,43 @@
+{
+  "name": "MessageReport",
+  "description": "A1 table: message_reports",
+  "type": "object",
+  "properties": {
+    "message_id": {
+      "type": "number"
+    },
+    "group_id": {
+      "type": "number"
+    },
+    "reporter_id": {
+      "type": "string"
+    },
+    "reporter_name": {
+      "type": "string"
+    },
+    "sender_id": {
+      "type": "string"
+    },
+    "sender_name": {
+      "type": "string"
+    },
+    "reason": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "default": "pending"
+    }
+  },
+  "required": [
+    "message_id",
+    "reporter_id",
+    "status"
+  ],
+  "rls": {
+    "read": {},
+    "create": {},
+    "update": {},
+    "delete": {}
+  }
+}
