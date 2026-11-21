@@ -5,12 +5,12 @@
 import React, { useMemo, useState } from 'react';
 import { Scale, Lock, ShieldCheck, AlertTriangle } from 'lucide-react';
 import { buildBalanceSheet, BALANCE_SHEET_POLICY } from '@/core/reports/balanceSheet';
-import { APPROVED_BALANCE_SHEET_POLICY } from '@/core/reports/approvedPolicies';
+import { APPROVED_BALANCE_SHEET_POLICY, ratesFromCurrencyRecords } from '@/core/reports/approvedPolicies';
 import { FINANCIAL_FIXTURE } from '@/core/transfer/financialContracts';
 
 const STORAGE_KEY = 'hisab-sarraf-v22-balance-sheet-policy';
 
-// سیاست پیش‌فرض همان قرارداد مستند است: طبقه‌بندی با کدینگ، سود دوره جدا، تسعیر با نرخ ثبت‌شدهٔ صراف
+// سیاست پیش‌فرض همان قرارداد مستند است: طبقه‌بندی با کدینگ، سود دوره جدا، تسعیر با نرخ حسابداری ثبت‌شده یا میانگین خرید و فروش
 export const DEFAULT_BALANCE_POLICY = APPROVED_BALANCE_SHEET_POLICY;
 
 const readPolicy = () => {
@@ -55,15 +55,10 @@ export default function BalanceSheetPanel({ data }) {
   };
 
   const baseCurrency = policy?.baseCurrency || DEFAULT_BALANCE_POLICY.baseCurrency;
-  const rates = useMemo(() => {
-    const map = {};
-    (data?.currencies || []).forEach((row) => {
-      const code = String(row.code || '').toUpperCase();
-      const rate = Number(row.rate);
-      if (code && Number.isFinite(rate) && rate > 0) map[code] = rate;
-    });
-    return map;
-  }, [data]);
+  const rates = useMemo(
+    () => ratesFromCurrencyRecords(data?.currencies || []),
+    [data],
+  );
 
   // سطرهای دفتر: هر حساب کل با مانده‌اش؛ مانده‌های افتتاحیهٔ صندوق/بانک/مشتری در همان حساب کل لحاظ شده است.
   const { lines, excluded } = useMemo(() => {
@@ -135,13 +130,13 @@ export default function BalanceSheetPanel({ data }) {
             label={BALANCE_SHEET_POLICY.valuation}
             value={policy?.valuation}
             onChange={(value) => update({ ...(policy || DEFAULT_BALANCE_POLICY), valuation: value || undefined })}
-            options={[['book', 'بهای ثبت‌شده'], ['current', 'ارزیابی به نرخ روز']]}
+            options={[['book', 'بهای ثبت‌شده'], ['current', 'تسعیر با نرخ حسابداری (میانگین خرید و فروش)']]}
           />
           <Field
             label="ارز پایه"
             value={policy?.baseCurrency || DEFAULT_BALANCE_POLICY.baseCurrency}
             onChange={(value) => update({ ...(policy || DEFAULT_BALANCE_POLICY), baseCurrency: value })}
-            options={[...new Set([DEFAULT_BALANCE_POLICY.baseCurrency, ...((data?.currencies || []).map((row) => String(row.code || '').toUpperCase()))])].filter(Boolean).map((code) => [code, code])}
+            options={[...new Set([DEFAULT_BALANCE_POLICY.baseCurrency, ...((data?.currencies || []).map((row) => String(row.currency || row.code || '').toUpperCase()))])].filter(Boolean).map((code) => [code, code])}
           />
         </div>
 
