@@ -8,7 +8,7 @@ import { LAPTOP_MENUS, LAPTOP_SHORTCUTS, LAPTOP_MENU_MODULE_IDS } from './laptop
 
 export default function LaptopTopChrome({
   canViewModule, canModuleAction, goModule, menuAction, activeModule = 'home', fixed = false,
-  exchangeName, exchangeCode, dbStatus, ltDate,
+  homeMode = false, exchangeName, exchangeCode, dbStatus, ltDate,
 }) {
   const state = useExchangeStatus(dbStatus);
   // منویی که صفحهٔ جاری از آن باز شده، همان‌جا نشانه‌گذاری می‌شود؛
@@ -59,18 +59,20 @@ export default function LaptopTopChrome({
         {/* شناسهٔ صرافی در نوار عنوان: نام و کد صرافی و وضعیت اتصال، هم‌ردیف با دکمه‌های پنجره */}
         <div className="a1-lap__brand" role="group" aria-label="شناسهٔ صرافی">
           <SarraafLogo size={20} />
-          <span className="a1-lap__brand-title">{exchangeName || 'حساب صراف'}</span>
-          {exchangeCode && (
+          <span className="a1-lap__brand-title">{homeMode ? 'حساب صراف — نسخه ۲۲' : (exchangeName || 'حساب صراف')}</span>
+          {!homeMode && exchangeCode && (
             <>
               <span className="a1-lap__brand-sep">|</span>
               <bdi dir="ltr" className="a1-lap__brand-code">{exchangeCode}</bdi>
             </>
           )}
-          <span className={`a1-lap__identity-status is-${state.key}`} aria-live="polite">
-            <span className="a1-lap__identity-dot" aria-hidden="true" />
-            <span>صراف {state.label}</span>
-          </span>
-          {ltDate && <span className="a1-lap__brand-date">{ltDate}</span>}
+          {!homeMode && (
+            <span className={`a1-lap__identity-status is-${state.key}`} aria-live="polite">
+              <span className="a1-lap__identity-dot" aria-hidden="true" />
+              <span>صراف {state.label}</span>
+            </span>
+          )}
+          {!homeMode && ltDate && <span className="a1-lap__brand-date">{ltDate}</span>}
         </div>
         <div className="a1-lap__controls">
           {/* کوچک‌کردن و بستن در مرورگر ممکن نیست؛ به‌جای دکمهٔ بی‌اثر، نشانهٔ تزئینی و بدون تعامل */}
