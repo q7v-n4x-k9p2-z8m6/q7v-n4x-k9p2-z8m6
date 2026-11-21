@@ -23,6 +23,12 @@ import { syncDefaultPasswordAlert } from '@/lib/passwordAlert';
 const LOGIN_TIMEOUT = 12000;
 const MIGRATION_TIMEOUT = 8000;
 
+// The designated exchanger test account opens the dedicated third panel.
+const postLoginPath = (user, role, fallbackUsername = '') =>
+  String(user?.username || fallbackUsername) === '33333333'
+    ? '/exchanger'
+    : (HOME_BY_ROLE[role] || '/');
+
 function waitForLoginResult(promise, timeoutMs, fallback) {
   return Promise.race([
     Promise.resolve(promise),
@@ -340,7 +346,7 @@ export default function Login() {
       setMaintenanceBlocked(true);
       return;
     }
-    window.location.replace(HOME_BY_ROLE[user.role] || '/');
+    window.location.replace(postLoginPath(user, user.role));
   }, [isAuthenticated, user, isLoadingAuth, maintenanceStatusLoaded, maintenanceInfo, navigate]);
 
   const handleLogin = async (e) => {
@@ -428,7 +434,7 @@ export default function Login() {
               setLoading(false);
               return;
             }
-            window.location.replace(HOME_BY_ROLE[userRole] || '/');
+            window.location.replace(postLoginPath(localResult.user, userRole, normalizedIdentifier));
             return;
           }
 
@@ -542,7 +548,7 @@ export default function Login() {
         setLoading(false);
         return;
       }
-      window.location.replace(HOME_BY_ROLE[finalRole] || '/');
+      window.location.replace(postLoginPath(result.user, finalRole, normalizedIdentifier));
     } catch (err) {
       setError(err.message || 'خطا در ورود');
     } finally {
@@ -625,7 +631,7 @@ export default function Login() {
           setGoogleLoading(false);
           return;
         }
-        window.location.replace(HOME_BY_ROLE[result.user.role] || '/');
+        window.location.replace(postLoginPath(result.user, result.user.role));
       } else if (result?.error === 'user_not_found' && result.google_email) {
         const params = new URLSearchParams({ tab: 'google', email: result.google_email });
         if (result.google_name) params.set('name', result.google_name);
