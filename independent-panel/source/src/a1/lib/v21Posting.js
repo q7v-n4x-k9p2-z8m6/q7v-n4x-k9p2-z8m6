@@ -118,6 +118,7 @@ export async function postDocumentInTx(handles, payload) {
 export async function reverseDocumentInTx(handles, documentId, { reason = '', registeredBy = '', exchangeCode = '', registeredByUserId = null } = {}) {
   const document = await handles.documents.get(Number(documentId));
   if (!document) throw new Error('سند برای ابطال پیدا نشد.');
+  if (String(document.exchange_code || '') !== String(exchangeCode || '')) throw new Error('این سند متعلق به صرافی فعال نیست؛ ابطال متوقف شد.');
   if (document.deleted) throw new Error('سند حذف‌شده قابل ابطال نیست.');
   if (document.reversed) throw new Error(`سند ${document.doc_number} قبلاً ابطال شده است.`);
 
@@ -180,9 +181,10 @@ export async function reverseDocumentInTx(handles, documentId, { reason = '', re
 }
 
 // ویرایش سند: سطرهای قبلی حذف نمی‌شوند؛ با نسخهٔ جدید جایگزین و در سابقه حفظ می‌شوند.
-export async function replaceDocumentLinesInTx(handles, documentId, { lines, description, amount, currency, user = '', note = '' } = {}) {
+export async function replaceDocumentLinesInTx(handles, documentId, { lines, description, amount, currency, user = '', note = '', exchangeCode = '', date } = {}) {
   const document = await handles.documents.get(Number(documentId));
   if (!document) throw new Error('سند برای ویرایش پیدا نشد.');
+  if (String(document.exchange_code || '') !== String(exchangeCode || '')) throw new Error('این سند متعلق به صرافی فعال نیست؛ ویرایش متوقف شد.');
   if (document.reversed) throw new Error('سند ابطال‌شده قابل ویرایش نیست.');
   if (document.deleted) throw new Error('سند حذف‌شده قابل ویرایش نیست.');
   validateBalancedLines(lines, 'ویرایش سند');
@@ -191,7 +193,7 @@ export async function replaceDocumentLinesInTx(handles, documentId, { lines, des
   const activeLines = allLines.filter(row => !row.deleted);
   const version = allLines.reduce((top, row) => Math.max(top, number(row.version) || 1), 1) + 1;
   const stamp = nowIso();
-  const day = String(document.date || document.created_at || stamp).slice(0, 10);
+  const day = date ? documentDateTimestamp(date).slice(0, 10) : String(document.date || document.created_at || stamp).slice(0, 10);
 
   for (const line of activeLines) {
     await handles.ledger_entries.put({
@@ -235,6 +237,7 @@ export async function replaceDocumentLinesInTx(handles, documentId, { lines, des
     description: description || document.description,
     amount: number(amount) || document.amount,
     currency: currency || document.currency,
+    date: day,
     edited: true,
     edited_date: stamp,
     edited_by_name: user,
