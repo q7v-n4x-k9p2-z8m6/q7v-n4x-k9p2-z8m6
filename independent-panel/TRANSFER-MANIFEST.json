@@ -29,7 +29,7 @@
     "text_files": 1302,
     "native_binary_files": 3,
     "chunked_binary_files": 2,
-    "total_bytes": 17786617
+    "total_bytes": 17786664
   },
   "files": [
     {
@@ -8575,15 +8575,15 @@
     {
       "source_path": "src/core/transfer/authMigration.js",
       "target_path": "independent-panel/source/src/core/transfer/authMigration.js",
-      "size_bytes": 3688,
-      "sha256": "b8150ccf0aa2ef813d03dfa09688f277dd5337e1a2e10bdefe5a0cdf0ef82eb3",
+      "size_bytes": 3701,
+      "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
       "storage": "utf8-inline"
     },
     {
       "source_path": "src/core/transfer/authMigration.test.js",
       "target_path": "independent-panel/source/src/core/transfer/authMigration.test.js",
-      "size_bytes": 1527,
-      "sha256": "92ca15303ed6638be44fab8d2e265d24d7d2234a0f06758f0fa0b45c3e3a5c8a",
+      "size_bytes": 1561,
+      "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
       "storage": "utf8-inline"
     },
     {
