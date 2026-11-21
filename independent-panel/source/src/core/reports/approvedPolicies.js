@@ -30,14 +30,19 @@ export function ratesFromCurrencyRecords(records = []) {
     if (row?.is_active === false) continue;
     const code = String(row?.currency || row?.code || '').trim().toUpperCase();
     if (!code) continue;
-    const explicit = Number(row.accounting_rate ?? row.rate);
+    const explicit = Number(row.accounting_rate);
+    const legacy = Number(row.rate);
     const buy = Number(row.buy_rate);
     const sell = Number(row.sell_rate);
+    const hasBuy = Number.isFinite(buy) && buy > 0;
+    const hasSell = Number.isFinite(sell) && sell > 0;
     const rate = Number.isFinite(explicit) && explicit > 0
       ? explicit
-      : Number.isFinite(buy) && buy > 0 && Number.isFinite(sell) && sell > 0
+      : hasBuy && hasSell
         ? (buy + sell) / 2
-        : null;
+        : !hasBuy && !hasSell && Number.isFinite(legacy) && legacy > 0
+          ? legacy
+          : null;
     if (rate !== null) rates[code] = Math.round((rate + Number.EPSILON) * 1000000) / 1000000;
   }
   return rates;
