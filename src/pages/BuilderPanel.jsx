@@ -250,15 +250,26 @@ export default function BuilderPanel() {
         subtitle={isFullCreator ? user?.full_name : `کمک‌سازنده: ${accessInfo?.name || user?.full_name || ''}`}
         icon={Shield}
         actions={
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => navigate('/dashboard')}
-            className="gap-1.5"
-          >
-            <Eye className="w-4 h-4" />
-            پیش‌نمایش برنامه
-          </Button>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigate('/dashboard')}
+              className="gap-1.5"
+            >
+              <Eye className="w-4 h-4" />
+              پیش‌نمایش برنامه
+            </Button>
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={() => logout(true)}
+              className="gap-1.5"
+            >
+              <LogOut className="w-4 h-4" />
+              خروج از پنل سازنده
+            </Button>
+          </div>
         }
       />
 
