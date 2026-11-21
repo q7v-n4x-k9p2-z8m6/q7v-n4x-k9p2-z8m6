@@ -5,6 +5,7 @@ import { loadVersion21LocalState, saveVersion21LocalState } from './Version21Loc
 import { saveDemoPreviewRecord, deleteDemoPreviewRecord } from './Version21DemoAdapter';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import LanguageSettings from './LanguageSettings';
+import DailyRates from './DailyRates';
 import { hasPermission } from '@/lib/permissions';
 import {
   Home, Users, Wallet, BookOpen, BookText, Search, Printer, Plus, Pencil, Trash2,
@@ -14,7 +15,7 @@ import {
   CircleDollarSign, Eye, FilePlus2, ArrowDownCircle, ArrowUpCircle, Scale, Settings2,
   Archive, RotateCcw, ListChecks, CreditCard, CircleHelp, PrinterCheck,
   Languages, ShoppingBag, Smartphone, Wifi, Gamepad2, MessagesSquare, Headphones,
-  Settings, Vault, ArrowDown, ArrowUp, Info, User, Globe, ShoppingCart, Minus, Square, LifeBuoy
+  Settings, Vault, ArrowDown, ArrowUp, Info, User, Globe, ShoppingCart, Minus, Square, LifeBuoy, TrendingUp
 } from 'lucide-react';
 import SarraafLogo from '@/components/SarraafLogo';
 import { useAuth } from '@/lib/AuthContext';
@@ -23,29 +24,30 @@ import { sumCashLedgerMovement, sumCashLedgerSide, sumBankLedgerMovement, withRu
 const CURRENCIES = ['AFN','USD','EUR','IRR','TRY','PKR','AED','SAR','GBP','CNY'];
 const MODULES = [
   {id:'home',label:'مرکز عملیات',icon:Home,group:'عمومی'},
-  {id:'customers',label:'تعریف مشتریان',icon:Users,group:'تعاریف و دفاتر'},
-  {id:'customerLedger',label:'دفتر حساب مشتریان',icon:BookOpen,group:'تعاریف و دفاتر'},
-  {id:'debtors',label:'بدهکاران و بستانکاران',icon:CircleDollarSign,group:'حسابداری'},
-  {id:'branches',label:'تعریف نمایندگی‌ها',icon:Building2,group:'تعاریف و دفاتر'},
-  {id:'branchLedger',label:'دفتر حساب نمایندگی‌ها',icon:BookText,group:'تعاریف و دفاتر'},
+  {id:'customers',label:'تعریف مشتریان',icon:Users,group:'تعاریف و دفاتر طرف‌حساب'},
+  {id:'customerLedger',label:'دفتر حساب مشتریان',icon:BookOpen,group:'تعاریف و دفاتر طرف‌حساب'},
+  {id:'debtors',label:'بدهکاران و بستانکاران',icon:CircleDollarSign,group:'گزارشات و مطالبات'},
+  {id:'branches',label:'تعریف نمایندگی‌ها',icon:Building2,group:'تعاریف و دفاتر طرف‌حساب'},
+  {id:'branchLedger',label:'دفتر حساب نمایندگی‌ها',icon:BookText,group:'بخش‌های تکمیلی (بیشتر)'},
   {id:'cash',label:'صندوق‌ها و موجودی',icon:Wallet,group:'صندوق و بانک'},
   {id:'banks',label:'بانک و چک',icon:Landmark,group:'صندوق و بانک'},
   {id:'exchange',label:'خرید و فروش اسعار',icon:ArrowLeftRight,group:'عملیات صرافی'},
   {id:'remittance',label:'دفتر حواله‌ها',icon:Send,group:'عملیات صرافی'},
+  {id:'rates',label:'نرخ روز',icon:TrendingUp,group:'بخش‌های تکمیلی (بیشتر)'},
   {id:'expenses',label:'مصارف و پرداخت‌ها',icon:Receipt,group:'عملیات صرافی'},
   {id:'journal',label:'دفتر روزنامچه',icon:ScrollText,group:'حسابداری'},
   {id:'ledger',label:'دفتر کل',icon:ClipboardList,group:'حسابداری'},
   {id:'accounts',label:'کدینگ حساب‌ها',icon:ListChecks,group:'حسابداری'},
-  {id:'currencies',label:'تعریف اسعار',icon:Coins,group:'تنظیمات'},
-  {id:'reports',label:'گزارش عملیات',icon:FileSpreadsheet,group:'گزارشات'},
-  {id:'profit',label:'مفاد و زیان',icon:BarChart3,group:'گزارشات'},
-  {id:'activity',label:'سوابق فعالیت',icon:ClipboardList,group:'گزارشات'},
-  {id:'errors',label:'گزارش خطاها و فیلدها',icon:CircleHelp,group:'گزارشات'},
-  {id:'balance',label:'بیلانس عمومی',icon:Scale,group:'گزارشات'},
+  {id:'currencies',label:'تعریف اسعار',icon:Coins,group:'بخش‌های تکمیلی (بیشتر)'},
+  {id:'reports',label:'گزارش عملیات',icon:FileSpreadsheet,group:'گزارشات و مطالبات'},
+  {id:'profit',label:'مفاد و زیان',icon:BarChart3,group:'گزارشات و مطالبات'},
+  {id:'activity',label:'سوابق فعالیت',icon:ClipboardList,group:'بخش‌های تکمیلی (بیشتر)'},
+  {id:'errors',label:'گزارش خطاها و فیلدها',icon:CircleHelp,group:'بخش‌های تکمیلی (بیشتر)'},
+  {id:'balance',label:'بیلانس عمومی',icon:Scale,group:'بخش‌های تکمیلی (بیشتر)'},
   {id:'sarraafGroups',label:'گروه و چت',icon:MessagesSquare,group:'امکانات تکمیلی',linkedModule:true,children:['گروه صرافان','ایجاد گروه','گفت‌وگوی گروهی','گفت‌وگوی خصوصی']},
   {id:'assistant',label:'هوش مصنوعی',icon:Bot,group:'امکانات تکمیلی',linkedModule:true},
   {id:'products',label:'محصولات آنلاین',icon:ShoppingBag,group:'امکانات تکمیلی',linkedModule:true,children:['شارژ موبایل','بسته‌های اینترنت','UC پابجی موبایل']},
-  {id:'language',label:'زبان برنامه',icon:Languages,group:'تنظیمات',linkedModule:true,children:['فارسی','دری','English','العربية']}
+  {id:'language',label:'زبان برنامه',icon:Languages,group:'بخش‌های تکمیلی (بیشتر)',linkedModule:true,children:['فارسی','دری','English','العربية']}
 ];
 const SCHEMAS = {
  transactions:{title:'گردش حساب',fields:[['date','تاریخ','date'],['type','نوع عملیات','text'],['partyType','نوع طرف حساب','select',['customer','branch','other']],['party','طرف حساب','text'],['currency','ارز','select',CURRENCIES],['amount','مبلغ (+ دریافت / - پرداخت)','number'],['description','شرح','text']]},
@@ -69,29 +71,29 @@ const fieldValue = (obj,key) => obj?.[key] ?? '';
 const NAV_MENUS = [
  {label:'فایل',items:[['پشتیبان‌گیری','backup'],['بازیابی پشتیبان','restore'],['چاپ صفحه','print'],['پاک‌سازی نمای محلی','reset']]},
  {label:'تعریف',items:[['مشتریان','customers'],['نمایندگی‌ها','branches'],['صندوق‌ها','cash'],['بانک و چک','banks'],['اسعار','currencies'],['کدینگ حساب‌ها','accounts']]},
- {label:'عملیات',items:[['دخل صندوق','cashIn'],['خرج صندوق','cashOut'],['خرید و فروش اسعار','exchange'],['ثبت حواله','remittance'],['ثبت مصرف','expenses']]},
+ {label:'عملیات',items:[['دخل صندوق','cashIn'],['خرج صندوق','cashOut'],['خرید و فروش اسعار','exchange'],['نرخ روز','rates'],['ثبت حواله','remittance'],['ثبت مصرف','expenses']]},
  {label:'حسابات',items:[['روزنامچه','journal'],['دفتر کل','ledger'],['حساب مشتریان','customerLedger'],['حساب نمایندگی‌ها','branchLedger'],['بدهکاران و بستانکاران','debtors']]},
  {label:'گزارشات',items:[['گزارش عملیات روز','reports'],['مفاد و زیان','profit'],['بیلانس عمومی','balance'],['سوابق فعالیت','activity'],['گزارش خطاها','errors']]},
  {label:'تنظیمات',items:[['تنظیمات محلی','settings'],['انتخاب زبان','language'],['پشتیبانی','support'],['راهنما','help']]},
- {label:'امکانات تکمیلی',items:[['گروه و چت','sarraafGroups'],['هوش مصنوعی','assistant']] }
+ {label:'امکانات تکمیلی',items:[['گروه و چت','sarraafGroups'],['محصولات آنلاین','products'],['هوش مصنوعی','assistant']]}
 ];
 const LAPTOP_NAV_MENUS = NAV_MENUS.map(menu => menu.label === 'فایل' ? {...menu, items:menu.items.filter(([,action]) => action !== 'print')} : menu);
 const LAPTOP_TOOLBAR = [
- {id:'home',label:'میزکار',icon:Home},
- {id:'language',label:'زبان برنامه',icon:Globe},
- {id:'products',label:'محصولات آنلاین',icon:ShoppingCart},
- {id:'assistant',label:'هوش مصنوعی',icon:Bot},
- {id:'sarraafGroups',label:'گروه و چت',icon:Users},
- {id:'journal',label:'دفتر روزنامه',icon:BookText},
- {id:'expenses',label:'مصارف و پرداخت‌ها',icon:CreditCard},
+ {id:'home',label:'مرکز عملیات',icon:Home},
+ {id:'customerLedger',label:'دفتر حساب مشتریان',icon:BookOpen},
+ {id:'branchLedger',label:'دفتر حساب نمایندگی‌ها',icon:BookText},
+ {id:'journal',label:'دفتر روزنامچه',icon:ScrollText},
+ {id:'remittance',label:'دفتر حواله‌ها',icon:Send},
+ {id:'ledger',label:'دفتر کل',icon:ClipboardList},
+ {id:'branches',label:'تعریف نمایندگی‌ها',icon:Building2},
+ {id:'customers',label:'تعریف مشتریان',icon:Users},
+ {id:'cash',label:'صندوق‌ها و موجودی',icon:Wallet},
  {id:'exchange',label:'خرید و فروش اسعار',icon:ArrowLeftRight},
- {id:'cash',label:'صندوق‌ها و موجودی',icon:Vault},
- {id:'remittance',label:'دفتر حواله‌ها',icon:ArrowLeftRight},
- {id:'banks',label:'بانک و چک چک',icon:Landmark},
- {id:'branchLedger',label:'دفتر حساب نمایندگی‌ها',icon:Users},
- {id:'customers',label:'تعریف مشتریان',icon:User},
- {id:'customerLedger',label:'دفتر حساب مشتریان',icon:User}
+ {id:'expenses',label:'مصارف و پرداخت‌ها',icon:Receipt},
+ {id:'banks',label:'بانک و چک',icon:Landmark}
 ];
+const MOBILE_ICON_IDS = ['home','language','products','assistant','sarraafGroups','journal','expenses','exchange','cash','remittance','banks','branchLedger','customers','branches','customerLedger'];
+
 
 function Field({field,value,onChange,choices}) {
  const [key,label,type,opts]=field;
@@ -132,7 +134,7 @@ function DataTable({columns,rows,onSelect,selected}) {
 const MODULE_TONES = {
  home:'from-blue-700 to-indigo-700', customers:'from-sky-600 to-blue-700', customerLedger:'from-emerald-600 to-teal-700',
  branches:'from-violet-600 to-indigo-700', branchLedger:'from-cyan-600 to-blue-700', cash:'from-amber-500 to-orange-600',
- banks:'from-blue-600 to-indigo-700', exchange:'from-fuchsia-600 to-purple-700', remittance:'from-orange-500 to-amber-600',
+ banks:'from-blue-600 to-indigo-700', exchange:'from-fuchsia-600 to-purple-700', remittance:'from-orange-500 to-amber-600', rates:'from-emerald-600 to-teal-700',
  expenses:'from-rose-600 to-red-700', journal:'from-slate-600 to-slate-800', ledger:'from-indigo-600 to-violet-700',
  accounts:'from-cyan-600 to-teal-700', currencies:'from-lime-600 to-green-700', reports:'from-blue-600 to-cyan-700',
  profit:'from-emerald-600 to-green-700', activity:'from-slate-600 to-blue-700', errors:'from-rose-600 to-pink-700',
@@ -192,7 +194,7 @@ export default function Version21Workspace(){
  const [showWorkspace,setShowWorkspace]=useState(false);
  const [customerDetail,setCustomerDetail]=useState(null);
  const [branchDetail,setBranchDetail]=useState(null);
- const permissionSectionByModule={home:'dashboard',customers:'customers',customerLedger:'accounts_receivable',debtors:'accounts_receivable',transactions:'accounts_receivable',branches:'agents',branchLedger:'agents',cash:'cash',cashAction:'cash',banks:'bank',exchange:'trade',remittance:'transfers',expenses:'cash',journal:'journal',ledger:'general_ledger',accounts:'chart_of_accounts',currencies:'currencies',reports:'reports',profit:'profit_loss',activity:'audit_log',errors:'audit_log',balance:'balance_sheet',sarraafGroups:'chat_groups',assistant:'assistant',products:'online_products',language:'settings'};
+ const permissionSectionByModule={home:'dashboard',customers:'customers',customerLedger:'accounts_receivable',debtors:'accounts_receivable',transactions:'accounts_receivable',branches:'agents',branchLedger:'agents',cash:'cash',cashAction:'cash',banks:'bank',exchange:'trade',remittance:'transfers',rates:'currencies',expenses:'cash',journal:'journal',ledger:'general_ledger',accounts:'chart_of_accounts',currencies:'currencies',reports:'reports',profit:'profit_loss',activity:'audit_log',errors:'audit_log',balance:'balance_sheet',sarraafGroups:'chat_groups',assistant:'assistant',products:'online_products',language:'settings'};
  const isEmployee=data.role==='employee';
  const canViewModule=id=>!isEmployee||hasPermission(data.permissions,permissionSectionByModule[id],'view');
  const canModuleAction=(id,action)=>!isEmployee||hasPermission(data.permissions,permissionSectionByModule[id]||permissionSectionByModule[id==='cashAction'?'cash':id],action);
@@ -529,14 +531,14 @@ export default function Version21Workspace(){
   {key:'exchange-ops',title:'عملیات صرافی',items:[
    ['خرید و فروش اسعار',ArrowLeftRight,()=>openNew('exchange')],
    ['مصارف و پرداخت‌ها',CreditCard,()=>goModule('expenses')],
-   ['معاملات',ArrowLeftRight]
+   ['معاملات',ArrowLeftRight,()=>navigate('/transactions')]
   ]},
   {key:'accounting-reports',title:'حسابداری و گزارشات',items:[
-   ['دفتر روزنامه ·',ShoppingCart,()=>goModule('journal')],
+   ['دفتر روزنامچه',ScrollText,()=>goModule('journal')],
    ['دفتر کل',ClipboardList,()=>goModule('ledger')],
-   ['دفتر ریگال',CalendarDays]
+   ['نرخ روز',TrendingUp,()=>goModule('rates')]
   ]},
-  {key:'extras',title:'امکانات تکمیلی · اسکلت اولیه',items:[
+  {key:'extras',title:'امکانات مرکزی صرافی',items:[
    ['محصولات آنلاین',ShoppingCart,()=>goModule('products')],
    ['گروه و چت',Users,()=>goModule('sarraafGroups')],
    ['هوش مصنوعی',Bot,()=>goModule('assistant')]
@@ -544,7 +546,7 @@ export default function Version21Workspace(){
   {key:'settings',title:'تنظیمات',items:[
    ['تنظیمات',Settings,()=>menuAction('settings')],
    ['زبان برنامه',Globe,()=>goModule('language')],
-   ['درباره برنامه',LifeBuoy]
+   ['درباره برنامه',LifeBuoy,()=>menuAction('help')]
   ]}
  ];
  const ltDeletable=['customers','branches','cash','banks','currencies','accounts','transactions','cashAction','expenses','journal','ledger','remittance','exchange'].includes(active);
@@ -567,7 +569,7 @@ export default function Version21Workspace(){
       {LAPTOP_TOOLBAR.map(item=>{const m=MODULES.find(x=>x.id===item.id);if(!m)return null;const I=item.icon;const allowed=canViewModule(item.id);return <button key={item.id} type="button" disabled={!allowed} aria-disabled={!allowed} title={allowed?item.label:'مجوز مشاهده این بخش برای حساب شما فعال نیست'} aria-current={active===item.id?'page':undefined} onClick={()=>{if(allowed)goModule(item.id);}} className={'v21-desktop-module-button '+(active===item.id?'is-active ':'')+(!allowed?'cursor-not-allowed opacity-40':'')}><I/><span>{item.label}</span></button>;})}
      </aside>
      <aside aria-label="آیکون‌های اصلی موبایل" className="v21-module-icon-row-mobile grid w-full grid-cols-3 gap-1 border-b border-slate-400 bg-[#e1e8ed] p-2 lg:hidden">
-      {['home','language','products','assistant','sarraafGroups','journal','expenses','exchange','cash','remittance','banks','branchLedger','customers','customerLedger'].filter(canViewModule).map(id=>{const m=MODULES.find(x=>x.id===id);if(!m)return null;const I=m.icon;return <button key={m.id} type="button" title={m.label} onClick={()=>{setActive(m.id);setSelected(null);setCustomerDetail(null);setBranchDetail(null);setQuery('');}} className={'v21-desktop-module-button flex min-h-[64px] min-w-0 flex-col items-center justify-center gap-1 rounded-lg border px-1 py-2 text-center '+(active===m.id?'is-active border-blue-300 bg-[#d2e3f1] font-bold text-blue-900':'border-transparent text-[#29465e] hover:border-slate-300 hover:bg-white')}><I className="h-5 w-5"/><span className="w-full whitespace-normal text-[10px] leading-tight">{m.label==='مرکز عملیات'?'میزکار':m.label}</span></button>;})}
+      {MOBILE_ICON_IDS.filter(canViewModule).map(id=>{const m=MODULES.find(x=>x.id===id);if(!m)return null;const I=m.icon;return <button key={m.id} type="button" title={m.label} onClick={()=>{setActive(m.id);setSelected(null);setCustomerDetail(null);setBranchDetail(null);setQuery('');}} className={'v21-desktop-module-button flex min-h-[64px] min-w-0 flex-col items-center justify-center gap-1 rounded-lg border px-1 py-2 text-center '+(active===m.id?'is-active border-blue-300 bg-[#d2e3f1] font-bold text-blue-900':'border-transparent text-[#29465e] hover:border-slate-300 hover:bg-white')}><I className="h-5 w-5"/><span className="w-full whitespace-normal text-[10px] leading-tight">{m.label==='مرکز عملیات'?'میزکار':m.label}</span></button>;})}
      </aside>
       <nav className="v21-reference-mobile-shortcuts" aria-label="دسترسی سریع موبایل">
        {['assistant','language','products','home'].filter(canViewModule).map(id=>{const m=MODULES.find(x=>x.id===id);if(!m)return null;const I=m.icon;return <button key={id} type="button" onClick={()=>{setActive(id);setSelected(null);setCustomerDetail(null);setBranchDetail(null);setQuery('');}} className={'flex min-w-0 flex-col items-center justify-center gap-1 rounded-xl border px-1 py-2 text-center '+(active===id?'border-blue-300 bg-blue-50 font-bold text-blue-900 shadow-sm':'border-transparent text-[#29465e] hover:border-blue-200 hover:bg-white')}><I className="h-5 w-5"/><span>{m.label}</span></button>;})}
@@ -583,7 +585,7 @@ export default function Version21Workspace(){
        {ltGroups.map(group=><div key={group.key} data-lt-group={group.key} className="v21-lt-group">
         <div className="v21-lt-group-title">{group.title}</div>
         <div className="v21-lt-group-tiles">
-         {group.items.map(([label,I,run])=>{const permissionId=({'تعریف مشتریان':'customers','تعریف نمایندگی‌ها':'branches','دفتر حساب مشتریان':'customerLedger','صندوق‌ها و موجودی':'cash','بانک و چک':'banks','دفتر حواله‌ها':'remittance','خرید و فروش اسعار':'exchange','مصارف و پرداخت‌ها':'expenses','دفتر روزنامه ·':'journal','دفتر کل':'ledger','محصولات آنلاین':'products','گروه و چت':'sarraafGroups','هوش مصنوعی':'assistant','تنظیمات':'language','زبان برنامه':'language'})[label];const createRestricted=['خرید و فروش اسعار','مصارف و پرداخت‌ها'].includes(label);const allowed=Boolean(run)&&(!permissionId||canViewModule(permissionId))&&(!createRestricted||canModuleAction(permissionId,'create'));return <button key={label} type="button" onClick={allowed?run:undefined} disabled={!allowed} aria-disabled={!allowed} title={allowed?label:'این گزینه برای حساب شما فعال نیست'} className={'v21-lt-tile '+(!allowed?'cursor-not-allowed opacity-40':'')}><I/><span>{label}</span></button>;})}
+         {group.items.map(([label,I,run])=>{const permissionId=({'تعریف مشتریان':'customers','تعریف نمایندگی‌ها':'branches','دفتر حساب مشتریان':'customerLedger','صندوق‌ها و موجودی':'cash','بانک و چک':'banks','دفتر حواله‌ها':'remittance','خرید و فروش اسعار':'exchange','نرخ روز':'rates','مصارف و پرداخت‌ها':'expenses','دفتر روزنامچه':'journal','دفتر کل':'ledger','محصولات آنلاین':'products','گروه و چت':'sarraafGroups','هوش مصنوعی':'assistant','تنظیمات':'language','زبان برنامه':'language'})[label];const createRestricted=['خرید و فروش اسعار','مصارف و پرداخت‌ها'].includes(label);const allowed=Boolean(run)&&(!permissionId||canViewModule(permissionId))&&(!createRestricted||canModuleAction(permissionId,'create'));return <button key={label} type="button" onClick={allowed?run:undefined} disabled={!allowed} aria-disabled={!allowed} title={allowed?label:'این گزینه برای حساب شما فعال نیست'} className={'v21-lt-tile '+(!allowed?'cursor-not-allowed opacity-40':'')}><I/><span>{label}</span></button>;})}
         </div>
        </div>)}
       </div>
@@ -633,7 +635,7 @@ export default function Version21Workspace(){
        </div>
       </div>
      </div>
-     </>:page.linkedModule?<section className="min-h-[360px] border border-[#9aabb9] bg-white p-4 sm:p-6"><div className="mb-4 flex items-center gap-3"><div className="flex h-12 w-12 items-center justify-center rounded-xl border border-[#b6c4cf] bg-[#edf3f7]"><page.icon className="h-6 w-6 text-[#315e80]"/></div><div><h2 className="text-base font-bold text-[#24496d]">{page.label}</h2><p className="mt-1 text-[10px] text-slate-500">ورود به ماژول عملیاتی موجود در حساب صراف</p></div></div>{page.id==='language'?<LanguageSettings/>:<><p className="mb-4 text-xs leading-6 text-slate-600">برای استفاده از این امکان، ماژول مرتبط برنامه را باز کنید. دسترسی و محدودیت اشتراک در همان ماژول اعمال می‌شود.</p><div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">{(page.id==='sarraafGroups'?[['گروه‌ها و گفت‌وگوی گروهی','/chat'],['گفت‌وگوی مستقیم صرافان','/sarraaf-chat'],['بازار نرخ صرافان','/sarraaf-market']]:page.id==='assistant'?[['دستیار هوش مصنوعی','/assistant']]:[['مدیریت محصولات آنلاین','/online-products'],['شارژ و بسته اینترنت','/online-products/recharge'],['بازی‌ها و خدمات دیجیتال','/online-products/games']]).map(([label,path])=><button key={path} onClick={()=>navigate(path)} className="min-h-12 border border-[#b6c4cf] bg-[#f2f6f9] px-3 py-3 text-right text-xs font-bold text-[#294d69] hover:border-[#47799d] hover:bg-blue-50">{label}</button>)}</div></>}</section>:<>
+     </>:active==='rates'?<DailyRates/>:page.linkedModule?<section className="min-h-[360px] border border-[#9aabb9] bg-white p-4 sm:p-6"><div className="mb-4 flex items-center gap-3"><div className="flex h-12 w-12 items-center justify-center rounded-xl border border-[#b6c4cf] bg-[#edf3f7]"><page.icon className="h-6 w-6 text-[#315e80]"/></div><div><h2 className="text-base font-bold text-[#24496d]">{page.label}</h2><p className="mt-1 text-[10px] text-slate-500">ورود به ماژول عملیاتی موجود در حساب صراف</p></div></div>{page.id==='language'?<LanguageSettings/>:<><p className="mb-4 text-xs leading-6 text-slate-600">برای استفاده از این امکان، ماژول مرتبط برنامه را باز کنید. دسترسی و محدودیت اشتراک در همان ماژول اعمال می‌شود.</p><div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">{(page.id==='sarraafGroups'?[['گروه‌ها و گفت‌وگوی گروهی','/chat'],['گفت‌وگوی مستقیم صرافان','/sarraaf-chat'],['بازار نرخ صرافان','/sarraaf-market']]:page.id==='assistant'?[['دستیار هوش مصنوعی','/assistant']]:[['مدیریت محصولات آنلاین','/online-products'],['شارژ و بسته اینترنت','/online-products/recharge'],['بازی‌ها و خدمات دیجیتال','/online-products/games']]).map(([label,path])=><button key={path} onClick={()=>navigate(path)} className="min-h-12 border border-[#b6c4cf] bg-[#f2f6f9] px-3 py-3 text-right text-xs font-bold text-[#294d69] hover:border-[#47799d] hover:bg-blue-50">{label}</button>)}</div></>}</section>:<>
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2 border-b-2 border-[#315e80] pb-2"><div className="flex items-center gap-2"><page.icon className="h-5 w-5 text-[#315e80]"/><div><div className="text-[9px] text-slate-500">سیستم حسابداری / {page.label}</div><h2 className="text-sm font-bold text-[#24496d]">{page.label}</h2></div>{active==='customerLedger'&&customerDetail&&<button onClick={()=>{setCustomerDetail(null);setSelected(null);}} className="mr-2 border bg-white px-2 py-1 text-[10px]">بازگشت به فهرست مشتریان</button>}{active==='branchLedger'&&branchDetail&&<button onClick={()=>{setBranchDetail(null);setSelected(null);}} className="mr-2 border bg-white px-2 py-1 text-[10px]">بازگشت به فهرست نمایندگی‌ها</button>}</div><div className="flex flex-wrap gap-1 text-[10px]"><label>از <input type="date" value={dateFrom} onChange={e=>setDateFrom(e.target.value)} className="border bg-white px-1 py-1"/></label><label>تا <input type="date" value={dateTo} onChange={e=>setDateTo(e.target.value)} className="border bg-white px-1 py-1"/></label><button onClick={()=>{setDateFrom('');setDateTo('');}} className="border bg-white px-2">پاک‌سازی تاریخ</button></div></div>
       <section className="v21-mobile-record-actions mb-3 rounded-2xl border border-slate-200 bg-white p-3 shadow-sm" aria-label="عملیات این بخش"><div className="mb-2 flex items-center justify-between"><b className="text-xs text-[#24496d]">عملیات این بخش</b><span className="text-[10px] text-slate-400">{selected?'یک مورد انتخاب شده':'موردی انتخاب نشده'}</span></div><div className="grid grid-cols-4 gap-2"><button type="button" onClick={()=>openNew()} disabled={!SCHEMAS[active]||!canModuleAction(active,'create')} className="v21-mobile-operation-button is-create"><Check className="h-5 w-5"/><span>ثبت جدید</span></button><button type="button" onClick={editSelected} disabled={!selected||!canModuleAction(active,'edit')} className="v21-mobile-operation-button"><Pencil className="h-5 w-5"/><span>ویرایش</span></button><button type="button" onClick={removeSelected} disabled={!selected||!canModuleAction(active,'delete')||!ltDeletable} className="v21-mobile-operation-button is-delete"><Trash2 className="h-5 w-5"/><span>حذف</span></button><button type="button" onClick={printPage} className="v21-mobile-operation-button"><Printer className="h-5 w-5"/><span>چاپ</span></button></div></section>
       {active==='cash'&&<div className="mb-3 flex flex-wrap items-center justify-between gap-2 border border-[#b6c4cf] bg-[#edf3f7] px-3 py-2"><div><b className="text-[11px] text-[#24496d]">فهرست صندوق‌ها</b><div className="mt-1 text-[10px] text-slate-600">هر صندوق در یک ردیف؛ برای دیدن جزئیات، ردیف را انتخاب کنید.</div></div><div className="flex items-center gap-3 text-[10px]"><span>تعداد صندوق‌ها: <b>{fmt(data.cash.length)}</b></span><button onClick={()=>openNew('cash')} className="border border-blue-300 bg-white px-3 py-2 font-bold text-blue-900"><Plus className="ml-1 inline h-3 w-3"/>صندوق جدید</button></div></div>}
@@ -678,7 +680,7 @@ export default function Version21Workspace(){
    </div>
    <footer className="shrink-0 border-t border-slate-400 bg-[#dfe5ea] px-3 py-2 text-center text-[9px] text-slate-600 lg:hidden">حساب صراف</footer>
   </section>
-  {showWorkspace&&<div className="v21-mobile-feature-overlay fixed inset-0 z-[90] flex items-center justify-center bg-slate-950/55 p-3" role="presentation" onClick={()=>setShowWorkspace(false)}><section className="v21-mobile-feature-sheet relative flex max-h-[90dvh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl border border-slate-200 bg-[#f7f9fc] shadow-2xl" role="dialog" aria-modal="true" aria-label="همه امکانات حساب صراف" onClick={event=>event.stopPropagation()}><header className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-200 bg-white px-4 py-4"><div><b className="block text-sm text-[#183d5c]">همه امکانات</b><span className="mt-1 block text-[10px] text-slate-500">بخش مورد نظر را انتخاب کنید</span></div><button type="button" aria-label="بستن فهرست امکانات" onClick={()=>setShowWorkspace(false)} className="grid h-10 w-10 place-items-center rounded-xl border border-slate-200 bg-slate-50 text-slate-700"><X className="h-5 w-5"/></button></header><div className="v21-mobile-feature-list flex-1 space-y-4 overflow-y-auto p-3 sm:p-4">{['تعاریف و دفاتر','صندوق و بانک','عملیات صرافی','حسابداری','گزارشات','امکانات تکمیلی','تنظیمات'].map(group=>{const items=MODULES.filter(m=>m.group===group&&m.id!=='home'&&canViewModule(m.id));if(!items.length)return null;return <section key={group} className="v21-mobile-feature-group overflow-hidden rounded-2xl border border-slate-200 bg-white"><h3 className="border-b border-slate-100 bg-slate-50 px-3 py-3 text-xs font-extrabold text-[#315f80]">{group}</h3><div className="divide-y divide-slate-100">{items.map(m=>{const Icon=m.icon;return <button key={m.id} type="button" onClick={()=>{setShowWorkspace(false);if(m.id==='debtors'){navigate('/debtors');return;}setActive(m.id);setSelected(null);setCustomerDetail(null);setBranchDetail(null);setQuery('');}} className="flex min-h-[62px] w-full items-center gap-3 px-3 py-2.5 text-right transition hover:bg-blue-50 active:bg-blue-100"><span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[#edf4fa] text-[#245a82]"><Icon className="h-5 w-5"/></span><span className="min-w-0 flex-1"><b className="block text-xs font-bold text-slate-800">{m.label}</b><small className="mt-1 block text-[10px] text-slate-500">{m.linkedModule?'امکانات تکمیلی و متصل':'ورود به بخش و مشاهده سوابق'}</small></span><ChevronDown className="h-4 w-4 -rotate-90 text-slate-400"/></button>;})}</div></section>;})}</div></section></div>}
+  {showWorkspace&&<div className="v21-mobile-feature-overlay fixed inset-0 z-[90] flex items-center justify-center bg-slate-950/55 p-3" role="presentation" onClick={()=>setShowWorkspace(false)}><section className="v21-mobile-feature-sheet relative flex max-h-[90dvh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl border border-slate-200 bg-[#f7f9fc] shadow-2xl" role="dialog" aria-modal="true" aria-label="همه امکانات حساب صراف" onClick={event=>event.stopPropagation()}><header className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-200 bg-white px-4 py-4"><div><b className="block text-sm text-[#183d5c]">همه امکانات</b><span className="mt-1 block text-[10px] text-slate-500">بخش مورد نظر را انتخاب کنید</span></div><button type="button" aria-label="بستن فهرست امکانات" onClick={()=>setShowWorkspace(false)} className="grid h-10 w-10 place-items-center rounded-xl border border-slate-200 bg-slate-50 text-slate-700"><X className="h-5 w-5"/></button></header><div className="v21-mobile-feature-list flex-1 space-y-4 overflow-y-auto p-3 sm:p-4">{['تعاریف و دفاتر طرف‌حساب','صندوق و بانک','عملیات صرافی','حسابداری','گزارشات و مطالبات','امکانات تکمیلی','بخش‌های تکمیلی (بیشتر)'].map(group=>{const items=MODULES.filter(m=>m.group===group&&m.id!=='home'&&canViewModule(m.id));if(!items.length)return null;return <section key={group} className="v21-mobile-feature-group overflow-hidden rounded-2xl border border-slate-200 bg-white"><h3 className="border-b border-slate-100 bg-slate-50 px-3 py-3 text-xs font-extrabold text-[#315f80]">{group}</h3><div className="divide-y divide-slate-100">{items.map(m=>{const Icon=m.icon;return <button key={m.id} type="button" onClick={()=>{setShowWorkspace(false);if(m.id==='debtors'){navigate('/debtors');return;}setActive(m.id);setSelected(null);setCustomerDetail(null);setBranchDetail(null);setQuery('');}} className="flex min-h-[62px] w-full items-center gap-3 px-3 py-2.5 text-right transition hover:bg-blue-50 active:bg-blue-100"><span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[#edf4fa] text-[#245a82]"><Icon className="h-5 w-5"/></span><span className="min-w-0 flex-1"><b className="block text-xs font-bold text-slate-800">{m.label}</b><small className="mt-1 block text-[10px] text-slate-500">{m.linkedModule?'امکانات تکمیلی و متصل':'ورود به بخش و مشاهده سوابق'}</small></span><ChevronDown className="h-4 w-4 -rotate-90 text-slate-400"/></button>;})}</div></section>;})}</div></section></div>}
    {notice&&<div role={notice.tone==='error'?'alert':'status'} aria-live={notice.tone==='error'?'assertive':'polite'} className={'v21-lt-toast flex items-center gap-2 border p-3 text-[11px] '+(notice.tone==='error'?'border-rose-300 bg-rose-50 text-rose-900':notice.tone==='warning'?'border-amber-300 bg-amber-50 text-amber-900':notice.tone==='success'?'border-emerald-300 bg-emerald-50 text-emerald-900':'border-slate-300 bg-slate-50 text-slate-800')}>
     {notice.tone==='success'?<Check className="h-4 w-4 shrink-0"/>:<Info className="h-4 w-4 shrink-0"/>}<span>{notice.message}</span><button onClick={()=>setNotice('')} className="mr-auto"><X className="h-4 w-4"/></button></div>}
   <p className="text-[10px] leading-5 text-slate-500 lg:hidden">اطلاعات مالی پس از ثبت در دیتابیس همان صراف ذخیره می‌شود. پیش‌نویس فرم‌ها و تنظیمات نمایش، جداگانه در حافظه محلی همین مرورگر و برای همین کاربر نگهداری می‌شود.</p>
