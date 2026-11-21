@@ -1313,3 +1313,80 @@
   }
 }
 
+
+
+/* Hotfix 2026-11-21: keep the six laptop dashboard panels from collapsing.
+   The earlier stacked desktop rules gave the groups a zero flex-basis and
+   zero minimum height. On shorter/compact desktop viewports this let the
+   fixed quick-actions row consume the remaining space and made all six
+   panels disappear. Keep the panels at their reference height and let the
+   dashboard main area scroll when the viewport is short. */
+@media (min-width: 768px) {
+  html body .v21-workspace-shell main:has(> .v21-lt-home) {
+    display: block !important;
+    flex: 1 1 0 !important;
+    min-height: 0 !important;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+  }
+
+  html body .v21-workspace-shell main > .v21-lt-home {
+    display: flex !important;
+    flex: 0 0 auto !important;
+    flex-direction: column !important;
+    width: 100% !important;
+    height: auto !important;
+    min-height: 0 !important;
+    gap: 8px !important;
+    overflow: visible !important;
+  }
+
+  html body .v21-workspace-shell main > .v21-lt-home > .v21-lt-groups {
+    display: grid !important;
+    flex: 0 0 281px !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    grid-template-rows: 144px 124px !important;
+    grid-auto-flow: row !important;
+    align-items: stretch !important;
+    gap: 13px 8px !important;
+    width: 100% !important;
+    height: 281px !important;
+    min-height: 281px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+  }
+
+  html body .v21-workspace-shell main > .v21-lt-home > .v21-lt-groups > .v21-lt-group {
+    display: flex !important;
+    flex: initial !important;
+    width: 100% !important;
+    height: 100% !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+  }
+
+  html body .v21-workspace-shell main > .v21-lt-home > .v21-lt-quick {
+    flex: 0 0 125px !important;
+    width: 100% !important;
+    height: 125px !important;
+    min-height: 125px !important;
+  }
+}
+
+/* The live toolbar contains 11 shortcuts (not the obsolete 14-item layout). */
+@media (min-width: 768px) {
+  html body .v21-workspace-shell .v21-laptop-toolbar > aside.v21-module-icon-row {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    width: 100% !important;
+    overflow: hidden !important;
+  }
+  html body .v21-workspace-shell .v21-laptop-toolbar > aside.v21-module-icon-row > button.v21-desktop-module-button {
+    flex: 1 1 0 !important;
+    width: 0 !important;
+    min-width: 0 !important;
+    max-width: none !important;
+  }
+}
