@@ -29,7 +29,7 @@
     "text_files": 1291,
     "native_binary_files": 3,
     "chunked_binary_files": 2,
-    "total_bytes": 17581553
+    "total_bytes": 17581836
   },
   "files": [
     {
@@ -7427,8 +7427,8 @@
     {
       "source_path": "src/a1/pages/Builder.jsx",
       "target_path": "independent-panel/source/src/a1/pages/Builder.jsx",
-      "size_bytes": 20141,
-      "sha256": "1cb79bf159bb88f0b4f07ad9c45306395011059b7b16f0c37272b57eebb4770e",
+      "size_bytes": 20424,
+      "sha256": "1763cc55c47ed3ab4c886afcfd3afe263c752f834756b4f9d865d34a6211df16",
       "storage": "utf8-inline"
     },
     {
