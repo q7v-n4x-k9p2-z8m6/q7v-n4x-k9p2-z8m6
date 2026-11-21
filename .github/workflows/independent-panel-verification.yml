@@ -34,7 +34,7 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Restore binary files and verify all 1,295 manifest entries
+      - name: Restore binary files and verify all manifest entries
         run: bash restore-binary-files.sh
 
       - name: Set up Node.js
@@ -52,7 +52,7 @@ jobs:
         working-directory: independent-panel/source
         run: npm run lint
 
-      - name: Type checking
+      - name: Type-check isolated financial and tenant guard modules
         working-directory: independent-panel/source
         run: npm run typecheck
 
