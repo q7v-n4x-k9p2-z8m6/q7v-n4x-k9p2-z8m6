@@ -15,6 +15,7 @@ import {
   positive, nonNegative, customerRef, suspenseRef,
 } from './v21Domain';
 import { isReversalDocument, isOriginalLinkedDocument, cashBankOutflows, assertAvailableBalance } from './v21PostingGuards.js';
+import { belongsToExchange } from './v22TenantRules.js';
 
 const TABLES = {
   customers: 'customers',
@@ -48,7 +49,7 @@ const FINANCIAL_DATED_MODULES = ['remittance', 'expenses', 'exchange', 'journal'
 async function assertFinancialDateOpen(ctx, date, module) {
   if (!FINANCIAL_DATED_MODULES.includes(module)) return;
   const rows = (await all('fiscal_periods'))
-    .filter(row => !row.exchange_code || row.exchange_code === ctx.exchangeCode);
+    .filter(row => belongsToExchange(row, ctx.exchangeCode));
   const closed = findClosedPeriod(rows, date);
   if (closed) throw new Error(closedPeriodMessage(closed, date));
 }
@@ -88,7 +89,7 @@ async function requireModulePermission(ctx, module, action) {
   const section = PERMISSION_SECTION_BY_MODULE[module];
   if (!section) throw new Error('این بخش برای نقش کارمند مجوز عملیاتی تعریف‌شده ندارد.');
   const rows = await all('user_permissions');
-  const data = rows.find(row => String(row.user_id) === String(ctx.userId) && row.section === section);
+  const data = rows.find(row => belongsToExchange(row, ctx.exchangeCode) && String(row.user_id) === String(ctx.userId) && row.section === section);
   const flag = action === 'create' ? 'can_create' : action === 'edit' ? 'can_edit' : action === 'delete' ? 'can_delete' : 'can_view';
   if (!data || data.can_view !== true || data[flag] !== true) {
     throw new Error('برای این عملیات مجوز کافی از مدیر صرافی دریافت نشده است.');
@@ -174,8 +175,8 @@ async function writeAudit(ctx, action, entityType, entityId, description, oldVal
   return null;
 }
 
-const tenantRows = async (table, ctx) => (await all(table)).filter(row => !row.exchange_code || row.exchange_code === ctx.exchangeCode);
-const belongsToActiveExchange = (row, ctx) => Boolean(row && (!row.exchange_code || String(row.exchange_code) === String(ctx.exchangeCode)));
+const tenantRows = async (table, ctx) => (await all(table)).filter(row => belongsToExchange(row, ctx.exchangeCode));
+const belongsToActiveExchange = (row, ctx) => belongsToExchange(row, ctx.exchangeCode);
 
 async function getSafe(ctx, name, currency) {
   const row = (await tenantRows('safes', ctx)).find(item => item.name === name && item.currency === currency);
@@ -261,8 +262,8 @@ async function resolveLedgerAccount(ctx, label, currency) {
   return chartAccountLedgerRef(data);
 }
 
-async function nextTransferNumberInTx(handles) {
-  const rows = await handles.transfers.getAll();
+async function nextTransferNumberInTx(handles, ctx) {
+  const rows = (await handles.transfers.getAll()).filter(row => belongsToActiveExchange(row, ctx));
   const max = rows.reduce((top, row) => {
     const match = /^TR-(\d+)$/.exec(String(row.transfer_number || ''));
     return match ? Math.max(top, Number(match[1])) : top;
@@ -299,7 +300,7 @@ async function accountBalanceInTx(handles, ctx, account, excludeDocumentId = nul
   const table = account.account_type === 'bank' ? 'bank_accounts' : 'safes';
   const rows = await handles[table].getAll();
   const row = rows.find(item => String(item.id) === String(account.account_id)
-    && (!item.exchange_code || item.exchange_code === ctx.exchangeCode));
+    && belongsToExchange(item, ctx.exchangeCode));
   const opening = number(row?.opening_balance ?? row?.balance ?? 0);
   const lines = await handles.ledger_entries.getAll();
   const movement = lines
@@ -308,7 +309,7 @@ async function accountBalanceInTx(handles, ctx, account, excludeDocumentId = nul
       && String(line.account_id || '') === String(account.account_id)
       && String(line.currency || 'AFN') === String(account.currency || 'AFN')
       && (excludeDocumentId === null || Number(line.document_id) !== Number(excludeDocumentId))
-      && (!line.exchange_code || line.exchange_code === ctx.exchangeCode))
+      && belongsToExchange(line, ctx.exchangeCode))
     .reduce((sum, line) => sum + number(line.debit) - number(line.credit), 0);
   return opening + movement;
 }
@@ -401,7 +402,7 @@ export async function saveVersion21Record(module, draft) {
 
     return runVersion21Tx(['transfers', ...settlementTables], async handles => {
       await assertNoDuplicateOperation(handles, operationId);
-      const transferNumber = await nextTransferNumberInTx(handles);
+      const transferNumber = await nextTransferNumberInTx(handles, ctx);
       const meta = settlementMeta(settlement, settleType, counter);
       const transferId = await handles.transfers.add({
         exchange_code: ctx.exchangeCode,
@@ -758,7 +759,7 @@ export async function saveFiscalPeriod(draft) {
   const ctx = sessionContext();
   await requireModulePermission(ctx, 'fiscalPeriods', draft?.id ? 'edit' : 'create');
   const rows = (await all('fiscal_periods'))
-    .filter(row => !row.exchange_code || row.exchange_code === ctx.exchangeCode);
+    .filter(row => belongsToExchange(row, ctx.exchangeCode));
   const validated = validatePeriodDraft(draft, rows, draft?.id || '');
   const current = draft?.id ? rows.find(row => String(row.id) === String(draft.id)) : null;
   if (draft?.id && !current) throw new Error('دورهٔ مالی برای ویرایش پیدا نشد.');
@@ -784,7 +785,7 @@ export async function closeFiscalPeriod(id, reason = '') {
   const ctx = sessionContext();
   await requireModulePermission(ctx, 'fiscalPeriods', 'edit');
   const rows = (await all('fiscal_periods'))
-    .filter(row => !row.exchange_code || row.exchange_code === ctx.exchangeCode);
+    .filter(row => belongsToExchange(row, ctx.exchangeCode));
   const current = rows.find(row => String(row.id) === String(id));
   if (!current) throw new Error('دورهٔ مالی پیدا نشد.');
   if (periodIsClosed(current)) throw new Error('این دورهٔ مالی قبلاً بسته شده است.');
