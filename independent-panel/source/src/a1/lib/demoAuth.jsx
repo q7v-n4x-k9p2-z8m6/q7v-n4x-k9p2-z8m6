@@ -3,6 +3,7 @@
 // اما هویت و نشست فقط محلی است: هیچ رمز، OTP، JWT یا درخواست احراز هویت ارسال نمی‌شود.
 import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import { seedIfEmpty, ensureDemoTransactions, DEMO_ACCOUNTS } from '@/a1/lib/seed';
+import { SANDBOX_TOKEN_KEY, sandboxVerify } from '@/a1/lib/sandboxAuth';
 
 const SESSION_KEY = 'a1_demo_session';
 const AuthContext = createContext(null);
@@ -24,18 +25,50 @@ export const DemoAuthProvider = ({ children }) => {
       try {
         const raw = localStorage.getItem(SESSION_KEY);
         if (raw && active) {
-          // نشست‌های قدیمی مشتری فاقد اتصال پرونده بودند؛ اتصال از حساب نمایشی تکمیل می‌شود.
-          const stored = JSON.parse(raw);
-          const account = DEMO_ACCOUNTS.find(item => item.username === stored?.username);
-          const session = stored?.role === 'customer' && account?.customer_mobile
-            ? {
-              ...stored,
-              customer_mobile: stored.customer_mobile || account.customer_mobile,
-              customer_name: stored.customer_name || account.customer_name,
+          let session = JSON.parse(raw);
+          if (session?.is_sandbox_session) {
+            const token = localStorage.getItem(SANDBOX_TOKEN_KEY);
+            if (!token) {
+              session = null;
+            } else {
+              try {
+                const verified = await sandboxVerify(token);
+                if (verified.user?.username !== '33333333' || verified.user?.role !== 'sarraaf' || verified.user?.status !== 'active') {
+                  session = null;
+                } else {
+                  session = {
+                    ...session,
+                    id: String(verified.user.id),
+                    full_name: verified.user.full_name || session.full_name,
+                    role: 'sarraaf',
+                    status: 'active',
+                    exchange_code: verified.exchange?.exchange_code || session.exchange_code,
+                  };
+                }
+              } catch (verifyError) {
+                // هنگام قطعی شبکه، نشست محلیِ همین پیش‌نمایش حفظ می‌شود؛ پاسخ رد/انقضا نشست را پاک می‌کند.
+                if (verifyError?.code !== 'network_error') session = null;
+              }
             }
-            : stored;
-          if (session !== stored) localStorage.setItem(SESSION_KEY, JSON.stringify(session));
-          setUser(session);
+            if (!session) {
+              localStorage.removeItem(SESSION_KEY);
+              localStorage.removeItem(SANDBOX_TOKEN_KEY);
+            } else {
+              localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+            }
+          } else {
+            // نشست‌های قدیمی مشتری فاقد اتصال پرونده بودند؛ اتصال از حساب نمایشی تکمیل می‌شود.
+            const account = DEMO_ACCOUNTS.find(item => item.username === session?.username);
+            if (session?.role === 'customer' && account?.customer_mobile) {
+              session = {
+                ...session,
+                customer_mobile: session.customer_mobile || account.customer_mobile,
+                customer_name: session.customer_name || account.customer_name,
+              };
+              localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+            }
+          }
+          if (session) setUser(session);
         }
       } catch { /* نشست محلی نامعتبر است */ }
       if (active) setIsLoadingAuth(false);
@@ -44,6 +77,7 @@ export const DemoAuthProvider = ({ children }) => {
   }, []);
 
   const signIn = useCallback((account) => {
+    try { localStorage.removeItem(SANDBOX_TOKEN_KEY); } catch { /* storage optional */ }
     const session = {
       id: account.username,
       username: account.username,
@@ -60,7 +94,7 @@ export const DemoAuthProvider = ({ children }) => {
   }, []);
 
   const logout = useCallback((shouldRedirect = true) => {
-    try { localStorage.removeItem(SESSION_KEY); } catch { /* storage optional */ }
+    try { localStorage.removeItem(SESSION_KEY); localStorage.removeItem(SANDBOX_TOKEN_KEY); } catch { /* storage optional */ }
     setUser(null);
     if (shouldRedirect) window.location.replace('/login');
   }, []);
