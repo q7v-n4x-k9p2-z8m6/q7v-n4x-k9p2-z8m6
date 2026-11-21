@@ -19,7 +19,7 @@
       "base44/.app.jsonc",
       "node_modules/",
       "dist/",
-      " .git/",
+      ".git/",
       " .vite/"
     ],
     "existing_destination_readme_preserved": true
