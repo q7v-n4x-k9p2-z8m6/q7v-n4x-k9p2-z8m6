@@ -1,5 +1,5 @@
 // src/core/reports/trialBalance.js — تراز آزمایشی چهارستونی و چندارزی
-import { classOf, groupOf, normalizeLine, missingPolicy, rateFor, round2, sum, isBalanced } from './ledgerBasis';
+import { classOf, groupOf, normalizeLine, missingPolicy, rateFor, round2, sum, isBalanced } from './ledgerBasis.js';
 
 export const TRIAL_BALANCE_POLICY = {
   columns: 'نوع ستون‌ها (دوستونی یا چهارستونی)',
