@@ -7245,8 +7245,8 @@
     {
       "source_path": "src/a1/lib/v21Write.js",
       "target_path": "independent-panel/source/src/a1/lib/v21Write.js",
-      "size_bytes": 70657,
-      "sha256": "b5872d5527b72632005b6f2753effd8c640aae41eaf3c9c90ce45a99877e6ca0",
+      "size_bytes": 70716,
+      "sha256": "df04713200f6e664a882b5529024f49b5e47d4129ca5a8cd098f444ccb547296",
       "storage": "utf8-inline"
     },
     {
