@@ -1023,7 +1023,7 @@ export async function editVersion21Record(module, draft) {
       ? { account: baseAccount, amount: baseAmount, currency: baseCurrency }
       : { account: foreignAccount, amount: foreignAmount, currency: foreignCurrency };
 
-    return runVersion21Tx(['conversions', 'safes'], async handles => {
+    return runVersion21Tx(['conversions', payout.account.account_type === 'bank' ? 'bank_accounts' : 'safes'], async handles => {
       const available = await accountBalanceInTx(handles, ctx, payout.account, document.id);
       if (payout.amount > available + 0.000001) {
         throw new Error(
