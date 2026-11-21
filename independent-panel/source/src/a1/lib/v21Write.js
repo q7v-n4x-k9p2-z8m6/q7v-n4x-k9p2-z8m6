@@ -14,7 +14,7 @@ import {
   buildConversionLines, buildJournalLines, buildSettlementLines, makeSettlementNumber,
   positive, nonNegative, customerRef, suspenseRef,
 } from './v21Domain';
-import { isReversalDocument, cashBankOutflows, assertAvailableBalance } from './v21PostingGuards.js';
+import { isReversalDocument, isOriginalLinkedDocument, cashBankOutflows, assertAvailableBalance } from './v21PostingGuards.js';
 
 const TABLES = {
   customers: 'customers',
@@ -1249,10 +1249,10 @@ export async function editVersion21Record(module, draft) {
 // ── ابطال: سند معکوس برای سند اصلی و همهٔ اسناد وابسته در یک تراکنش ──
 function linkedDocuments(module, record, documents) {
   if (module === 'remittance') {
-    return documents.filter(doc => !doc.deleted && !isReversalDocument(doc) && Number(doc.transfer_id) === Number(record.id));
+    return documents.filter(doc => isOriginalLinkedDocument(doc) && Number(doc.transfer_id) === Number(record.id));
   }
   if (module === 'exchange') {
-    return documents.filter(doc => !doc.deleted && !isReversalDocument(doc) && doc.related_type === 'conversion' && Number(doc.related_id) === Number(record.id));
+    return documents.filter(doc => isOriginalLinkedDocument(doc) && doc.related_type === 'conversion' && Number(doc.related_id) === Number(record.id));
   }
   const documentId = Number(record.documentId || record.id);
   return documents.filter(doc => !doc.deleted && Number(doc.id) === documentId);
