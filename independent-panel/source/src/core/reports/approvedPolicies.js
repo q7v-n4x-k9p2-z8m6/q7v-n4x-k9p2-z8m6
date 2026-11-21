@@ -59,7 +59,6 @@ const EXPECTED_CLASS_BY_TYPE = {
 // بازسازی سطرهای تراز از کدینگ تجمیع‌شده؛ ماندهٔ حساب مادر از گردش مستقیم و فرزندان جدا می‌شود.
 export function trialBalanceLinesFromAccounts(accounts = []) {
   const rows = Array.isArray(accounts) ? accounts : [];
-  const byId = new Map(rows.map((row) => [String(row.id), row]));
   const children = new Map();
   rows.forEach((row) => {
     if (!row.parentId) return;
