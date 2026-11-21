@@ -729,7 +729,7 @@
       "source_path": "package.json",
       "target_path": "independent-panel/source/package.json",
       "size_bytes": 3640,
-      "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+      "sha256": "5d98b675429c06941d1d119a60e82859aff72a21d64ba551eaf2aaa3bfffe6f5",
       "storage": "utf8-inline"
     },
     {
@@ -8576,7 +8576,7 @@
       "source_path": "src/core/transfer/authMigration.js",
       "target_path": "independent-panel/source/src/core/transfer/authMigration.js",
       "size_bytes": 3688,
-      "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+      "sha256": "b8150ccf0aa2ef813d03dfa09688f277dd5337e1a2e10bdefe5a0cdf0ef82eb3",
       "storage": "utf8-inline"
     },
     {
@@ -8611,7 +8611,7 @@
       "source_path": "src/core/transfer/readiness.js",
       "target_path": "independent-panel/source/src/core/transfer/readiness.js",
       "size_bytes": 40588,
-      "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+      "sha256": "f8f375b5e7b513134eb78f0c3de2339b1320a1814507a583ce4a02edb0467703",
       "storage": "utf8-inline"
     },
     {
