@@ -488,6 +488,49 @@ export async function saveVersion21Record(module, draft) {
         await captureVersion21Error(feeError, 'transfer-fee');
       }
     }
+    if (draft.settlement === 'instant') {
+      try {
+        const currency = draft.currency || 'AFN';
+        let settlementAccount;
+        if (draft.settleType === 'bank') {
+          settlementAccount = bankLedgerRef(await getBankById(ctx, draft.bank, currency));
+        } else {
+          const safe = await getSafe(ctx, draft.cash, currency);
+          settlementAccount = { account_type: 'cash', account_id: String(safe.id), account_name: safe.name };
+        }
+        const transit = {
+          account_type: 'suspense',
+          account_id: String(data.transfer_id),
+          account_name: 'transfer in transit',
+        };
+        const lines = draft.direction === 'دریافتی'
+          ? [
+              { ...settlementAccount, currency, debit: transferAmount, credit: 0 },
+              { ...transit, currency, debit: 0, credit: transferAmount },
+            ]
+          : [
+              { ...transit, currency, debit: transferAmount, credit: 0 },
+              { ...settlementAccount, currency, debit: 0, credit: transferAmount },
+            ];
+        validateBalancedLines(lines, 'تسویه فوری حواله');
+        const settlementDoc = await postDocument(ctx, {
+          docType: 'transfer_settlement',
+          currency,
+          amount: transferAmount,
+          relatedType: 'transfer',
+          relatedId: data.transfer_id,
+          relatedName: transferNumber || String(data.transfer_id),
+          description: 'تسویه فوری حواله ' + (transferNumber || data.transfer_id) + ' از ' + settlementAccount.account_name,
+          lines,
+          clientOperationId: operationId + '-settlement',
+        });
+        const settlementDateWarning = await applyDocumentDate(ctx, settlementDoc?.document_id, draft.date);
+        if (settlementDateWarning) warning = [warning, settlementDateWarning].filter(Boolean).join(' | ');
+      } catch (settlementError) {
+        warning = [warning, 'حواله ثبت شد، اما تسویه فوری ثبت نشد و مبلغ در حساب واسط باقی ماند: ' + (settlementError?.message || 'خطای نامشخص')].filter(Boolean).join(' | ');
+        await captureVersion21Error(settlementError, 'transfer-settlement');
+      }
+    }
     const dateWarning = await applyDocumentDate(ctx, transferDocumentId, draft.date, 'transfers', data?.transfer_id);
     const auditWarning = await writeAudit(ctx, 'create', 'transfer', data?.transfer_id,
       `ثبت حواله ${transferNumber || ''}`, null, draft);
