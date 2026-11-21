@@ -287,26 +287,30 @@ export default function BuilderPanel() {
             <span className="text-xs text-muted-foreground">{visibleTabCount} بخش مدیریتی</span>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            <Select
-              value={activeCategory}
-              onValueChange={(value) => {
-                const category = visibleCategories.find((item) => item.value === value);
-                setActiveCategory(value);
-                if (category?.tabs?.length) setActiveTab(category.tabs[0].value);
-              }}
-            >
-              <SelectTrigger className="h-9 w-full text-xs">
-                <SelectValue placeholder="انتخاب گروه مدیریتی" />
-              </SelectTrigger>
-              <SelectContent>
-                {visibleCategories.map((category) => (
-                  <SelectItem key={category.value} value={category.value}>
-                    {getPanelNumber(TAB_CATEGORIES.findIndex((item) => item.value === category.value))} · {category.label} ({category.tabs.length})
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          <div className="space-y-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
+              {visibleCategories.map((category) => {
+                const CategoryIcon = category.icon;
+                const selected = activeCategory === category.value;
+                return (
+                  <Button
+                    key={category.value}
+                    type="button"
+                    variant={selected ? "default" : "outline"}
+                    onClick={() => {
+                      setActiveCategory(category.value);
+                      if (category.tabs?.length) setActiveTab(category.tabs[0].value);
+                    }}
+                    className="h-auto min-h-20 flex-col items-center justify-center gap-2 whitespace-normal px-2 py-3 text-center"
+                    aria-pressed={selected}
+                  >
+                    <CategoryIcon className="h-5 w-5 shrink-0" />
+                    <span className="text-xs leading-5">{category.label}</span>
+                    <span className="text-[10px] opacity-75">{category.tabs.length} بخش</span>
+                  </Button>
+                );
+              })}
+            </div>
 
             <Select value={activeTab} onValueChange={setActiveTab}>
               <SelectTrigger className="h-9 w-full text-xs">
