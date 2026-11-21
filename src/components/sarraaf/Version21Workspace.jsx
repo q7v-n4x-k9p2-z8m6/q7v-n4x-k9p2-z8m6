@@ -80,19 +80,19 @@ const NAV_MENUS = [
  {label:'امکانات تکمیلی',items:[['گروه و چت','sarraafGroups'],['محصولات آنلاین','products'],['هوش مصنوعی','assistant']]}
 ];
 const LAPTOP_NAV_MENUS = NAV_MENUS.map(menu => menu.label === 'فایل' ? {...menu, items:menu.items.filter(([,action]) => action !== 'print')} : menu);
+// ترتیب مرجع لپ‌تاپ (۱۱ میان‌بر از راست به چپ، مطابق نسخهٔ تأییدشدهٔ ساعت ۸ صبح)
 const LAPTOP_TOOLBAR = [
- {id:'home',label:'مرکز عملیات',icon:Home},
- {id:'customerLedger',label:'دفتر حساب مشتریان',icon:BookOpen},
- {id:'branchLedger',label:'دفتر حساب نمایندگی‌ها',icon:BookText},
- {id:'journal',label:'دفتر روزنامچه',icon:ScrollText},
- {id:'remittance',label:'دفتر حواله‌ها',icon:Send},
- {id:'ledger',label:'دفتر کل',icon:ClipboardList},
- {id:'branches',label:'تعریف نمایندگی‌ها',icon:Building2},
- {id:'customers',label:'تعریف مشتریان',icon:Users},
+ {id:'home',label:'میزکار',icon:Home},
  {id:'cash',label:'صندوق‌ها و موجودی',icon:Wallet},
  {id:'exchange',label:'خرید و فروش اسعار',icon:ArrowLeftRight},
+ {id:'remittance',label:'دفتر حواله‌ها',icon:Send},
+ {id:'journal',label:'دفتر روزنامه',icon:ScrollText},
  {id:'expenses',label:'مصارف و پرداخت‌ها',icon:Receipt},
- {id:'banks',label:'بانک و چک',icon:Landmark}
+ {id:'branchLedger',label:'دفتر حساب نمایندگی‌ها',icon:BookText},
+ {id:'banks',label:'بانک و چک',icon:Landmark},
+ {id:'customers',label:'تعریف مشتریان',icon:Users},
+ {id:'customerLedger',label:'دفتر حساب مشتریان',icon:BookOpen},
+ {id:'language',label:'زبان برنامه',icon:Languages}
 ];
 const MOBILE_ICON_IDS = ['home','language','products','assistant','sarraafGroups','journal','expenses','exchange','cash','remittance','banks','branchLedger','customers','branches','customerLedger'];
 
