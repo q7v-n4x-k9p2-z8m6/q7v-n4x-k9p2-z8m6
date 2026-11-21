@@ -11,13 +11,14 @@ export default function Version21JournalRowsEditor({ draft, setDraft, data }) {
   const mode = draft.journalMode === 'multi' || rows.length > 2 ? 'multi' : 'simple';
 
   useEffect(() => {
-    if (Array.isArray(draft.rows) && draft.rows.length >= 2) setRows(draft.rows);
-    else {
+    if (Array.isArray(draft.rows) && draft.rows.length >= 2) {
+      setRows(current => JSON.stringify(current) === JSON.stringify(draft.rows) ? current : draft.rows);
+    } else {
       const initial = emptyRows();
-      setRows(initial);
-      setDraft(current => ({ ...current, rows: initial }));
+      setRows(current => current.length >= 2 ? current : initial);
+      setDraft(current => ({ ...current, rows: current.rows?.length >= 2 ? current.rows : initial }));
     }
-  }, [draft.id]);
+  }, [draft.rows]);
 
   const accountOptions = useMemo(() => [
     { value: '', label: 'انتخاب حساب' },

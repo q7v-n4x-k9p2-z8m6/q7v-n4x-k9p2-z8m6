@@ -23,6 +23,11 @@ export default function TransactionsCenter() {
     setError('');
     try {
       const result = await loadVersion21Database();
+      const role = String(result?.data?.role || '').toLowerCase();
+      const permissions = result?.permissions || result?.data?.permissions || [];
+      if (role === 'employee' && !permissions.some(item => item.section === 'accounts_receivable' && item.can_view === true)) {
+        throw new Error('مجوز مشاهدهٔ مرکز معاملات برای حساب شما فعال نیست.');
+      }
       setRows(Array.isArray(result?.data?.transactions) ? result.data.transactions.filter(row => !row.deleted) : []);
     } catch (cause) {
       setRows([]);

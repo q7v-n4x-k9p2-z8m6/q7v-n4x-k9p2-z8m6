@@ -251,7 +251,7 @@ export default function Version21Workspace(){
  },[data.profitEntries,dateFrom,dateTo,filterCurrency]);
  const profitUnclassified=(data.unclassifiedProfitLines||[]).filter(x=>(!dateFrom||!x.date||x.date>=dateFrom)&&(!dateTo||!x.date||x.date<=dateTo)&&(filterCurrency==='همه'||x.currency===filterCurrency));
  const setField=(k,v)=>setDraft(d=>({...d,[k]:v,...(k==='accountType'&&!d.id?{nature:['revenue','liability','equity'].includes(v)?'بستانکار':'بدهکار'}:{})}));
- const openNew=(module=active,extra={})=>{if(readOnly){notify('ثبت اطلاعات در این حساب فعال نیست.');return;}if(!canModuleAction(module,'create')){notify('مجوز ثبت اطلاعات در این بخش برای حساب شما فعال نیست.');return;}const sc=SCHEMAS[module];const defaults=Object.fromEntries((sc?.fields||[]).map(([k,,type,opts])=>[k,type==='date'?today():type==='select'?(typeof opts?.[0]==='object'?(opts[0].value??''):(opts?.[0]??'')): '']));if(module==='journal')defaults.rows=[{account:'',debit:'',credit:0},{account:'',debit:0,credit:''}];if(module!=='settlement')setActive(module);setDraft({...defaults,date:today(),currency:'AFN',...extra});setSelected(null);setModal(module);};
+ const openNew=(module=active,extra={})=>{if(readOnly){notify('ثبت اطلاعات در این حساب فعال نیست.');return;}if(!canModuleAction(module,'create')){notify('مجوز ثبت اطلاعات در این بخش برای حساب شما فعال نیست.');return;}const sc=SCHEMAS[module];const defaults=Object.fromEntries((sc?.fields||[]).map(([k,,type,opts])=>[k,type==='date'?today():type==='select'?(typeof opts?.[0]==='object'?(opts[0].value??''):(opts?.[0]??'')): '']));if(module==='journal')defaults.rows=[{account:'',debit:'',credit:0},{account:'',debit:0,credit:''}];if(module==='exchange'){defaults.fromCurrency='USD';defaults.toCurrency='AFN';}if(module!=='settlement')setActive(module);setDraft({...defaults,date:today(),currency:'AFN',...extra});setSelected(null);setModal(module);};
  const saveRecord=async(keepOpen=false)=>{
   if(readOnly){notify('ثبت اطلاعات در این حساب فعال نیست.');return;}
   const mod=modal;
@@ -485,7 +485,7 @@ export default function Version21Workspace(){
   ];
   if(mod==='remittance')return [{key:'date',label:'تاریخ'},{key:'number',label:'شماره حواله'},{key:'direction',label:'نوع حواله'},{key:'sender',label:'فرستنده'},{key:'receiver',label:'گیرنده'},{key:'origin',label:'مبدأ'},{key:'destination',label:'مقصد'},{key:'amount',label:'مبلغ',render:r=>fmt(r.amount)},{key:'fee',label:'کمیشن',render:r=>fmt(r.fee)},{key:'total',label:'جمع کل',render:r=>fmt(r.total)},{key:'currency',label:'ارز'},{key:'settlementStatus',label:'وضعیت تسویه'}];
   if(mod==='exchange')return [{key:'date',label:'تاریخ'},{key:'number',label:'شماره سند'},{key:'kindLabel',label:'نوع معامله'},{key:'party',label:'طرف حساب'},{key:'fromCurrency',label:'ارز اول'},{key:'fromAmount',label:'مبلغ ارز اول',render:r=>fmt(r.fromAmount)},{key:'toCurrency',label:'ارز دوم'},{key:'toAmount',label:'مبلغ ارز دوم',render:r=>fmt(r.toAmount)},{key:'rate',label:'نرخ'},{key:'debitAccount',label:'حساب بدهکار'},{key:'creditAccount',label:'حساب بستانکار'},{key:'note',label:'شرح'}];
-  if(mod==='expenses')return [{key:'date',label:'تاریخ'},{key:'number',label:'شماره سند'},{key:'title',label:'شرح مصرف'},{key:'expenseAccount',label:'حساب مصرف'},{key:'payerType',label:'نوع پرداخت',render:r=>r.payerType==='bank'?'بانک':'صندوق'},{key:'cash',label:'صندوق'},{key:'bank',label:'شناسه بانک'},{key:'amount',label:'مبلغ',render:r=>fmt(r.amount)},{key:'currency',label:'ارز'}];
+  if(mod==='expenses')return [{key:'date',label:'تاریخ'},{key:'number',label:'شماره سند'},{key:'title',label:'شرح مصرف'},{key:'expenseAccount',label:'حساب مصرف'},{key:'payerType',label:'نوع پرداخت',render:r=>r.payerType==='bank'?'بانک':'صندوق'},{key:'cash',label:'صندوق'},{key:'bankName',label:'حساب بانکی'},{key:'amount',label:'مبلغ',render:r=>fmt(r.amount)},{key:'currency',label:'ارز'}];
   if(mod==='cash')return [{key:'code',label:'کد صندوق'},{key:'name',label:'نام صندوق'},{key:'currency',label:'ارز'},{key:'opening',label:'مانده افتتاحیه',render:r=>fmt(r.opening)},{key:'balance',label:'موجودی فعلی',render:r=>fmt(balanceFor(r.currency,r.name))},{key:'status',label:'وضعیت'},{key:'description',label:'توضیحات'}];
   if(mod==='journal')return [{key:'date',label:'تاریخ'},{key:'number',label:'شماره سند'},{key:'description',label:'شرح'},{key:'debitAccount',label:'حساب بدهکار'},{key:'creditAccount',label:'حساب بستانکار'},{key:'debitTotal',label:'جمع بدهکار',render:r=>fmt(r.debitTotal)},{key:'creditTotal',label:'جمع بستانکار',render:r=>fmt(r.creditTotal)},{key:'currency',label:'ارز'}];
   if(mod==='ledger')return [{key:'date',label:'تاریخ'},{key:'number',label:'شماره سند'},{key:'account',label:'حساب'},{key:'description',label:'شرح'},{key:'debit',label:'بدهکار',render:r=>fmt(r.debit)},{key:'credit',label:'بستانکار',render:r=>fmt(r.credit)},{key:'currency',label:'ارز'}];
@@ -494,7 +494,7 @@ export default function Version21Workspace(){
  };
  const menuAction=(action)=>{
   setMenu('');
-  if(action==='transactions'){navigate('/transactions');return;}
+  if(action==='transactions'){if(!canViewModule('transactions')){notify('مجوز مشاهدهٔ مرکز معاملات برای حساب شما فعال نیست.');return;}navigate('/transactions');return;}
   if(action==='settlement')return openNew('settlement');
   if(MODULES.some(m=>m.id===action)&&!canViewModule(action)){notify('مجوز مشاهده این بخش برای حساب شما فعال نیست.');return;}
   if(action==='debtors'){navigate('/debtors');return;}
@@ -699,7 +699,7 @@ export default function Version21Workspace(){
       return f[0]===(draft.settleType==='bank'?'bank':'cash');
     }
     return true;
-   }).map(f=><Field key={f[0]} field={f} value={fieldValue(draft,f[0])} onChange={setField} choices={{
+   }).map(f=><Field key={f[0]} field={f} value={fieldValue(draft,f[0])} onChange={(key,value)=>{if(modal==='journal'&&key==='journalMode'&&value==='simple')setDraft(d=>({...d,[key]:value,rows:(d.rows||[]).slice(0,2)}));else setField(key,value);}} choices={{
     ...(modal==='transactions'?{partyType:[{value:'customer',label:'مشتری'},{value:'branch',label:'نمایندگی'},{value:'other',label:'سایر'}]}:{}),
     ...(modal==='accounts'?{parentId:[{value:'',label:'بدون حساب مادر'},...data.accounts.filter(a=>a.status!=='غیرفعال'&&!a.parentId&&String(a.id)!==String(draft.id||'')).map(a=>({value:String(a.id),label:a.code+' — '+a.name}))]}:{}),
     ...(modal==='expenses'?{
