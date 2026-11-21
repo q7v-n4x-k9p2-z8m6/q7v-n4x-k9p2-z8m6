@@ -1,11 +1,11 @@
-// src/core/transfer/ruleContracts.js — قراردادهای قواعد حسابداری که پیش از پیاده‌سازی باید تأیید شوند
-// هیچ محاسبهٔ حدسی در برنامه نیست: تا انتخاب هر تصمیم، قابلیت مربوط BLOCKED می‌ماند.
-// هر قرارداد، تصمیم‌های لازم و اثر هر تصمیم را کنار هم می‌گذارد.
+// src/core/transfer/ruleContracts.js — قراردادهای حسابداری تأییدشدهٔ نسخهٔ ۲۲
+import { APPROVED_TRIAL_BALANCE_POLICY, APPROVED_BALANCE_SHEET_POLICY, APPROVED_REVENUE_POLICY } from '@/core/reports/approvedPolicies';
+// سیاست‌ها توسط کاربر تأیید شده‌اند؛ اعداد فقط بر اساس دادهٔ واقعی و نرخ ثبت‌شده محاسبه می‌شوند.
 
 export const RULE_CONTRACTS = [
   {
-    key: 'trial_balance', title: 'تراز آزمایشی', status: 'BLOCKED',
-    reason: 'قاعدهٔ جمع‌بندی و سطح تفکیک حساب‌ها تأیید نشده است؛ عدد نمایشی ساخته نمی‌شود.',
+    key: 'trial_balance', title: 'تراز آزمایشی', status: 'APPROVED', approvedPolicy: APPROVED_TRIAL_BALANCE_POLICY,
+    reason: 'چهارستونی؛ حساب معین؛ تفکیک ارز و نمای تجمیعی با نرخ ثبت‌شده؛ بستن حساب‌های موقت در پایان دوره.',
     decisions: [
       {
         key: 'columns',
@@ -34,8 +34,8 @@ export const RULE_CONTRACTS = [
     ],
   },
   {
-    key: 'balance_sheet', title: 'بیلانس عمومی (ترازنامه)', status: 'BLOCKED',
-    reason: 'طبقه‌بندی دارایی/بدهی/سرمایه و قاعدهٔ تراز تأیید نشده است.',
+    key: 'balance_sheet', title: 'بیلانس عمومی (ترازنامه)', status: 'APPROVED', approvedPolicy: APPROVED_BALANCE_SHEET_POLICY,
+    reason: 'طبقه‌بندی بر اساس کدینگ؛ سود دوره جداگانه؛ تسعیر با نرخ ثبت‌شدهٔ صراف.',
     decisions: [
       {
         key: 'classification',
@@ -58,8 +58,8 @@ export const RULE_CONTRACTS = [
     ],
   },
   {
-    key: 'revenue_form', title: 'فرم مستقل عواید', status: 'BLOCKED',
-    reason: 'عواید امروز فقط از کمیشن و حساب درآمد ثبت می‌شود؛ فرم مستقل نیازمند قرارداد ثبت است.',
+    key: 'revenue_form', title: 'فرم مستقل عواید', status: 'APPROVED', approvedPolicy: APPROVED_REVENUE_POLICY,
+    reason: 'همهٔ درآمدها در فرم مستقل و سند جدا ثبت می‌شوند؛ دریافت نقدی از مسیر صندوق/بانک ثبت می‌شود تا دوباره‌شماری نشود.',
     decisions: [
       {
         key: 'scope',
