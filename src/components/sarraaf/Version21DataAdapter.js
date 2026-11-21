@@ -261,59 +261,81 @@ export async function loadVersion21Database() {
     parent.balanceByCurrency = [...totals.values()].sort((a, b) => a.currency.localeCompare(b.currency));
   });
 
-  const mappedTransfers = transfers.map(row => ({
-    ...row,
-    id: String(row.id),
-    date: dateOnly(row.created_at),
-    number: row.transfer_number || '',
-    direction: row.direction === 'receive' ? 'دریافتی' : row.direction === 'send' ? 'ارسالی' : 'نامعلوم',
-    sender: row.sender_name || '',
-    receiver: row.receiver_name || '',
-    origin: row.origin || '',
-    destination: row.destination || '',
-    branch: row.origin || row.destination || '',
-    currency: row.currency || 'AFN',
-    amount: num(row.amount),
-    fee: num(row.fee),
-    total: Number.isFinite(num(row.total)) && num(row.total) > 0 ? num(row.total) : num(row.amount) + num(row.fee),
-    cash: '',
-    status: ['paid','done','completed'].includes(String(row.status || '').toLowerCase()) ? 'اجرا شده' : (row.status === 'reversed' ? 'ابطال شده' : row.status === 'pending' ? 'در انتظار' : row.status),
-    accountingStatus: (() => {
-      const doc = documents.find(item => Number(item.transfer_id) === Number(row.id));
-      const feeDocs = documents.filter(item => item.doc_type === 'transfer_fee' && item.related_type === 'transfer' && Number(item.related_id) === Number(row.id) && !item.deleted);
-      if (!doc) return 'سند ندارد';
-      if (!isDocumentBalanced(doc.id) && !doc.reversed) return 'نیازمند بررسی';
-      if (doc.reversed) return (num(row.fee) > 0 && (!feeDocs.length || feeDocs.some(item => !item.reversed))) ? 'ابطال ناقص' : 'ابطال شده';
-      if (num(row.fee) > 0 && !feeDocs.length) return 'سند کمیشن ندارد';
-      if (feeDocs.some(item => !item.reversed && !isDocumentBalanced(item.id))) return 'نیازمند بررسی';
-      if (num(row.fee) > 0 && feeDocs.length && feeDocs.every(item => item.reversed)) return 'کمیشن ابطال شده';
-      return 'متوازن';
-    })(),
-    note: row.destination || row.agent_route || '',
-    _sourceTable: 'transfers',
-  }));
+  const mappedTransfers = transfers.map(row => {
+    const doc = documents.find(item => Number(item.transfer_id) === Number(row.id));
+    const feeDocs = documents.filter(item => item.doc_type === 'transfer_fee' && item.related_type === 'transfer' && Number(item.related_id) === Number(row.id) && !item.deleted);
+    const settlementDoc = documents.find(item => item.doc_type === 'transfer_settlement' && item.related_type === 'transfer' && Number(item.related_id) === Number(row.id) && !item.deleted);
+    const settlementLines = settlementDoc ? activeLedgerEntries.filter(line => String(line.document_id || '') === String(settlementDoc.id)) : [];
+    const settlementAccount = settlementLines.find(line => ['cash','bank'].includes(line.account_type));
+    const settlementIsActive = Boolean(settlementDoc && !settlementDoc.reversed);
+    let accountingStatus = 'متوازن';
+    if (!doc) accountingStatus = 'سند ندارد';
+    else if (doc.reversed) accountingStatus = (feeDocs.some(item => !item.reversed) || (settlementDoc && !settlementDoc.reversed)) ? 'ابطال ناقص' : 'ابطال شده';
+    else if (!isDocumentBalanced(doc.id)) accountingStatus = 'نیازمند بررسی';
+    else if (num(row.fee) > 0 && !feeDocs.length) accountingStatus = 'سند کمیشن ندارد';
+    else if (feeDocs.some(item => !item.reversed && !isDocumentBalanced(item.id))) accountingStatus = 'نیازمند بررسی';
+    else if (settlementIsActive && !isDocumentBalanced(settlementDoc.id)) accountingStatus = 'نیازمند بررسی';
+    else if (num(row.fee) > 0 && feeDocs.length && feeDocs.every(item => item.reversed)) accountingStatus = 'کمیشن ابطال شده';
+    return {
+      ...row,
+      id: String(row.id),
+      date: dateOnly(row.created_at),
+      number: row.transfer_number || '',
+      direction: row.direction === 'receive' ? 'دریافتی' : row.direction === 'send' ? 'ارسالی' : 'نامعلوم',
+      sender: row.sender_name || '',
+      receiver: row.receiver_name || '',
+      origin: row.origin || '',
+      destination: row.destination || '',
+      branch: row.origin || row.destination || '',
+      currency: row.currency || 'AFN',
+      amount: num(row.amount),
+      fee: num(row.fee),
+      total: Number.isFinite(num(row.total)) && num(row.total) > 0 ? num(row.total) : num(row.amount) + num(row.fee),
+      settlement: settlementIsActive ? 'instant' : 'suspense',
+      settleType: settlementAccount?.account_type || 'cash',
+      cash: settlementAccount?.account_type === 'cash' ? (safeById.get(String(settlementAccount.account_id || ''))?.name || settlementAccount.account_name || '') : '',
+      bank: settlementAccount?.account_type === 'bank' ? String(settlementAccount.account_id || '') : '',
+      settlementAccount: settlementAccount?.account_name || 'حساب واسط حواله',
+      settlementStatus: settlementIsActive ? (isDocumentBalanced(settlementDoc.id) ? 'تسویه شده' : 'نیازمند بررسی') : 'در انتظار تسویه',
+      status: ['paid','done','completed'].includes(String(row.status || '').toLowerCase()) ? 'اجرا شده' : (row.status === 'reversed' ? 'ابطال شده' : row.status === 'pending' ? 'در انتظار' : row.status),
+      accountingStatus,
+      note: row.destination || row.agent_route || '',
+      _sourceTable: 'transfers',
+    };
+  });
 
   const mappedConversions = conversions.map(row => {
     const linkedDocument = documents.find(item => item.related_type === 'conversion' && Number(item.related_id) === Number(row.id));
     const documentLines = linkedDocument
       ? activeLedgerEntries.filter(line => String(line.document_id || '') === String(linkedDocument.id))
       : [];
+    const description = String(linkedDocument?.description || row.description || '');
+    const kind = linkedDocument?.doc_type === 'convert'
+      ? 'convert'
+      : description.startsWith('خرید اسعار') ? 'buy'
+      : description.startsWith('فروش اسعار') ? 'sell' : 'convert';
+    const kindLabel = kind === 'buy' ? 'خرید اسعار' : kind === 'sell' ? 'فروش اسعار' : 'تبدیل ارز';
+    const fromCash = documentLines.find(line => line.account_type === 'cash' && String(line.currency) === String(row.from_currency));
+    const toCash = documentLines.find(line => line.account_type === 'cash' && String(line.currency) === String(row.to_currency));
     return {
       ...row,
       id: String(row.id),
       date: dateOnly(row.created_at),
       number: linkedDocument?.doc_number || '',
-      kind: 'تبدیل',
+      kind,
+      kindLabel,
       fromCurrency: row.from_currency || '',
       fromAmount: num(row.from_amount),
       toCurrency: row.to_currency || '',
       toAmount: num(row.to_amount),
       rate: num(row.rate),
+      cashFrom: fromCash ? (safeById.get(String(fromCash.account_id || ''))?.name || fromCash.account_name || '') : '',
+      cashTo: toCash ? (safeById.get(String(toCash.account_id || ''))?.name || toCash.account_name || '') : '',
       profit: null,
       debitAccount: [...new Set(documentLines.filter(line => num(line.debit) > 0).map(line => line.account_name).filter(Boolean))].join(' / '),
       creditAccount: [...new Set(documentLines.filter(line => num(line.credit) > 0).map(line => line.account_name).filter(Boolean))].join(' / '),
       accountingStatus: !linkedDocument ? 'سند ندارد' : (linkedDocument.reversed ? 'ابطال شده' : isDocumentBalanced(linkedDocument.id) ? 'متوازن' : 'نیازمند بررسی'),
-      party: row.customer_name || '',
+      party: row.customer_name && row.customer_name !== 'مشتری نقدی' ? row.customer_name : '',
       note: row.description || '',
       _sourceTable: 'conversions',
     };
@@ -380,6 +402,16 @@ export async function loadVersion21Database() {
     const creditTotal = lines.reduce((sum, row) => sum + num(row.credit), 0);
     const debitNames = [...new Set(lines.filter(row => num(row.debit) > 0).map(row => row.account_name).filter(Boolean))];
     const creditNames = [...new Set(lines.filter(row => num(row.credit) > 0).map(row => row.account_name).filter(Boolean))];
+    const journalRows = lines.map(line => {
+      let account = line.account_name || '';
+      if (line.account_type === 'cash') account = 'صندوق: ' + (safeById.get(String(line.account_id || ''))?.name || account);
+      else if (line.account_type === 'bank') account = 'بانک: ' + String(line.account_id || '');
+      else if (line.account_type === 'suspense' && line.account_id && chartAccountById.has(String(line.account_id))) {
+        const chart = chartAccountById.get(String(line.account_id));
+        account = chart.account_code + ' — ' + chart.account_name;
+      }
+      return { account, debit: num(line.debit), credit: num(line.credit) };
+    });
     return {
       id: key,
       documentId: documentKey,
@@ -388,6 +420,8 @@ export async function loadVersion21Database() {
       description: linkedDocument?.description || first.description || '',
       debitAccount: debitNames.join(' / '),
       creditAccount: creditNames.join(' / '),
+      rows: journalRows,
+      journalMode: journalRows.length > 2 ? 'multi' : 'simple',
       currency,
       amount: debitTotal,
       debitTotal,
@@ -448,6 +482,7 @@ export async function loadVersion21Database() {
     .map(row => {
       const documentLines = activeLedgerEntries.filter(line => String(line.document_id || '') === String(row.id));
       const cashLine = documentLines.find(line => line.account_type === 'cash');
+      const bankLine = documentLines.find(line => line.account_type === 'bank');
       const expenseLine = documentLines.find(line => line.account_type === 'suspense' && line.account_id && chartAccountById.has(String(line.account_id)));
       const expenseChartAccount = expenseLine ? chartAccountById.get(String(expenseLine.account_id)) : null;
       return {
@@ -457,6 +492,8 @@ export async function loadVersion21Database() {
         expenseAccount: expenseChartAccount ? expenseChartAccount.account_code + ' — ' + expenseChartAccount.account_name : '',
         currency: row.currency || 'AFN',
         amount: num(row.amount),
+        payerType: bankLine ? 'bank' : 'cash',
+        bank: bankLine ? String(bankLine.account_id || '') : '',
         cash: cashLine ? (safeById.get(String(cashLine.account_id || ''))?.name || cashLine.account_name || '') : '',
         number: row.doc_number || '',
         note: row.doc_number || '',
