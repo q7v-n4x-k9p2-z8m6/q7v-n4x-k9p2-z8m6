@@ -341,9 +341,13 @@ export async function buildReadinessReport() {
   });
 
   const decisions = RULE_CONTRACTS.flatMap((contract) => contract.decisions);
-  add(reports, 'policy-default', 'انتخاب سیاست پیش‌فرض سه گزارش', STATUS.BLOCKED,
-    'پیاده‌سازی هر گزینه آماده و آزمون‌شده است، اما انتخاب سیاست پیش‌فرض تصمیم صرافی است: ' + decisions.map((item) => item.question).join(' / '),
-    { kind: 'code', dependency: 'انتخاب سیاست گزارش‌ها' });
+  const policiesApproved = RULE_CONTRACTS.length === 3
+    && RULE_CONTRACTS.every((contract) => contract.status === 'APPROVED' && contract.approvedPolicy);
+  add(reports, 'policy-default', 'سیاست پیش‌فرض سه گزارش', policiesApproved ? STATUS.PASS : STATUS.BLOCKED,
+    policiesApproved
+      ? 'سه سیاست حسابداری با تأیید کاربر ثبت شده‌اند و آزمون‌های گزارش اجرا می‌شوند.'
+      : 'سیاست‌های لازم هنوز تأیید نشده‌اند: ' + decisions.map((item) => item.question).join(' / '),
+    { kind: 'code', dependency: policiesApproved ? '' : 'تأیید سیاست گزارش‌ها' });
 
   guard(reports, 'print', 'مدل چاپ و خروجی گزارش', () => {
     const columns = columnsFor('customers') || [];
