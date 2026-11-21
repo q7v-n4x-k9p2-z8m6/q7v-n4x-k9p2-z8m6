@@ -5,7 +5,8 @@
 import React, { useMemo, useState } from 'react';
 import { Scale, Lock, ShieldCheck, AlertTriangle } from 'lucide-react';
 import { buildBalanceSheet, BALANCE_SHEET_POLICY } from '@/core/reports/balanceSheet';
-import { APPROVED_BALANCE_SHEET_POLICY, ratesFromCurrencyRecords } from '@/core/reports/approvedPolicies';
+import { buildTrialBalanceViews } from '@/core/reports/trialBalance';
+import { APPROVED_BALANCE_SHEET_POLICY, APPROVED_TRIAL_BALANCE_POLICY, ratesFromCurrencyRecords, trialBalanceLinesFromAccounts } from '@/core/reports/approvedPolicies';
 import { FINANCIAL_FIXTURE } from '@/core/transfer/financialContracts';
 
 const STORAGE_KEY = 'hisab-sarraf-v22-balance-sheet-policy';
@@ -45,6 +46,7 @@ const Field = ({ label, value, onChange, options }) => (
 
 export default function BalanceSheetPanel({ data }) {
   const [policy, setPolicy] = useState(readPolicy);
+  const [trialView, setTrialView] = useState('split');
 
   const update = (next) => {
     setPolicy(next);
@@ -80,12 +82,76 @@ export default function BalanceSheetPanel({ data }) {
     [policy, lines, baseCurrency, rates],
   );
 
+  const trialSource = useMemo(
+    () => trialBalanceLinesFromAccounts(data?.accounts || []),
+    [data?.accounts],
+  );
+  const trialReports = useMemo(
+    () => trialSource.status === 'ready'
+      ? buildTrialBalanceViews(trialSource.lines, APPROVED_TRIAL_BALANCE_POLICY, rates)
+      : null,
+    [trialSource, rates],
+  );
+  const trialReport = trialReports?.[trialView] || null;
+
   // نمونهٔ مستند قرارداد محاسبه — روی دادهٔ ساختگی، مستقل از دفتر صراف
   const reference = useMemo(() => buildBalanceSheet(FINANCIAL_FIXTURE, DEFAULT_BALANCE_POLICY), []);
   const locked = !policy;
 
   return (
-    <section dir="rtl" className="mb-2 space-y-2" aria-label="بیلانس عمومی و انتخاب سیاست">
+    <section dir="rtl" className="mb-2 space-y-2" aria-label="گزارش‌های مالی نسخهٔ ۲۲">
+      <div className="card-flat p-2.5 sm:p-3">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <b className="block text-[12px] font-extrabold text-foreground">تراز آزمایشی چهارستونی</b>
+            <span className="text-[9px] text-muted-foreground">گردش و ماندهٔ بدهکار/بستانکار؛ جمع‌ها جداگانه برای هر ارز</span>
+          </div>
+          <div className="flex gap-1">
+            <button type="button" onClick={() => setTrialView('split')} className={'rounded-lg border px-2 py-1 text-[10px] font-bold ' + (trialView === 'split' ? 'border-primary bg-primary/10 text-primary' : 'border-border bg-card text-muted-foreground')}>تفکیک ارز</button>
+            <button type="button" onClick={() => setTrialView('base')} className={'rounded-lg border px-2 py-1 text-[10px] font-bold ' + (trialView === 'base' ? 'border-primary bg-primary/10 text-primary' : 'border-border bg-card text-muted-foreground')}>تجمیع ارز پایه</button>
+          </div>
+        </div>
+        {trialSource.status !== 'ready' ? (
+          <div className="mt-2 rounded-xl border border-amber-300 bg-amber-50 px-2 py-2 text-[10px] leading-5 text-amber-900">
+            کدینگ برای ساخت تراز کامل نیست؛ هیچ رقم حدسی نمایش داده نمی‌شود.
+            <ul className="mt-1 list-inside list-disc">{trialSource.missing.map((item) => <li key={item}>{item}</li>)}</ul>
+          </div>
+        ) : trialReport?.status === 'blocked' ? (
+          <div className="mt-2 rounded-xl border border-amber-300 bg-amber-50 px-2 py-2 text-[10px] leading-5 text-amber-900">
+            نمای تجمیعی تا ثبت نرخ معتبر همهٔ ارزها ساخته نمی‌شود.
+            <ul className="mt-1 list-inside list-disc">{trialReport.missing.map((item) => <li key={item}>{item}</li>)}</ul>
+          </div>
+        ) : trialReport?.status === 'ready' ? (
+          <>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {trialReport.totals.byCurrency.map((item) => (
+                <div key={item.currency} className="rounded-lg border border-border/70 bg-background/60 px-2 py-1 text-[9px]">
+                  <b>{item.currency}</b> · بدهکار {money(item.debit)} · بستانکار {money(item.credit)}
+                  <span className={item.balanced ? 'mr-1 text-emerald-700' : 'mr-1 text-rose-700'}>{item.balanced ? 'متوازن' : 'نامتوازن'}</span>
+                </div>
+              ))}
+            </div>
+            <div className="mt-2 overflow-x-auto">
+              <table className="w-full min-w-[620px] border-collapse text-[9px]">
+                <thead><tr className="bg-muted/60 text-right">
+                  <th className="border border-border p-1.5">کد / حساب</th><th className="border border-border p-1.5">ارز</th>
+                  <th className="border border-border p-1.5">گردش بدهکار</th><th className="border border-border p-1.5">گردش بستانکار</th>
+                  <th className="border border-border p-1.5">مانده بدهکار</th><th className="border border-border p-1.5">مانده بستانکار</th>
+                </tr></thead>
+                <tbody>{trialReport.rows.map((row) => (
+                  <tr key={row.code + '::' + row.currency} className="odd:bg-background even:bg-muted/20">
+                    <td className="border border-border p-1.5 font-bold">{row.code}</td><td className="border border-border p-1.5">{row.currency}</td>
+                    <td className="border border-border p-1.5 text-left num">{money(row.debitTurnover)}</td>
+                    <td className="border border-border p-1.5 text-left num">{money(row.creditTurnover)}</td>
+                    <td className="border border-border p-1.5 text-left num">{money(row.debitBalance)}</td>
+                    <td className="border border-border p-1.5 text-left num">{money(row.creditBalance)}</td>
+                  </tr>
+                ))}</tbody>
+              </table>
+            </div>
+          </>
+        ) : null}
+      </div>
       <div className="card-flat p-2.5 sm:p-3">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex min-w-0 items-center gap-2">
