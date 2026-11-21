@@ -1413,6 +1413,7 @@ export default function A1Workspace() {
           data={data}
           fmt={fmt}
           ltDate={ltDate}
+          ltUserName={ltUserName}
           dbStatus={dbStatus}
           profit={profit}
           tradeProfit={tradeProfit}
