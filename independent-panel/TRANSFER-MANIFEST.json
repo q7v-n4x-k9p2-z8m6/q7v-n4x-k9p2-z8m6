@@ -29,7 +29,7 @@
     "text_files": 1299,
     "native_binary_files": 3,
     "chunked_binary_files": 2,
-    "total_bytes": 17769403
+    "total_bytes": 17778527
   },
   "files": [
     {
@@ -7882,8 +7882,8 @@
     {
       "source_path": "src/components/sections/BalanceSheetPanel.jsx",
       "target_path": "independent-panel/source/src/components/sections/BalanceSheetPanel.jsx",
-      "size_bytes": 13080,
-      "sha256": "18f7a52b41ee65d30b511663aacb7a10f283acd743554be255301a58bde1fda1",
+      "size_bytes": 17840,
+      "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
       "storage": "utf8-inline"
     },
     {
@@ -8505,15 +8505,15 @@
     {
       "source_path": "src/core/reports/approvedPolicies.js",
       "target_path": "independent-panel/source/src/core/reports/approvedPolicies.js",
-      "size_bytes": 1913,
-      "sha256": "04a6a2501c63ba5c307a71f9fdd0bdc3e7f344beba3007eec02e9763995ddd50",
+      "size_bytes": 4568,
+      "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
       "storage": "utf8-inline"
     },
     {
       "source_path": "src/core/reports/approvedPolicies.test.js",
       "target_path": "independent-panel/source/src/core/reports/approvedPolicies.test.js",
-      "size_bytes": 4593,
-      "sha256": "0413fb9d49544b254b3cff4cf806b3833c2e09fa89208c2033b1ef5c17620859",
+      "size_bytes": 6302,
+      "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
       "storage": "utf8-inline"
     },
     {
