@@ -5,7 +5,8 @@
 // حذف شده‌اند و هیچ ورود یا اتصال دیتابیسی انجام نمی‌شود.
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { sandboxLogin, SANDBOX_TOKEN_KEY as TOKEN_KEY } from '@/a1/lib/sandboxAuth';
+import { sandboxLogin } from '@/a1/lib/sandboxAuth';
+import { useAuth } from '@/a1/lib/demoAuth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -190,6 +191,7 @@ export default function LoginOriginal() {
   const [error, setError] = useState('');
   const [googleError, setGoogleError] = useState('');
   const navigate = useNavigate();
+  const { signInSandbox } = useAuth();
 
   // ورود واقعی فقط برای حساب صراف مجازِ پیش‌نمایش؛ سایر نقش‌ها همچنان از این مسیر وارد نمی‌شوند.
   const handleLogin = async (event) => {
@@ -218,8 +220,7 @@ export default function LoginOriginal() {
         exchange_code: result.exchange?.exchange_code || `SANDBOX-${result.user.id}`,
         is_sandbox_session: true,
       };
-      localStorage.setItem(TOKEN_KEY, result.token);
-      localStorage.setItem('a1_demo_session', JSON.stringify(session));
+      signInSandbox(session, result.token);
       navigate('/exchanger', { replace: true });
     } catch (loginError) {
       setError(loginError?.message || 'ورود انجام نشد؛ دوباره تلاش کنید.');
