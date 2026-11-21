@@ -84,8 +84,8 @@ import MobileActionBar from '@/a1/components/v21/MobileActionBar';
 import AdaptiveLayoutPanel from '@/a1/components/v21/AdaptiveLayoutPanel';
 import useAdaptiveLayout from '@/a1/hooks/useAdaptiveLayout';
 import { runVersion21DomainChecks } from '@/a1/lib/v21DomainTests';
-import '../../../reference/A1-extracted-source-temp/src/components/sarraaf/version21-responsive-layout.css';
-import '../../../reference/A1-extracted-source-temp/src/components/sarraaf/version21-laptop-reference.css';
+import '@/a1/components/v21/legacy-responsive-layout.css';
+import '@/a1/components/v21/legacy-laptop-reference.css';
 // آخرین شیت: چیدمان لپ‌تاپ صفحات داخلی میز کار
 import '@/a1/components/v21/laptop-chrome.css';
 // آخرین شیت: تنها منبع تصمیم چیدمان (متغیرها و data-a1-* از موتور مرکزی)
