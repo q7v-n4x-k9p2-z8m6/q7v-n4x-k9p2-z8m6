@@ -68,6 +68,7 @@ export function buildTrialBalance(rawLines = [], policy = null) {
     };
   });
 
+  const allTurnoverRows = [...rows];
   const profitByCurrency = {};
   if (policy.closing === 'close') {
     const temporary = rows.filter((row) => TEMPORARY.includes(classOf(row.code)));
@@ -92,7 +93,7 @@ export function buildTrialBalance(rawLines = [], policy = null) {
   }
 
   const balanceByCurrency = groupedTotals(rows, (row) => row.debitBalance, (row) => row.creditBalance);
-  const turnoverByCurrency = groupedTotals(rows, (row) => row.debitTurnover, (row) => row.creditTurnover);
+  const turnoverByCurrency = groupedTotals(allTurnoverRows, (row) => row.debitTurnover, (row) => row.creditTurnover);
   const singleCurrency = balanceByCurrency.length <= 1;
   const totals = {
     ...(singleCurrency ? {
