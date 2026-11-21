@@ -11,7 +11,6 @@ import { useRecords, useLedger } from '@/hooks/useRecords';
 import { useRole } from '@/lib/role-context';
 import { buildConversion, validateBalanced } from '@/lib/accounting/postings';
 import { postDocument } from '@/lib/accounting/posting-engine';
-import { DOC_TYPES } from '@/lib/accounting/chart';
 import { balanceFor } from '@/lib/accounting/queries';
 import { dec, faDate, isoToday } from '@/lib/format';
 import { BASE_CURRENCY } from '@/lib/config';
