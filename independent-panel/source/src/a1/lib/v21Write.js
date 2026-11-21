@@ -291,7 +291,7 @@ async function remittanceSettlement(ctx, draft, currency) {
 
 // ماندهٔ در دسترس یک صندوق یا بانک: ماندهٔ افتتاحیه + حرکت دفتر کل همان حساب در همان ارز.
 // پیش از ثبت معامله استفاده می‌شود تا فروش بیش از موجودی رد شود، نه اینکه فقط هشدار بگیرد.
-async function accountBalanceInTx(handles, ctx, account) {
+async function accountBalanceInTx(handles, ctx, account, excludeDocumentId = null) {
   // خواندن موجودی در همان تراکنش read-write ثبت سند انجام می‌شود؛
   // تراکنش‌های هم‌زمانی که دفترکل/حساب مشترک دارند به‌صورت ترتیبی اجرا می‌شوند.
   const table = account.account_type === 'bank' ? 'bank_accounts' : 'safes';
@@ -305,6 +305,7 @@ async function accountBalanceInTx(handles, ctx, account) {
       && String(line.account_type || '') === account.account_type
       && String(line.account_id || '') === String(account.account_id)
       && String(line.currency || 'AFN') === String(account.currency || 'AFN')
+      && (excludeDocumentId === null || Number(line.document_id) !== Number(excludeDocumentId))
       && (!line.exchange_code || line.exchange_code === ctx.exchangeCode))
     .reduce((sum, line) => sum + number(line.debit) - number(line.credit), 0);
   return opening + movement;
@@ -1018,7 +1019,19 @@ export async function editVersion21Record(module, draft) {
     });
     const feeDoc = documents.find(doc => doc.doc_type === 'exchange_fee' && doc.related_type === 'conversion' && Number(doc.related_id) === Number(draft.id) && !doc.reversed);
 
-    return runVersion21Tx(['conversions'], async handles => {
+    const payout = kind === 'buy'
+      ? { account: baseAccount, amount: baseAmount, currency: baseCurrency }
+      : { account: foreignAccount, amount: foreignAmount, currency: foreignCurrency };
+
+    return runVersion21Tx(['conversions', 'safes'], async handles => {
+      const available = await accountBalanceInTx(handles, ctx, payout.account, document.id);
+      if (payout.amount > available + 0.000001) {
+        throw new Error(
+          `موجودی ${payout.account.account_name} برای ویرایش این معامله کافی نیست؛ `
+          + `ماندهٔ قابل استفاده پس از کنارگذاشتن سند قبلی ${new Intl.NumberFormat('fa-IR', { maximumFractionDigits: 2 }).format(available)} ${payout.currency} `
+          + `و مبلغ لازم ${new Intl.NumberFormat('fa-IR', { maximumFractionDigits: 2 }).format(payout.amount)} ${payout.currency} است.`
+        );
+      }
       await replaceDocumentLinesInTx(handles, document.id, {
         lines,
         description: draft.note || 'معاملهٔ اسعار',
