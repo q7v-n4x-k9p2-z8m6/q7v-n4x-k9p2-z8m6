@@ -29,7 +29,7 @@
     "text_files": 1296,
     "native_binary_files": 3,
     "chunked_binary_files": 2,
-    "total_bytes": 17592526
+    "total_bytes": 17592513
   },
   "files": [
     {
@@ -728,8 +728,8 @@
     {
       "source_path": "package.json",
       "target_path": "independent-panel/source/package.json",
-      "size_bytes": 3277,
-      "sha256": "68d0ada0749691a718685a4e840c77462509a241764bfb72efc09c0370ee8608",
+      "size_bytes": 3316,
+      "sha256": "acea0161e9602e7878000e788d2207d528d15c6faa1560e0b93930351e470ee0",
       "storage": "utf8-inline"
     },
     {
@@ -8813,8 +8813,8 @@
     {
       "source_path": "src/pages/Convert.jsx",
       "target_path": "independent-panel/source/src/pages/Convert.jsx",
-      "size_bytes": 8570,
-      "sha256": "420b81e2bdb4fa09a6f10f333372fd34cb130aeaac33634a8782801f24ac450c",
+      "size_bytes": 8518,
+      "sha256": "1fb4dd029b6f9e5ffd40489913cf5aae47e5bc028675faf2f35e58228a579fd9",
       "storage": "utf8-inline"
     },
     {
