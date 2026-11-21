@@ -3317,9 +3317,10 @@
 }
 
 
-/* A1 laptop correction: the four-button dock is phone/tablet navigation only.
-   Keep the established laptop workspace and its original lower layout unchanged. */
-@media (min-width: 1024px) {
+/* A1 laptop correction: the laptop layout starts at 768px, so the
+   four-button mobile dock must be hidden from that same breakpoint onward.
+   This final high-specificity rule overrides the <=1023px mobile-dock styling. */
+@media (min-width: 768px) {
   html body .v21-workspace-shell .v21-mobile-bottom {
     display: none !important;
   }
