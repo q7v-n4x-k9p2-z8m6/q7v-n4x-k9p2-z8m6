@@ -8,6 +8,7 @@ import {
   APPROVED_BALANCE_SHEET_POLICY,
   APPROVED_REVENUE_POLICY,
   ratesFromCurrencyRecords,
+  trialBalanceLinesFromAccounts,
 } from './approvedPolicies.js';
 
 const multiCurrencyLedger = [
@@ -90,4 +91,29 @@ test('currency records map their actual currency, buy_rate and sell_rate fields'
   ]);
   assert.deepEqual(rates, { USD: 71, IRR: 0.0012 });
   assert.equal(Object.hasOwn(rates, 'EUR'), false, 'one-sided rate must not be accepted as a mid-rate');
+});
+
+test('trial balance mapping subtracts child totals from parent rollups without double counting', () => {
+  const mapped = trialBalanceLinesFromAccounts([
+    { id: 'a1', code: '1010', accountType: 'asset', name: 'دارایی کل', parentId: '', balanceByCurrency: [{ currency: 'AFN', debit: 100, credit: 0 }] },
+    { id: 'a2', code: '1011', accountType: 'asset', name: 'صندوق', parentId: 'a1', balanceByCurrency: [{ currency: 'AFN', debit: 60, credit: 0 }] },
+    { id: 'a3', code: '1012', accountType: 'asset', name: 'بانک', parentId: 'a1', balanceByCurrency: [{ currency: 'AFN', debit: 40, credit: 0 }] },
+    { id: 'l1', code: '2010', accountType: 'liability', name: 'بدهی کل', parentId: '', balanceByCurrency: [{ currency: 'AFN', debit: 0, credit: 50 }] },
+    { id: 'l2', code: '2011', accountType: 'liability', name: 'بدهی معین', parentId: 'l1', balanceByCurrency: [{ currency: 'AFN', debit: 0, credit: 30 }] },
+  ]);
+  assert.equal(mapped.status, 'ready');
+  assert.deepEqual(mapped.lines, [
+    { code: '1011', currency: 'AFN', debit: 60, credit: 0 },
+    { code: '1012', currency: 'AFN', debit: 40, credit: 0 },
+    { code: '2010', currency: 'AFN', debit: 0, credit: 20 },
+    { code: '2011', currency: 'AFN', debit: 0, credit: 30 },
+  ]);
+});
+
+test('trial balance mapping blocks account codes inconsistent with account class', () => {
+  const mapped = trialBalanceLinesFromAccounts([
+    { id: 'x1', code: '4010', accountType: 'asset', name: 'کد ناسازگار', parentId: '', balanceByCurrency: [{ currency: 'AFN', debit: 10, credit: 0 }] },
+  ]);
+  assert.equal(mapped.status, 'blocked');
+  assert.equal(mapped.lines.length, 0);
 });
