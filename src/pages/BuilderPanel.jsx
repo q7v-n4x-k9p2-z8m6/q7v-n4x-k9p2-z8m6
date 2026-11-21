@@ -9,7 +9,7 @@ import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
   Shield, Users, CreditCard, Lock, Bell, MessageSquare,
-  Server, Wallet, Crown, Upload, LogOut, Download, AlertTriangle, UserCog, Clock, Eye, Mail, Smartphone, Gamepad2, Zap, Globe, Store, FlaskConical, Database, Bot, LayoutGrid, BookOpen, Network, Share2, Bitcoin
+  Server, Wallet, Crown, Upload, LogOut, Download, AlertTriangle, UserCog, Clock, Eye, Mail, Smartphone, Gamepad2, Zap, Globe, Store, FlaskConical, Database, Bot, LayoutGrid, BookOpen, Network, Share2, Bitcoin, ImagePlus
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -45,6 +45,7 @@ import LayoutHexLibrary from '@/components/sarraaf/LayoutHexLibrary';
 import { lazy } from 'react';
 const BuilderLiveAssistant = lazy(() => import('@/pages/BuilderLiveAssistant'));
 const TestingAgentPanel = lazy(() => import('@/components/sarraaf/TestingAgentPanel'));
+const ImageGenerationPanel = lazy(() => import('@/components/sarraaf/ImageGenerationPanel'));
 import UCManager from '@/components/sarraaf/UCManager';
 import RechargeManager from '@/components/sarraaf/RechargeManager';
 import Afghan5Manager from '@/components/sarraaf/Afghan5Manager';
@@ -95,6 +96,7 @@ const TAB_GROUPS = [
   { label: 'آزمایشگاه چیدمان', value: 'layout_studio', description: 'نمای موبایل و لپ‌تاپ در یک محیط آزمایشی مستقل' },
   { label: 'دستیار زنده سازنده', value: 'masnavi_ai', description: 'دستیار اختصاصی و محرمانه برای گزارش وضعیت پنل سازنده' },
   { label: 'عامل هوشمند آزمایش', value: 'testing_agent', description: 'تهیه برنامه و سناریوهای کنترل کیفیت با هوش مصنوعی موجود؛ اجرای خودکار هنوز غیرفعال است' },
+  { label: 'تولید تصویر با هوش مصنوعی', value: 'image_generator', description: 'ساخت تصویر از توضیحات متنی، آیکون و طرح گرافیکی' },
   { label: 'UC پابجی', value: 'uc_manager', description: 'مدیریت خدمات UC' },
   { label: 'شارژ و بسته', value: 'recharge', description: 'مدیریت شارژ و بسته اینترنت' },
   { label: 'افغان۵', value: 'afghan5', description: 'مدیریت خدمات افغان۵' },
@@ -110,6 +112,7 @@ const TAB_CATEGORIES = [
   { label: 'مالی و پلن‌ها', value: 'finance', icon: Wallet, tabs: ['plans', 'pricing', 'payments', 'withdrawals', 'trial'] },
   { label: 'ارتباطات', value: 'communication', icon: MessageSquare, tabs: ['notif', 'chat', 'masnavi_ai'] },
   { label: 'آزمایش و کنترل کیفیت', value: 'testing', icon: FlaskConical, tabs: ['testing_agent'] },
+  { label: 'هوش مصنوعی و خلاقیت', value: 'ai_tools', icon: Bot, tabs: ['image_generator'] },
   { label: 'خدمات و فروش', value: 'services', icon: Store, tabs: ['uc_manager', 'recharge', 'afghan5', 'sellers'] },
   { label: 'ابزار و نگهداری', value: 'tools', icon: Database, tabs: ['maintenance', 'version', 'layout_preview', 'computer_layout_preview', 'layout_studio', 'backup', 'backup_v2', 'triple_backup', 'project_transfer', 'supabase_audit', 'db_explorer'] },
 ];
@@ -135,9 +138,10 @@ export default function BuilderPanel() {
 
   // مجوزها روی شناسه تک‌تک تب‌ها اعمال می‌شوند، نه شناسه گروه‌های نمایشی.
   const visibleTabGroups = useMemo(() => TAB_GROUPS.filter((group) => {
-    const creatorOnlyTabs = ['co_creators', 'layout_preview', 'computer_layout_preview', 'layout_studio', 'supabase_audit', 'db_explorer', 'masnavi_ai', 'testing_agent'];
+    const creatorOnlyTabs = ['co_creators', 'layout_preview', 'computer_layout_preview', 'layout_studio', 'supabase_audit', 'db_explorer', 'masnavi_ai', 'testing_agent', 'image_generator'];
     if (group.value === 'masnavi_ai' && user?.role !== 'creator') return false;
     if (group.value === 'testing_agent' && user?.role !== 'creator') return false;
+    if (group.value === 'image_generator' && user?.role !== 'creator') return false;
     if (group.value === 'maintenance' && user?.role !== 'creator') return false;
     if (creatorOnlyTabs.includes(group.value) && !isFullCreator) return false;
     if (isFullCreator) return true;
@@ -619,6 +623,15 @@ export default function BuilderPanel() {
                   status: getFeatureStatus(features || [], item.feature_key),
                 }))}
               />
+            </React.Suspense>
+          </TabsContent>
+        )}
+
+        {/* تولید تصویر با هوش مصنوعی — ابزار مستقل و فقط برای سازنده اصلی */}
+        {user?.role === 'creator' && (
+          <TabsContent value="image_generator">
+            <React.Suspense fallback={<div className="flex items-center justify-center min-h-[30vh]"><div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" /></div>}>
+              <ImageGenerationPanel role={user?.role} />
             </React.Suspense>
           </TabsContent>
         )}
