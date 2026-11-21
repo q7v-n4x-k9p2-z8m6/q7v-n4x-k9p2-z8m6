@@ -48,6 +48,14 @@ jobs:
         working-directory: independent-panel/source
         run: npm ci --no-audit --no-fund
 
+      - name: Static analysis
+        working-directory: independent-panel/source
+        run: npm run lint
+
+      - name: Type checking
+        working-directory: independent-panel/source
+        run: npm run typecheck
+
       - name: Run isolated financial guard tests
         working-directory: independent-panel/source
         run: npm run test:unit
