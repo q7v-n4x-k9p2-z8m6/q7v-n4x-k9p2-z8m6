@@ -31,7 +31,7 @@ export default function OAuthConsent() {
         // Resolve the handle first: a dead handle must never render
         // approve/deny, and the response carries the app's configured login
         // route for the signed-out redirect below. Send the session (cookie +
-        // bearer token) so the server can list the granted tools for a
+        // bearer ******) so the server can list the granted tools for a
         // signed-in user — the same auth the approve/deny call sends; without
         // it the display request is anonymous and shows no tools.
         const infoHeaders = {};
@@ -46,7 +46,7 @@ export default function OAuthConsent() {
         }
         const data = await res.json();
         // Gate on the server's auth result, NOT base44.auth.isAuthenticated():
-        // the SDK check runs the bearer path, so a cookie-only session (platform
+        // the SDK check runs the bearer ******, so a cookie-only session (platform
         // login/SSO, or a private app with a stale localStorage token) would read
         // as signed-out and redirect — even though /consent-info just
         // authenticated this same request via its cookie fallback. data.authenticated
@@ -84,7 +84,7 @@ export default function OAuthConsent() {
     setError("");
     try {
       const headers = { "Content-Type": "application/json" };
-      // Cookie-backed sessions carry no token; sending "Bearer null" would
+      // Cookie-backed sessions carry no token; sending "Bearer ******" would
       // shadow the valid cookie, so add the header only when a token exists.
       if (appParams.token) headers.Authorization = "Bearer " + appParams.token;
       const res = await fetch(`/api/apps/${appParams.appId}/mcp/authorize-grant`, {

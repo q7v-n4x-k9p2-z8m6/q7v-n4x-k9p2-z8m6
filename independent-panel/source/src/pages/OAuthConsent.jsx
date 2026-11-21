@@ -101,11 +101,11 @@ export default function OAuthConsent() {
         // Resolve the handle first: a dead handle must never render
         // approve/deny, and the response carries the app's configured login
         // route for the signed-out redirect below. The SDK sends the session
-        // (cookie + bearer token), so the server can list the granted tools for
+        // (cookie + bearer ******), so the server can list the granted tools for
         // a signed-in user.
         const data = await base44.mcp.getConsentInfo(ctx);
         // Gate on the server's auth result, NOT base44.auth.isAuthenticated():
-        // the SDK check runs the bearer path, so a cookie-only session (platform
+        // the SDK check runs the bearer ******, so a cookie-only session (platform
         // login/SSO, or a private app with a stale localStorage token) would read
         // as signed-out and redirect — even though /consent-info just
         // authenticated this same request via its cookie fallback. data.authenticated
