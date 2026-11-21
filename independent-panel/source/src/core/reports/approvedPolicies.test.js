@@ -25,6 +25,9 @@ test('approved V22 trial balance closes temporary accounts separately per curren
   assert.equal(result.status, 'ready');
   assert.deepEqual(result.profitByCurrency, { AFN: 60, USD: 30 });
   assert.equal(result.totals.balanced, true);
+  const temporaryRows = result.rows.filter((row) => ['4', '5'].includes(row.code.charAt(0)));
+  assert.equal(temporaryRows.length, 4, 'revenue and expense account turnover remains visible');
+  assert.equal(temporaryRows.every((row) => row.debitBalance === 0 && row.creditBalance === 0), true, 'temporary balances close to the profit row');
   assert.equal(Object.hasOwn(result.totals, 'debit'), false, 'cross-currency totals must not be added together');
   assert.deepEqual(
     result.totals.byCurrency.map((row) => [row.currency, row.debit, row.credit, row.balanced]),
