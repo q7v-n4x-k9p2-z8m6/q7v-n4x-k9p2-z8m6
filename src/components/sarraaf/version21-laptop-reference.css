@@ -206,7 +206,7 @@
     left: auto !important;
   }
 
-  /* 14 icon tiles in one row; each tile is ~76x86 at the reference width. */
+  /* 11 reference shortcuts in one row; flex sizing keeps all icons visible on laptop widths. */
   html body .v21-workspace-shell .v21-laptop-toolbar > aside.v21-module-icon-row {
     display: flex !important;
     flex: 0 0 92px !important;
