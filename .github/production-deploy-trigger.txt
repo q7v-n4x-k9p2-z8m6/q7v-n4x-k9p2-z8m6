@@ -1,5 +1,12 @@
-Production deployment trigger.
-Application source: release/restore-build.
-Latest source commit: ddd0a6625d5288c30c021dc217d4f7295e245d13.
-Changes include the tenant-scoped chart of accounts module, enterprise module page completion, and corrected zero-valued plan quotas.
-Preserve existing CNAME and all production user and financial data.
+Production deployment policy.
+
+Canonical application source: this repository's main branch only.
+Production domain: hisabsarraf.new.tg
+Build command: npm run build
+Deployment workflow: .github/workflows/deploy-production.yml
+
+Only pushes to main trigger production deployment. Manual deployment is also restricted to main and requires explicit confirmation.
+No other branch or repository is used as a production source.
+
+Preserve the existing CNAME and all production user, authentication, and financial data.
+This policy changes GitHub Pages deployment only; it does not authorize database migrations or data changes.
